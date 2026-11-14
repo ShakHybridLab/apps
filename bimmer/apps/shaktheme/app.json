@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redraws the instrument cluster: Sport, M, M Blade and Navi themes with a shift light, a Waze map window, oil and coolant temperatures that change colour, the battery and electric range, and an energy flow",
-  "version": "0.14.10",
+  "version": "0.14.11",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
