@@ -994,12 +994,13 @@ void main() {
 }
 `;
 
-const MBLADE = `// The M Blade theme in one cluster-render "effect" layer (GLSL ES 1.00), after a photo of a BMW M cluster view: a blue
-// card with the M tricolour (light blue and red stripes, blurred as on the photo), a few fine facet lines, a dark plate
-// for the gear and speed; a red rev blade leaning right (a light blue double line on its left edge, a bright red right
-// edge, ticks in from it every 1000 rpm, orange dashes before the redline); and two thin slanted gauge pairs (oil
-// temperature, fuel) to the right of it. The part of the blade under the rpm is bright red, the rest dark red, with a
-// white marker at the rpm. The card is cut see-through over the map window (u_hole). v_uv (0,0) is the top-left.
+const MBLADE = `// The M Blade theme in one cluster-render "effect" layer (GLSL ES 1.00), traced off a photo of a BMW M cluster (Nov 14 2026,
+// measured on the photo warped to the 1920x720 panel): a near black navy backdrop with faint hexagon outlines; the speed scale
+// on the left as a cyan line with a knee, a tick at each label and a white marker at the speed; a blue hexagon cut into panels
+// by dark gaps, with a void across it for the speed (the photo's gear); the rev blade on the right (maroon body, bright red
+// right edge, red ticks, a white line and a bright red foot, the part under the rpm lit; blue on the electric power, and the foot filling green while the battery charges); three slanted segmented strips (the fuel
+// on the left, the oil temperature and the hybrid battery on the right); and four blue tabs with a cyan and a red swoosh under the hexagon. The
+// hexagon and the backdrop are cut see-through over the map window (u_hole). v_uv (0,0) is the top-left.
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
@@ -1007,149 +1008,204 @@ precision mediump float;
 #endif
 varying vec2 v_uv;
 uniform vec2 u_size;
-uniform vec4 u_cardA;     // card: left x, top y, bottom y, corner rounding px
-uniform vec4 u_cardB;     // card: x where the top edge ends, x and y of the right-hand point, x where the bottom edge starts
-uniform vec4 u_plate;     // gear plate: top y, bottom y, left x at the top, left x at the bottom
-uniform float u_plateR;   // the plate's right end x (0 = no plate)
-uniform vec4 u_s1;        // light blue stripe: x, y at the top end, x, y at the bottom end
-uniform vec4 u_s2;        // red stripe
-uniform vec2 u_sw;        // the two stripes' widths px
-uniform vec4 u_bl;        // blade: y of the top, y of the bottom (0 rpm), left edge x at the top, its slope (x per y px)
-uniform vec4 u_br;        // blade: right edge x at the top, its slope, x of the hook's left end, x of the baseline's left end
-uniform vec2 u_sc;        // y of the scale's top mark (max rpm), y of its 0 (the bottom)
-uniform vec4 u_g0;        // oil gauge: x, y of the top end, x, y of the bottom end
-uniform vec4 u_g1;        // fuel gauge
-uniform vec2 u_gv;        // the gauge levels 0..1
+uniform vec4 u_hex;       // the hexagon: where its design point (612, 167) lands on the panel x, y; the scale (0 = none)
+uniform vec4 u_sp;        // speed line: x, y of the top cap's left end, x, y of the knee
+uniform vec4 u_sq;        // speed line: x, y of the bottom end, the top cap's length (0 = no speed line)
+uniform vec4 u_sy;        // speed line: y of the 0 label, of the knee's label, of the top label, the knee's share along the scale
+uniform float u_speed;    // speed 0..1 along the scale
+uniform vec4 u_bl;        // blade body: top y, bottom y, left edge x at the top, its slope (x per y px)
+uniform vec4 u_br;        // blade: right edge x at the top (outer side), its slope, its thickness, the maroon body's width
+uniform vec4 u_bx;        // blade: scale, x of the top line's left end, x of the base line's left end
+uniform vec2 u_sc;        // y of the scale's top mark (max rpm), y of its 0
+uniform vec4 u_g0;        // fuel strip: left edge x at the top, top y, bottom y, slope
+uniform float u_fh;       // 1 = the fuel strip lies flat: u_g0 is then in a frame turned a quarter (x' = y, y' = panel width - x)
+uniform vec4 u_g1;        // oil temperature strip
+uniform vec4 u_g2;        // hybrid battery strip
+uniform vec3 u_gv;        // the strips' levels 0..1: fuel, oil, battery
+uniform vec3 u_oc;        // the oil strip's lit colour (blue cold, green warm, red in alert)
 uniform float u_ticks;    // marks: max rpm / 1000
 uniform float u_value;    // rpm 0..1
 uniform float u_orange;   // 0..1, orange dashes from here to the redline
 uniform float u_redFrom;  // 0..1
 uniform float u_shiftNow;
-uniform vec3 u_red;
+uniform vec4 u_red;       // the lit blade's colour (red on rpm, blue on the electric power), then the charge 0..1 filling the foot green
+uniform float u_deco;     // 1 = the tabs and the swoosh under the hexagon
 uniform vec4 u_hole;      // map window x, y, w, h, already inset (w 0 = none)
 uniform float u_holeR;
-uniform float u_tint;     // the navy backdrop's strength 0..1.4 (0 = pure black)
-uniform float u_facets;   // the facets' strength 0..1 (0 = plain navy)
+uniform float u_tint;     // the backdrop's strength 0..1.4 (0 = pure black)
+uniform float u_facets;   // the faint hexagon outlines' strength 0..1
 
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
-vec4 over(vec4 top, vec4 under) {
-    float a = top.a + under.a * (1.0 - top.a);
-    if (a <= 0.0) return vec4(0.0);
-    return vec4((top.rgb * top.a + under.rgb * under.a * (1.0 - top.a)) / a, a);
+vec4 over(vec4 t, vec4 u) {
+    float a = t.a + u.a * (1.0 - t.a);
+    return vec4((t.rgb * t.a + u.rgb * u.a * (1.0 - t.a)) / max(a, 0.0001), a);
 }
 float segD(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }
-${FACETS}
-${NAVY}
 float smax(float a, float b, float k) { float h = clamp(0.5 + 0.5 * (a - b) / k, 0.0, 1.0); return mix(b, a, h) + k * h * (1.0 - h); }
-// a thin pair of slanted lines from the top end a to the bottom end b, the gap between them filled from the bottom up to v
-vec4 gauge(vec2 p, vec4 g, float v, vec3 fill, vec4 c) {
-    vec2 a = g.xy, b = g.zw;
-    float len = length(b - a);
-    vec2 u = (b - a) / len;
-    vec2 q = p - a;
-    float along = dot(q, u) / len;
-    float side = dot(q, vec2(u.y, -u.x));
-    if (along < -0.03 || along > 1.03 || abs(side) > 12.0) return c;
-    float body = cov(abs(side) - 6.0) * cov(abs(along - 0.5) * len - len * 0.5);
-    c = over(vec4(fill * mix(0.55, 1.0, along), 0.9 * body * step(1.0 - v, along) * step(0.001, v)), c);
-    float ln = max(cov(abs(side + 6.0) - 1.6), cov(abs(side - 6.0) - 1.1));
-    return over(vec4(0.92, 0.95, 1.0, 0.95 * ln * cov(abs(along - 0.5) * len - len * 0.5)), c);
+// the distance (px, positive inside) to the nearest border of a honeycomb of flat-topped hexagons of circumradius r
+float honey(vec2 p, float r) {
+    vec2 s = vec2(3.0 * r, 1.7320508 * r);
+    vec2 a = mod(p, s) - s * 0.5;
+    vec2 b = mod(p - s * 0.5, s) - s * 0.5;
+    vec2 g = abs(dot(a, a) < dot(b, b) ? a : b);
+    return r * 0.8660254 - max(g.y, dot(g, vec2(0.8660254, 0.5)));
+}
+// signed distance (positive outside) to the line through a and b, for a polygon walked clockwise on screen
+float ed(vec2 g, vec2 a, vec2 b) { vec2 e = b - a; return dot(g - a, vec2(e.y, -e.x)) / length(e); }
+float poly4(vec2 g, vec2 a, vec2 b, vec2 c, vec2 d) { return max(max(ed(g, a, b), ed(g, b, c)), max(ed(g, c, d), ed(g, d, a))); }
+float poly5(vec2 g, vec2 a, vec2 b, vec2 c, vec2 d, vec2 e) { return max(max(max(ed(g, a, b), ed(g, b, c)), max(ed(g, c, d), ed(g, d, e))), ed(g, e, a)); }
+// the x of the speed line at y
+float lineX(float y) {
+    return y >= u_sp.w ? u_sp.z + (u_sq.x - u_sp.z) * (y - u_sp.w) / (u_sq.y - u_sp.w) : u_sp.z + (u_sp.x - u_sp.z) * (u_sp.w - y) / (u_sp.w - u_sp.y);
+}
+// one slanted strip of five segments (never an empty one: g.z > g.y): g = left edge x at the top, top y, bottom y, slope; the outer line is on the left when the
+// strip leans right, on the right when it leans left; the part under the level is lit white
+vec4 strip(vec2 p, vec4 g, float lvl, vec3 lit, vec4 c) {
+    float len = g.z - g.y;
+    float xl = g.x + g.w * (p.y - g.y);
+    float cs = 1.0 / sqrt(1.0 + g.w * g.w);
+    float W = 27.0, ow = 5.0;
+    float u = p.x - xl;
+    bool mir = g.w < 0.0;
+    float uo = mir ? W - u : u;
+    float f = (g.z - p.y) / len;
+    float inside = cov(max(-u, u - W) * cs) * cov(max(g.y - p.y, p.y - g.z));
+    if (inside <= 0.0) return c;
+    vec3 col;
+    float a = 1.0;
+    if (uo < ow) {
+        col = vec3(0.96, 0.98, 1.0);
+        if (mir) col = f < 0.12 ? vec3(0.36, 0.86, 1.0) : (f > 0.9 ? vec3(1.0, 0.55, 0.78) : col);
+    } else if (uo < ow + 2.5) {
+        a = 0.0;
+    } else {
+        float sep = min(min(abs(f - 0.2), abs(f - 0.4)), min(abs(f - 0.6), abs(f - 0.8))) * len;
+        col = f <= lvl ? lit : mix(vec3(0.56, 0.64, 0.9), vec3(0.5, 0.58, 0.84), f);
+        a = 1.0 - 0.9 * cov(sep - 0.9);
+    }
+    return over(vec4(col, a * inside), c);
 }
 
 void main() {
     vec2 p = v_uv * u_size;
-    // the Sport view's navy with its facets (pure black with the tint at 0); BMW's own gauges stay hidden under it
-    vec4 c = vec4(u_tint > 0.0 ? navyFacets(p, u_size, u_facets) * u_tint : vec3(0.0), 1.0);
+    // the near black navy, with the photo's faint hexagon outlines
+    vec4 c = vec4(vec3(0.016, 0.026, 0.078) * u_tint, 1.0);
+    if (u_tint > 0.0) c = over(vec4(0.45, 0.6, 1.0, 0.045 * u_facets * cov(abs(honey(p, 150.0)) - 0.7)), c);
 
-    // ---- the card: left edge, flat top, a point on the right, flat bottom; the corners rounded ----
-    vec2 va = vec2(u_cardB.x, u_cardA.y), vv = u_cardB.yz, vb = vec2(u_cardB.w, u_cardA.z);
-    vec2 t1 = normalize(vv - va), t2 = normalize(vb - vv);
-    float d = smax(u_cardA.y - p.y, p.y - u_cardA.z, u_cardA.w);
-    d = smax(d, u_cardA.x - p.x, u_cardA.w);
-    d = smax(d, dot(p - va, vec2(t1.y, -t1.x)), u_cardA.w);
-    d = smax(d, dot(p - vv, vec2(t2.y, -t2.x)), u_cardA.w);
-    if (d < 2.0) {
-        float fx = clamp((p.x - u_cardA.x) / (u_cardB.y - u_cardA.x), 0.0, 1.0);
-        float fy = clamp((p.y - u_cardA.y) / (u_cardA.z - u_cardA.y), 0.0, 1.0);
-        vec3 col = mix(vec3(0.05, 0.14, 0.55), vec3(0.075, 0.2, 0.66), fx) * mix(1.05, 0.9, fy);
-        // a long facet line from the top edge down to the left; the card is a shade lighter to the right of it
-        float xd = 741.0 - 0.6028 * (p.y - 150.0);
-        col = mix(col, vec3(0.13, 0.33, 0.85), 0.4 * clamp((p.x - xd) / 6.0, 0.0, 1.0) * (1.0 - clamp((p.x - xd - 190.0) / 60.0, 0.0, 1.0)));
-        vec4 k = vec4(col, cov(d));
-        k = over(vec4(0.0, 0.02, 0.24, 0.55 * cov(abs((p.x - xd) * 0.857) - 0.9)), k);
-        k = over(vec4(0.45, 0.6, 1.0, 0.25 * cov(abs((p.x - xd) * 0.857 - 3.0) - 0.7)), k);
-        float xe = 956.0 - 0.6 * (p.y - 255.0);
-        k = over(vec4(0.0, 0.02, 0.24, 0.35 * cov(abs((p.x - xe) * 0.857) - 0.8)), k);
-        // the fine facets: a level line and a V under the stripes
-        float fl = min(segD(p, vec2(487.0, 307.0), vec2(652.0, 307.0)),
-                   min(segD(p, vec2(491.0, 318.0), vec2(554.0, 427.0)),
-                   min(segD(p, vec2(554.0, 427.0), vec2(610.0, 516.0)), segD(p, vec2(610.0, 516.0), vec2(655.0, 438.0)))));
-        k = over(vec4(0.5, 0.65, 1.0, 0.32 * cov(fl - 0.7)), k);
-        // the M stripes: soft, as the photo shows them
-        float s1 = 1.0 - smoothstep(u_sw.x * 0.1, u_sw.x * 0.6, segD(p, u_s1.xy, u_s1.zw));
-        float s2 = 1.0 - smoothstep(u_sw.y * 0.08, u_sw.y * 0.6, segD(p, u_s2.xy, u_s2.zw));
-        k = over(vec4(0.24, 0.52, 0.93, 0.9 * s1), k);
-        k = over(vec4(0.86, 0.1, 0.27, 0.88 * s2), k);
-        // the plate under the gear and speed: near black, a slanted left end
-        if (u_plateR > 0.0) {
-            float yy = clamp((p.y - u_plate.x) / (u_plate.y - u_plate.x), 0.0, 1.0);
-            float pd = max(max(mix(u_plate.z, u_plate.w, yy) - p.x, p.x - u_plateR), max(u_plate.x - p.y, p.y - u_plate.y));
-            k = over(vec4(0.01, 0.01, 0.11, 0.96 * cov(pd)), k);
+    // ---- the hexagon: five panels cut by dark gaps (design coordinates of the photo, scaled), the void for the speed between ----
+    if (u_hex.z > 0.0) {
+        float s = u_hex.z;
+        vec2 g = (p - u_hex.xy) / s + vec2(612.0, 167.0);
+        float gy = clamp((g.y - 167.0) / 422.0, 0.0, 1.0);
+        float dS = poly4(g, vec2(743.0, 167.0), vec2(788.0, 167.0), vec2(642.0, 425.0), vec2(612.0, 392.0)) * s;
+        float dT = poly5(g, vec2(795.0, 167.0), vec2(1079.0, 169.0), vec2(1110.0, 230.0), vec2(1097.0, 272.0), vec2(737.0, 272.0)) * s;
+        float dL = poly5(g, vec2(650.0, 408.0), vec2(1006.0, 408.0), vec2(906.0, 589.0), vec2(735.0, 589.0), vec2(641.0, 430.0)) * s;
+        float dR = poly4(g, vec2(1114.0, 241.0), vec2(1179.0, 352.0), vec2(1018.0, 588.0), vec2(913.0, 589.0)) * s;
+        c = over(vec4(vec3(0.09, 0.31, 0.7), cov(dS)), c);
+        c = over(vec4(mix(vec3(0.085, 0.34, 0.79), vec3(0.075, 0.31, 0.72), (g.y - 167.0) / 105.0), cov(dT)), c);
+        c = over(vec4(mix(vec3(0.07, 0.275, 0.66), vec3(0.08, 0.31, 0.74), clamp((g.x - 640.0) / 360.0, 0.0, 1.0)), cov(dL)), c);
+        c = over(vec4(mix(vec3(0.075, 0.28, 0.68), vec3(0.095, 0.32, 0.76), gy), cov(dR)), c);
+        // the thin lighter facet lines the photo shows on the panels
+        float f1 = segD(g, vec2(775.0, 408.0), vec2(699.0, 537.0)) * s;
+        float f2 = segD(g, vec2(753.0, 449.0), vec2(700.0, 534.0)) * s;
+        float f3 = segD(g, vec2(1043.0, 162.0), vec2(1102.0, 245.0)) * s;
+        float f4 = segD(g, vec2(1105.0, 262.0), vec2(1050.0, 352.0)) * s;
+        c = over(vec4(0.5, 0.7, 1.0, 0.38 * cov(f1 - 0.6) * cov(dL + 1.0)), c);
+        c = over(vec4(0.5, 0.7, 1.0, 0.22 * cov(f2 - 0.6) * cov(dL + 1.0)), c);
+        c = over(vec4(0.5, 0.7, 1.0, 0.3 * cov(f3 - 0.6)), c);
+        c = over(vec4(0.5, 0.7, 1.0, 0.25 * cov(f4 - 0.6) * cov(dR + 1.0)), c);
+        // the lighter strip along the bottom of the right panel
+        c = over(vec4(0.4, 0.62, 1.0, 0.22 * cov(abs(g.y - 551.0) * s - 0.7) * step(981.0, g.x) * step(g.x, 1056.0) * cov(dR + 1.0)), c);
+        if (u_deco > 0.5) {
+            // four blue tabs under it, a cyan swoosh to the left and a red glow to the right
+            float dTab = poly4(g, vec2(806.0, 651.0), vec2(1154.0, 651.0), vec2(1185.0, 708.0), vec2(777.0, 708.0)) * s;
+            float sd = min(min(segD(g, vec2(866.0, 651.0), vec2(895.0, 708.0)), segD(g, vec2(979.0, 651.0), vec2(952.0, 708.0))), segD(g, vec2(1081.0, 651.0), vec2(1056.0, 707.0))) * s;
+            float gl = poly4(g, vec2(700.0, 649.0), vec2(806.0, 649.0), vec2(790.0, 676.0), vec2(688.0, 676.0)) * s;
+            float gr = poly4(g, vec2(1154.0, 649.0), vec2(1203.0, 649.0), vec2(1222.0, 676.0), vec2(1172.0, 676.0)) * s;
+            c = over(vec4(0.12, 0.3, 0.62, 0.55 * cov(gl) * (1.0 - clamp((g.y - 649.0) / 27.0, 0.0, 1.0))), c);
+            c = over(vec4(0.62, 0.05, 0.16, 0.65 * cov(gr) * (1.0 - clamp((g.y - 649.0) / 27.0, 0.0, 1.0))), c);
+            c = over(vec4(mix(vec3(0.12, 0.34, 0.7), vec3(0.1, 0.3, 0.66), clamp((g.y - 651.0) / 57.0, 0.0, 1.0)), cov(dTab)), c);
+            c = over(vec4(0.02, 0.03, 0.09, cov(sd - 1.6) * cov(dTab + 0.5)), c);
+            float sw = min(min(segD(g, vec2(693.0, 608.0), vec2(700.0, 621.0)), segD(g, vec2(700.0, 621.0), vec2(714.0, 630.0))), segD(g, vec2(714.0, 630.0), vec2(797.0, 632.0))) * s;
+            c = over(vec4(0.3, 0.78, 1.0, 0.3 * exp(-sw * 0.2)), c);
+            c = over(vec4(0.3, 0.78, 1.0, cov(sw - 3.6)), c);
         }
-        k = over(vec4(0.55, 0.72, 1.0, 0.3 * cov(abs(d) - 1.0)), k);
-        c = over(k, c);
     }
-    // the map window: cut out of the card
+    // the map window: cut out of the hexagon and the backdrop
     if (u_hole.z > 0.0) {
         vec2 hs = u_hole.zw * 0.5;
-        vec2 q = abs(p - (u_hole.xy + hs)) - (hs - vec2(u_holeR));
-        c.a *= clamp(length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_holeR + 0.5, 0.0, 1.0);
+        vec2 qq = abs(p - (u_hole.xy + hs)) - (hs - vec2(u_holeR));
+        c.a *= clamp(length(max(qq, 0.0)) + min(max(qq.x, qq.y), 0.0) - u_holeR + 0.5, 0.0, 1.0);
+    }
+
+    // ---- the speed scale: a cyan line (cap, a long slant up to the knee, a long slant down), a tick at each label, a marker ----
+    if (u_sq.z > 0.0) {
+        vec2 a = u_sp.xy, k = u_sp.zw, b = u_sq.xy;
+        float d = min(segD(p, a, a + vec2(u_sq.z, 0.0)), min(segD(p, a, k), segD(p, k, b)));
+        c = over(vec4(0.25, 0.75, 1.0, 0.2 * exp(-d * 0.2)), c);
+        c = over(vec4(0.4, 0.84, 1.0, cov(d - 1.9)), c);
+        float tl = clamp(floor((u_sy.x - p.y) / (u_sy.x - u_sy.y) * 5.0 + 0.5), 0.0, 5.0);
+        float tu = clamp(floor((u_sy.y - p.y) / (u_sy.y - u_sy.z) * 3.0 + 0.5), 0.0, 3.0);
+        float ty = p.y >= u_sy.y - 4.0 ? u_sy.x + (u_sy.y - u_sy.x) * tl / 5.0 : u_sy.y + (u_sy.z - u_sy.y) * tu / 3.0;
+        float lx = lineX(ty);
+        c = over(vec4(0.8, 0.93, 1.0, 0.9 * cov(max(abs(p.y - ty) - 1.5, max(lx + 3.0 - p.x, p.x - lx - 15.0)))), c);
+        float f = clamp(u_speed, 0.0, 1.0);
+        float my = f <= u_sy.w ? u_sy.x + (u_sy.y - u_sy.x) * f / u_sy.w : u_sy.y + (u_sy.z - u_sy.y) * (f - u_sy.w) / (1.0 - u_sy.w);
+        float mx = lineX(my);
+        float dm = max(abs(p.x - (mx + 18.0)) - 15.0, abs(p.y - my) - 2.4);
+        c = over(vec4(0.7, 0.9, 1.0, 0.3 * exp(-max(dm, 0.0) * 0.3)), c);
+        c = over(vec4(1.0, 1.0, 1.0, cov(dm)), c);
     }
 
     // ---- the rev blade ----
+    float s = u_bx.x;
     float yT = u_bl.x, yB = u_bl.y;
     float xl = u_bl.z + u_bl.w * (p.y - yT);
     float xr = u_br.x + u_br.y * (p.y - yT);
     float cl = 1.0 / sqrt(1.0 + u_bl.w * u_bl.w), cr = 1.0 / sqrt(1.0 + u_br.y * u_br.y);
-    float dl = (p.x - xl) * cl, dr = (xr - p.x) * cr;
+    float thick = u_br.z, mw = u_br.w;
     float t = (u_sc.y - p.y) / (u_sc.y - u_sc.x);                 // 0 at the bottom of the scale, 1 at its top mark
     float yn = u_sc.y - u_value * (u_sc.y - u_sc.x);
-    float inB = cov(max(max(-dl, -dr), max(yT - p.y, p.y - yB)));
-    if (inB > 0.0) {
-        float ft = clamp((p.y - yT) / (yB - yT), 0.0, 1.0);
-        vec3 dark = mix(vec3(0.6, 0.12, 0.16), vec3(0.3, 0.06, 0.11), ft);
-        vec3 lit = u_shiftNow > 0.5 ? vec3(1.0, 0.35, 0.3) : mix(vec3(1.0, 0.14, 0.2), vec3(0.72, 0.07, 0.13), ft);
-        vec3 col = p.y > yn ? lit : dark;
-        c = over(vec4(col, inB), c);
-        if (u_value > 0.003) c = over(vec4(1.0, 0.78, 0.8, 0.9 * cov(abs(p.y - yn) - 1.3) * inB), c);
-        // the shift marks on the right-hand side: yellow dashes before the redline, solid from it
-        if (dr > 5.0 && dr < 13.0) {
-            if (t >= u_redFrom && t <= 1.02) c = over(vec4(1.0, 0.25, 0.25, 0.95), c);
-            else if (t >= u_orange && t < u_redFrom && mod(p.y, 20.0) < 8.0) c = over(vec4(1.0, 0.86, 0.5, 0.95), c);
-        }
+    float yL = yT - 8.0 * s;                                      // the top line
+    float yF0 = yB + 14.0 * s, yF1 = yB + 68.0 * s;               // the foot
+    // the maroon body, bright red under the rpm
+    float inM = cov(max(max(xl - p.x, p.x - xl - mw) * cl, max(yT - p.y, p.y - yB)));
+    if (inM > 0.0) {
+        vec3 dark = mix(vec3(0.4, 0.15, 0.27), vec3(0.34, 0.12, 0.23), clamp((p.y - yT) / (yB - yT), 0.0, 1.0));
+        vec3 lit = u_shiftNow > 0.5 ? vec3(1.0, 0.45, 0.5) : mix(u_red.rgb, u_red.rgb * vec3(0.91, 0.63, 0.82), clamp((p.y - yn) / 200.0, 0.0, 1.0));
+        c = over(vec4(p.y > yn ? lit : dark, inM), c);
+        if (u_value > 0.003) c = over(vec4(1.0, 0.78, 0.82, 0.85 * cov(abs(p.y - yn) - 1.2 * s) * inM), c);
     }
-    // the edges: light blue double line on the left, bright red with a pale rim on the right, the hook and the top line
-    float el = cov(abs(dl - 3.5) - 3.5) * step(yT - 1.0, p.y) * step(p.y, yB + 1.0);
-    c = over(vec4(0.5, 0.72, 1.0, el), c);
-    c = over(vec4(0.92, 0.96, 1.0, 0.85 * cov(abs(dl - 11.0) - 0.8) * step(yT, p.y) * step(p.y, yB)), c);
-    float er = cov(abs(dr - 5.0) - 5.0) * step(yT - 1.0, p.y) * step(p.y, yB + 1.0);
-    c = over(vec4(0.92, 0.13, 0.17, er), c);
-    c = over(vec4(1.0, 0.55, 0.55, 0.7 * cov(abs(dr - 8.5) - 0.8) * step(yT, p.y) * step(p.y, yB)), c);
-    float hk = segD(p, vec2(u_br.z, yT + 6.0), vec2(xl, yT + 6.0));
-    c = over(vec4(0.5, 0.72, 1.0, cov(hk - 1.8)), c);
-    c = over(vec4(0.9, 0.25, 0.3, 0.9 * cov(segD(p, vec2(u_br.z + 40.0, yT - 1.0), vec2(xr, yT - 1.0)) - 1.2)), c);
-    // the baseline: a white line with a red one under it, from the hook's side to the blade's right foot
-    float bl = segD(p, vec2(u_br.w, yB), vec2(xr - 4.0, yB));
-    c = over(vec4(0.95, 0.97, 1.0, cov(bl - 1.7)), c);
-    c = over(vec4(0.92, 0.13, 0.17, cov(segD(p, vec2(u_br.w + 30.0, yB + 8.0), vec2(xr + 4.0, yB + 8.0)) - 2.2)), c);
-    // ticks every 1000 rpm, running in from the right edge
+    // the left edge (thin, pink), the top line with its overhang, the thick bright right edge
+    float dlE = (p.x - xl) * cl;
+    c = over(vec4(1.0, 0.58, 0.64, 0.95 * cov(abs(dlE - 1.0) - 1.2) * step(yL, p.y) * step(p.y, yF0)), c);
+    c = over(vec4(1.0, 0.25, 0.35, cov(max(abs(p.y - yL) - 1.3 * s, max(u_bx.y - p.x, p.x - xr - 1.0)))), c);
+    float drE = (xr - p.x) * cr;
+    float inE = cov(max(max(-drE, drE - thick * cr), max(yL - p.y, p.y - yF0)));
+    vec3 ecol = vec3(1.0, 0.2, 0.33);
+    float tt = clamp(t, 0.0, 1.2);
+    if (tt >= u_redFrom && tt <= 1.02) ecol = vec3(1.0, 0.1, 0.12);
+    else if (tt >= u_orange && tt < u_redFrom && mod(p.y, 20.0) < 8.0) ecol = vec3(1.0, 0.82, 0.45);
+    c = over(vec4(ecol, inE), c);
+    c = over(vec4(1.0, 0.62, 0.7, 0.55 * cov(abs(drE - 1.5) - 0.9) * inE), c);
+    // red ticks every 1000 rpm, just inside the right edge
     float kk = floor(t * u_ticks + 0.5);
     float yk = u_sc.y - kk / u_ticks * (u_sc.y - u_sc.x);
-    if (kk >= 0.0 && kk <= u_ticks && dr > 8.0 && dr < 52.0) c = over(vec4(0.5, 0.24, 0.27, 0.9 * cov(abs(p.y - yk) - 1.1)), c);
+    float xk = u_br.x + u_br.y * (yk - yT) - thick - 1.0 * s;
+    if (kk >= 1.0 && kk <= u_ticks) c = over(vec4(1.0, 0.26, 0.36, 0.9 * cov(max(abs(p.y - yk) - 2.0 * s, max(xk - 27.0 * s - p.x, p.x - xk)))), c);
+    // the white line and the bright red foot, then the thin red base running left from it
+    float xW0 = u_bl.z + u_bl.w * (yB + 6.0 * s - yT) - 10.0 * s, xW1 = u_br.x + u_br.y * (yB + 6.0 * s - yT) + 8.0 * s;
+    c = over(vec4(1.0, 1.0, 1.0, cov(max(abs(p.y - (yB + 6.0 * s)) - 2.7 * s, max(xW0 - p.x, p.x - xW1)))), c);
+    float dF = smax(smax((xl - p.x) * cl, (p.x - xr) * cr, 8.0 * s), smax(yF0 - p.y, p.y - yF1, 14.0 * s), 12.0 * s);
+    float ft = clamp((p.y - yF0) / (yF1 - yF0), 0.0, 1.0);
+    c = over(vec4(ft < u_red.a ? vec3(0.2, 0.85, 0.5) : mix(vec3(0.99, 0.2, 0.34), vec3(0.9, 0.1, 0.26), ft), cov(dF)), c);
+    float xb1 = u_bl.z + u_bl.w * (yF1 - yT) + 12.0 * s;
+    c = over(vec4(0.97, 0.16, 0.3, cov(max(abs(p.y - (yF1 - 2.0 * s)) - 1.7 * s, max(u_bx.z - p.x, p.x - xb1))) * smoothstep(u_bx.z, u_bx.z + 140.0 * s, p.x)), c);
 
-    // ---- the two gauge pairs ----
-    c = gauge(p, u_g0, u_gv.x, vec3(0.5, 0.72, 1.0), c);
-    c = gauge(p, u_g1, u_gv.y, vec3(0.25, 0.45, 1.0), c);
+    // ---- the two strips ----
+    c = strip(u_fh > 0.5 ? vec2(p.y, u_size.x - p.x) : p, u_g0, u_gv.x, vec3(0.94, 0.96, 1.0), c);
+    c = strip(p, u_g1, u_gv.y, u_oc, c);
+    c = strip(p, u_g2, u_gv.z, vec3(0.94, 0.96, 1.0), c);
     gl_FragColor = c;
 }
 `;

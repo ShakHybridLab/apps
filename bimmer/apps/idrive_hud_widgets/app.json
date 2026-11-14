@@ -29,6 +29,7 @@
     "cluster_info.js",
     "danger.js",
     "free_rect.js",
+    "map_window.js",
     "runs.js",
     "tz.js",
     "shift_light.js"

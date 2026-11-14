@@ -54,11 +54,13 @@ CLUSTER_FONTS = [
     ('m_gear', 'Orbitron[wght].ttf', 125, 'PRNDSM-' + DIGITS, 3, 'Black', {'0': 'O'}),
     ('m_speed', 'Orbitron[wght].ttf', 78, DIGITS + '-', 3, 'Black', {'0': 'O'}),
     ('m_gl', 'Orbitron[wght].ttf', 25, DIGITS + '/.-', 0, 'Black', {'0': 'O'}),
+    ('m_big', 'Orbitron[wght].ttf', 100, DIGITS + '-', 3, 'Black', {'0': 'O'}),   # M Blade's speed in the void: three digits (110 km/h and up) fit it, 264 px
+    ('m_spd', 'Orbitron[wght].ttf', 50, DIGITS + '-', 0, 'Black', {'0': 'O'}),     # M Blade's small speed under the gear, as the photo has it
     ('m_mid', 'Orbitron[wght].ttf', 34, DIGITS + ':+-.', 0, 'Bold', {'0': 'O'}),
     ('m_tyre', 'Orbitron[wght].ttf', 25, DIGITS + '.-', 0, 'Bold', {'0': 'O'}),
     ('m_unit', 'Barlow-Medium.ttf', 30, LOWER + UPPER + '°/-.'),
     ('m_label', 'Orbitron[wght].ttf', 20, UPPER + ' -', 0, 'Bold'),
-    ('m_tiny', 'Barlow-Medium.ttf', 26, LOWER + DIGITS + 'CF./ -°%'),
+    ('m_tiny', 'Barlow-Medium.ttf', 26, LOWER + DIGITS + 'CFW./ -°%'),
     ('m_badge', 'Barlow-Medium.ttf', 26, UPPER + LOWER + DIGITS + ' -'),
     ('mode', 'Barlow-Medium.ttf', 22, UPPER + LOWER + DIGITS + ' -'),   # the drive mode, small, bottom right of every theme ({{modeName}})
     # Sport: BMW Live Cockpit style, the wide numbers in Michroma like BMW's own

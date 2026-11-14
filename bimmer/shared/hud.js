@@ -82,13 +82,15 @@
  *             "ticks" [speed, rpm], "rpmMax" (speed follows SPEED_SCALE), "fuelSeg" / "oilSeg" [fullX, fullY,
  *             emptyX, emptyY] (the oil bar shows the "oilSignal" instead, with "oilMin" / "oilMax": hvSoc 0 / 100 for the battery), "strip" [left end x, y, h, slant], "topEnd" x; the middle is deep blue with a lighter glow (the setting "sportTint", % of the car's own blue, 0 = black), and the map
  *             window is cut see-through while "holeWhen" is on ("hole", "holeInset", "holeRadius" as fill)
- *   mblade    effect layer; the M Blade theme (shaders.js mblade): the blue card "card" [left x, top y, bottom y, rounding] and "cardB"
- *             [x where the top edge ends, x and y of the point on the right, x where the bottom edge starts], the gear "plate"
- *             [top y, bottom y, left x at the top, at the bottom] with its right end "plateRight" (hidden while the window is open), the M
- *             stripes "stripe1" / "stripe2" [x, y top, x, y bottom] with "stripeW" [px, px], the rev blade "bl" [top y, bottom y, left edge x at
- *             the top, its slope] and "br" [right edge x at the top, its slope, x of the hook's left end, x of the baseline's left end], "scale"
- *             [y of the max mark, y of 0], "rpmMax" (7000), two gauge pairs "g0" (the hybrid battery, 0..100 %) and "g1" (fuel): [x, y of the
- *             top end, x, y of the bottom end]; "hole", "holeWhen", "holeInset", "holeRadius" as fill (the card is cut over the map window)
+ *   mblade    effect layer; the M Blade theme (shaders.js mblade), traced off a photo of a BMW M cluster: the blue hexagon "hex" [x, y where its
+ *             design point (612, 167) lands, scale] (none without it), the speed line "sp" [x, y of the top cap's left end, x, y of the knee]
+ *             and "sq" [x, y of the bottom end, cap length] with "sy" [y of the 0 label, the knee's label, the top label] (a marker rides it on
+ *             the M_SCALE speed scale), the rev blade "bl" [top y, bottom y, left edge x at the top, its slope], "br" [right edge x at the top,
+ *             its slope, its thickness, the maroon body's width], "bx" [scale, x of the top line's left end, x of the red base line's left end],
+ *             "scale" [y of the max mark, y of 0], "rpmMax" (7000); three slanted strips "g0" (fuel), "g1" (the oil temperature, lit blue / green / red) and "g2"
+ *             (the hybrid battery, 0..100 %): [left edge x at the top, top y, bottom y, slope]; "deco" draws the four tabs and the cyan swoosh under the hexagon; "hybridTach" true makes the blade a hybrid rev counter (see HYBRID_ENGINE_RPM; tokens {{tachUnit}}, {{chargeNote}}); "fuelH" true lays the first strip flat: "g0" is then [top y, panel width - right end x, panel width - left end x, 0] (the bar runs from x left to x right, empty at its left); "hole", "holeWhen",
+ *             "holeInset", "holeRadius" as fill (the hexagon and the backdrop are cut over the map window); "mapPlace": true on a layer with a
+ *             "holeWhen" "mapUp" hole also has Waze on cluster (0.9.107+, map_window.js) draw the map right in that window while it shows
  *   navi      effect layer; the Navi theme (shaders.js navi): the speed band on the left "band" { tip [x, y], slope (dy per dx), bottom (y),
  *             sep [px, per y] and edge [px, per y] (offsets right of the outer line at y 300), top (y where the purple stripe begins) },
  *             "scale" [y of the top mark, y of 0] (SPEED_SCALE, the marker rides it), the line under the map "line" [x0, y, x of the
@@ -237,6 +239,7 @@ const Car = require('./kit/car');
 const Waze = require('./waze');
 const Screen = require('./screen');
 const { ClusterInfo } = require('./cluster_info');
+const { MapWindow } = require('./map_window');
 const { Danger, formatDistance, formatLimit } = require('./danger');
 const { freeRect } = require('./free_rect');
 const { shiftLightState } = require('./shift_light');
@@ -293,6 +296,10 @@ const WARN = { oil: 'warnOil', coolant: 'warnCoolant', boost: 'warnBoost' };
 const COLD_BELOW = { oil: 'oilCold', coolant: 'coolantCold' };
 const WARN_DIM = [120, 16, 22, 255];   // the dark red a temperature flashes from, up to the shift red, while over its warning limit
 const WARN_FLASH_MS = 300;
+// M Blade's hybrid rev counter (widget key "hybridTach", needs an app sharing the battery's power: eDrive Live): from this rpm up the engine
+// runs and the blade reads rpm; under it, driving on the battery, the blade (blue) reads the power, 10 kW per mark (70 kW = the top one);
+// the foot under the 0 fills green with the power going back into the battery (full at HYBRID_CHARGE_KW), as the original dial's CHARGE zone
+const HYBRID_ENGINE_RPM = 400, HYBRID_CHARGE_KW = 60, HYBRID_CHARGE_MIN_KW = 1;
 // a tile's bar (the Dyno theme's "tiles") per sensor (sensors.js id): the raw reading (hud _raw) between min and
 // max, "z" for a zoned bar (blue, dark blue, red past u_at); a sensor not here has no bar. rpm runs to the bar max.
 const TILE_BAR = {
@@ -336,6 +343,8 @@ const WINDOW_HOLD_MS = 6000;            // the centre window stays open this lon
 const CAR_ERANGE_MS = 10 * 60 * 1000;   // the car's own electric range counts for this long after it last said (it changes slowly)
 // BMW's speed scale: even steps to 120 mph (180 km/h), then wider ones to 200 mph (320 km/h)
 const SPEED_SCALE = { us: [0, 20, 40, 60, 80, 100, 120, 160, 200], metric: [0, 30, 60, 90, 120, 150, 180, 250, 320] };
+// the M Blade theme's own speed scale (the photo it follows): 0..330 km/h, the knee at 150
+const M_SCALE = { us: [0, 20, 40, 60, 80, 100, 130, 170, 205], metric: [0, 30, 60, 90, 120, 150, 210, 270, 330] };
 /** speed (display unit) -> 0..1 along a scale of evenly spaced labels */
 function scaleFrac(v, marks) {
     if (!(v > 0)) return 0;
@@ -537,10 +546,13 @@ class HudApp {
         // its status says (sceneIdsOf), false while they share one (older versions, or a panel fallen back after the guard)
         this.scenesApart = null;
         // the hand-over with the Cluster Info / Cluster Centre apps (cluster_info.js): the battery charge in, out and who asks for it
+        this.mapWin = new MapWindow(this.log);       // tells Waze on cluster where the window is (layouts with "mapPlace")
+        this.mapPlace = false;           // the active layout has Waze draw the map in its own window (holeWhen "mapUp" and "mapPlace")
         this.ci = new ClusterInfo({ id: ctx.spec && ctx.spec.id, name: ctx.spec && ctx.spec.title, onChange: () => this._guard('power', () => this._powerChanged()) }, this.log);
         // the energy flow (the battery's power in kW) another app shares (eDrive Live): the Sport theme shows it in place of the boost
-        // while it does (widgets with toggle "power", the boost's with "boostShown"), and the layout is rebuilt when it comes or goes
+        // while it does (widgets with toggle "power", "powerShut" or "powerOpen", the boost's with "boostShown"), and the layout is rebuilt when it comes or goes
         this.powerLayout = false;        // the active layout has such a widget
+        this.hybridEv = false; this.hybridCharge = false;   // M Blade's hybrid rev counter: the battery alone drives / the battery charges
         this.powerShown = '';            // whether the layout was built for the power shown or not
         // the "danger zone" alert (danger.js): a file another app writes while a zone is ahead; the layout is rebuilt when it comes
         // or goes (widgets with toggle "danger"), the distance and limit are the tokens {{dangerDist}} {{dangerUnit}} {{dangerLimit}}
@@ -689,9 +701,11 @@ class HudApp {
         }
         // "power": not saved, an app shares the battery's power (cluster_info.js) and the setting "sportPower" lets it replace the boost;
         // "boostShown": the boost shows (the setting "showBoost", and no power flow in its place)
-        if (key === 'power' || key === 'boostShown') {
+        // "powerShut" / "powerOpen": the power flow shows and the Waze map window is closed / open (for layouts that draw it twice)
+        if (key === 'power' || key === 'powerShut' || key === 'powerOpen' || key === 'boostShown') {
             const flow = this.target === 'panel' && this.ctx.settings.item('sportPower') && this.ctx.settings.get('sportPower') !== false && this.ci.sharedPower() !== null;
-            return key === 'power' ? !!flow : !flow && this.ctx.settings.get('showBoost') !== false;
+            if (key === 'boostShown') return !flow && this.ctx.settings.get('showBoost') !== false;
+            return key === 'power' ? !!flow : !!flow && (key === 'powerOpen') === (this.setting('mapUp') === true);
         }
         const s = this.ctx.settings.item(key);
         const v = this.ctx.settings.get(key);
@@ -932,6 +946,10 @@ class HudApp {
             if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuild(); else this._status();
         }
         this.ci.markTheme(shows, { window: shows ? this.windowRect : null, open: this.setting('mapUp') === true && this.mapShown === true });
+        // a layout with "mapPlace": while its map shows, Waze on cluster draws the map right in the window (the file is kept fresh)
+        const place = shows && this.mapPlace && !!this.windowRect && this.mapShown === true && this.setting('mapUp') === true
+            && !!this.waze && this.waze.up === true && this.ctx.settings.get('mapInTheme') === true;
+        this.mapWin.set(place ? this.windowRect : null);
         // on the HUD: where the layout shown leaves room for Cluster Info's panel (it would sit on the readouts otherwise)
         if (this.target === 'hud') this.ci.markLayout(this.started && !!this.activeName && this.activeName !== 'off' && !this.claimBy, this._panelRoom());
     }
@@ -1031,6 +1049,7 @@ class HudApp {
         clearInterval(this.ciTimer);
         this.danger.stop();
         try { this.ci.markTheme(false); this.ci.markLayout(false); this.ci.stop(); } catch (e) { /* exiting anyway */ }
+        try { this.mapWin.release(); } catch (e) { /* exiting anyway */ }
         clearInterval(this.claimTimer);
         clearTimeout(this.statusAskT);
         this.stallTimers.forEach((t) => clearTimeout(t)); this.stallTimers.clear();
@@ -1493,13 +1512,13 @@ class HudApp {
         return [redFrom, redFrom - 700 / max];
     }
 
-    /** The scale label nearest the value now: 'speed' (SPEED_SCALE index) or 'rpm' (thousands); null without data. */
+    /** The scale label nearest the value now: 'speed' (SPEED_SCALE index), 'mspeed' (the M Blade scale) or 'rpm' (thousands); null without data. */
     _nearMark(kind) {
         if (kind === 'rpm') { const r = this._raw('rpm'); return isNum(r) ? Math.round(r / 1000) : null; }
         const v = this._raw('speed');
         if (!isNum(v)) return null;
         const us = this.setting('units') === 'us';
-        return Math.round(scaleFrac(us ? v * 0.621371 : v, SPEED_SCALE[us ? 'us' : 'metric']) * 8);
+        return Math.round(scaleFrac(us ? v * 0.621371 : v, (kind === 'mspeed' ? M_SCALE : SPEED_SCALE)[us ? 'us' : 'metric']) * 8);
     }
 
     /** The setup rows for the drive mode now, or null before the car has said. */
@@ -1562,6 +1581,8 @@ class HudApp {
                 const kw = Math.max(0, d.torque) * rpm / 9549;
                 return String(Math.round(us ? kw * 1.341 : kw));
             }
+            case 'tachUnit': return this.hybridEv ? 'kW x 10' : '1/min x 1000';     // M Blade's rev counter: what its marks mean now
+            case 'chargeNote': return this.hybridCharge ? 'CHARGE' : '';
             case 'powerKw': {        // the battery's power in kW, - while charging (recuperation); -- when no app shares it
                 const p = this.ci.sharedPower();
                 return p ? String(Math.round(p.kw)) : '--';
@@ -1638,6 +1659,8 @@ class HudApp {
                 return ((h % 12) || 12) + ':' + pad2(m);
             }
             default:
+                if (tok.indexOf('tc:') === 0) { const v = Number(tok.slice(3)); return String(Math.round(us ? v * 9 / 5 + 32 : v)); }   // a fixed Celsius number in the display unit
+                if (tok.indexOf('ms:') === 0) { const v = M_SCALE[us ? 'us' : 'metric'][Number(tok.slice(3))]; return v === undefined ? '' : String(v); }   // the M Blade speed scale labels
                 if (tok.indexOf('spd:') === 0) { const v = SPEED_SCALE[us ? 'us' : 'metric'][Number(tok.slice(4))]; return v === undefined ? '' : String(v); }   // speed scale labels
                 if (tok.indexOf('temp:') === 0) { const c = Number(tok.slice(5)); return isNum(c) ? String(us ? Math.round((c * 9 / 5 + 32) / 10) * 10 : Math.round(c)) : '--'; }   // gauge labels: °F to the 10
                 if (tok.indexOf('setup:') === 0) { const s = this._setup(); return s ? s[tok.slice(6)] || '' : '--'; }
@@ -1711,6 +1734,7 @@ class HudApp {
         this.dangerLayout = false;
         this.powerLayout = false;
         this.windowRect = null;
+        this.mapPlace = false;
         this.mapShown = this.setting('mapUp');
         if (name === 'off') {
             this._wazeWant();
@@ -1729,9 +1753,10 @@ class HudApp {
         this.mapLayout = layout.widgets.some((w) => w.holeWhen === 'mapUp');
         this.dangerLayout = layout.widgets.some((w) => /^!?danger/.test(w.toggle || ''));
         this.dangerShown = this._dangerKey();
-        this.powerLayout = layout.widgets.some((w) => w.toggle === 'power' || w.toggle === 'boostShown');
+        this.powerLayout = layout.widgets.some((w) => w.toggle === 'power' || w.toggle === 'powerShut' || w.toggle === 'powerOpen' || w.toggle === 'boostShown');
         this.powerShown = this._powerKey();
         this.windowRect = this._windowRectOf(layout);
+        this.mapPlace = layout.widgets.some((w) => w.holeWhen === 'mapUp' && w.mapPlace === true);
         // (a layout without a window can't have it open for Cluster Centre; the map flag is re-read for this layout)
         if (this.windowOpen && !this.windowRect) this.windowOpen = false;
         this.mapShown = this.setting('mapUp');
@@ -1939,27 +1964,30 @@ class HudApp {
         } else if (w.type === 'mblade') {
             // the M Blade theme (shaders.js mblade): geometry in panel px from the layout, see the widget notes in the header
             const [redFrom, orange] = this._redMarks(w.rpmMax || 7000);
-            const holeOn = this._hole(w)[2] > 0;
             c.uniform(ref, 'u_size', [w.w, w.h]);
-            c.uniform(ref, 'u_cardA', w.card);
-            c.uniform(ref, 'u_cardB', w.cardB);
-            c.uniform(ref, 'u_plate', w.plate || [0, 0, 0, 0]);
-            c.uniform(ref, 'u_plateR', [holeOn || !w.plate ? 0 : w.plateRight || 0]);
-            c.uniform(ref, 'u_s1', w.stripe1 || [0, 0, 0, 0]);
-            c.uniform(ref, 'u_s2', w.stripe2 || [0, 0, 0, 0]);
-            c.uniform(ref, 'u_sw', w.stripeW || [60, 44]);
+            c.uniform(ref, 'u_hex', w.hex || [0, 0, 0, 0]);
+            const sy = w.sy || [0, 0, 0];
+            c.uniform(ref, 'u_sp', w.sp || [0, 0, 0, 0]);
+            c.uniform(ref, 'u_sq', w.sq ? [w.sq[0], w.sq[1], w.sq[2], 0] : [0, 0, 0, 0]);
+            c.uniform(ref, 'u_sy', [sy[0], sy[1], sy[2], 5 / 8]);
+            c.uniform(ref, 'u_speed', [0]);
             c.uniform(ref, 'u_bl', w.bl);
             c.uniform(ref, 'u_br', w.br);
+            c.uniform(ref, 'u_bx', w.bx);
             c.uniform(ref, 'u_sc', w.scale);
             c.uniform(ref, 'u_g0', w.g0);
+            c.uniform(ref, 'u_fh', [w.fuelH ? 1 : 0]);
             c.uniform(ref, 'u_g1', w.g1);
-            c.uniform(ref, 'u_gv', [0, 0]);
+            c.uniform(ref, 'u_g2', w.g2);
+            c.uniform(ref, 'u_gv', [0, 0, 0]);
+            c.uniform(ref, 'u_oc', rgb(VERDICT['SPOT ON']));
+            c.uniform(ref, 'u_deco', [w.deco ? 1 : 0]);
             c.uniform(ref, 'u_ticks', [(w.rpmMax || 7000) / 1000]);
             c.uniform(ref, 'u_value', [0]);
             c.uniform(ref, 'u_orange', [orange]);
             c.uniform(ref, 'u_redFrom', [redFrom]);
             c.uniform(ref, 'u_shiftNow', [0]);
-            c.uniform(ref, 'u_red', rgb(t.hot));
+            c.uniform(ref, 'u_red', [0.99, 0.19, 0.33, 0]);
             c.uniform(ref, 'u_hole', this._hole(w));
             c.uniform(ref, 'u_holeR', [this._holeRadius(w)]);
             c.uniform(ref, 'u_tint', [this._tint()]);
@@ -2462,15 +2490,31 @@ class HudApp {
             x.c.uniform(x.ref, 'u_fuel', [vals[2]]);
             x.c.uniform(x.ref, 'u_oil', [vals[3]]);
         } else if (w.type === 'mblade') {
-            // rpm on the blade; the two gauges are the hybrid battery (0..100 %, in place of the oil temperature) and the fuel
-            const rpm = this._raw('rpm'), sp = this._shift(), hv = this._raw('hvSoc'), fuel = this._raw('fuel');
+            // rpm on the blade, the speed on the scale line (the M_SCALE labels); the strips are the fuel, the oil temperature (50..150 C,
+            // lit blue while cold, green once warm, flashing red over its warning limit) and the hybrid battery (0..100 %)
+            const us = this.setting('units') === 'us';
+            const rpm = this._raw('rpm'), sp = this._shift(), hv = this._raw('hvSoc'), fuel = this._raw('fuel'), spd = this._raw('speed'), oil = this._raw('oil');
             const q = (v) => Math.round(Math.min(1, Math.max(0, v)) * 500) / 500;
-            const vals = [q(isNum(rpm) ? rpm / (w.rpmMax || 7000) : 0), q(isNum(hv) ? hv / 100 : 0), q(isNum(fuel) ? fuel : 0)];
-            const key = vals.join('|') + '|' + sp.now;
+            const cold = this.setting('oilCold');
+            const over = !!this._overLimit('oil');
+            const flash = over && Math.floor(now / WARN_FLASH_MS) % 2 === 0;
+            const oc = over ? (flash ? this.theme.hot : WARN_DIM) : isNum(oil) && isNum(cold) && cold > 0 && oil < cold ? VERDICT.COLD : VERDICT['SPOT ON'];
+            // the hybrid rev counter: the engine runs = rpm; the battery alone drives = its power on the blade (blue); charging = the foot fills green
+            const flow = w.hybridTach === true && this.target === 'panel' && this.ctx.settings.item('sportPower') && this.ctx.settings.get('sportPower') !== false;
+            const pw = flow ? this.ci.sharedPower() : null, kw = pw && !pw.old ? pw.kw : null;
+            const ev = isNum(kw) && kw >= 0 && !(isNum(rpm) && rpm >= HYBRID_ENGINE_RPM);
+            const chg = isNum(kw) && kw <= -HYBRID_CHARGE_MIN_KW ? Math.min(1, -kw / HYBRID_CHARGE_KW) : 0;
+            this.hybridEv = ev; this.hybridCharge = chg > 0;
+            const vals = [q(ev ? kw * 100 / (w.rpmMax || 7000) : isNum(rpm) ? rpm / (w.rpmMax || 7000) : 0), q(isNum(fuel) ? fuel : 0), q(isNum(oil) ? (oil - 50) / 100 : 0), q(isNum(hv) ? hv / 100 : 0),
+                q(isNum(spd) ? scaleFrac(us ? spd * 0.621371 : spd, M_SCALE[us ? 'us' : 'metric']) : 0), q(chg)];
+            const key = vals.join('|') + '|' + sp.now + '|' + oc.join(',') + '|' + ev;
             if (!force && key === x.last) return;
             x.last = key;
             x.c.uniform(x.ref, 'u_value', [vals[0]]);
-            x.c.uniform(x.ref, 'u_gv', [vals[1], vals[2]]);
+            x.c.uniform(x.ref, 'u_gv', [vals[1], vals[2], vals[3]]);
+            x.c.uniform(x.ref, 'u_oc', rgb(oc));
+            x.c.uniform(x.ref, 'u_speed', [vals[4]]);
+            x.c.uniform(x.ref, 'u_red', ev ? [0.2, 0.55, 1.0, vals[5]] : [0.99, 0.19, 0.33, vals[5]]);
             x.c.uniform(x.ref, 'u_shiftNow', [sp.now ? 1 : 0]);
         } else if (w.type === 'navi') {
             // the marker on the speed band (the same scale as the Sport theme's) and the two bottom bars: fuel left, battery right
