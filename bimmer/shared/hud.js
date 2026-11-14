@@ -202,6 +202,8 @@
  * {{badge}}: the model picked on the Badge tab (badges.js), "BMW X3 M40i" with the lettering on, '' for none.
  * Warnings: a text showing oil, coolant or boost (a {{oil}} / {{coolant}} / {{boost}} token, or a readout slot with that
  * sensor) flashes in the shift red while the value is over "warnOil" / "warnCoolant" (C) / "warnBoost" (bar); 0 = off.
+ * Text "tempBy": "oil" | "coolant" (with the same token): blue while the reading is under "oilCold" / "coolantCold" (C; 0 = never
+ * blue), green once it is warm, and over the warning limit it flashes between the shift red and a dark red.
  * Shift-light test (testShift(), the page's Alerts tab): for about 4 s the rpm every widget sees climbs from 1500 to just
  * past the shift point and holds there; only while the car stands. Shift scoring keeps the car's own rpm.
  * Night colours (Cluster Themes "nightDim" on Auto): after sunset (sun.js, at _sunPlace(): the time zone's middle) a layout's own theme is
@@ -276,7 +278,7 @@ const PLACE_KEYS = ['hudX', 'hudY', 'hudScale', 'stripClear'];
 // cluster-render has no clip, so the switch squeezes every layer to 662 / 720 of its height about the panel's top.
 const STRIP_TOP = 662;
 // settings that only change what a text shows (the next tick paints it), no rebuild
-const LIVE_KEYS = ['warnOil', 'warnCoolant', 'warnBoost', 'badge', 'badgeBMW', 'gFlipLat', 'gFlipLong', 'gRange', 'gTrail'];
+const LIVE_KEYS = ['warnOil', 'warnCoolant', 'warnBoost', 'oilCold', 'coolantCold', 'badge', 'badgeBMW', 'gFlipLat', 'gFlipLong', 'gRange', 'gTrail'];
 // g (after cauliflowermossgrape's G-Force, MIT, idea only): a sample over G_BAD is a bad reading, not a corner;
 // the rest are averaged over G_AVG_MS so kerbs and potholes don't throw the dot about
 const G_BAD = 3;
@@ -287,6 +289,9 @@ const G_AMBER = [255, 176, 40];         // the dot between 0.5 and 0.8 g
 const G_SECTORS = 48, G_SPREAD = 3, G_TRAIL = 16;
 // warnings (page.js Alerts): a readout of oil / coolant / boost over its limit flashes in the shift red
 const WARN = { oil: 'warnOil', coolant: 'warnCoolant', boost: 'warnBoost' };
+// a temperature text with "tempBy" is blue below this setting (C), green above it, and flashes red over its warning limit
+const COLD_BELOW = { oil: 'oilCold', coolant: 'coolantCold' };
+const WARN_DIM = [120, 16, 22, 255];   // the dark red a temperature flashes from, up to the shift red, while over its warning limit
 const WARN_FLASH_MS = 300;
 // a tile's bar (the Dyno theme's "tiles") per sensor (sensors.js id): the raw reading (hud _raw) between min and
 // max, "z" for a zoned bar (blue, dark blue, red past u_at); a sensor not here has no bar. rpm runs to the bar max.
@@ -2298,6 +2303,12 @@ class HudApp {
                 const sp = this._shift();
                 if (w.coldWhen && sp[w.coldWhen]) role = VERDICT.COLD;
                 if (w.hotWhen && sp[w.hotWhen]) role = 'hot';
+            }
+            // a temperature in the temperature colours: blue while cold, green once warm (over the limit: dark red, the flash below makes it bright)
+            if (w.tempBy && COLD_BELOW[w.tempBy]) {
+                const tv = this._raw(w.tempBy), cold = this.setting(COLD_BELOW[w.tempBy]);
+                if (isNum(tv)) role = isNum(cold) && cold > 0 && tv < cold ? VERDICT.COLD : VERDICT['SPOT ON'];
+                if (this._warning(w)) role = WARN_DIM;
             }
             // over its warning limit: the value flashes in the shift red
             // ("warnFlash": false: not on a tile that turns red itself, the Dyno theme's)

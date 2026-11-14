@@ -89,7 +89,7 @@ class Page {
         const s = this.item(k), v = this.get(k);
         if (!s) return '';
         if (s.type === 'bool') return v ? 'On' : 'Off';
-        if (s.type === 'number' && WARN_KEYS.indexOf(k) >= 0) return warnText(k, v, this.get('units') === 'us');
+        if (s.type === 'number' && (WARN_KEYS.indexOf(k) >= 0 || COLD_KEYS.indexOf(k) >= 0)) return warnText(k, v, this.get('units') === 'us');
         if (k === 'timeZone') return tzText(v);
         if (k === 'tankLitres') return fmtInt(v) + ' L';
         if (k === 'evRangeFull') return fmtInt(v) + (this.get('units') === 'us' ? ' km (' + fmtInt(v * 0.621371) + ' mi)' : ' km');
@@ -460,6 +460,12 @@ class Page {
         let y = 84;
         const w = CW * 0.62;
         WARN_KEYS.forEach((k) => { if (this.item(k)) y = this.stepRow(cv, CX, y, w, this.item(k).label.replace(/ warning$/, ''), k); });
+        if (COLD_KEYS.some((k) => this.item(k))) {
+            y += 10;
+            label(cv, CX, y, 'Warm-up colours · blue below, green above');
+            y += 14;
+            COLD_KEYS.forEach((k) => { if (this.item(k)) y = this.stepRow(cv, CX, y, w, this.item(k).label.replace(/: blue below$/, ''), k); });
+        }
         y += 24;
         label(cv, CX, y, 'Shift lights');
         y += 14;
@@ -674,6 +680,7 @@ class Page {
 /* ---------- small pieces ---------- */
 const LOOK_KEYS = ['hudLayout', 'inHybrid', 'inEco', 'inSport'];
 const WARN_KEYS = ['warnOil', 'warnCoolant', 'warnBoost'];
+const COLD_KEYS = ['oilCold', 'coolantCold'];
 /** A warning limit as the page shows it, in the display units: "266 °F", "1.2 bar", "Off". */
 function warnText(k, v, us) {
     if (!(v > 0)) return 'Off';
