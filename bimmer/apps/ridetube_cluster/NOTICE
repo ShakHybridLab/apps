@@ -1,0 +1,14 @@
+RideTube on cluster - third-party notices
+=========================================
+
+This app's own code is MIT, Copyright (c) 2026 shakzer (the LICENSE in the repository).
+It is not RideTube and is not affiliated with it, with Google or with YouTube. It ships with:
+
+1. cauliflowermossgrape's MGU App Kit (kit/ in the package): MIT, Copyright (c) 2026 cauliflowermossgrape.
+   https://github.com/cauliflowermossgrape/idrive7-apps  Its licence is kit/LICENSE in the package.
+
+2. cluster_render_client.js: MPL-2.0, Copyright (C) 2026 Robert Nisipeanu.
+   https://github.com/robertnisipeanu/idrive-apps (native/cluster-render), unmodified.
+
+It reads, and does not include, the frame file written by RideTube's decoder (JustAnotherPU/ridetube, GPL-3.0-or-later):
+only the file's layout (64-byte header, I420 frames) is used, as documented in that project's native/ytdec/src/mgvf.h.
