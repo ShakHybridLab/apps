@@ -1,25 +1,63 @@
 {
   "id": "ridetube_cluster",
   "title": "RideTube on cluster",
-  "description": "Shows the video RideTube plays in a cluster theme's window and on the HUD, only while the car stands",
-  "version": "0.1.0",
+  "description": "Shows what RideTube plays on the cluster and the HUD: the video only while the car stands, the title and progress (no picture) otherwise",
+  "version": "0.2.0",
   "vendor": "custom",
   "loggingId": "OAV1",
   "iconGlyph": "RT",
-  "shared": ["video_app.js", "video_bridge.js", "visible.js", "cluster_render_client.js"],
+  "shared": [
+    "video_app.js",
+    "video_bridge.js",
+    "video_now.js",
+    "hud_text.js",
+    "hud_data.js",
+    "visible.js",
+    "cluster_render_client.js"
+  ],
   "signals": {
-    "de.bmw.infotainment.vehicle.Vehicle2": { "statusCarSpeed2": "rs" }
+    "de.bmw.infotainment.vehicle.Vehicle2": {
+      "statusCarSpeed2": "rs"
+    }
   },
   "screens": [
-    { "name": "MAIN", "kind": "menu", "title": "RideTube on cluster", "settings": true }
+    {
+      "name": "MAIN",
+      "kind": "menu",
+      "title": "RideTube on cluster",
+      "settings": true
+    }
   ],
   "settings": [
-    { "key": "videoCluster", "label": "Video in the cluster theme's window (parked only)", "type": "bool", "default": false },
-    { "key": "videoHud", "label": "Video on the HUD (parked only)", "type": "bool", "default": false }
+    {
+      "key": "videoCluster",
+      "label": "Video in the cluster theme's window (parked only)",
+      "type": "bool",
+      "default": false
+    },
+    {
+      "key": "videoHud",
+      "label": "Video on the HUD (parked only)",
+      "type": "bool",
+      "default": false
+    },
+    {
+      "key": "nowCluster",
+      "label": "Now playing (title, no picture) in the cluster theme's window",
+      "type": "bool",
+      "default": false
+    },
+    {
+      "key": "nowHud",
+      "label": "Now playing (title, no picture) on the HUD",
+      "type": "bool",
+      "default": false
+    }
   ],
   "config": {
     "socketPath": "/dev/shm/cluster-render/render.sock",
     "videoPath": "/dev/shm/mgu-video-ridetube",
-    "_comment": "The picture shows only while the car stands (speed known, fresh and zero for 2 s): shared/video_bridge.js, Standing. There is no setting for that. videoPath: the frame file RideTube's decoder writes; the stock RideTube keeps it private (0600), so this needs the RideTube build that shares it."
+    "_comment": "The picture shows only while the car stands (speed known, fresh and zero for 2 s): shared/video_bridge.js, Standing. There is no setting for that. videoPath: the frame file RideTube's decoder writes; the stock RideTube keeps it private (0600), so this needs the RideTube build that shares it.",
+    "nowPath": "/run/jap-ridetube-d/now.json"
   }
 }

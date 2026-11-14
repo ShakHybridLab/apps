@@ -27,13 +27,13 @@
       "id": "jap-ridetube-d",
       "kind": "tool",
       "title": "RideTube service (shakzer fork)",
-      "description": "JustAnotherPU's RideTube service 0.3.9 with one change: the decoder's frame file is readable by the apps' group, for RideTube on cluster (video on the instrument cluster and HUD, parked only). The car side of RideTube, an unofficial client for YouTube: yt-dlp (from its official release, run in mgu-python) fetches as the daemon's own internet uid; search, feeds and thumbnails on the car (jap-node22); audio through the BMW MediaPlayer, video decoded by ytdec into the mgu-render video layer; TV device sign-in; controlled by the RideTube app over /run/jap-ridetube-d/ctl.sock",
-      "version": "0.3.91",
+      "description": "JustAnotherPU's RideTube service 0.3.9 with two changes for RideTube on cluster: the decoder's frame file is readable by the apps' group (video on the cluster and HUD, parked only) and what plays is written to now.json (title and progress). The car side of RideTube, an unofficial client for YouTube: yt-dlp (from its official release, run in mgu-python) fetches as the daemon's own internet uid; search, feeds and thumbnails on the car (jap-node22); audio through the BMW MediaPlayer, video decoded by ytdec into the mgu-render video layer; TV device sign-in; controlled by the RideTube app over /run/jap-ridetube-d/ctl.sock",
+      "version": "0.3.92",
       "artifact": {
-        "name": "jap-ridetube-d@0.3.91.tgz",
-        "size": 8782238,
-        "sha256": "da6229709f7ec8d4fbb063ea1082df86dc2d8c4972f62f2bff393e8124e0e650",
-        "url": "jap-ridetube-d@0.3.91.tgz"
+        "name": "jap-ridetube-d@0.3.92.tgz",
+        "size": 8782607,
+        "sha256": "47a527b5c63346dee7f80873c4199fd95a1647f1d1a8e35faeff360b3dd7c650",
+        "url": "jap-ridetube-d@0.3.92.tgz"
       },
       "requires": {
         "mgu-deploy": "0.7.0",

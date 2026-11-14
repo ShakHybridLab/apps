@@ -15,9 +15,9 @@
  *    layout shows it, as Cluster Info does (wantPower()); this app never reads the battery's power from the car itself;
  *  - takes the charge from another app that shares it (eDrive Live reads the battery unit itself, a second reader
  *    is avoided: "leave the battery unit to it"): the first other provider's values.soc.pct, while fresh;
- *  - says when a cluster theme shows (/dev/shm/cluster-themes/themes.json, { at, window, open }, written once a
+ *  - says when a cluster theme shows (/dev/shm/cluster-themes/themes.json, { at, window, open, map }, written once a
  *    second): a theme covers the whole panel, so Cluster Centre and Cluster Info draw in its centre window instead
- *    (the window where Waze's map shows: "window" is its rectangle on the panel, "open" that it is see-through now);
+ *    (the window where Waze's map shows: "window" is its rectangle on the panel, "open" that it is see-through now, "map" that Waze's map shows in it);
  *  - HUD Widgets says where its layout leaves room on the HUD (/dev/shm/cluster-themes/hud-layout.json, { at, panel }):
  *    Cluster Info's panel goes there instead of on the readouts;
  *  - reads who wants that window: each of them writes /dev/shm/cluster-themes/window-<app>.json ({ t, app, kind,
@@ -232,11 +232,12 @@ class ClusterInfo {
         const win = info && info.window && ['x', 'y', 'w', 'h'].every((k) => typeof info.window[k] === 'number' && isFinite(info.window[k]))
             ? { x: info.window.x, y: info.window.y, w: info.window.w, h: info.window.h } : null;
         const open = !!(win && info && info.open === true);
-        const key = JSON.stringify([win, open]);
+        const map = !!(open && info.map === true);      // a map (Waze) shows in the window: nothing may be drawn over it
+        const key = JSON.stringify([win, open, map]);
         if ((t - this.themeAt < 1000 && key === this.themeKey) || !this._ensure(this.themesDir)) return;
         this.themeAt = t; this.themeKey = key;
         const f = path.join(this.themesDir, 'themes.json'), tmp = f + '.tmp';
-        try { fs.writeFileSync(tmp, JSON.stringify({ at: t, app: this.name, window: win, open }), { mode: 0o644 }); fs.renameSync(tmp, f); this.themeMarked = true; } catch (e) { this._warn('presence', e); }
+        try { fs.writeFileSync(tmp, JSON.stringify({ at: t, app: this.name, window: win, open, map }), { mode: 0o644 }); fs.renameSync(tmp, f); this.themeMarked = true; } catch (e) { this._warn('presence', e); }
     }
 }
 

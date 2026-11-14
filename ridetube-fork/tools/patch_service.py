@@ -3,11 +3,13 @@
 
   python3 ridetube-fork/tools/patch_service.py <jap-ridetube-d@0.3.9.tgz> [--out ridetube-fork]
 
-The one change: once the decoder (ytdec) has made its frame file /dev/shm/mgu-video-ridetube, the service gives the file to the
+Two changes. First: once the decoder (ytdec) has made its frame file /dev/shm/mgu-video-ridetube, the service gives the file to the
 apps' group (tm_oap_app, the group that already may use the service's control socket) read-only: owner unchanged, group
 tm_oap_app, mode 0640 instead of 0600. "RideTube on cluster" (bimmer/apps/ridetube_cluster) reads it to show the video on the
 instrument cluster and the HUD while the car is parked. mgu-render checks the file's owner only, so the centre screen is
-unaffected. Everything else, the decoder binary included, is byte for byte the original's.
+unaffected. Second: while a video plays or is paused the service writes /run/jap-ridetube-d/now.json once a second (state, title,
+channel, position, length; 0644) for that app's "now playing" card, and removes it when nothing plays. Everything else, the
+decoder binary included, is byte for byte the original's.
 
 Writes <out>/jap-ridetube-d@<new version>.tgz and <out>/catalog.json (the app entry points at the original's unmodified
 package). RideTube is JustAnotherPU's, GPL-3.0-or-later; this fork keeps that licence and its notices (files/LICENSE,
@@ -15,7 +17,7 @@ files/THIRD_PARTY_LICENSES in the package)."""
 import argparse, gzip, hashlib, io, json, os, sys, tarfile
 
 BASE = '0.3.9'
-VERSION = '0.3.91'          # x.y.z, above the original's 0.3.9 (the app asks for at least that)
+VERSION = '0.3.92'          # x.y.z, above the original's 0.3.9 (the app asks for at least that)
 ORIG_SHA = '63dc4d7deb18849662d7d90efb41017483db5f835e6124fb90e6f5cd45300f5d'
 UPSTREAM = 'https://github.com/JustAnotherPU/ridetube/releases/download/catalog/'
 
@@ -25,6 +27,10 @@ ANCHOR = """    } else if (m.ev === 'ready') {
 ADDED = """    } else if (m.ev === 'ready') {
         this.lastProgress = Date.now();
         this.shareVideoFile();     // shakzer fork
+"""
+TIMER_ANCHOR = """    this.timers.push(setInterval(() => this.guard(() => this.watchdog()), 1000));
+"""
+TIMER = TIMER_ANCHOR + """    this.timers.push(setInterval(() => this.guard(() => this.shareNow()), 1000));     // shakzer fork
 """
 FUNC_ANCHOR = "Daemon.prototype.toYtdec = function (line) {"
 FUNC = """// shakzer fork (x3-hybride, ridetube-fork/): the decoder's frame file, read-only for the apps' group (the control socket's:
@@ -38,6 +44,23 @@ Daemon.prototype.shareVideoFile = function () {
         fs.chownSync(f, st.uid, this.opts.sockGid);
         fs.chmodSync(f, 0o640);
     } catch (e) { this.log('share video file: ' + e.message); }
+};
+// shakzer fork: what plays, in words, once a second while a video plays or is paused: now.json beside the control socket (the
+// service's own runtime folder, root's; 0644), for the "now playing" card of RideTube on cluster. Removed when nothing plays.
+Daemon.prototype.shareNow = function () {
+    const f = path.join(path.dirname(this.opts.sock), 'now.json'), c = this.cur;
+    if (!c || (this.state !== 'playing' && this.state !== 'paused')) {
+        if (this.nowShared) { this.nowShared = false; try { fs.unlinkSync(f); } catch (e) { /* gone */ } }
+        return;
+    }
+    if (!this.nowMeta || this.nowMeta.id !== c.id || !this.nowMeta.channel) this.nowMeta = readMeta(c.dir, c.id);
+    const o = { t: Date.now(), state: this.state, title: String(c.title || this.nowMeta.title || ''), channel: String(this.nowMeta.channel || ''),
+        elapsed_ms: Math.max(0, Math.round(this.elapsed || 0)), total_ms: Math.max(0, Math.round(this.total || 0)) };
+    try {
+        fs.writeFileSync(f + '.tmp', JSON.stringify(o), { mode: 0o644 });
+        fs.renameSync(f + '.tmp', f);
+        this.nowShared = true;
+    } catch (e) { if (!this.nowWarned) { this.nowWarned = true; this.log('now.json: ' + e.message); } }
 };
 """
 
@@ -61,9 +84,9 @@ def main():
         mtime = m.mtime if mtime is None else mtime
         if m.name == 'files/ytd.js':
             s = d.decode('utf8')
-            if s.count(ANCHOR) != 1 or s.count(FUNC_ANCHOR) != 1:
+            if s.count(ANCHOR) != 1 or s.count(FUNC_ANCHOR) != 1 or s.count(TIMER_ANCHOR) != 1:
                 sys.exit('ytd.js is not the one this patch was written for')
-            s = s.replace(ANCHOR, ADDED).replace(FUNC_ANCHOR, FUNC + FUNC_ANCHOR)
+            s = s.replace(ANCHOR, ADDED).replace(FUNC_ANCHOR, FUNC + FUNC_ANCHOR).replace(TIMER_ANCHOR, TIMER)
             d = s.encode('utf8')
             ytd = d
         out.append((m, d))
@@ -73,8 +96,8 @@ def main():
             assert c['version'] == BASE
             c['version'] = VERSION
             c['title'] = 'RideTube service (shakzer fork)'
-            c['description'] = ('JustAnotherPU\'s RideTube service %s with one change: the decoder\'s frame file is readable by the apps\' '
-                                'group, for RideTube on cluster (video on the instrument cluster and HUD, parked only). ' % BASE) + c['description']
+            c['description'] = ('JustAnotherPU\'s RideTube service %s with two changes for RideTube on cluster: the decoder\'s frame file is readable '
+                                'by the apps\' group (video on the cluster and HUD, parked only) and what plays is written to now.json (title and progress). ' % BASE) + c['description']
             hit = [f for f in c['files'] if f['path'] == 'ytd.js']
             assert len(hit) == 1
             hit[0]['sha256'] = sha(ytd)

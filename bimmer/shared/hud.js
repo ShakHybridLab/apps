@@ -944,7 +944,8 @@ class HudApp {
             this.log.info('centre window ' + (open ? 'open: Cluster Centre / Cluster Info draw in it' : 'closed'));
             if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuild(); else this._status();
         }
-        this.ci.markTheme(shows, { window: shows ? this.windowRect : null, open: this.setting('mapUp') === true && this.mapShown === true });
+        this.ci.markTheme(shows, { window: shows ? this.windowRect : null, open: this.setting('mapUp') === true && this.mapShown === true,
+            map: !!this.waze && this.waze.up === true && this.ctx.settings.get('mapInTheme') === true });
         // a layout with "mapPlace": while its map shows, Waze on cluster draws the map right in the window (the file is kept fresh)
         const place = shows && this.mapPlace && !!this.windowRect && this.mapShown === true && this.setting('mapUp') === true
             && !!this.waze && this.waze.up === true && this.ctx.settings.get('mapInTheme') === true;
