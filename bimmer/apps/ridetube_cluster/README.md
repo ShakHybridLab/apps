@@ -27,11 +27,11 @@ dangerous and, in most countries, illegal. The sound is RideTube's own and is no
 ## Needs
 
 - RideTube installed and working, in a build that lets other apps read its frame file (`/dev/shm/mgu-video-ridetube`). The stock
-  RideTube keeps that file private, so with it this app shows nothing. The modified build is not made yet.
+  RideTube keeps that file private, so with it this app shows nothing: install the service from `ridetube-fork/` at the root of
+  this repository (its README has the steps).
 - cluster-render (as ShakTheme), and for the cluster a ShakTheme theme showing.
 
 ## Not done yet
 
-- The RideTube build that shares its frames.
 - "Now playing" (title, channel, progress) without a picture while driving.
 - A run on the car. On the bench it is driven by `tools/test_video_app.js` with made-up frames and a fake speed.
