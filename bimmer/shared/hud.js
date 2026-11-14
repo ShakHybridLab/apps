@@ -2011,6 +2011,8 @@ class HudApp {
             c.uniform(ref, 'u_top', [B.top]);
             c.uniform(ref, 'u_sc', w.scale || [236, B.bottom]);
             c.uniform(ref, 'u_speed', [0]);
+            c.uniform(ref, 'u_rev', [0]);
+            c.uniform(ref, 'u_hy', [0, 0, 0, 0]);
             c.uniform(ref, 'u_ln', L);
             c.uniform(ref, 'u_ln2', L2);
             c.uniform(ref, 'u_barL', [w.barL[0], w.barL[1], w.barL[2], 0]);
@@ -2533,15 +2535,21 @@ class HudApp {
             x.c.uniform(x.ref, 'u_red', ev ? [0.2, 0.55, 1.0, vals[5]] : [0.99, 0.19, 0.33, vals[5]]);
             x.c.uniform(x.ref, 'u_shiftNow', [sp.now ? 1 : 0]);
         } else if (w.type === 'navi') {
-            // the marker on the speed band (the same scale as the Sport theme's) and the two bottom bars: fuel left, battery right
+            // the marker on the speed band (the same scale as the Sport theme's), the rev counter (the purple stripe: the rpm, or while the
+            // battery alone drives its power in light blue, or while it charges in green, as Sport's bar) and the two bottom bars
             const us = this.setting('units') === 'us';
-            const sp = this._raw('speed'), fuel = this._raw('fuel'), hv = this._raw('hvSoc');
+            const sp = this._raw('speed'), fuel = this._raw('fuel'), hv = this._raw('hvSoc'), rpm = this._raw('rpm');
             const q = (v) => Math.round(Math.min(1, Math.max(0, v)) * 500) / 500;
-            const vals = [q(isNum(sp) ? scaleFrac(us ? sp * 0.621371 : sp, SPEED_SCALE[us ? 'us' : 'metric']) : 0), q(isNum(fuel) ? fuel : 0), q(isNum(hv) ? hv / 100 : 0)];
-            const key = vals.join('|');
+            const hy = this._hybridTach(w, rpm), bar = hy.ev ? 1 : (w.chgOnBar === true && hy.engineOff && hy.chg > 0 ? 2 : 0);
+            this.hybridEv = bar > 0; this.hybridCharge = bar === 2;
+            const vals = [q(isNum(sp) ? scaleFrac(us ? sp * 0.621371 : sp, SPEED_SCALE[us ? 'us' : 'metric']) : 0), q(isNum(fuel) ? fuel : 0), q(isNum(hv) ? hv / 100 : 0),
+                q(bar ? Math.abs(hy.kw) * 100 / (w.rpmMax || 7000) : isNum(rpm) ? rpm / (w.rpmMax || 7000) : 0)];
+            const key = vals.join('|') + '|' + bar;
             if (!force && key === x.last) return;
             x.last = key;
             x.c.uniform(x.ref, 'u_speed', [vals[0]]);
+            x.c.uniform(x.ref, 'u_rev', [vals[3]]);
+            x.c.uniform(x.ref, 'u_hy', bar === 1 ? [0.3, 0.75, 1.0, 1] : bar === 2 ? [0.2, 0.85, 0.5, 1] : [0, 0, 0, 0]);
             x.c.uniform(x.ref, 'u_barL', [w.barL[0], w.barL[1], w.barL[2], vals[1]]);
             x.c.uniform(x.ref, 'u_barR', [w.barR[0], w.barR[1], w.barR[2], vals[2]]);
         } else if (w.type === 'mdash') {

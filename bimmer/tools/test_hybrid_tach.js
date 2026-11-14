@@ -42,11 +42,34 @@ check('an unknown rpm never counts as the engine being off', () => {
         assert(!s.engineOff && !s.ev, String(rpm));
     });
 });
-check('who asks: M Blade (both blades) and Sport yes; M and Navi no', () => {
+check('who asks: M Blade (both blades), Sport and Navi (its purple stripe) yes; M no', () => {
     layout('mblade').widgets.filter((w) => w.type === 'mblade').forEach((w) => assert(w.hybridTach === true, w.id));
     const sp = layout('sport').widgets.find((w) => w.type === 'sdash');
     assert(sp.hybridTach === true && sp.chgOnBar === true, 'Sport asks for it and shows the charge on its bracket');
-    ['m', 'navi'].forEach((id) => layout(id).widgets.forEach((w) => assert(!w.hybridTach, id + ' ' + w.id)));
+    layout('navi').widgets.filter((w) => w.type === 'navi').forEach((w) => assert(w.hybridTach === true && w.chgOnBar === true && w.rpmMax === 7000, 'Navi ' + w.id + ' asks for it and shows the charge on its stripe'));
+    layout('m').widgets.forEach((w) => assert(!w.hybridTach, 'm ' + w.id));
+});
+check('Navi: the purple stripe is the rev counter: marks 0..7 inside it in both views, the unit token and a CHARGE note above it, letters in the fonts', () => {
+    const L = layout('navi'), by = (id) => L.widgets.find((w) => w.id === id);
+    [['', 'backdrop'], ['o_', 'backdrop_open']].forEach(([pre, bid]) => {
+        const B = by(bid).band;
+        for (let k = 0; k < 8; k++) {
+            const w = by(pre + 'rev' + k);
+            assert(w && w.text === String(k), pre + 'rev' + k + ' missing');
+            const y = w.y + 12;                                                      // the mark's row
+            const xl = B.tip[0] + (y - B.tip[1]) / B.slope, sep = B.sep[0] + B.sep[1] * (y - 300), edge = B.edge[0] + B.edge[1] * (y - 300);
+            assert(w.x >= xl + sep + 5 && w.x + w.w <= xl + edge - 10, pre + 'rev' + k + ' is not inside the purple stripe');
+        }
+    });
+    const cap = by('rev_unit'), note = by('rev_charge');
+    assert(cap && cap.text === '{{tachUnit}}' && note && note.text === '{{chargeNote}}' && !cap.toggle && !note.toggle, 'unit / note missing');
+    assert(note.x >= cap.x + cap.w && Math.abs(note.y - cap.y) <= 2 && cap.y + cap.h <= 227, 'the note is not beside the unit, above the stripe');
+    const fonts = (id) => JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'hud', 'fonts', id + '.json'), 'utf8')).glyphs;
+    '1/min x 1000kW x 10'.split('').forEach((ch) => assert(fonts(cap.font)[ch], cap.font + ' lacks "' + ch + '"'));
+    'CHARGE'.split('').forEach((ch) => assert(fonts(note.font)[ch], note.font + ' lacks "' + ch + '"'));
+    '01234567'.split('').forEach((ch) => assert(fonts(by('rev0').font)[ch], by('rev0').font + ' lacks "' + ch + '"'));
+    const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8'), sh = fs.readFileSync(path.join(root, 'shared', 'shaders.js'), 'utf8');
+    assert(/u_rev/.test(hud) && /u_hy/.test(hud) && sh.includes('uniform float u_rev;') && sh.includes('uniform vec4 u_hy;'), 'hud.js / the navi shader do not carry the rev counter');
 });
 check('Sport: the rev caption is the unit token, a CHARGE note sits left of it, letters in the font', () => {
     const L = layout('sport');

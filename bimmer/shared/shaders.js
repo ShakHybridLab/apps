@@ -1209,8 +1209,9 @@ void main() {
 }
 `;
 const NAVI = `// The Navi theme in one cluster-render "effect" layer (GLSL ES 1.00), after a photo of a BMW map view: a wide diagonal
-// speed band on the left (an outer white line, a textured blue stripe, a thin white divider, a purple stripe that fades
-// in from black, a thin pale edge, and a white marker across it at the speed), the big rounded map window, the white
+// speed band on the left (an outer white line, a textured blue stripe that is the speed with a white marker across it at the speed,
+// a thin white divider, a purple stripe that fades in from black and is the rev counter: lit up to the rpm, a marker and eight
+// ticks, and a thin pale edge), the big rounded map window, the white
 // line under the map that steps up at the right, and two thin bars along the bottom (fuel left, battery right). The
 // window is cut see-through while u_hole is set (Waze, Cluster Centre, Cluster Info); the band is drawn over it.
 // v_uv (0,0) is the top-left. Outside the shapes the backdrop is the Sport view's navy with facets (u_tint 0 = pure black).
@@ -1226,6 +1227,8 @@ uniform vec4 u_W;         // divider offset (px right of the outer line) at y 30
 uniform float u_top;      // y where the purple stripe begins
 uniform vec2 u_sc;        // y of the scale's top mark and of its 0
 uniform float u_speed;    // 0..1 along the scale
+uniform float u_rev;      // the rev counter, 0..1 along the same scale
+uniform vec4 u_hy;        // the hybrid rev counter: the lit colour while the battery drives or charges (a = 1), else a = 0
 uniform vec4 u_ln;        // the white line under the map: x of its start, y, x where it steps up, x where it is back level
 uniform vec3 u_ln2;       // y of the upper level, x where the upper level fades out, x where it ends
 uniform vec4 u_barL;      // left bar: x, y, width, level 0..1
@@ -1294,15 +1297,21 @@ void main() {
         float pu = clamp((s - sep - 5.0) / (edge - sep - 5.0), 0.0, 1.0);
         vec3 pc = mix(vec3(0.02, 0.0, 0.05), mix(vec3(0.3, 0.07, 0.52), vec3(0.56, 0.26, 0.9), pu), smoothstep(0.0, 0.55, pu));
         pc *= 0.35 + 0.65 * smoothstep(u_top, u_top + 260.0, p.y);
+        float yr = u_sc.y - u_rev * (u_sc.y - u_sc.x);
+        pc = mix(pc * 0.2, mix(pc, u_hy.rgb * (0.45 + 0.55 * pu), u_hy.a), step(yr, p.y));
         c = over(vec4(pc, cov(-(s - sep - 5.0) * kk) * cov((s - edge) * kk) * step(u_top, p.y) * down), c);
         // the outer white line, the divider, the pale edge
         c = over(vec4(0.97, 0.98, 1.0, cov(abs(s - 5.0) * kk - 3.6) * down), c);
         c = over(vec4(0.92, 0.95, 1.0, 0.95 * cov(abs(s - sep) * kk - 0.9) * down), c);
         c = over(vec4(0.95, 0.82, 1.0, 0.9 * cov(abs(s - edge) * kk - 0.9) * step(u_top, p.y) * down), c);
-        // the marker across the band at the speed
+        // the marker across the blue stripe at the speed, the one across the purple stripe at the rpm, and a tick at each of the eight marks
         float ym = u_sc.y - u_speed * (u_sc.y - u_sc.x);
-        float mk = cov(abs(p.y - ym) - 2.2) * cov(-(s - 2.0) * kk) * cov((s - edge) * kk);
+        float mk = cov(abs(p.y - ym) - 2.2) * cov(-(s - 2.0) * kk) * cov((s - sep) * kk);
         c = over(vec4(1.0, 1.0, 1.0, 0.95 * mk * down), c);
+        float mr = cov(abs(p.y - yr) - 1.6) * cov(-(s - sep - 5.0) * kk) * cov((s - edge) * kk);
+        float k7 = clamp(floor((u_sc.y - p.y) / (u_sc.y - u_sc.x) * 7.0 + 0.5), 0.0, 7.0);
+        float tk = cov(abs(p.y - u_sc.y + k7 * (u_sc.y - u_sc.x) / 7.0) - 0.9) * cov(-(s - edge + 14.0) * kk) * cov((s - edge) * kk);
+        c = over(vec4(1.0, 1.0, 1.0, (0.9 * mr + 0.7 * tk) * step(u_top, p.y) * down), c);
     }
     // the bars along the bottom
     c = bar(p, u_barL, vec3(0.15, 0.3, 1.0), vec3(0.15, 0.3, 1.0), c);
