@@ -149,20 +149,23 @@ def mb_right_strip(pre, tog, G, name, hi, mid, lo, unit, icon_name, icon_w=26):
     return W
 
 
-def mb_bottom_right(y=684):
+def mb_bottom_right(pre='', tog=None, dx=0, y=684):
     """The right end of the bottom row, on the fuel range's line and in its lettering (m_mid): the coolant temperature, the oil
     temperature (under its strip) and the electric range (under the battery strip), then the outside temperature (added by the
     caller). The two temperatures are coloured by their value (tempBy: blue cold, green warm, red flashing over the limit). The same
     in both views. Each is an icon, a number, a unit; the value boxes hold the longest value (three digits for the temperatures,
     302 F)."""
+    k = {'toggle': tog} if tog else {}
     W = []
     for x, name, icon_name, tok, sig in ((1205, 'cool', 'therm', '{{coolant}}', 'coolant'), (1383, 'oil', 'oilcan', '{{oil}}', 'oil')):
-        W.append(icon(name + '_icon', icon_name, x, y - 3, 26, 34, 'fg', 1))
-        W.append(text(name, x + 32, y, 87, 29, tok, 'm_mid', 'fg', 'right', 1, tempBy=sig))
-        W.append(text(name + '_unit', x + 123, y + 3, 36, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1))
-    W += [icon('ev_icon', 'battery', 1562, y - 3, 26, 34, 'fg', 1),
-          text('ev_range', 1594, y, 62, 29, '{{evRange}}', 'm_mid', 'fg', 'right', 1),
-          text('ev_range_unit', 1660, y + 3, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1)]
+        # the coolant is not under a strip: it keeps its place; the oil, and the electric range, follow their strips (dx)
+        d = 0 if name == 'cool' else dx
+        W.append(icon(pre + name + '_icon', icon_name, x + d, y - 3, 26, 34, 'fg', 1, **k))
+        W.append(text(pre + name, x + d + 32, y, 87, 29, tok, 'm_mid', 'fg', 'right', 1, tempBy=sig, **k))
+        W.append(text(pre + name + '_unit', x + d + 123, y + 3, 36, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, **k))
+    W += [icon(pre + 'ev_icon', 'battery', 1562 + dx, y - 3, 26, 34, 'fg', 1, **k),
+          text(pre + 'ev_range', 1594 + dx, y, 62, 29, '{{evRange}}', 'm_mid', 'fg', 'right', 1, **k),
+          text(pre + 'ev_range_unit', 1660 + dx, y + 3, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1, **k)]
     return W
 
 
@@ -182,15 +185,25 @@ def mblade():
     # right there, see mapPlace), the hexagon right of it with a gap (it no longer goes under the window), the blade and the two strips a
     # little to the right of the normal view (the blade's "4" is the limit: BMW's black box starts at x 1406), the fuel as a flat bar
     # under the window
-    HX = 18                                       # everything right of the window moves this far right of the normal view
-    WIN = [100, 167, 482, 422]                    # the window (x, y, w, h)
+    HB = 18                                       # the blade is this far right of the normal view (its "4" is the limit: BMW's black box)
+    SX = 30                                       # the two strips (and the oil / electric range / outside under them)
+    HNAR = 0.08                                   # the hexagon is this share narrower than the photo's (same height): its right tip stays 20 px
+    HTIP = 612 + DX + 32 + round(567 * HNAR)      # from the blade, its left tip, where the window ends, moves right
+    WIN = [80, 167, HTIP - 18 - 80, 422]          # the window (x, y, w, h): from the hood's limit (x 80 at y 167) to 18 px before the hexagon's tip
+
+    def hexx(x, rel):
+        """A text box of the normal view (x) placed in the narrower hexagon: its centre keeps its place in the hexagon, `rel` px (photo
+        design) right of the tip."""
+        return round(x + (HTIP - (612 + DX)) - rel * HNAR)
+
     INS = 10
-    FB = [140, 560, 606]                          # the flat fuel bar: left end x, right end x, top y (27 thick)
-    G1o = [G1[0] + HX, G1[1], G1[2], G1[3]]
-    G2o = [G2[0] + HX, G2[1], G2[2], G2[3]]
+    FB = [122, 558, 606]                          # the flat fuel bar: left end x, right end x, top y (27 thick)
+    G1o = [G1[0] + SX, G1[1], G1[2], G1[3]]
+    G2o = [G2[0] + SX, G2[1], G2[2], G2[3]]
     G0o = [FB[2], 1920 - FB[1], 1920 - FB[0], 0]  # the first strip, lying flat: in the frame the shader turns it into
-    W.append(dict(base, id='backdrop_open', toggle='mapUp', hex=[612 + DX + HX, 167, 1.0, 0],
-                  bl=[137, 560, 1333 + DX + HX, -0.558], br=[1487 + DX + HX, -0.605, 13, 130], bx=[1.0, 1245 + DX + HX, 864 + DX + HX, 0],
+    W.append(dict(base, id='backdrop_open', toggle='mapUp', hex=[HTIP, 167, 1.0, HNAR],
+                  bl=[137, 560, 1333 + DX + HB, -0.558], br=[1487 + DX + HB, -0.605, 13, 130],
+                  bx=[1.0, 1245 + DX + HB, HTIP + round(252 * (1 - HNAR)), 0],
                   scale=[RPM_Y7, RPM_Y0], g0=G0o, g1=G1o, g2=G2o, fuelH=True, deco=True,
                   hole=[WIN[0] - INS, WIN[1] - INS, WIN[2] + 2 * INS, WIN[3] + 2 * INS], holeWhen='mapUp', holeInset=INS, holeRadius=14,
                   mapPlace=True))
@@ -210,14 +223,14 @@ def mblade():
     W.append(text('power', 740, 528, 120, 29, '{{powerKw}}', 'm_mid', 'fg', 'right', 1, toggle='powerShut'))
     W.append(text('power_unit', 866, 528, 50, 36, 'kW', 'm_unit', 'dim', 'left', 1, toggle='powerShut'))
     W.append(text('drive_mode', 851, 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='!mapUp'))
-    W.append(text('o_gear', 725 + HX, 291, 280, 101, '{{stage}}', 'm_gear', align='center', toggle='mapUp'))
-    W.append(text('o_speed', 735 + HX, 449, 170, 40, '{{speed}}', 'm_spd', 'fg', 'right', toggle='mapUp'))
-    W.append(text('o_speed_unit', 915 + HX, 461, 80, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'left', toggle='mapUp'))
-    W.append(text('o_power', 740 + HX, 528, 120, 29, '{{powerKw}}', 'm_mid', 'fg', 'right', 1, toggle='powerOpen'))
-    W.append(text('o_power_unit', 866 + HX, 528, 50, 36, 'kW', 'm_unit', 'dim', 'left', 1, toggle='powerOpen'))
-    W.append(text('o_drive_mode', 851 + HX, 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='mapUp'))
+    W.append(text('o_gear', hexx(725, 283), 291, 280, 101, '{{stage}}', 'm_gear', align='center', toggle='mapUp'))
+    W.append(text('o_speed', hexx(735, 283), 449, 170, 40, '{{speed}}', 'm_spd', 'fg', 'right', toggle='mapUp'))
+    W.append(text('o_speed_unit', hexx(915, 283), 461, 80, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'left', toggle='mapUp'))
+    W.append(text('o_power', hexx(740, 283), 528, 120, 29, '{{powerKw}}', 'm_mid', 'fg', 'right', 1, toggle='powerOpen'))
+    W.append(text('o_power_unit', hexx(866, 283), 528, 50, 36, 'kW', 'm_unit', 'dim', 'left', 1, toggle='powerOpen'))
+    W.append(text('o_drive_mode', hexx(851, 369), 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='mapUp'))
     W.extend(mb_blade('', '!mapUp', lambda x, y: (x + DX, y), 1.0))
-    W.extend(mb_blade('o_', 'mapUp', lambda x, y: (x + DX + HX, y), 1.0))
+    W.extend(mb_blade('o_', 'mapUp', lambda x, y: (x + DX + HB, y), 1.0))
     # the strips' numbers: fuel on the left; on the right the oil temperature (50 / 100 / 150) and the battery (0 / 50 / 100 %)
     W.extend(mb_fuel('', '!mapUp', G0))
     W.extend(mb_right_strip('', '!mapUp', G1, 'o', '{{tc:150}}', '{{tc:100}}', '{{tc:50}}', '{{u:temp}}', 'oilcan', 30))
@@ -231,9 +244,15 @@ def mblade():
     W.append(icon('range_icon', 'fuel', 313, 681, 29, 34, 'fg', 1))
     W.append(text('range', 348, 684, 112, 29, '{{range}}', 'm_mid', 'fg', 'right', 1))
     W.append(text('range_unit', 466, 687, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1))
-    W.extend(mb_bottom_right())
-    W.append(text('outside', 1722, 684, 118, 29, '{{ambient}}', 'm_mid', 'fg', 'right', 1))
-    W.append(text('outside_unit', 1846, 687, 44, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1))
+    # the right end follows the strips: in the map view they are SX px further right, so the oil, the electric range and the outside
+    # temperature move with them (the coolant stays)
+    W.extend(mb_bottom_right('', '!mapUp', 0))
+    W.extend(mb_bottom_right('o_', 'mapUp', SX))
+    W.append(text('outside', 1722, 684, 118, 29, '{{ambient}}', 'm_mid', 'fg', 'right', 1, toggle='!mapUp'))
+    W.append(text('outside_unit', 1846, 687, 44, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, toggle='!mapUp'))
+    OX = SX - 16          # (its value box holds '+104', so its left 30 px are empty for '+22': it needs less than the strips' shift)
+    W.append(text('o_outside', 1722 + OX, 684, 118, 29, '{{ambient}}', 'm_mid', 'fg', 'right', 1, toggle='mapUp'))
+    W.append(text('o_outside_unit', 1846 + OX, 687, 44, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, toggle='mapUp'))
     W += danger_alert(1612, 340, 78)       # right of BMW's black box (x < 1597), above the strips (y 435)
     return {
         'schemaVersion': 2, 'name': 'M Blade', 'theme': 'mblade',
@@ -247,9 +266,9 @@ def mblade():
                   "lettering: the clock, the fuel range, then the coolant temperature, the oil temperature and the electric range (each under "
                   "its strip) and the outside temperature, clear of BMW's belt light (x 587..626, y 663..700). Waze's map normally sits at "
                   "the centred 1088x480 of the panel; Waze on the cluster 0.9.107 or later takes a window from shared/map_window.js "
-                  "(map_window.txt) and this layout asks for a narrow one at the far left like the photo (x 100..582, y 167..589) when "
-                  "'Show Waze map inside the theme' is on. The theme is then rebuilt (backdrop_open and the o_ readouts): the hexagon, the "
-                  "blade and the strips move 18 px to the right so nothing is tight against the map, the speed scale gives way to the map "
+                  "(map_window.txt) and this layout asks for a narrow one at the far left like the photo (x 80..641, y 167..589) when "
+                  "'Show Waze map inside the theme' is on. The theme is then rebuilt (backdrop_open and the o_ readouts): the hexagon "
+                  "(8 % narrower, same height, its right tip stays put), the blade (18 px) and the strips (30 px, with the oil, electric range and outside temperature under them) move to the right so nothing is tight against the map, the speed scale gives way to the map "
                   "and the vertical fuel strip becomes a flat bar under the map (pump icon, 0 / 1/2 / 1). "
                   "Nothing is drawn under the map. Clear of the black box BMW draws at x 1406..1597, y 342..419. Widget reference: "
                   "shared/hud.js header.",

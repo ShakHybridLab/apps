@@ -7,6 +7,8 @@
     {
       "id": "sport",
       "type": "sdash",
+      "hybridTach": true,
+      "chgOnBar": true,
       "class": "content",
       "z": 1,
       "x": 0,
@@ -393,10 +395,23 @@
       "y": 86,
       "w": 200,
       "h": 29,
-      "text": "1/min x 1000",
+      "text": "{{tachUnit}}",
       "font": "s_unit",
       "color": "sred",
       "align": "center"
+    },
+    {
+      "id": "charge_note",
+      "type": "text",
+      "z": 5,
+      "x": 1290,
+      "y": 86,
+      "w": 160,
+      "h": 29,
+      "text": "{{chargeNote}}",
+      "font": "s_unit",
+      "color": "fg",
+      "align": "right"
     },
     {
       "id": "drive_icon",

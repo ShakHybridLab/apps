@@ -54,7 +54,7 @@ NAMES.forEach((n) => {
             'kW x 10'.split('').forEach((ch) => assert(tiny[ch], 'm_tiny lacks "' + ch + '" (kW x 10)'));
             'CHARGE'.split('').forEach((ch) => assert(unit[ch], 'm_unit lacks "' + ch + '" (CHARGE)'));
             const hud = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8'), sh = fs.readFileSync(path.join(__dirname, '..', 'shared', 'shaders.js'), 'utf8');
-            ['HYBRID_ENGINE_RPM', "case 'tachUnit'", "case 'chargeNote'", "w.hybridTach === true"].forEach((s) => assert(hud.includes(s), 'hud.js lacks ' + s));
+            ["require('./hybrid_tach')", "case 'tachUnit'", "case 'chargeNote'", "w.hybridTach === true"].forEach((s) => assert(hud.includes(s), 'hud.js lacks ' + s));
             assert(/uniform vec4 u_red;/.test(sh) && sh.includes('ft < u_red.a'), 'the shader does not read the charge');
         });
         check(n + ': the hexagon as in the photo: the gear letter big in the void, the speed small right under it with its unit beside it, kW below, in both views', () => {
@@ -89,24 +89,31 @@ NAMES.forEach((n) => {
             assert(f.every((w) => w && w.toggle === 'mapUp' && w.x >= win[0] - 60 && w.x + w.w <= win[2] + 20), 'fuel scale outside the window\'s span');
             assert(!by('o_f_hi').text || by('o_f_hi').y >= o.g0[0] + 27, 'the scale is not under the bar');
         });
+        // the bottom row's right end exists twice: for the normal view (no prefix, backdrop) and for the map view ("o_", backdrop_open),
+        // where the oil, the electric range and the outside temperature follow the strips
+        const VIEWS = [['', '!mapUp', 'backdrop'], ['o_', 'mapUp', 'backdrop_open']];
         check('mblade: the clock, the fuel range, the electric range, the oil and coolant temperatures and the outside temperature share one line at the bottom (same y), in both views', () => {
-            const ys = ['time', 'range', 'ev_range', 'oil', 'cool', 'outside'].map((i) => by(i).y);
-            assert(ys.every((y) => y === ys[0]), 'y differ: ' + ys.join(', '));
-            assert(!by('o_ev_range'), 'the electric range must not be a second, higher readout with the map up');
-            ['range_icon', 'ev_icon', 'oil_icon', 'cool_icon'].forEach((i) => assert(by(i).y === 681, i + ' is not on the line'));
-            ['range_unit', 'ev_range_unit', 'oil_unit', 'cool_unit', 'outside_unit'].forEach((i) => assert(by(i).y === 687, i + ' is not on the line'));
+            VIEWS.forEach(([pre]) => {
+                const ys = [by('time'), by('range'), by(pre + 'ev_range'), by(pre + 'oil'), by(pre + 'cool'), by(pre + 'outside')].map((w) => w.y);
+                assert(ys.every((y) => y === ys[0]), pre + ' y differ: ' + ys.join(', '));
+                ['range_icon', pre + 'ev_icon', pre + 'oil_icon', pre + 'cool_icon'].forEach((i) => assert(by(i).y === 681, i + ' is not on the line'));
+                ['range_unit', pre + 'ev_range_unit', pre + 'oil_unit', pre + 'cool_unit', pre + 'outside_unit'].forEach((i) => assert(by(i).y === 687, i + ' is not on the line'));
+            });
         });
-        check('mblade: the coolant, the oil and the electric range are on the bottom row in the range\'s lettering and height, the oil under its strip and the electric range under the battery strip, before the outside temperature', () => {
-            const ids = ['ev_range', 'oil', 'cool'].map(by);
-            assert(ids.every((w) => w.font === 'm_mid' && w.y === by('range').y), 'not the range\'s lettering and line');
-            assert(by('oil').tempBy === 'oil' && by('cool').tempBy === 'coolant', 'tempBy missing');
-            ['ev_range', 'oil', 'cool', 'oil_icon', 'cool_icon', 'ev_icon', 'oil_unit', 'cool_unit', 'ev_range_unit'].forEach((i) => assert(!by(i).toggle, i + ': one set for both views'));
-            const right = (id) => by(id).x + by(id).w, b = by('backdrop');
-            assert(by('cool_icon').x >= 1190, 'in the hexagon\'s tabs / red glow');
-            assert(by('oil_icon').x > right('cool_unit') && by('ev_icon').x > right('oil_unit') && by('outside').x > right('ev_range_unit'), 'the readouts touch or are out of order');
-            const under = (g) => g[0] + g[3] * (g[2] - g[1]);                          // a strip's left edge at its bottom
-            assert(Math.abs(by('oil_icon').x + 40 - (under(b.g1) + 13)) <= 50, 'the oil reading is not under the oil strip');
-            assert(by('ev_icon').x >= under(b.g2) - 15 && by('ev_icon').x <= under(b.g2) + 15, 'the electric range is not under the battery strip');
+        check('mblade: the coolant, the oil and the electric range are on the bottom row in the range\'s lettering and height, the oil under its strip and the electric range under the battery strip, before the outside temperature, in both views', () => {
+            VIEWS.forEach(([pre, tog, bid]) => {
+                const ids = ['ev_range', 'oil', 'cool'].map((i) => by(pre + i));
+                assert(ids.every((w) => w.font === 'm_mid' && w.y === by('range').y), pre + ': not the range\'s lettering and line');
+                assert(by(pre + 'oil').tempBy === 'oil' && by(pre + 'cool').tempBy === 'coolant', pre + ': tempBy missing');
+                ['ev_range', 'oil', 'cool', 'oil_icon', 'cool_icon', 'ev_icon', 'oil_unit', 'cool_unit', 'ev_range_unit', 'outside', 'outside_unit'].forEach((i) => assert(by(pre + i).toggle === tog, pre + i + ': not for its own view'));
+                const right = (id) => by(pre + id).x + by(pre + id).w, b = by(bid);
+                assert(by(pre + 'cool_icon').x >= 1190, pre + ': in the hexagon\'s tabs / red glow');
+                assert(by(pre + 'oil_icon').x > right('cool_unit') && by(pre + 'ev_icon').x > right('oil_unit') && by(pre + 'outside').x > right('ev_range_unit'), pre + ': the readouts touch or are out of order');
+                assert(by(pre + 'outside').x - right('ev_range_unit') >= 0 && by(pre + 'outside_unit').x + 30 <= 1890, pre + ': outside temperature too close to the electric range or to the panel edge');
+                const under = (g) => g[0] + g[3] * (g[2] - g[1]);                          // a strip's left edge at its bottom
+                assert(Math.abs(by(pre + 'oil_icon').x + 40 - (under(b.g1) + 13)) <= 50, pre + ': the oil reading is not under the oil strip');
+                assert(by(pre + 'ev_icon').x >= under(b.g2) - 15 && by(pre + 'ev_icon').x <= under(b.g2) + 15, pre + ': the electric range is not under the battery strip');
+            });
         });
         check('mblade: nothing shown together overlaps anything else (text and icon boxes), in either view', () => {
             const g = (w) => (w.toggle === 'powerShut' ? '!mapUp' : w.toggle === 'powerOpen' ? 'mapUp' : w.toggle) || '';

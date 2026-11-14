@@ -842,6 +842,7 @@ uniform float u_redFrom;  // 0..1 (the redline)
 uniform float u_orange;   // 0..1, yellow marks from here to the redline
 uniform float u_fuel;     // 0..1
 uniform float u_oil;      // 0..1
+uniform vec4 u_hy;        // the hybrid rev counter: the colour (rgb) that fills the rev bracket in place of the red, a = 1 (0 = the red rpm)
 uniform vec4 u_fuelSeg;   // full end x, y, empty end x, y
 uniform vec4 u_oilSeg;
 uniform vec4 u_hole;      // map window x, y, w, h, already inset (w 0 = none)
@@ -961,7 +962,7 @@ void main() {
     }
 
     c = bracket(p, u_speed, 2.0, 2.0, u_ticks.x, BLUE_LINE, BLUE_BAND, BLUE_LIT, BLUE_IN, c);
-    c = bracket(pm, u_rpm, u_redFrom, u_orange, u_ticks.y, RED_LINE, RED_BAND, RED_LIT, RED_IN, c);
+    c = bracket(pm, u_rpm, u_redFrom, u_orange, u_ticks.y, RED_LINE, mix(RED_BAND, u_hy.rgb * 0.25, u_hy.a), mix(RED_LIT, u_hy.rgb, u_hy.a), RED_IN, c);
     // the map window: a rounded hole cut out of the backdrop and brackets, so the map shows clean; the fuel and
     // oil bars come off while it is open (they ran across the map, car photos Nov 7 2026), the bottom strip stays
     if (u_hole.z > 0.0) {
@@ -1008,7 +1009,7 @@ precision mediump float;
 #endif
 varying vec2 v_uv;
 uniform vec2 u_size;
-uniform vec4 u_hex;       // the hexagon: where its design point (612, 167) lands on the panel x, y; the scale (0 = none)
+uniform vec4 u_hex;       // the hexagon: where its design point (612, 167) lands on the panel x, y; the scale (0 = none); the share it is narrower than the photo's (0 = as is)
 uniform vec4 u_sp;        // speed line: x, y of the top cap's left end, x, y of the knee
 uniform vec4 u_sq;        // speed line: x, y of the bottom end, the top cap's length (0 = no speed line)
 uniform vec4 u_sy;        // speed line: y of the 0 label, of the knee's label, of the top label, the knee's share along the scale
@@ -1095,7 +1096,7 @@ void main() {
     // ---- the hexagon: five panels cut by dark gaps (design coordinates of the photo, scaled), the void for the speed between ----
     if (u_hex.z > 0.0) {
         float s = u_hex.z;
-        vec2 g = (p - u_hex.xy) / s + vec2(612.0, 167.0);
+        vec2 g = (p - u_hex.xy) / vec2(s - s * u_hex.w, s) + vec2(612.0, 167.0);
         float gy = clamp((g.y - 167.0) / 422.0, 0.0, 1.0);
         float dS = poly4(g, vec2(743.0, 167.0), vec2(788.0, 167.0), vec2(642.0, 425.0), vec2(612.0, 392.0)) * s;
         float dT = poly5(g, vec2(795.0, 167.0), vec2(1079.0, 169.0), vec2(1110.0, 230.0), vec2(1097.0, 272.0), vec2(737.0, 272.0)) * s;
@@ -1107,11 +1108,9 @@ void main() {
         c = over(vec4(mix(vec3(0.075, 0.28, 0.68), vec3(0.095, 0.32, 0.76), gy), cov(dR)), c);
         // the thin lighter facet lines the photo shows on the panels
         float f1 = segD(g, vec2(775.0, 408.0), vec2(699.0, 537.0)) * s;
-        float f2 = segD(g, vec2(753.0, 449.0), vec2(700.0, 534.0)) * s;
         float f3 = segD(g, vec2(1043.0, 162.0), vec2(1102.0, 245.0)) * s;
         float f4 = segD(g, vec2(1105.0, 262.0), vec2(1050.0, 352.0)) * s;
         c = over(vec4(0.5, 0.7, 1.0, 0.38 * cov(f1 - 0.6) * cov(dL + 1.0)), c);
-        c = over(vec4(0.5, 0.7, 1.0, 0.22 * cov(f2 - 0.6) * cov(dL + 1.0)), c);
         c = over(vec4(0.5, 0.7, 1.0, 0.3 * cov(f3 - 0.6)), c);
         c = over(vec4(0.5, 0.7, 1.0, 0.25 * cov(f4 - 0.6) * cov(dR + 1.0)), c);
         // the lighter strip along the bottom of the right panel

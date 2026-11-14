@@ -83,12 +83,12 @@
  *             emptyX, emptyY] (the oil bar shows the "oilSignal" instead, with "oilMin" / "oilMax": hvSoc 0 / 100 for the battery), "strip" [left end x, y, h, slant], "topEnd" x; the middle is deep blue with a lighter glow (the setting "sportTint", % of the car's own blue, 0 = black), and the map
  *             window is cut see-through while "holeWhen" is on ("hole", "holeInset", "holeRadius" as fill)
  *   mblade    effect layer; the M Blade theme (shaders.js mblade), traced off a photo of a BMW M cluster: the blue hexagon "hex" [x, y where its
- *             design point (612, 167) lands, scale] (none without it), the speed line "sp" [x, y of the top cap's left end, x, y of the knee]
+ *             design point (612, 167) lands, scale, the share it is narrower than the photo's (0 = as is; the map view, same height)] (none without it), the speed line "sp" [x, y of the top cap's left end, x, y of the knee]
  *             and "sq" [x, y of the bottom end, cap length] with "sy" [y of the 0 label, the knee's label, the top label] (a marker rides it on
  *             the M_SCALE speed scale), the rev blade "bl" [top y, bottom y, left edge x at the top, its slope], "br" [right edge x at the top,
  *             its slope, its thickness, the maroon body's width], "bx" [scale, x of the top line's left end, x of the red base line's left end],
  *             "scale" [y of the max mark, y of 0], "rpmMax" (7000); three slanted strips "g0" (fuel), "g1" (the oil temperature, lit blue / green / red) and "g2"
- *             (the hybrid battery, 0..100 %): [left edge x at the top, top y, bottom y, slope]; "deco" draws the four tabs and the cyan swoosh under the hexagon; "hybridTach" true makes the blade a hybrid rev counter (see HYBRID_ENGINE_RPM; tokens {{tachUnit}}, {{chargeNote}}); "fuelH" true lays the first strip flat: "g0" is then [top y, panel width - right end x, panel width - left end x, 0] (the bar runs from x left to x right, empty at its left); "hole", "holeWhen",
+ *             (the hybrid battery, 0..100 %): [left edge x at the top, top y, bottom y, slope]; "deco" draws the four tabs and the cyan swoosh under the hexagon; "hybridTach" true makes the blade (mblade) or the rev bracket (sdash, with "chgOnBar" true: it also shows the charge) a hybrid rev counter (see hybrid_tach.js; tokens {{tachUnit}}, {{chargeNote}}); "fuelH" true lays the first strip flat: "g0" is then [top y, panel width - right end x, panel width - left end x, 0] (the bar runs from x left to x right, empty at its left); "hole", "holeWhen",
  *             "holeInset", "holeRadius" as fill (the hexagon and the backdrop are cut over the map window); "mapPlace": true on a layer with a
  *             "holeWhen" "mapUp" hole also has Waze on cluster (0.9.107+, map_window.js) draw the map right in that window while it shows
  *   navi      effect layer; the Navi theme (shaders.js navi): the speed band on the left "band" { tip [x, y], slope (dy per dx), bottom (y),
@@ -240,6 +240,7 @@ const Waze = require('./waze');
 const Screen = require('./screen');
 const { ClusterInfo } = require('./cluster_info');
 const { MapWindow } = require('./map_window');
+const hybridTach = require('./hybrid_tach');
 const { Danger, formatDistance, formatLimit } = require('./danger');
 const { freeRect } = require('./free_rect');
 const { shiftLightState } = require('./shift_light');
@@ -296,10 +297,8 @@ const WARN = { oil: 'warnOil', coolant: 'warnCoolant', boost: 'warnBoost' };
 const COLD_BELOW = { oil: 'oilCold', coolant: 'coolantCold' };
 const WARN_DIM = [120, 16, 22, 255];   // the dark red a temperature flashes from, up to the shift red, while over its warning limit
 const WARN_FLASH_MS = 300;
-// M Blade's hybrid rev counter (widget key "hybridTach", needs an app sharing the battery's power: eDrive Live): from this rpm up the engine
-// runs and the blade reads rpm; under it, driving on the battery, the blade (blue) reads the power, 10 kW per mark (70 kW = the top one);
-// the foot under the 0 fills green with the power going back into the battery (full at HYBRID_CHARGE_KW), as the original dial's CHARGE zone
-const HYBRID_ENGINE_RPM = 400, HYBRID_CHARGE_KW = 60, HYBRID_CHARGE_MIN_KW = 1;
+// The hybrid rev counter of M Blade and Sport (widget key "hybridTach"; the decision is in hybrid_tach.js): rpm while the engine runs, the battery's
+// power in blue while it alone drives (10 kW per mark), the charge in green (M Blade's foot under the 0, Sport's bracket).
 // a tile's bar (the Dyno theme's "tiles") per sensor (sensors.js id): the raw reading (hud _raw) between min and
 // max, "z" for a zoned bar (blue, dark blue, red past u_at); a sensor not here has no bar. rpm runs to the bar max.
 const TILE_BAR = {
@@ -1581,7 +1580,7 @@ class HudApp {
                 const kw = Math.max(0, d.torque) * rpm / 9549;
                 return String(Math.round(us ? kw * 1.341 : kw));
             }
-            case 'tachUnit': return this.hybridEv ? 'kW x 10' : '1/min x 1000';     // M Blade's rev counter: what its marks mean now
+            case 'tachUnit': return this.hybridEv ? 'kW x 10' : '1/min x 1000';     // the hybrid rev counter's marks: kW x 10 while it shows the power
             case 'chargeNote': return this.hybridCharge ? 'CHARGE' : '';
             case 'powerKw': {        // the battery's power in kW, - while charging (recuperation); -- when no app shares it
                 const p = this.ci.sharedPower();
@@ -1673,6 +1672,17 @@ class HudApp {
     _evRangeFull() {
         const s = this.ctx.settings.item('evRangeFull') ? this.setting('evRangeFull') : null;
         return isNum(s) && s > 0 ? s : (this.config.evRangeFull || 40);
+    }
+
+    /**
+     * The hybrid rev counter's state for a layer that asks for it ("hybridTach"), from the battery's power that eDrive Live shares and the
+     * engine's rpm: { kw, engineOff, ev, chg }. ev: the battery alone drives (engine off, power >= 0); chg: 0..1, the power going back into the
+     * battery over hybrid_tach's CHARGE_KW. Without a shared power (or its last read held) nothing is hybrid: ev false, chg 0, so the rpm shows alone.
+     */
+    _hybridTach(w, rpm) {
+        const flow = w.hybridTach === true && this.target === 'panel' && this.ctx.settings.item('sportPower') && this.ctx.settings.get('sportPower') !== false;
+        const pw = flow ? this.ci.sharedPower() : null;
+        return hybridTach.state(pw && !pw.old ? pw.kw : null, rpm);
     }
 
     /** The fuel tank's size in litres: the "tankLitres" setting, else config.tankLitres (the car sends litres only). */
@@ -1953,6 +1963,7 @@ class HudApp {
             const [redFrom, orange] = this._redMarks(w.rpmMax || 8000);
             c.uniform(ref, 'u_redFrom', [redFrom]);
             c.uniform(ref, 'u_orange', [orange]);
+            c.uniform(ref, 'u_hy', [0, 0, 0, 0]);
             c.uniform(ref, 'u_fuelSeg', w.fuelSeg);
             c.uniform(ref, 'u_oilSeg', w.oilSeg);
             c.uniform(ref, 'u_hole', this._hole(w));
@@ -2476,16 +2487,24 @@ class HudApp {
             const sp = this._raw('speed'), rpm = this._raw('rpm'), fuel = this._raw('fuel'), oil = this._raw(w.oilSignal || 'oil');
             const oMin = isNum(w.oilMin) ? w.oilMin : 50, oMax = isNum(w.oilMax) ? w.oilMax : 150;
             const q = (v) => Math.round(Math.min(1, Math.max(0, v)) * 500) / 500;
+            // the hybrid rev counter ("hybridTach"): engine off and the battery driving = its power in blue (10 kW per mark); engine off and the
+            // battery charging = the power in green ("chgOnBar"); else the rpm in red, as on a combustion car
+            const hy = this._hybridTach(w, rpm), bar = hy.ev ? 1 : (w.chgOnBar === true && hy.engineOff && hy.chg > 0 ? 2 : 0);
+            this.hybridEv = bar > 0; this.hybridCharge = bar === 2;
             const vals = [
                 q(isNum(sp) ? scaleFrac(us ? sp * 0.621371 : sp, SPEED_SCALE[us ? 'us' : 'metric']) : 0),
-                q(isNum(rpm) ? rpm / (w.rpmMax || 8000) : 0),
+                q(bar ? Math.abs(hy.kw) * 100 / (w.rpmMax || 8000) : isNum(rpm) ? rpm / (w.rpmMax || 8000) : 0),
                 q(isNum(fuel) ? fuel : 0),
                 q(isNum(oil) ? (oil - oMin) / (oMax - oMin) : 0),
             ];
-            const key = vals.join('|');
+            const key = vals.join('|') + '|' + bar;
             if (!force && key === x.last) return;
             x.last = key;
             x.c.uniform(x.ref, 'u_speed', [vals[0]]);
+            const marks = bar ? [2, 2] : this._redMarks(w.rpmMax || 8000);
+            x.c.uniform(x.ref, 'u_redFrom', [marks[0]]);
+            x.c.uniform(x.ref, 'u_orange', [marks[1]]);
+            x.c.uniform(x.ref, 'u_hy', bar === 1 ? [0.25, 0.6, 1.0, 1] : bar === 2 ? [0.2, 0.85, 0.5, 1] : [0, 0, 0, 0]);
             x.c.uniform(x.ref, 'u_rpm', [vals[1]]);
             x.c.uniform(x.ref, 'u_fuel', [vals[2]]);
             x.c.uniform(x.ref, 'u_oil', [vals[3]]);
@@ -2500,10 +2519,7 @@ class HudApp {
             const flash = over && Math.floor(now / WARN_FLASH_MS) % 2 === 0;
             const oc = over ? (flash ? this.theme.hot : WARN_DIM) : isNum(oil) && isNum(cold) && cold > 0 && oil < cold ? VERDICT.COLD : VERDICT['SPOT ON'];
             // the hybrid rev counter: the engine runs = rpm; the battery alone drives = its power on the blade (blue); charging = the foot fills green
-            const flow = w.hybridTach === true && this.target === 'panel' && this.ctx.settings.item('sportPower') && this.ctx.settings.get('sportPower') !== false;
-            const pw = flow ? this.ci.sharedPower() : null, kw = pw && !pw.old ? pw.kw : null;
-            const ev = isNum(kw) && kw >= 0 && !(isNum(rpm) && rpm >= HYBRID_ENGINE_RPM);
-            const chg = isNum(kw) && kw <= -HYBRID_CHARGE_MIN_KW ? Math.min(1, -kw / HYBRID_CHARGE_KW) : 0;
+            const hy = this._hybridTach(w, rpm), ev = hy.ev, chg = hy.chg, kw = hy.kw;
             this.hybridEv = ev; this.hybridCharge = chg > 0;
             const vals = [q(ev ? kw * 100 / (w.rpmMax || 7000) : isNum(rpm) ? rpm / (w.rpmMax || 7000) : 0), q(isNum(fuel) ? fuel : 0), q(isNum(oil) ? (oil - 50) / 100 : 0), q(isNum(hv) ? hv / 100 : 0),
                 q(isNum(spd) ? scaleFrac(us ? spd * 0.621371 : spd, M_SCALE[us ? 'us' : 'metric']) : 0), q(chg)];
