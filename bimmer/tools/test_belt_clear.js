@@ -8,7 +8,7 @@ const path = require('path');
 const visible = require('../shared/visible');
 
 const BELT = visible.BELT || [587, 663, 626, 700];
-const dir = path.join(__dirname, '..', 'apps', 'cluster_themes', 'hud', 'layouts');
+const dir = path.join(__dirname, '..', 'apps', 'shaktheme', 'hud', 'layouts');
 const hits = [];
 let n = 0;
 fs.readdirSync(dir).filter((f) => /\.json$/.test(f)).forEach((f) => {

@@ -2,7 +2,7 @@
 # Push edited layouts to the car over SSH, without reinstalling the app.
 #
 #   ./scripts/deploy.sh root@<car-ip-or-hostname> [layout.json ...]
-#   APP=cluster_themes ./scripts/deploy.sh root@<car> gt3.json      (the cluster app; default: HUD Widgets)
+#   APP=shaktheme ./scripts/deploy.sh root@<car> sport.json    (the cluster app; default: HUD Widgets)
 #
 # With no files it pushes the app's built-in layouts from apps/<app>/hud/layouts/.
 # They land in the app's data folder, <app>/data/layouts/, where a file overrides the
@@ -12,7 +12,7 @@
 # The app's folder is found on the car, not assumed: OAP installs each app under
 # /var/opt/public/oap/oap_<uid>/, and its source/package.json names the app.
 # UNVERIFIED until the first install: that path pattern (it comes from
-# cauliflowermossgrape/idrive7-apps' docs) and SSH access as root.
+# the MGU kit's docs) and SSH access as root.
 set -euo pipefail
 
 APP_ID="${APP:-idrive_hud_widgets}"

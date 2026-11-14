@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140" width="140" height="140">
+<!-- shaktheme_icon: the ShakTheme logo, source for apps/shaktheme/icon.png (140 px) and docs/images/logo.png (512 px).
+     Two gauge arcs make an S, blue over red, with a lit pivot between them, on a dark faceted tile.
+     Re-export: rsvg-convert -w 140 -h 140 shaktheme_icon.svg -o ../../apps/shaktheme/icon.png
+                rsvg-convert -w 512 -h 512 shaktheme_icon.svg -o ../../docs/images/logo.png -->
+<defs>
+  <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#1b2c4a"/><stop offset="1" stop-color="#080d18"/>
+  </linearGradient>
+  <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#8fd0ff"/><stop offset="1" stop-color="#2b7fff"/>
+  </linearGradient>
+  <linearGradient id="red" x1="1" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#ff6a5c"/><stop offset="1" stop-color="#e1001a"/>
+  </linearGradient>
+  <radialGradient id="pivot" cx=".5" cy=".5" r=".5">
+    <stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#ffffff" stop-opacity=".9"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="3.2" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <clipPath id="t"><rect x="8" y="8" width="124" height="124" rx="30"/></clipPath>
+</defs>
+<rect x="8" y="8" width="124" height="124" rx="30" fill="url(#tile)"/>
+<g clip-path="url(#t)">
+  <polygon points="8,8 78,8 8,86" fill="#ffffff" fill-opacity=".055"/>
+  <polygon points="132,40 132,132 52,132" fill="#2b7fff" fill-opacity=".10"/>
+  <polygon points="96,8 132,8 132,44" fill="#ffffff" fill-opacity=".045"/>
+</g>
+<rect x="8.75" y="8.75" width="122.5" height="122.5" rx="29.5" fill="none" stroke="#5aa2ff" stroke-opacity=".35" stroke-width="1.5"/>
+<g fill="none" stroke-width="13" stroke-linecap="round" filter="url(#glow)">
+  <path d="M 88.0 35.4 A 22 22 0 1 0 70 70" stroke="url(#blue)"/>
+  <path d="M 70 70 A 22 22 0 1 1 52.0 104.6" stroke="url(#red)"/>
+</g>
+<circle cx="70" cy="70" r="9" fill="url(#pivot)"/>
+</svg>

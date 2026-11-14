@@ -7,7 +7,7 @@ const assert = require('assert');
 const visible = require('../shared/visible');
 
 const root = path.join(__dirname, '..');
-const m = JSON.parse(fs.readFileSync(path.join(root, 'apps/cluster_themes/hud/layouts/m.json'), 'utf8'));
+const m = JSON.parse(fs.readFileSync(path.join(root, 'apps/shaktheme/hud/layouts/m.json'), 'utf8'));
 const byId = (id) => m.widgets.find((w) => w.id === id);
 assert.strictEqual(byId('oil').tempBy, 'oil'); assert.strictEqual(byId('oil').text, '{{oil}}');
 assert.strictEqual(byId('cool').tempBy, 'coolant'); assert.strictEqual(byId('cool').text, '{{coolant}}');
@@ -15,7 +15,7 @@ assert.ok(byId('oil_icon') && byId('cool_icon') && byId('oil_unit') && byId('coo
 assert.ok(!byId('ev_pct') && !byId('ev_pct_unit'), 'the exact % is not in the bottom row (the dial shows it)');
 assert.ok(byId('ev_range') && byId('ev_range_unit'), 'the electric range is');
 
-const app = JSON.parse(fs.readFileSync(path.join(root, 'apps/cluster_themes/app.json'), 'utf8'));
+const app = JSON.parse(fs.readFileSync(path.join(root, 'apps/shaktheme/app.json'), 'utf8'));
 const item = (k) => app.settings.find((s) => s.key === k);
 assert.strictEqual(item('oilCold').default, 75); assert.strictEqual(item('coolantCold').default, 70);
 assert.ok(item('oilCold').steps.includes(75) && item('coolantCold').steps.includes(70));

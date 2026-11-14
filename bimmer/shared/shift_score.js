@@ -16,7 +16,7 @@
  *    the last grade on screen. Shifts under 2500 rpm aren't scored.
  *  - peak rpm, held 15 s; limiter hits (within 60 rpm) counted per session.
  *
- * Redline's own values, when it runs: Redline writes /dev/shm/redline/shift.json (Redline 2.0.28+, bimmer-lab/apps#4)
+ * Redline's own values, when it runs: Redline writes /dev/shm/redline/shift.json (Redline 2.0.28+)
  * with its shift point for the gear (learned per gear from the torque curve) and its last graded shift. While that
  * file is under 3 s old, the shift point and the last shift come from it; else from the rules above.
  *

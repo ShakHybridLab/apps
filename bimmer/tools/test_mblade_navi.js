@@ -1,5 +1,5 @@
 'use strict';
-// The two Cluster Themes layouts copied from the screenshot: "M Blade" (mblade) and "Navi" (navi). Checks that they are
+// The two ShakTheme layouts copied from the screenshot: "M Blade" (mblade) and "Navi" (navi). Checks that they are
 // listed in every theme setting, carry what the owner asked for (the hybrid battery where the photo has the oil gauge, the
 // oil temperature in the free space on the right, the ONE OF ONE lettering (Navi only, centred under the shift light, gone while the Waze window is open),
 // the shift light where BMW's own sits), keep clear of BMW's black box, seat-belt light and the hood, and cut the map window
@@ -11,14 +11,14 @@ const visible = require('../shared/visible');
 
 const ROOT = path.join(__dirname, '..');
 const read = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
-const app = read('apps/cluster_themes/app.json');
+const app = read('apps/shaktheme/app.json');
 const NAMES = ['mblade', 'navi'];
 let bad = 0;
 function check(what, fn) { try { fn(); } catch (e) { bad++; console.log('FAIL ' + what + ': ' + e.message); } }
 const overlap = (w, z) => w.x < z[2] && w.x + w.w > z[0] && w.y < z[3] && w.y + w.h > z[1];
 
 NAMES.forEach((n) => {
-    const L = read('apps/cluster_themes/hud/layouts/' + n + '.json');
+    const L = read('apps/shaktheme/hud/layouts/' + n + '.json');
     const by = (id) => L.widgets.find((w) => w.id === id);
     const ofType = (t) => L.widgets.filter((w) => w.type === t);
 

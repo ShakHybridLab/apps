@@ -1,27 +1,14 @@
-# Cluster Themes
+# ShakTheme
 
-<img src="icon.png" width="72" align="left" alt="Cluster Themes icon">
+<img src="icon.png" width="72" align="left" alt="ShakTheme logo">
 
-Redraws the whole instrument cluster in a theme of your choice. Open **Cluster Themes** from the apps menu on the center screen: its own page has the themes with pictures, the readouts, the badge, the Waze map, warnings and settings.
+By shakzer. Redraws the whole instrument cluster of an iDrive 7 BMW in one of four themes: **Sport**, **M**, **M Blade** and **Navi**. Open **ShakTheme** from the apps menu on the center screen: its own menu (after BMW's iDrive 8.5) has the themes with pictures, the badge, the Waze map, warnings, display and settings.
 
-<p align="center"><img src="../../docs/images/cluster-gt3.gif" width="900" alt="GT3 race dash"></p>
-
-<p align="center"><img src="../../docs/images/page-cluster-themes.png" width="900" alt="The Cluster Themes page on the center screen"></p>
+<p align="center"><img src="../../docs/images/page-cluster-themes.png" width="900" alt="The ShakTheme page on the center screen"></p>
 
 ## Themes
 
-### GT3
-
-A race dash.
-
-- **Top:** 18 round shift lights (green, yellow, red, then blue) and a segmented rev bar. The lights come on from 3000 rpm and fill up to your shift point.
-- **Left:** speed, rpm, and your last shift with its grade.
-- **Middle:** the gear, with water and oil temperatures.
-- **Right:** boost, your shift point, and the clock.
-- **At the shift point** the lights, the rev bar, the rpm and the gear all go red.
-
-<p align="center"><img src="../../docs/images/cluster-gt3.png" width="900" alt="GT3 theme"></p>
-<p align="center"><img src="../../docs/images/cluster-gt3-map.png" width="900" alt="GT3 theme with the Waze map inside"></p>
+Four themes, plus BMW's own cluster.
 
 ### M
 
@@ -71,58 +58,6 @@ Neither theme has been tried on a car; they are checked on the bench against the
 
 <p align="center"><img src="../../docs/images/cluster-navi.png" width="900" alt="Navi theme"></p>
 
-### Minimal
-
-Just the speed, big, with the gear beside it and a thin fuel line under it (the reserve end is red). Nothing else.
-
-<p align="center"><img src="../../docs/images/cluster-minimal.png" width="900" alt="Minimal theme"></p>
-
-### Roadster
-
-Two classic round dials with chrome rings and an orange needle: speed on the left (0 to 160 mph, or 0 to 240 km/h), revs on the right (0 to 7000 rpm, a red band before the redline, and the ring turns red at your shift point). The speed also shows in figures inside its dial, and the gear sits between the dials in chrome. Six readouts left and right: oil, coolant and range, then boost, the clock and the outside temperature, each one changeable on the Readouts tab.
-
-<p align="center"><img src="../../docs/images/cluster-roadster.png" width="900" alt="Roadster theme"></p>
-
-### Track
-
-A race dash for track days: a shift bar across the top, a big gear with the speed under it, all four tyres (pressure and temperature, from the car's tyre monitor) on the left, and oil, coolant and boost on the right (changeable).
-
-<p align="center"><img src="../../docs/images/cluster-track.png" width="900" alt="Track theme"></p>
-
-### Drag
-
-A full-width shift bar and a 0 to 60 mph timer (0 to 100 km/h in metric). Stop for half a second and it reads READY; the clock starts the moment the car moves and stops at 60. Your best time is kept. Also the speed, the gear, the peak boost of the run, and one readout you pick. The timer runs off the car's speed signal, which reads a little under BMW's speedometer, so treat it as a good guide rather than a timing gear.
-
-<p align="center"><img src="../../docs/images/cluster-drag.png" width="900" alt="Drag theme"></p>
-
-### Rally
-
-A segmented rev arc sweeps across the top of the screen, white, then rally yellow from the shift zone, red and flashing at the redline. A huge gear sits in the middle with the speed under it. On the left a G-meter: a dot shows the cornering and braking or accelerating force (it moves into the turn and up when you speed up), white, then amber from 0.5 g, then red from 0.8 g, with a fading trail behind it and an outline of the most g you reached this drive in every direction. Under it the g now (left or right, accelerating or braking), the best of the drive and the range. Boost with a peak-hold bar and two readouts on the right.
-
-<p align="center"><img src="../../docs/images/cluster-rally.png" width="900" alt="Rally theme"></p>
-
-### Retro 80s
-
-An 80s digital dash: amber seven-segment digits with their unlit 8s showing faintly behind, for the gear, the speed and the clock. A segmented rev bar runs across the top, bar graphs show oil, water and fuel on the left, and boost and two readouts sit on the right.
-
-<p align="center"><img src="../../docs/images/cluster-retro80s.png" width="900" alt="Retro 80s theme"></p>
-
-### Cruise
-
-Calm and quiet for the highway: the speed in soft white, the gear beside it, and one row of trip figures (range, fuel, outside temperature, your average speed this drive and the time). No rev bar, and nothing red until the fuel runs low. The average speed counts only time moving and shows after the first minute of the drive.
-
-<p align="center"><img src="../../docs/images/cluster-cruise.png" width="900" alt="Cruise theme"></p>
-
-### Dyno
-
-A safety dash for hard pulls, in BMW M colours: twelve tiles in a grid (rpm, speed, boost, oil, coolant, intake air, cornering g, braking or accelerating g, the gear, fuel, range and outside temperature) and tall Power and Torque tiles on the right, each with a bar that runs light blue, dark blue, then red. A tile's number flashes red while its oil, coolant or boost reading is over your warning limit. A rev bar runs across the top. Every tile but the gear can show another sensor (Readouts tab). The gap between Power and Torque is where BMW draws its black gear box, so nothing is hidden under it.
-
-<p align="center"><img src="../../docs/images/cluster-dyno.png" width="900" alt="Dyno theme"></p>
-
-Minimal, Roadster, Track, Drag, Rally, Retro 80s, Cruise and Dyno have no map window yet; with "Show Waze map inside the theme" on, Waze stays in its usual place while they show.
-
-More themes are on the way.
-
 ## Off and drive modes
 
 - **Off (BMW's own cluster):** pick it as the theme and the app draws nothing, so BMW's cluster comes back.
@@ -134,14 +69,13 @@ More themes are on the way.
 ## Settings
 
 - **Theme**, and one per drive mode.
-- **Readouts:** pick which car sensor each GT3, Roadster, Track, Drag, Rally, Retro 80s or Dyno readout shows (speed, rpm, boost, temperatures, tyres, fuel, g, power and more). Plug-in hybrids can also show **Hybrid battery**, the high-voltage battery's charge in % (not yet checked on a hybrid). They can also show **Electric range**: that charge times the **Electric range when full** setting (40 km by default; an X3 xDrive30e is rated 42 to 50 km). It is an estimate, not BMW's own figure.
-- **Show Waze map inside the theme:** GT3, Sport, M, M Blade and Navi open a window in the middle and Waze on Cluster draws its map in it, above BMW's own map view, so nothing shows twice. When the map goes away the theme fills back in. While it is on, Waze's map on the HUD is off. Needs robertnisipeanu's Waze on Cluster; turning it off gives Waze its usual place back.
+- **Show Waze map inside the theme:** Sport, M, M Blade and Navi open a window in the middle and Waze on Cluster draws its map in it, above BMW's own map view, so nothing shows twice. When the map goes away the theme fills back in. While it is on, Waze's map on the HUD is off. Needs the Waze on Cluster app; turning it off gives Waze its usual place back.
 - **Blue background (Sport, M Blade, Navi):** how strong the navy faceted backdrop is, in % of the car's own blue (80 % by default, 0 = pure black, up to 140 %). The car brightens dark tints, so set it by eye. The M theme keeps its black background.
 - **Backdrop facets (Sport, M Blade, Navi):** how strong the lozenge pattern is, 0 to 100 % (100 % by default; 0 = plain navy).
-- **Sport theme: energy flow (kW) in place of the boost** (on by default): the Sport theme's bottom strip shows the high-voltage battery's power in kW (negative = charging, recuperation) instead of the boost while another app shares it. eDrive Live 1.9.6 or later does, when this app asks for it (it writes its own `wanted-cluster_themes.json` in `/dev/shm/cluster-info`, once a second, and removes it when the theme no longer needs it). When nothing shares the power, or eDrive Live stops (3 s without an update), the boost is shown as before. Off: the boost always stays. The other themes keep their boost.
+- **Sport theme: energy flow (kW) in place of the boost** (on by default): the Sport theme's bottom strip shows the high-voltage battery's power in kW (negative = charging, recuperation) instead of the boost while another app shares it. eDrive Live 1.9.6 or later does, when this app asks for it (it writes its own `wanted-shaktheme.json` in `/dev/shm/cluster-info`, once a second, and removes it when the theme no longer needs it). When nothing shares the power, or eDrive Live stops (3 s without an update), the boost is shown as before. Off: the boost always stays. The other themes keep their boost.
 - **Oil / Coolant temperature: blue below** (M theme): the oil and coolant readouts in the M theme's bottom row are blue while cold (under 75 °C for the oil, 70 °C for the coolant by default), green once warm, and flash bright red and dark red over their warning limit. 0 = never blue.
 - **Danger zone alert (M Blade and Navi):** shows the alert card while another app reports a zone ahead (see the two themes above). Off by default; nothing appears until an app writes the file.
-- **Badge:** the model name, like "BMW X3 M40i", as text in the theme's font (GT3 top left, Sport and M bottom centre). Off by default.
+- **Badge:** the model name, like "BMW X3 M40i", as text in the theme's font (Sport and M, at the bottom). Off by default.
 - **Warnings:** oil, coolant and boost limits. A readout over its limit flashes red (oil 130°C and coolant 115°C by default, boost off).
 - **Test the shift lights:** runs the rpm up to the shift point for about 4 seconds while the car stands.
 - **Night colours:** after sunset the theme's whites and greys dim to 60% (Auto, the default), or Off.
@@ -154,8 +88,7 @@ More themes are on the way.
 - **Cold-engine rev guard:** until the oil reaches 80°C, the shift point starts at 4500 rpm and climbs as the oil warms up.
 - **Show boost.**
 - **Leave BMW's bottom strip clear** (off by default): the theme draws only above BMW's own bottom strip (range, clock, belt light, P), squeezed a little to fit. Try it if BMW draws black boxes over the theme: one M car owner found that leaving the strip clear stopped them (issue #5). Not yet tested on a car with this setting.
-- **Leave room for the driver camera** (off by default): for newer cars with a driver attention camera in the top middle of the cluster, where other cars show the model badge. The shift lights and rev bars (GT3, Track, Dyno, Rally) become two mirrored wings either side of the camera that fill from the outer ends in towards it and meet at the shift point, Track's rpm numbers are left out, and M's logo is hidden. The camera's spot is taken from where the badge sits on a car without one. Not yet tested on a car with a camera; please report how it lines up on yours.
-- **G-meter** (its own tab): the range (0.8, 1.0, 1.2, 1.5 or 2.0 g at the edge; 1.2 by default), the trail (off, 1, 2 or 4 seconds), **Swap left / right** (if the dot goes the wrong way in a turn) and **Brake on top**, the best left, right, accelerating, braking and overall g of the drive with a Reset button, and a live copy of the meter. The g comes from the car's own acceleration sensor: parked on level ground it reads 0.00, and a hill adds a little.
+- **Leave room for the driver camera** (off by default): for newer cars with a driver attention camera in the top middle of the cluster, where other cars show the model badge. The shift light moves aside and M's logo is hidden. The camera's spot is taken from where the badge sits on a car without one. Not yet tested on a car with a camera; please report how it lines up on yours.
 - **Demo data:** fake driving data for trying it out parked.
 - **Calibration grid:** a theme that draws lines every 50 px with labels, for checking on a photo where things land on the real screen. It also carries a few test marks used to measure cluster-render's limits on the car.
 - **Map calibration:** a theme that leaves BMW's whole map window open with a grid through it, for photographing exactly what shows through the map cut-out with a navigation map up.
@@ -170,16 +103,20 @@ More themes are on the way.
 
 ## On the car
 
-Tested on a 2020 X3 M40i. Checked on the car: GT3 and Dyno draw complete, and the Waze map shows inside GT3 and Sport. Still to be checked:
+**Not tried on a car yet.** Everything was checked on the bench (the themes drawn frame by frame, the menu in the kit's emulator) and by automatic tests (`node tools/test_*.js`). To be checked in a real X3 30e:
 
-- the other themes on the real screen, including M since its 0.10.0 rework;
-- a theme and a HUD layout showing together (0.14.5);
-- whether BMW's warning lights still show over the dash (start the car with a seat belt off and look);
+- the four themes on the real screen, with and without the Waze map window;
+- whether BMW's warning lights still show over the themes (start the car with a seat belt off and look);
+- the battery charge and power readings, and the drive mode numbers the car sends;
 - the clock with a named time zone, and the fuel % from the engine unit;
-- the Hybrid battery readout on a plug-in hybrid.
+- the menu on the real centre screen (the emulator may differ a little).
 
-If something looks wrong on your car, the last line of the Settings tab says what the app is doing and why anything is not drawn. Please open an issue with it.
+If something looks wrong on your car, the last line of the Settings tab says what the app is doing and why anything is not drawn.
 
 See [Use at your own risk](../../README.md#use-at-your-own-risk) before installing.
 
 Version history is in the repo's [CHANGELOG.md](../../CHANGELOG.md).
+
+## Licence
+
+ShakTheme's changes and additions are by shakzer, under the MIT licence. The app builds on code under other free licences, whose notices must stay with it: see `NOTICE` and the repository's `LICENSE` and `LICENSES.md`.

@@ -12,8 +12,8 @@
  * Tokens are counted as the compiler sees them: comments and #ifdef'd-out code gone, every function inlined into
  * main (a function called 6 times counts 6 times), a loop's body once.
  *
- * Our own (bimmer-lab's 2020 X3, G01):
- *   8748 tokens, inlined (Cluster Themes M "mdash", one whole-panel layer)  holds (Nov 10 2026, cluster-render 0.5.3)
+ * Measured on a 2020 X3 (G01):
+ *   8748 tokens, inlined (ShakTheme M "mdash", one whole-panel layer)  holds (Nov 10 2026, cluster-render 0.5.3)
  * That is over the 8724 that crashed james10424's display, so tokens alone are no hard limit: past 8748 is only
  * "untested". Texture reads keep their crash mark (no conflicting data).
  *
@@ -202,7 +202,7 @@ if (require.main === module) {
                 const r = layer(src, w.w, w.h);
                 if (broken || r.level === 'crash') worst = 'crash';
                 if (r.level === 'ok' && !broken && !process.argv.includes('--all')) return;
-                console.log((broken || r.level === 'crash' ? 'X ' : r.level === 'warn' ? '! ' : '  ') + (app.replace('idrive_hud_widgets', 'hud').replace('cluster_themes', 'cluster') + '/' + f.replace('.json', '') + ' ' + w.id + ' (' + w.type + ' ' + w.w + 'x' + w.h + ')').padEnd(44) + r.text + (broken ? ', does not compile' : ''));
+                console.log((broken || r.level === 'crash' ? 'X ' : r.level === 'warn' ? '! ' : '  ') + (app.replace('idrive_hud_widgets', 'hud').replace('shaktheme', 'cluster') + '/' + f.replace('.json', '') + ' ' + w.id + ' (' + w.type + ' ' + w.w + 'x' + w.h + ')').padEnd(44) + r.text + (broken ? ', does not compile' : ''));
                 if (broken) console.log(b.errors.replace(/^/gm, '      '));
             });
         });

@@ -1,7 +1,7 @@
 'use strict';
 /**
- * The drawing engine, shared by every bimmer-lab app that draws through cluster-render
- * (robertnisipeanu/idrive-apps, native/cluster-render): it connects, builds the active layout's layers in
+ * The drawing engine, shared by every app here that draws through cluster-render
+ * (native/cluster-render): it connects, builds the active layout's layers in
  * the active theme (one effect layer per shader widget, the image widgets packed into sheets, below), and
  * keeps live widgets updated from the kit's car.js.
  * Started by an app's main.js with the kit's ctx (settings, signals, log, spec, dataDir).
@@ -128,7 +128,7 @@
  *             furthest g this drive in 48 directions, role "envColor", fg), a trail of the last "gTrail" seconds (2;
  *             0 = none) and the dot: role "dot" (fg) under 0.5 g, amber to 0.8 g, the shift red past it; roles "line"
  *             (dim), "lineAlpha" 0-255 (150; 255 on the HUD, where see-through is faint). The dot moves the way the
- *             car accelerates (into the turn, up when speeding up), as cauliflowermossgrape's G-Force draws it; the
+ *             car accelerates (into the turn, up when speeding up), as a G-meter usually draws it; the
  *             settings "gFlipLat" (the car's left / right the other way round) / "gFlipLong" (brake on top) swap the
  *             drawing, a layout's "flipX" / "flipY" swap again. g is averaged over 150 ms and a sample over 3 g is
  *             dropped (also for the tokens). The envelope and the bests (tokens, the page's G-meter tab) last until
@@ -184,7 +184,7 @@
  * rpm is smoothed (a 120 ms filter, and the readout moves in 50 rpm steps only when it changes by 40 or
  * more), so idle wobble doesn't show, as on BMW's own tach. Shift scoring uses the raw rpm.
  * Boost: FES displayBoostPressure while it's valid, else (app.json config.dme) the engine unit over
- * read-only UDS, absolute pressure minus outside air pressure, as cauliflowermossgrape's car_vitals does.
+ * read-only UDS, absolute pressure minus outside air pressure, as the kit's car vitals do.
  *
  * Text tokens: {{speed}} {{u:speed}} {{oil}} {{coolant}} {{boost}} {{u:boost}} {{rpm}}
  * {{gear}} (P / R / N, D3 / S3 / M3 by the shifter programme, or just 3 when the selector position is unknown), {{gearnum}} (3, or P / R / N)
@@ -206,10 +206,10 @@
  * blue), green once it is warm, and over the warning limit it flashes between the shift red and a dark red.
  * Shift-light test (testShift(), the page's Alerts tab): for about 4 s the rpm every widget sees climbs from 1500 to just
  * past the shift point and holds there; only while the car stands. Shift scoring keeps the car's own rpm.
- * Night colours (Cluster Themes "nightDim" on Auto): after sunset (sun.js, at _sunPlace(): the time zone's middle) a layout's own theme is
+ * Night colours (ShakTheme "nightDim" on Auto): after sunset (sun.js, at _sunPlace(): the time zone's middle) a layout's own theme is
  * built with its whites and greys at 60 %; the minute timer rebuilds at sunset and sunrise.
  *
- * Boost is a PUSH signal, not a diagnostic poll: tracing cauliflowermossgrape's
+ * Boost is a PUSH signal, not a diagnostic poll: tracing the kit's
  * car_vitals showed its boost reading is de.bmw.infotainment.drivingexcitement.FES /
  * statusSwitchDriveDynamicSport2.displayBoostPressure, factor 0.01, offset 0,
  * invalid 255. car_vitals itself treats that field as unreliable on some cars, so
@@ -279,7 +279,7 @@ const PLACE_KEYS = ['hudX', 'hudY', 'hudScale', 'stripClear'];
 const STRIP_TOP = 662;
 // settings that only change what a text shows (the next tick paints it), no rebuild
 const LIVE_KEYS = ['warnOil', 'warnCoolant', 'warnBoost', 'oilCold', 'coolantCold', 'badge', 'badgeBMW', 'gFlipLat', 'gFlipLong', 'gRange', 'gTrail'];
-// g (after cauliflowermossgrape's G-Force, MIT, idea only): a sample over G_BAD is a bad reading, not a corner;
+// g (the idea of a G-meter app, no code): a sample over G_BAD is a bad reading, not a corner;
 // the rest are averaged over G_AVG_MS so kerbs and potholes don't throw the dot about
 const G_BAD = 3;
 const G_AVG_MS = 150;
@@ -309,7 +309,7 @@ const TILE_BAR = {
 const TILE_MAX = 14;       // half a flash: red, then the normal colour
 // the shift-light test (page.js Alerts): rpm climbs from TEST_FROM to just past the shift point, then holds
 const TEST_FROM = 1500, TEST_CLIMB_MS = 2500, TEST_HOLD_MS = 1200;
-// night colours (Cluster Themes "nightDim"): after sunset the theme's whites and greys go to this brightness
+// night colours (ShakTheme "nightDim"): after sunset the theme's whites and greys go to this brightness
 const NIGHT_DIM = 0.6;
 // the car's display units (Vehicle statusNewCurrentUnitsStatusExt, as BMW's own x_call reads them; car_vitals, MIT)
 const PRESS_UNITS = { 1: 'BAR', 2: 'KPA', 3: 'PSI' }, TEMP_UNITS = { 1: 'C', 2: 'F' };
@@ -321,12 +321,12 @@ const MODE_NAME = { hybrid: 'Hybrid', electric: 'Electric Eco Pro', eco: 'Electr
 const FRESH_MS = 3000;
 const TZ_AUTO = -9999;           // the "timeZone" setting's Automatic: the head unit's own time zone
 // A plug-in hybrid's high-voltage battery charge: read-only UDS 22 DDBC from its battery unit (SME, 0x07), 0.1 %.
-// The read Redline 2.0 and eDrive use (cauliflowermossgrape/idrive7-apps, MIT; apps/redline/electrical.js).
+// The read Redline 2.0 and eDrive use (the MGU kit's Redline and eDrive apps, MIT).
 // Asked every HV_EVERY_MS only while a shown readout uses it; a car that doesn't answer is asked once a minute.
 // Not checked on a car by us (no hybrid here, Nov 10 2026).
 const HV_SOC = { ecu: 0x07, did: 'DDBC', bytes: 2, at: 0, factor: 0.1, offset: 0, min: 0, max: 100, timeoutMs: 1000 };
 // The fuel level as a % from the engine unit: standard OBD-II PID 2F ("fuel tank level input", A x 100 / 255), as
-// cauliflowermossgrape's Live Data lists it (apps/live_data/std.js, MIT). A % needs no tank size; the car's own fuel
+// the kit's Live Data lists it (MIT). A % needs no tank size; the car's own fuel
 // signal is litres only. Whether BMW engine units answer it is not known yet (Nov 11 2026): without an answer the
 // gauge falls back to litres / the "tankLitres" setting.
 const FUEL_OBD = { obd: '2F', bytes: 1, at: 0, factor: 100 / 255, offset: 0, min: 0, max: 100, timeoutMs: 1000 };
@@ -345,14 +345,14 @@ function scaleFrac(v, marks) {
 
 /**
  * The drive mode from FES statusFESVehicleDynamicSwitchHMI.actualValueModeDrivingExperience: names or wire
- * numbers (cauliflowermossgrape's live_data signals.js, MIT): 1 Sport, 2 Sport+, 3 Sport individual,
+ * numbers (the kit's live_data signals, MIT): 1 Sport, 2 Sport+, 3 Sport individual,
  * 4 Comfort, 5 Comfort+, 6 Comfort individual, 7 Eco Pro, 8 Eco Pro+, 9 Eco Pro individual, 10 Adaptive.
  */
 /** The mode's variant: 'plus' (Sport+ / Comfort+ / Eco Pro+: wire 2, 5, 8, or PLUS / EXPERT in the name), 'individual'
  *  (wire 3, 6, 9, or INDIVID in the name), else null. */
 function driveVariantOf(raw) {
     const v = typeof raw === 'string' && /^\d+$/.test(raw.trim()) ? Number(raw.trim()) : raw;
-    // 23 = PHEV Sport Plus; 16 / 21 = PHEV Sport / Electric individual (cauliflowermossgrape's ambient_config, MIT)
+    // 23 = PHEV Sport Plus; 16 / 21 = PHEV Sport / Electric individual (the kit's ambient_config, MIT)
     if (typeof v === 'number') return v === 2 || v === 5 || v === 8 || v === 23 ? 'plus' : v === 3 || v === 6 || v === 9 || v === 16 || v === 21 ? 'individual' : null;
     if (typeof v !== 'string') return null;
     return /PLUS|EXPERT/i.test(v) ? 'plus' : /INDIVID/i.test(v) ? 'individual' : null;
@@ -378,7 +378,7 @@ function driveModeOf(raw) {
         if ((v >= 1 && v <= 3) || v === 15 || v === 16 || v === 23 || v === 28) return 'sport';     // 15 / 16 / 23: PHEV Sport, Sport individual, Sport Plus; 28 Boost
         if ((v >= 7 && v <= 9) || v === 18) return 'eco';                                           // 18: PHEV Hybrid Eco (Eco Pro)
         if (v === 20 || v === 21) return 'eco';                                                     // PHEV Electric, Electric individual: this car's Electric Eco Pro
-        if ((v >= 4 && v <= 6) || v === 10 || v === 17 || v === 19 || v === 22) return 'hybrid';   // no Comfort on a plug-in hybrid: Hybrid; 22: PHEV Battery Control (eroobeeroo's FES table)
+        if ((v >= 4 && v <= 6) || v === 10 || v === 17 || v === 19 || v === 22) return 'hybrid';   // no Comfort on a plug-in hybrid: Hybrid; 22: PHEV Battery Control (the Cluster Centre FES table)
         return null;
     }
     if (typeof v !== 'string') return null;
@@ -394,7 +394,7 @@ function driveModeOf(raw) {
 /**
  * The drive mode as the car's screens name it, for the small text in every theme ({{modeName}}): the X3 30e's
  * Hybrid, Electric, Electric Eco Pro, Electric Individual, Sport, Sport Individual, Sport Plus and XtraBoost.
- * Wire numbers from cauliflowermossgrape's ambient_config (MIT): 15 Sport, 16 Sport individual, 17 Hybrid, 18 Hybrid
+ * Wire numbers from the kit's ambient_config (MIT): 15 Sport, 16 Sport individual, 17 Hybrid, 18 Hybrid
  * Eco (this car calls it Electric Eco Pro), 19 Hybrid comfort, 20 Electric, 21 Electric individual, 22 Battery Control, 23 Sport Plus,
  * 28 Boost. A number or word that is not known gives null (the group's own name is used then).
  */
@@ -518,7 +518,7 @@ class HudApp {
         this.layoutSlots = [];           // the active layout's "slots"
         this.placed = [];                // every layer made for the layout: { c, ref, x, y, w, h } (where the layout puts it)
         this.mapLayout = false;          // the active layout has a map window (a widget with holeWhen "mapUp")
-        // the Waze map inside the theme (Cluster Themes, config.waze; waze.js): "mapUp" is on while it shows
+        // the Waze map inside the theme (ShakTheme, config.waze; waze.js): "mapUp" is on while it shows
         this.waze = this.config.waze ? new Waze(Object.assign({ dataDir: ctx.dataDir }, this.config.waze), this.log, () => this._guard('waze', () => {
             if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuild(); else this._status();
         })) : null;
@@ -536,7 +536,7 @@ class HudApp {
         // cluster-render 0.5.1+ gives the panel its own scene id, so the cluster and the HUD can show at once; null until
         // its status says (sceneIdsOf), false while they share one (older versions, or a panel fallen back after the guard)
         this.scenesApart = null;
-        // the hand-over with eroobeeroo's Cluster Info / Cluster Centre (cluster_info.js): the battery charge in, out and who asks for it
+        // the hand-over with the Cluster Info / Cluster Centre apps (cluster_info.js): the battery charge in, out and who asks for it
         this.ci = new ClusterInfo({ id: ctx.spec && ctx.spec.id, name: ctx.spec && ctx.spec.title, onChange: () => this._guard('power', () => this._powerChanged()) }, this.log);
         // the energy flow (the battery's power in kW) another app shares (eDrive Live): the Sport theme shows it in place of the boost
         // while it does (widgets with toggle "power", the boost's with "boostShown"), and the layout is rebuilt when it comes or goes
@@ -704,14 +704,14 @@ class HudApp {
 
     _setupVehicleData() {
         const extra = {
-            // fuel and range (cauliflowermossgrape's live_data, MIT): litres (255 = none) and km (4095 = none)
+            // fuel and range (the kit's live_data, MIT): litres (255 = none) and km (4095 = none)
             'de.bmw.infotainment.KombiIF': {
                 statusRangeTankStatus: (v) => {
                     const f = v && v.fluidLevelFuelTank, r = v && v.range;
                     this.fuelL = isNum(f) && f >= 0 && f < 255 ? f : null;
                     this.rangeKm = isNum(r) && r >= 0 && r < 4095 ? r : null;
                 },
-                // a plug-in hybrid's own electric range, as the cluster shows it (eroobeeroo's Cluster Centre reads the same signal,
+                // a plug-in hybrid's own electric range, as the cluster shows it (Cluster Centre reads the same signal,
                 // on a G05 PHEV): in the unit the cluster is set to, so miles when the "units" setting is US. 0xFFFE and up: none.
                 // Not on every car: without it the electric range is the charge times what a full battery gives (evRangeFull).
                 displayRangeElectricVehicle: (v) => {
@@ -980,7 +980,7 @@ class HudApp {
             const wantBoost = hasBoost && this.needsBoost && now - this.boostFesAt >= FRESH_MS;
             const wantIntake = hasIntake && this.needsIntake && now - intakeAsk >= 2000;   // a temperature: every 2 s is plenty
             // the charge is wanted by a shown widget or by Cluster Info / Cluster Centre; another app that shares it
-            // (eDrive Live, or the other bimmer-lab app) is believed instead of asking the battery unit a second time
+            // (eDrive Live, or the other app here) is believed instead of asking the battery unit a second time
             const wantHv = (this.needsHv || this.ci.wantsBattery()) && !isNum(this.ci.sharedSoc()) && now - hvAsk >= (hvMiss >= 3 ? HV_RETRY_MS : HV_EVERY_MS);
             const wantFuel = this.needsFuel && now - fuelAsk >= (fuelMiss >= 3 ? FUEL_RETRY_MS : FUEL_EVERY_MS);
             if (busy || this.car.data().demo || (!wantBoost && !wantIntake && !wantHv && !wantFuel)) return;
@@ -1247,7 +1247,7 @@ class HudApp {
         return sun.isNight(Date.now(), ...this._sunPlace()) ? 'night' : this.setting('dayTheme');
     }
 
-    /** Night colours now: Cluster Themes' "nightDim" on Auto, a theme of the layout's own, and the sun down. */
+    /** Night colours now: ShakTheme' "nightDim" on Auto, a theme of the layout's own, and the sun down. */
     _nightDim() {
         if (!this.ctx.settings.item('nightDim') || this.setting('nightDim') !== 'auto' || !this.layoutTheme) return false;
         return sun.isNight(Date.now(), ...this._sunPlace());

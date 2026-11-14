@@ -2,7 +2,7 @@
 
 ## radars_fr_zones.json
 
-Les zones de danger de la France, pour l'alerte « zone de danger » de Cluster Themes (M Blade et Navi). **Pas encore branchée** : l'app n'a pas la position de la voiture (voir `shared/danger.js`), et ce fichier n'est livré dans aucune app.
+Les zones de danger de la France, pour l'alerte « zone de danger » de ShakTheme (M Blade et Navi). **Pas encore branchée** : l'app n'a pas la position de la voiture (voir `shared/danger.js`), et ce fichier n'est livré dans aucune app.
 
 - **Source :** Ministère de l'Intérieur, [« Liste des radars fixes en France »](https://www.data.gouv.fr/datasets/liste-des-radars-fixes-en-france/), data.gouv.fr, version du 30 décembre 2025 (3 309 radars fixes, outre-mer compris ; ni radars mobiles ni contrôles de police).
 - **Licence :** [Licence Ouverte / Open Licence 2.0](https://www.etalab.gouv.fr/licence-ouverte-open-licence) (Etalab) : réutilisation libre, à condition de citer la source et la date, ce qui est fait ici.

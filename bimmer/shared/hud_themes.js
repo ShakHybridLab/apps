@@ -188,7 +188,7 @@ const THEMES = {
 // every theme: the shift-point red, used by "hot" (the gear and SHIFT at the shift point, the rev bar past it)
 Object.keys(THEMES).forEach((k) => { THEMES[k].hot = [255, 42, 42, 255]; });
 
-// Redline layout (after cauliflowermossgrape's Redline app): rev bar segments ramp rev.from -> rev.to up to
+// Redline layout (after the kit's Redline app): rev bar segments ramp rev.from -> rev.to up to
 // the shift point; the shift lights run green -> yellow -> red in every theme; grade badges by verdict.
 const LIGHTS = { green: [47, 210, 122], yellow: [255, 194, 26], red: [255, 42, 42], blue: [40, 110, 255], orange: [255, 140, 18] };
 const VERDICT = {

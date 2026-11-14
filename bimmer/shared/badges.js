@@ -1,6 +1,6 @@
 'use strict';
 /**
- * badges.js - the model name a cluster theme can show (Cluster Themes, page.js Badge tab, the {{badge}} token).
+ * badges.js - the model name a cluster theme can show (ShakTheme, page.js Badge tab, the {{badge}} token).
  * Text only, in the theme's own font: no BMW or M logo artwork in this public repo (takedown risk).
  * The "badge" setting holds the model ("X3 M40i", or "none"); "badgeBMW" puts "BMW " in front.
  * app.json's "badge" options must list every model here (tools: none; keep the two in step by hand).

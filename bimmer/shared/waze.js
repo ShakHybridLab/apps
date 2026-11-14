@@ -1,8 +1,8 @@
 'use strict';
 /**
- * waze.js - "Show Waze map inside the theme" (Cluster Themes, page.js Map tab).
+ * waze.js - "Show Waze map inside the theme" (ShakTheme, page.js Map tab).
  *
- * robertnisipeanu's waze-on-cluster draws the phone's map on cluster-render's "map" target by default: the KOMBI
+ * waze-on-cluster draws the phone's map on cluster-render's "map" target by default: the KOMBI
  * slot UNDER BMW's gauges, so BMW's own map-view readouts (speed, consumption, badge) always sit over it and a
  * see-through hole in a theme shows them too. Nothing can hide that overlay. Its other target, "panel", puts
  * the map inside the panel scene our theme draws on, ABOVE BMW's gauges: our frame is drawn over it with a

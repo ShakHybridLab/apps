@@ -1,8 +1,9 @@
 'use strict';
 /**
  * page.js - the app's own centre-screen page (both apps), in place of BMW's plain settings list.
- * Look: design/settings-mock-v2.png (approved Nov 7 2026): near-black with a soft blue glow, a rail of
- * tabs on the left (icon, name, current value), glass cards, BMW blue for what is on.
+ * Look: after the menus of BMW's iDrive 8.5 (Nov 14 2026): graphite black with a faint cool glow, a menu on the left
+ * (icon chip, name, current value; the open entry is a bright blue pill), large rounded glass cards, a blue ring and
+ * glow round what is picked, pill switches, and the app's mark at the foot of the menu.
  *
  * Drawn on the kit's canvas screen (kit/runtime/display.js): on the Store's renderer it fills the screen at
  * up to 60 fps and every tap or controller press lands on a target (cv.target); without the renderer the
@@ -29,11 +30,11 @@ const tz = require('./tz');
 const W = 1600, H = 520;
 const A = G.withAlpha;
 const C = {
-    bg: '#05070a', glow: '#0d1a2e', text: '#eef2f8', dim: '#8a96a8', label: '#6f7b8f', line: '#ffffff12',
-    blue: '#2b7fff', blueHi: '#5aa2ff', blueDeep: '#1c69d4', live: '#7fd3a0', off: '#c3cad6',
+    bg: '#0a0b0e', glow: '#161c27', text: '#f3f5f8', dim: '#9aa4b4', label: '#7d8798', line: '#ffffff16',
+    blue: '#1e8fff', blueHi: '#62b4ff', blueDeep: '#1266d8', live: '#6fd69b', off: '#c7cdd8',
 };
 const RAIL = { x: 16, y: 54, w: 252, h: 66, gap: 8 };
-const RAIL7 = { x: 16, y: 54, w: 252, h: 58, gap: 6 };     // seven tabs or more: a little shorter, so they fit
+const RAIL7 = { x: 16, y: 54, w: 252, h: 54, gap: 6 };     // six tabs or more: a little shorter, so they fit (and the app's mark below)
 const CX = 300, CR = 1584, CW = CR - CX;
 const MODES = [['inHybrid', 'Hybrid'], ['inEco', 'Electric Eco Pro'], ['inSport', 'Sport Plus']];
 const MODE_KEY = { hybrid: 'inHybrid', electric: 'inEco', eco: 'inEco', sport: 'inSport', comfort: 'inHybrid' };
@@ -46,6 +47,7 @@ const TAB = {
     alerts: { name: 'Alerts', icon: 'alert' },
     gmeter: { name: 'G-meter', icon: 'gmeter' },
     colours: { name: 'Colours', icon: 'colour' },
+    display: { name: 'Display', icon: 'colour' },
     settings: { name: 'Settings', icon: 'cog' },
 };
 
@@ -92,8 +94,8 @@ class Page {
         if (s.type === 'number' && (WARN_KEYS.indexOf(k) >= 0 || COLD_KEYS.indexOf(k) >= 0)) return warnText(k, v, this.get('units') === 'us');
         if (k === 'timeZone') return tzText(v);
         if (k === 'tankLitres') return fmtInt(v) + ' L';
-        if (k === 'evRangeFull') return fmtInt(v) + (this.get('units') === 'us' ? ' km (' + fmtInt(v * 0.621371) + ' mi)' : ' km');
-        if (s.type === 'number') return k === 'shiftBefore' ? (v ? fmtInt(v) + ' rpm before' : 'At the redline') : fmtInt(v) + ' rpm';
+        if (k === 'evRangeFull') return fmtInt(v) + (this.get('units') === 'us' ? ' km (' + fmtInt(Math.round(v * 0.621371)) + ' mi)' : ' km');
+        if (s.type === 'number') return k === 'shiftBefore' ? (v ? fmtInt(v) + ' rpm before' : 'At the redline') : fmtInt(v) + ' ' + (s.unit || 'rpm');
         return this.optLabel(k, v);
     }
     /** the layout showing now, else the one meant to (before cluster-render answers) */
@@ -141,7 +143,7 @@ class Page {
         const bottom = G.pageBottom(cv);
         const h = bottom + 8;
         cv.clear(C.bg);
-        cv.gradientRect(0, 0, W, h, [[0, C.glow], [0.55, '#070a10'], [1, C.bg]]);
+        cv.gradientRect(0, 0, W, h, [[0, C.glow], [0.5, '#0e1118'], [1, C.bg]]);
         const on = this.hud.activeName && this.hud.activeName !== 'off';
         const demo = this.hud.car && this.hud.car.data().demo;
         G.frame(cv, this.theme(), [], -1, [
@@ -152,7 +154,7 @@ class Page {
         const target = cv.target;
         if (this.picker || this.confirm) cv.target = function () { return this; };
         this.rail(cv, bottom);
-        const body = { look: this.lookTab, readouts: this.readoutsTab, position: this.positionTab, map: this.mapTab, colours: this.coloursTab, badge: this.badgeTab, alerts: this.alertsTab, gmeter: this.gmeterTab, settings: this.settingsTab }[this.tab];
+        const body = { look: this.lookTab, readouts: this.readoutsTab, position: this.positionTab, map: this.mapTab, colours: this.coloursTab, badge: this.badgeTab, alerts: this.alertsTab, gmeter: this.gmeterTab, display: this.displayTab, settings: this.settingsTab }[this.tab];
         if (body) body.call(this, cv, bottom);
         cv.target = target;
         if (this.picker) this.drawPicker(cv, bottom);
@@ -162,20 +164,32 @@ class Page {
     theme() { return this.ctx.theme(); }
 
     rail(cv, bottom) {
-        cv.fillRect(RAIL.x + RAIL.w + 15, 50, 1, bottom - 56, C.line);
-        const R = this.cfg.tabs.length > 6 ? RAIL7 : RAIL, dy = (66 - R.h) / 2;
+        const R = this.cfg.tabs.length > 5 ? RAIL7 : RAIL, dy = (66 - R.h) / 2;
         this.cfg.tabs.forEach((id, i) => {
             const x = R.x, y = R.y + i * (R.h + R.gap), w = R.w, h = R.h, sel = id === this.tab;
             if (sel) {
-                cv.card(x, y, w, h, 12, [[0, A(C.blue, 0.30)], [1, A(C.blueDeep, 0.10)]]);
-                cv.strokeRoundRect(x, y, w, h, 12, 1, A(C.blueHi, 0.35));
-                cv.roundRect(x, y + 12, 4, h - 24, 2, C.blue);
+                // the open entry: a bright blue pill with a soft glow round it
+                cv.strokeRoundRect(x - 3, y - 3, w + 6, h + 6, 22, 5, A(C.blueHi, 0.14));
+                cv.card(x, y, w, h, 20, [[0, '#2c9fff'], [1, '#1569dc']]);
+                cv.strokeRoundRect(x, y, w, h, 20, 1.5, A('#ffffff', 0.35));
+            } else {
+                cv.card(x, y, w, h, 20, [[0, '#ffffff0a'], [1, '#ffffff04']]);
+                cv.strokeRoundRect(x, y, w, h, 20, 1, C.line);
             }
-            icon(cv, (TAB[id] || {}).icon, x + 34, y + h / 2, sel ? C.text : C.dim);
-            cv.text(this.tabName(id), x + 64, y + 30 - dy, 21, sel ? '#ffffff' : C.text, { font: 'bold', literal: true });
-            cv.text(this.tabValue(id), x + 64, y + 53 - dy * 1.5, 15, sel ? A(C.blueHi, 0.95) : C.dim, { literal: true });
-            cv.target(x, y, w, h, () => { this.tab = id; this.picker = null; this.kick(); }, 'tab:' + id, 12);
+            cv.circle(x + 34, y + h / 2, 21, sel ? A('#ffffff', 0.2) : '#ffffff0d');
+            icon(cv, (TAB[id] || {}).icon, x + 34, y + h / 2, sel ? '#ffffff' : C.text);
+            cv.text(this.tabName(id), x + 68, y + 30 - dy, 21, '#ffffff', { font: 'bold', literal: true });
+            cv.text(this.tabValue(id), x + 68, y + 53 - dy * 1.5, 15, sel ? A('#ffffff', 0.82) : C.dim, { literal: true });
+            cv.target(x, y, w, h, () => { this.tab = id; this.picker = null; this.kick(); }, 'tab:' + id, 20);
         });
+        if (this.cfg.what === 'cluster') this.brand(cv, bottom);     // the mark is ShakTheme's; the HUD app has its own look
+    }
+    /** The app's mark and name at the foot of the menu. */
+    brand(cv, bottom) {
+        const x = RAIL.x + 8, y = bottom - 62, spec = this.ctx.spec || {};
+        drawLogo(cv, x, y, 46);
+        cv.text(spec.title || 'ShakTheme', x + 60, y + 21, 21, '#ffffff', { font: 'bold', literal: true });
+        cv.text('v' + (spec.version || ''), x + 60, y + 42, 14, C.label, { literal: true });
     }
     tabName(id) { return id === 'look' ? this.cfg.look.name : TAB[id].name; }
     tabValue(id) {
@@ -190,6 +204,7 @@ class Page {
         if (id === 'alerts') { const n = WARN_KEYS.filter((k) => this.get(k) > 0).length; return n ? n + ' warning' + (n > 1 ? 's' : '') + ' on' : 'warnings off'; }
         if (id === 'gmeter') return this.optLabel('gRange', this.get('gRange')) + ' · trail ' + this.optLabel('gTrail', this.get('gTrail')).toLowerCase();
         if (id === 'colours') return this.valueText('hudTheme').replace(/ \(.*\)$/, '');
+        if (id === 'display') return (this.get('sportTint') > 0 ? 'blue ' + this.get('sportTint') + ' %' : 'black') + ' · facets ' + this.get('sportFacets') + ' %';
         if (id === 'settings') return (this.get('units') === 'metric' ? 'km/h' : 'mph') + ' · ' + fmtInt(this.get('redline')) + ' rpm';
         return '';
     }
@@ -204,7 +219,7 @@ class Page {
     lookHero(cv, bottom) {
         const shown = this.shownName();
         label(cv, CX, 70, 'Now showing');
-        const pw = 523, ph = 196, px = CX, py = 82;
+        const pw = 600, ph = 225, px = CX, py = 82;
         this.picture(cv, shown, 'big', px, py, pw, ph);
         // right: name, tag line, the drive modes side by side
         const rx = px + pw + 28, rw = CR - rx;
@@ -216,8 +231,10 @@ class Page {
             MODES.forEach((m, i) => this.modeCell(cv, rx + i * (cw + 12), y, cw, m[1] + (m[0] === now ? '  ·  now' : ''), m[0]));
         } else this.pickRow(cv, rx, y, rw, 'Theme', 'hudLayout', (v) => this.layoutName(v), 52);
         // the gallery, two rows: a tap shows that theme (in the drive mode the car is in, when it changes with it)
+        // few themes (the cluster app has four and BMW's own): one row, as tall as its picture needs; many (the HUD's): two rows
         const looks = this.looks(), cols = Math.max(5, Math.ceil(looks.length / 2)), gap = 12, gy = py + ph + 16;
-        const gw = (CW - gap * (cols - 1)) / cols, gh = (bottom - gy - 4 - gap) / 2;
+        const rows = Math.ceil(looks.length / cols);
+        const gw = (CW - gap * (cols - 1)) / cols, gh = rows === 1 ? Math.min(bottom - gy - 4, (gw - 16) * 0.375 + 54) : (bottom - gy - 4 - gap) / 2;
         looks.forEach((v, i) => {
             const x = CX + (i % cols) * (gw + gap), yy = gy + Math.floor(i / cols) * (gh + gap), sel = v === shown;
             glass(cv, x, yy, gw, gh, sel);
@@ -399,14 +416,14 @@ class Page {
         // live state from waze.js: the map showing, waiting, the Waze app busy, Waze on Cluster missing
         const info = this.hud.waze ? this.hud.waze.info() : { text: 'Not available in this app', up: false, ok: false };
         let text = info.text;
-        if (this.get('mapInTheme') && !this.hud.mapLayout && this.hud.activeName !== 'off') text = 'This theme has no map version (GT3, Sport and M do)';
+        if (this.get('mapInTheme') && !this.hud.mapLayout && this.hud.activeName !== 'off') text = 'This theme has no map version (Sport, M, M Blade and Navi do)';
         glass(cv, CX, y, w, 46, false);
         cv.circle(CX + 26, y + 23, 7, info.up ? C.live : info.ok ? C.dim : '#e0a340');
         cv.text(text, CX + 46, y + 30, 18, info.up ? C.live : C.text, { literal: true });
         y += 54;
         y = this.toggleRow(cv, CX, y, w, 'Centre window for Cluster Centre / Cluster Info', 'centreWindow');
         const ci = this.hud.windowOpen ? 'Window open: Cluster Centre / Cluster Info draw in it' : this.hud.ci && this.hud.ci.wantsWindow() ? 'Asked for, opening' : 'Closed (nothing asks for it)';
-        note(cv, CX, y + 14, [ci + '. It is the same window Waze\'s map shows in (GT3, Sport and M).']);
+        note(cv, CX, y + 14, [ci + '. It is the same window Waze\'s map shows in (Sport, M, M Blade and Navi).']);
         y += 40;
         // the danger zone alert (M Blade and Navi, danger.js): shows only while another app says a zone is ahead
         y = this.toggleRow(cv, CX, y, w, 'Danger zone alert (M Blade and Navi)', 'dangerAlert');
@@ -414,10 +431,10 @@ class Page {
         note(cv, CX, y + 8, [dz && dz.on ? 'Showing a zone ' + Math.round(dz.distM) + ' m ahead (from ' + dz.app + ')' : 'Nothing to show: it needs an app that tells it where a zone is (danger-<app>.json in /dev/shm/cluster-themes).']);
         y += 26;
         note(cv, CX, y + 26, [
-            'On: GT3, Sport and M open a window in the middle and Waze on Cluster draws its map in it, above',
+            'On: Sport, M, M Blade and Navi open a window in the middle and Waze on Cluster draws its map in it, above',
             'BMW\'s own map view, so nothing shows twice. When the map goes away the theme fills back in.',
             'While on, Waze\'s map on the HUD is off (the cluster and the HUD share one picture).',
-            'Needs robertnisipeanu\'s Waze on Cluster. Turning this off gives Waze its usual place back.',
+            'Needs the Waze on Cluster app. Turning this off gives Waze its usual place back.',
         ]);
     }
 
@@ -450,39 +467,41 @@ class Page {
         glass(cv, rx, y, rw, 56, model === 'none');
         cv.text('No badge', rx + 18, y + 35, 19, C.text, { literal: true });
         cv.target(rx, y, rw, 56, () => this.set('badge', 'none'), 'badge:none', 14);
-        note(cv, rx, y + 92, ['Drawn as text in the theme\'s own font.', 'GT3: top left. Sport and M: bottom centre.']);
+        note(cv, rx, y + 92, ['Drawn as text in the theme\'s own font.', 'Sport and M show it at the bottom.']);
     }
 
     /* ---------- Alerts (both) ---------- */
     /** Warning limits (the readout flashes red over one) and the shift-light test. */
     alertsTab(cv) {
+        // left: the limits and the warm-up colours; right: the shift-light test
+        const w = CW * 0.52, rx = CX + w + 40, rw = CR - rx;
         label(cv, CX, 70, 'Warnings · the readout flashes red over its limit');
         let y = 84;
-        const w = CW * 0.62;
         WARN_KEYS.forEach((k) => { if (this.item(k)) y = this.stepRow(cv, CX, y, w, this.item(k).label.replace(/ warning$/, ''), k); });
         if (COLD_KEYS.some((k) => this.item(k))) {
-            y += 10;
-            label(cv, CX, y, 'Warm-up colours · blue below, green above');
             y += 14;
+            label(cv, CX, y + 4, 'Warm-up colours · blue below, green above');
+            y += 18;
             COLD_KEYS.forEach((k) => { if (this.item(k)) y = this.stepRow(cv, CX, y, w, this.item(k).label.replace(/: blue below$/, ''), k); });
         }
-        y += 24;
-        label(cv, CX, y, 'Shift lights');
-        y += 14;
+        label(cv, rx, 70, 'Shift lights');
+        const sy = 84;
         const testing = this.hud.shiftTesting && this.hud.shiftTesting();
         const d = this.hud.car && this.hud.car.data(), moving = d && !d.demo && d.speed > 3;
-        this.rowBox(cv, CX, y, w, 'Test the shift lights', 56);
+        this.rowBox(cv, rx, sy, rw, 'Test the shift lights', 56);
         const bt = testing ? 'Running' : moving ? 'Stop the car first' : 'Run test', bw = cv.textWidth(bt, 16, { font: 'bold', literal: true }) + 40;
-        cv.roundRect(CX + w - bw - 14, y + 10, bw, 36, 18, testing || moving ? '#ffffff12' : C.blue);
-        cv.text(bt, CX + w - 14 - bw / 2, y + 34, 16, testing || moving ? C.dim : '#ffffff', { align: 'center', font: 'bold', literal: true });
+        cv.roundRect(rx + rw - bw - 14, sy + 10, bw, 36, 18, testing || moving ? '#ffffff12' : C.blue);
+        cv.text(bt, rx + rw - 14 - bw / 2, sy + 34, 16, testing || moving ? C.dim : '#ffffff', { align: 'center', font: 'bold', literal: true });
         if (!testing && !moving) {
-            cv.target(CX, y, w, 56, () => {
+            cv.target(rx, sy, rw, 56, () => {
                 if (this.hud.testShift()) { this.kick(); setTimeout(() => this.kick(), 4000); }
             }, 'test:shift', 14);
         }
-        note(cv, CX, y + 92, [
-            'Runs the rpm up to the shift point for about 4 seconds: the lights fill, go red and flash.',
-            'Only while the car stands. Set a limit to 0 (Off) to turn that warning off.',
+        note(cv, rx, sy + 92, [
+            'Runs the rpm up to the shift point for',
+            'about 4 seconds: the lights fill, go red',
+            'and flash. Only while the car stands.',
+            'Set a limit to 0 (Off) to turn it off.',
         ]);
     }
 
@@ -569,9 +588,12 @@ class Page {
     }
 
     /* ---------- Settings ---------- */
-    settingsTab(cv, bottom) {
-        label(cv, CX, 70, 'Settings');
-        const keys = this.cfg.settings.filter((k) => this.item(k));
+    settingsTab(cv, bottom) { this.settingRows(cv, bottom, 'Settings', this.cfg.settings); }
+    /** The Display tab (cluster apps): the look of the themes and the shift light, in the same rows. */
+    displayTab(cv, bottom) { this.settingRows(cv, bottom, 'Display', this.cfg.display || []); }
+    settingRows(cv, bottom, title, list) {
+        label(cv, CX, 70, title);
+        const keys = list.filter((k) => this.item(k));
         const colW = (CW - 24) / 2, per = Math.ceil(keys.length / 2);
         // x3-hybride: more settings than rows at 64 px: slimmer rows (46 px, as the compact ones) rather than cutting the last
         const rh = 84 + (per - 1) * 64 + 56 <= bottom ? 56 : 46, pitch = rh === 56 ? 64 : Math.min(64, Math.floor((bottom - 84 - rh) / Math.max(1, per - 1)));
@@ -637,13 +659,13 @@ class Page {
         const p = this.picker, s = this.item(p.key), opts = s.type === 'number' ? (s.steps || []).map((v) => [v, null]) : s.options || [];
         cv.fillRect(0, 36, W, bottom + 20, '#000000b0');
         const w = 620, rh = 58, h = 76 + opts.length * rh, x = (W - w) / 2, y = Math.max(52, (bottom + 44 - h) / 2);
-        cv.card(x, y, w, h, 18, [[0, '#18233a'], [1, '#0c111b']]);
-        cv.strokeRoundRect(x, y, w, h, 18, 1, A(C.blueHi, 0.3));
-        cv.text(p.title.toUpperCase(), x + 26, y + 42, 15, C.label, { font: 'bold', spacing: 2.4, literal: true });
+        cv.card(x, y, w, h, 24, [[0, '#1c2433'], [1, '#0d1118']]);
+        cv.strokeRoundRect(x, y, w, h, 24, 1, A('#ffffff', 0.14));
+        cv.text(p.title, x + 26, y + 42, 18, C.label, { font: 'bold', spacing: 0.3, literal: true });
         const v = this.get(p.key);
         opts.forEach((o, i) => {
             const ry = y + 60 + i * rh, sel = o[0] === v;
-            if (sel) cv.roundRect(x + 12, ry, w - 24, rh - 6, 12, A(C.blue, 0.35));
+            if (sel) cv.roundRect(x + 12, ry, w - 24, rh - 6, 16, A(C.blue, 0.38));
             const text = p.fmt ? p.fmt(o[0]) : o[1] !== null ? o[1] : fmtInt(o[0]) + ' rpm';
             cv.text(text, x + 30, ry + 34, 20, sel ? '#ffffff' : C.text, { font: sel ? 'bold' : 'label', literal: true });
             if (sel) check(cv, x + w - 50, ry + 26, '#ffffff');
@@ -660,8 +682,8 @@ class Page {
         const q = this.confirm, close = () => { this.confirm = null; this.kick(); };
         cv.fillRect(0, 36, W, bottom + 20, '#000000b0');
         const w = 720, h = 96 + q.lines.length * 30 + 84, x = (W - w) / 2, y = Math.max(52, (bottom + 44 - h) / 2);
-        cv.card(x, y, w, h, 18, [[0, '#18233a'], [1, '#0c111b']]);
-        cv.strokeRoundRect(x, y, w, h, 18, 1, A(C.blueHi, 0.3));
+        cv.card(x, y, w, h, 24, [[0, '#1c2433'], [1, '#0d1118']]);
+        cv.strokeRoundRect(x, y, w, h, 24, 1, A('#ffffff', 0.14));
         cv.text(q.title, x + 32, y + 56, 28, '#ffffff', { font: 'bold', literal: true });
         q.lines.forEach((s, i) => cv.text(s, x + 32, y + 98 + i * 30, 19, C.text, { literal: true }));
         const bh = 52, by = y + h - bh - 24;
@@ -690,15 +712,17 @@ function warnText(k, v, us) {
 /** a "timeZone" setting value as the row shows it (shared/tz.js) */
 function tzText(v) { return tz.name(v); }
 function fmtInt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
-function label(cv, x, y, s) { cv.text(s.toUpperCase(), x, y, 14, C.label, { font: 'bold', spacing: 2.4, literal: true }); }
+function label(cv, x, y, s) { cv.text(s.charAt(0).toUpperCase() + s.slice(1), x, y, 16, C.label, { font: 'bold', spacing: 0.3, literal: true }); }
 function note(cv, x, y, lines) { lines.forEach((s, i) => cv.text(s, x, y + i * 26, 17, C.dim, { literal: true })); }
 function glass(cv, x, y, w, h, sel) {
     if (sel) {
-        cv.card(x, y, w, h, 16, [[0, A(C.blue, 0.16)], [1, A(C.blueDeep, 0.05)]]);
-        cv.strokeRoundRect(x, y, w, h, 16, 2, C.blue);
+        // picked: a blue ring with a soft glow, the card a little blue
+        cv.strokeRoundRect(x - 3, y - 3, w + 6, h + 6, 22, 6, A(C.blueHi, 0.14));
+        cv.card(x, y, w, h, 18, [[0, A(C.blue, 0.22)], [1, A(C.blueDeep, 0.07)]]);
+        cv.strokeRoundRect(x, y, w, h, 18, 2.5, C.blueHi);
     } else {
-        cv.card(x, y, w, h, 16, [[0, '#ffffff0b'], [1, '#ffffff04']]);
-        cv.strokeRoundRect(x, y, w, h, 16, 1, C.line);
+        cv.card(x, y, w, h, 18, [[0, '#ffffff0d'], [1, '#ffffff05']]);
+        cv.strokeRoundRect(x, y, w, h, 18, 1, C.line);
     }
 }
 function chip(cv, x, y, text, on, run, key) {
@@ -783,6 +807,16 @@ function icon(cv, name, x, y, c) {
             cv.line(x + Math.sin(a) * 9, y - Math.cos(a) * 9, x + Math.sin(a) * 13, y - Math.cos(a) * 13, 3, c);
         }
     }
+}
+
+/** The app's mark (tools/icons/shaktheme_icon.svg): a dark tile, two gauge arcs making an S, blue over red, a lit pivot. s: px. */
+function drawLogo(cv, x, y, s) {
+    const u = s / 124;
+    cv.card(x, y, s, s, 30 * u, [[0, '#1b2c4a'], [1, '#080d18']]);
+    cv.strokeRoundRect(x, y, s, s, 30 * u, 1, A(C.blueHi, 0.4));
+    cv.arc(x + 62 * u, y + 40 * u, 15.5 * u, 28.5 * u, -180, 55, '#62b4ff', { round: true });
+    cv.arc(x + 62 * u, y + 84 * u, 15.5 * u, 28.5 * u, 0, 235, '#ff4a3d', { round: true });
+    cv.circle(x + 62 * u, y + 62 * u, 4.6 * u, '#ffffff');
 }
 
 module.exports = Page;

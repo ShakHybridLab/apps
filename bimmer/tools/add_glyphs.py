@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Add characters to an already baked font atlas without touching the glyphs it has.
 
-    python3 tools/add_glyphs.py <app_id> <font name> <chars>      e.g. cluster_themes m_tiny %
+    python3 tools/add_glyphs.py <app_id> <font name> <chars>      e.g. shaktheme m_tiny %
 
 Re-baking a whole font (tools/bake_fonts.py) can move a glyph by a pixel when Pillow / FreeType differ from the
 Mac the shipped atlases came from. This bakes the font with the extra characters appended to the charset in

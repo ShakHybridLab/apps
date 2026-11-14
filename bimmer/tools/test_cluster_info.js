@@ -1,5 +1,5 @@
 'use strict';
-// node tools/test_cluster_info.js: the hand-over with eroobeeroo's Cluster Info / Centre (shared/cluster_info.js), in temp folders.
+// node tools/test_cluster_info.js: the hand-over with the Cluster Info / Centre apps (shared/cluster_info.js), in temp folders.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -10,7 +10,7 @@ const base = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-test-'));
 const dir = path.join(base, 'info'), themes = path.join(base, 'themes');
 let now = 1000000;
 const log = { info: () => {} };
-const ci = new ClusterInfo({ id: 'cluster_themes', name: 'Cluster Themes', dir, themesDir: themes, now: () => now }, log);
+const ci = new ClusterInfo({ id: 'shaktheme', name: 'ShakTheme', dir, themesDir: themes, now: () => now }, log);
 const read = (f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
 
 // no folder yet: nothing wanted, nothing shared
@@ -20,12 +20,12 @@ assert.strictEqual(ci.sharedSoc(), null);
 
 // publishing makes the folder and writes Cluster Info's format
 ci.publish(64.44);
-let j = read('cluster_themes.json');
-assert.strictEqual(j.v, 1); assert.strictEqual(j.t, now); assert.strictEqual(j.app, 'Cluster Themes');
+let j = read('shaktheme.json');
+assert.strictEqual(j.v, 1); assert.strictEqual(j.t, now); assert.strictEqual(j.app, 'ShakTheme');
 assert.deepStrictEqual(j.values, { soc: { pct: 64.4 } });
 // at most every 500 ms
-now += 100; ci.publish(70); assert.strictEqual(read('cluster_themes.json').values.soc.pct, 64.4);
-now += 500; ci.publish(70); assert.strictEqual(read('cluster_themes.json').values.soc.pct, 70);
+now += 100; ci.publish(70); assert.strictEqual(read('shaktheme.json').values.soc.pct, 64.4);
+now += 500; ci.publish(70); assert.strictEqual(read('shaktheme.json').values.soc.pct, 70);
 // our own file is not "another app's"
 ci.scan(); assert.strictEqual(ci.sharedSoc(), null);
 
@@ -48,7 +48,7 @@ fs.writeFileSync(path.join(dir, 'broken.json'), '{"t":');
 ci.scan();
 
 // no reading: the file goes
-ci.publish(null); assert.ok(!fs.existsSync(path.join(dir, 'cluster_themes.json')));
+ci.publish(null); assert.ok(!fs.existsSync(path.join(dir, 'shaktheme.json')));
 
 // presence of a theme
 ci.markTheme(true);
@@ -56,8 +56,8 @@ assert.strictEqual(JSON.parse(fs.readFileSync(path.join(themes, 'themes.json'), 
 ci.markTheme(false); assert.ok(!fs.existsSync(path.join(themes, 'themes.json')));
 
 // stop() removes our file
-now += 1000; ci.publish(50); assert.ok(fs.existsSync(path.join(dir, 'cluster_themes.json')));
-ci.stop(); assert.ok(!fs.existsSync(path.join(dir, 'cluster_themes.json')));
+now += 1000; ci.publish(50); assert.ok(fs.existsSync(path.join(dir, 'shaktheme.json')));
+ci.stop(); assert.ok(!fs.existsSync(path.join(dir, 'shaktheme.json')));
 
 console.log('cluster_info: ok');
 
@@ -83,7 +83,7 @@ fs.mkdirSync(themes, { recursive: true });
 fs.writeFileSync(path.join(themes, 'window-cluster_centre.json'), JSON.stringify({ t: now, app: 'cluster_centre', kind: 'pages', showing: false }));
 ci.scan(); assert.strictEqual(ci.wantsWindow(), true);
 now += 3001; ci.scan(); assert.strictEqual(ci.wantsWindow(), false, 'the app went');
-fs.writeFileSync(path.join(themes, 'window-cluster_themes.json'), JSON.stringify({ t: now }));
+fs.writeFileSync(path.join(themes, 'window-shaktheme.json'), JSON.stringify({ t: now }));
 ci.scan(); assert.strictEqual(ci.wantsWindow(), false, 'our own file does not count');
 fs.writeFileSync(path.join(themes, 'window-cluster_info.json'), '{"t":');
 ci.scan(); assert.strictEqual(ci.wantsWindow(), false, 'half written');

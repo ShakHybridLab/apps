@@ -1,6 +1,6 @@
 'use strict';
 /**
- * danger.js - the "danger zone" alert of Cluster Themes (M Blade and Navi draw it in Waze's style: a camera, the
+ * danger.js - the "danger zone" alert of ShakTheme (M Blade and Navi draw it in Waze's style: a camera, the
  * distance and, when known, the speed limit).
  *
  * This app knows no position and no map data (the CarPlay link carries the picture of Waze's map, nothing else),

@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Cluster Themes: redraws the iDrive 7 instrument cluster (the 1920x720 "panel" target) through cluster-render.
+ * ShakTheme: redraws the iDrive 7 instrument cluster (the 1920x720 "panel" target) through cluster-render.
  *
  * The center screen is the app's own page (shared/page.js, a canvas screen): the themes with their
  * pictures, which drive mode shows which, and the settings. Each choice is saved in the app's data/settings.json
@@ -25,9 +25,10 @@ mgu.run({
         hud.start();
         new Page(ctx, hud, {
             title: ctx.spec.title, what: 'cluster',
-            look: { name: 'Themes', style: 'hero', tags: { gt3: 'race dash', m: 'M8 style', sport: 'Live Cockpit', mblade: 'blue card · red blade', navi: 'speed band · big map', minimal: 'just the speed', roadster: 'round dials', track: 'tyres + temps', drag: '0-60 timer', rally: 'rev arc · G-meter', retro80s: '80s digital', cruise: 'calm · trip', dyno: 'safety tiles' } },
-            tabs: ['look', 'readouts', 'badge', 'map', 'alerts', 'gmeter', 'settings'],
-            settings: ['units', 'clock', 'timeZone', 'tankLitres', 'evRangeFull', 'redline', 'shiftBefore', 'stockShiftLight', 'shiftLightRed', 'shiftLightFlash', 'coldGuard', 'showBoost', 'nightDim', 'sportTint', 'sportFacets', 'sportPower', 'stripClear', 'cameraNotch', 'demo'],
+            look: { name: 'Themes', style: 'hero', tags: { m: 'M8 style', sport: 'Live Cockpit', mblade: 'blue card · red blade', navi: 'speed band · big map' } },
+            tabs: ['look', 'badge', 'map', 'alerts', 'display', 'settings'],
+            settings: ['units', 'clock', 'timeZone', 'tankLitres', 'evRangeFull', 'redline', 'shiftBefore', 'coldGuard', 'showBoost', 'demo'],
+            display: ['sportTint', 'sportFacets', 'sportPower', 'stockShiftLight', 'shiftLightRed', 'shiftLightFlash', 'nightDim', 'stripClear', 'cameraNotch'],
         }).start();
         process.on('exit', () => { try { hud.stop(); } catch (e) { /* exiting anyway */ } });
     },

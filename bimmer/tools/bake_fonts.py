@@ -40,11 +40,10 @@ HUD_FONTS = [
     ('d7_hero', 'DSEG7Classic-Bold.ttf', 76, DIGITS + 'PRN-', 0, None, {'R': 'r', 'N': 'n'}),   # r and n: seven segments can't draw R or N
     ('d7_mid', 'DSEG7Classic-Bold.ttf', 26, DIGITS + '-.:'),
 ]
-# Cluster Themes, 1920x720 LCD. GT3: the race-dash look, Barlow Condensed.
+# ShakTheme, 1920x720 LCD: the shared small print in Barlow Condensed, then each theme's own numbers.
 CLUSTER_FONTS = [
     ('gear', 'BarlowCondensed-Bold.ttf', 330, DIGITS + 'PRND-'),
     ('big', 'BarlowCondensed-Bold.ttf', 124, DIGITS + '.:-'),   # 124: "20.3 PSI" fits a 280 px box beside the hood; ':' for a clock in a readout slot
-    ('value', 'BarlowCondensed-Bold.ttf', 92, DIGITS + '.:- PRND°', 0, None, None, '°'),   # °: a readout slot showing a temperature (tucked: the cell keeps its height)
     ('small', 'BarlowCondensed-Bold.ttf', 50, DIGITS + '.:-° '),
     ('unit', 'BarlowCondensed-SemiBold.ttf', 34, UPPER + DIGITS + '/°%>·.: -'),
     ('head', 'BarlowCondensed-SemiBold.ttf', 24, UPPER + DIGITS + '/°%>·.: -'),
@@ -55,7 +54,6 @@ CLUSTER_FONTS = [
     ('m_gear', 'Orbitron[wght].ttf', 125, 'PRNDSM-' + DIGITS, 3, 'Black', {'0': 'O'}),
     ('m_speed', 'Orbitron[wght].ttf', 78, DIGITS + '-', 3, 'Black', {'0': 'O'}),
     ('m_gl', 'Orbitron[wght].ttf', 25, DIGITS + '/.-', 0, 'Black', {'0': 'O'}),
-    ('m_val', 'Barlow-Medium.ttf', 54, DIGITS + ':+-.'),
     ('m_mid', 'Orbitron[wght].ttf', 34, DIGITS + ':+-.', 0, 'Bold', {'0': 'O'}),
     ('m_tyre', 'Orbitron[wght].ttf', 25, DIGITS + '.-', 0, 'Bold', {'0': 'O'}),
     ('m_unit', 'Barlow-Medium.ttf', 30, LOWER + UPPER + '°/-.'),
@@ -69,32 +67,9 @@ CLUSTER_FONTS = [
     ('s_gear', 'Michroma-Regular.ttf', 70, DIGITS + 'PRNDSM-', 3),
     ('s_val', 'Michroma-Regular.ttf', 26, DIGITS + ':+-.', 1),
     ('s_unit', 'Barlow-Medium.ttf', 24, LOWER + UPPER + DIGITS + '°/-. %'),
-    ('s_label', 'BarlowSemiCondensed-SemiBold.ttf', 30, UPPER + DIGITS + ' .'),
     ('s_gl', 'Michroma-Regular.ttf', 21, DIGITS + '/', 1),
-    # Minimal: one huge speed, the gear, small print
-    ('n_speed', 'BarlowSemiCondensed-Medium.ttf', 260, DIGITS + '-'),
-    ('n_gear', 'BarlowSemiCondensed-SemiBold.ttf', 110, DIGITS + 'PRNDSM-'),
-    ('n_unit', 'Barlow-Medium.ttf', 34, LOWER + UPPER + '/'),
-    # Roadster: dial numbers, readouts, the chrome gear
-    ('r_num', 'BarlowSemiCondensed-SemiBold.ttf', 36, DIGITS),
-    ('r_val', 'BarlowSemiCondensed-Medium.ttf', 58, DIGITS + '.:-+°'),
-    ('r_gear', 'BarlowCondensed-Bold.ttf', 170, DIGITS + 'PRNDSM-'),
-    ('r_label', 'BarlowSemiCondensed-SemiBold.ttf', 24, UPPER + LOWER + DIGITS + '/°%.: -'),
-    # Drag: the 0-60 clock
-    ('timer', 'BarlowCondensed-Bold.ttf', 220, DIGITS + '.-'),
-    # Rally: the huge gear and the readouts in the arc
-    ('y_gear', 'BarlowCondensed-Bold.ttf', 300, DIGITS + 'PRNDSM-'),
-    ('y_val', 'BarlowCondensed-Bold.ttf', 76, DIGITS + '.:-+°', 0, None, None, '°'),
-    # Retro 80s: seven-segment digits (DSEG7 Classic, SIL OFL; the unlit 8s behind are the same font in "track")
-    ('d7_big', 'DSEG7Classic-Bold.ttf', 170, DIGITS + '-'),
-    ('d7_val', 'DSEG7Classic-Bold.ttf', 60, DIGITS + '-.:'),
-    ('d7_sm', 'DSEG7Classic-Bold.ttf', 42, DIGITS + '-.:'),
-    ('d7_gear', 'DSEG7Classic-Bold.ttf', 190, DIGITS + 'PRN-', 0, None, {'R': 'r', 'N': 'n'}),   # r and n: seven segments can't draw R or N
-    # Cruise: calm, light numbers
-    ('c_speed', 'BarlowSemiCondensed-Medium.ttf', 150, DIGITS + '-'),
-    ('c_val', 'BarlowSemiCondensed-Medium.ttf', 62, DIGITS + '.:-+°'),
 ]
-FONTS = {'idrive_hud_widgets': HUD_FONTS, 'cluster_themes': CLUSTER_FONTS}
+FONTS = {'idrive_hud_widgets': HUD_FONTS, 'shaktheme': CLUSTER_FONTS}
 PAD = 2
 ATLAS_W = 1024
 

@@ -1,27 +1,26 @@
-<h1 align="center">bimmer-lab apps</h1>
+<p align="center"><img src="docs/images/logo.png" width="120" alt="ShakTheme logo"></p>
 
-<p align="center">Apps for BMW iDrive 7 head units (MGU), installed through the community MGU Store.</p>
+<h1 align="center">ShakTheme</h1>
 
-<p align="center"><img src="docs/images/cluster-gt3.gif" width="900" alt="GT3 race dash on the instrument cluster"></p>
+<p align="center">Cluster themes for BMW iDrive 7 head units (MGU), by shakzer. Installed through the community MGU Store.</p>
 
-## Cluster Themes
+<p align="center"><img src="docs/images/cluster-sport.png" width="900" alt="Sport theme on the instrument cluster"></p>
 
-<img src="apps/cluster_themes/icon.png" width="72" align="left" alt="Cluster Themes icon">
+## ShakTheme
 
-Redraws the whole instrument cluster in a theme of your choice: a GT3 race dash, an M-style cluster, a Sport view, Minimal, Roadster round dials, Track, Drag with a 0 to 60 timer, Rally with a G-meter, Retro 80s, Cruise, or Dyno, a tile dash in BMW M colours. Pick the theme on the center screen, or let it follow the SPORT / COMFORT / ECO PRO buttons. [Read more](apps/cluster_themes/README.md)
+<img src="apps/shaktheme/icon.png" width="72" align="left" alt="ShakTheme logo">
 
-<p align="center"><img src="docs/images/cluster-gt3-shift.png" width="900" alt="GT3 theme at the shift point"></p>
+Redraws the whole instrument cluster in one of four themes: **Sport**, **M**, **M Blade** and **Navi**. Pick the theme on the center screen, or let it follow the drive mode (Hybrid, Electric Eco Pro, Sport Plus on a plug-in hybrid). It shows the battery and the electric range, oil and coolant temperatures that turn blue when cold, green when warm and flash red over their limit, a shift light, a window for the Waze map, and an energy flow in place of the boost when another app shares it. [Read more](apps/shaktheme/README.md)
+
 <p align="center"><img src="docs/images/cluster-m.png" width="900" alt="M theme"></p>
-<p align="center"><img src="docs/images/cluster-sport.png" width="900" alt="Sport theme"></p>
-<p align="center"><img src="docs/images/cluster-dyno.png" width="900" alt="Dyno theme"></p>
+<p align="center"><img src="docs/images/cluster-mblade.png" width="900" alt="M Blade theme"></p>
+<p align="center"><img src="docs/images/cluster-navi.png" width="900" alt="Navi theme"></p>
 
 ## HUD Widgets
 
 <img src="apps/idrive_hud_widgets/icon.png" width="72" align="left" alt="HUD Widgets icon">
 
 Puts your own readouts on the windshield HUD: gear, shift lights, boost, oil, coolant and intake temperatures, a G-meter and trip figures. Ten layouts, in Classic, M and Night colours (Cruise and Retro bring their own). [Read more](apps/idrive_hud_widgets/README.md)
-
-<p align="center"><img src="docs/images/hud-redline.gif" width="600" alt="Redline layout on the HUD"></p>
 
 <table align="center">
   <tr>
@@ -38,23 +37,23 @@ Puts your own readouts on the windshield HUD: gear, shift lights, boost, oil, co
 
 ## Setting up
 
-Each app has its own page on the center screen, opened from the apps menu. Pick a theme or layout there, give each drive mode its own, choose what every readout shows, and set your time zone and units.
+Each app has its own menu on the center screen, opened from the apps menu, in the style of BMW's iDrive 8.5. Pick a theme or layout there, give each drive mode its own, and set your time zone and units.
 
-<p align="center"><img src="docs/images/page-cluster-themes.png" width="900" alt="Cluster Themes page on the center screen"></p>
-<p align="center"><img src="docs/images/page-hud-layouts.png" width="900" alt="HUD Widgets page on the center screen"></p>
+<p align="center"><img src="docs/images/page-cluster-themes.png" width="900" alt="ShakTheme menu on the center screen"></p>
+<p align="center"><img src="docs/images/page-hud-layouts.png" width="900" alt="HUD Widgets menu on the center screen"></p>
 
 ## Install
 
 1. Install **cluster-render** first. Both apps draw through it. It comes from the `robertnisipeanu/idrive-apps` Store source. With version 0.5.1 or newer, a cluster theme and a HUD layout can show at the same time.
-2. In the Store, go to **Settings, Add source**, enter **`bimmer-lab/apps`**, and install the apps you want.
+2. In the Store, go to **Settings, Add source**, enter **`shakzer/x3-hybride`**, and install the apps you want.
 3. Open the app from the apps menu on the center screen to pick a theme or layout.
 4. The head unit's clock runs on UTC, so set **Settings, Time zone (clock)** to your zone once (for example US Eastern). Named zones change for daylight saving by themselves.
 
-The Store builds each app on the car from this repo. No BMW code is in it. Both apps are tested on a 2020 X3 M40i; each app's page says what has been checked on the car and what is still open. Version history is in [CHANGELOG.md](CHANGELOG.md).
+The Store builds each app on the car from this repo. No BMW code is in it. Nothing has been tried on a car yet: each app's page says what has been checked and what is still open. Version history is in [CHANGELOG.md](../CHANGELOG.md).
 
 ## Use at your own risk
 
-These are unofficial apps made by hobbyists. They are not made, approved or supported by BMW, and the people who wrote them are not responsible for anything that happens to your car or to you while using them.
+These are unofficial apps made by a hobbyist. They are not made, approved or supported by BMW, and the people who wrote them are not responsible for anything that happens to your car or to you while using them.
 
 - Installing apps that don't come from BMW on your head unit is done at your own risk and may affect your warranty.
 - The apps only read data from the car. They never write to or change any control unit.
@@ -62,12 +61,6 @@ These are unofficial apps made by hobbyists. They are not made, approved or supp
 - Don't set up or change the apps while driving. Keep your eyes on the road.
 - The apps are provided as is, without any warranty, under the MIT licence. You use them entirely at your own risk.
 
-## Credits
-
-- [cauliflowermossgrape/idrive7-apps](https://github.com/cauliflowermossgrape/idrive7-apps): the MGU App Kit (MIT) these apps are built on, and the Redline app the shift scoring comes from (Redline's HUD by [@biscotit](https://github.com/biscotit)).
-- [robertnisipeanu/idrive-apps](https://github.com/robertnisipeanu/idrive-apps): cluster-render, which draws on the HUD and the cluster.
-- Barlow, Michroma and Orbitron typefaces (SIL Open Font License).
-
 ## Licence
 
-MIT. Third-party parts are listed in each app's `NOTICE`. To work on the apps, see [docs/DEVELOPING.md](docs/DEVELOPING.md).
+shakzer's changes and additions are MIT. The apps build on code under other free licences, whose notices stay with them: see [LICENSE](LICENSE), each app's `NOTICE` and the repository's [LICENSES.md](../LICENSES.md).

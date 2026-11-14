@@ -25,7 +25,7 @@ mgu-repo.json     tells the Store how to build the apps
 
 ```sh
 node bench/server.js                   # HUD Widgets, then open http://localhost:8078
-node bench/server.js cluster_themes    # Cluster Themes
+node bench/server.js shaktheme    # ShakTheme
 ```
 
 The page has buttons for the drive mode (COMFORT, SPORT, SPORT+, ECO PRO), fed in as the car's FES signal. It builds the app with the kit and runs the build in the kit's stub head unit on Node 8.16.2 (the car's version), against a fake cluster-render. The page shows the HUD or the cluster with the app's real pixels and shaders, the center-screen status and settings, and signal sliders. Details in `bench/README.md`.
@@ -38,9 +38,9 @@ Each app's layouts are `apps/<id>/hud/layouts/<name>.json` (`schemaVersion: 2`).
 - **`atext` (both):** text drawn by the GPU: an effect layer that reads a glyph atlas of the font, uploaded once per connection as an R8 asset (one byte a pixel, not a layer, shared by every `atext` on that font). A value change is one uniform message of glyph codes, no pixels. Equal cells across the widget (`cells`, up to 32; the glyphs keep their shape at `w` = cells x the font's widest advance + 2 and `h` = its cell height, which the log states), `align` left, right or center, only the characters the font has. The calibration grids carry one as a probe (0.7.3 / 0.5.3), and the car drew it on both the cluster and the HUD (Nov 6 2026), so the plan is to move every readout onto this path (see `research/findings.md`, "Cost levers").
 - **Cluster (1920x720):** the same types, plus `fill` (a solid colour with a see-through `hole` cut while a setting is on) and `box` (a framed readout with a header strip). A cluster layout names its own `"theme"`.
 - **Sport theme:** `sdash` draws the whole theme (brackets, fills, the map cut-out or a black middle, fuel and oil bars, bottom strip) in one shader. Text `near: ["speed" | "rpm", i]` lights up the scale label nearest the value.
-- **GT3 theme:** `boxes` draws the background, the map cut-out and every framed box in one shader (array uniforms, up to 12 boxes); the labels are text widgets on top.
+- **M Blade and Navi themes:** `mblade` and `navi` draw the whole backdrop of each (card or band, blade, gauges, the map cut-out) in one shader; the labels are text widgets on top. The layouts are written by `tools/gen_mblade_navi.py`.
 - **M theme pieces:** `mdash` (the whole backdrop: cards, the tyre block's car glyph, side gauges and the four setup bars in one shader, nothing uploaded), `mtach` (the bowed glass rev blade with its red marker), `icon` (line icons drawn in `shared/icons.js`), and text `color2` (a chrome fade).
-- **Layout generators:** the GT3, Sport and M layouts are written by `design/gen_gt3.py`, `gen_sport.py` and `gen_m.py` (next to the repo, `python3 design/gen_m.py apps/cluster_themes/hud/layouts/m.json`); edit the generator, not the JSON.
+- **Layout generators:** the M Blade and Navi layouts are written by `tools/gen_mblade_navi.py`; edit the generator, not the JSON. The Sport and M layouts are edited in their JSON.
 - **Calibration:** `grid` (lines every `step` px, brighter every `major` steps) and `gridlabels` (x/y labels every `step` px). Each app ships a `grid.json` layout.
 - **Off:** the layout name `off` draws nothing and releases the screen. With `byMode` on, the `inComfort` / `inSport` / `inEco` settings pick the layout from the car's drive mode (FES `statusFESVehicleDynamicSwitchHMI`).
 - **Effect shaders:** cluster-render's `v_uv` has (0,0) at the top-left. The bench draws the same way.
@@ -53,7 +53,7 @@ To try an edited layout on the car without reinstalling:
 
 ```sh
 ./scripts/deploy.sh root@<car-ip-or-hostname> my-layout.json                    # HUD Widgets
-APP=cluster_themes ./scripts/deploy.sh root@<car-ip-or-hostname> gt3.json        # Cluster Themes
+APP=shaktheme ./scripts/deploy.sh root@<car-ip-or-hostname> sport.json      # ShakTheme
 ```
 
 The file lands in the app's `data/layouts/` on the car, overrides the built-in layout of the same name, and the running app reloads it by itself.

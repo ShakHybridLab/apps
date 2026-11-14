@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageChops
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONTS = os.path.join(HERE, 'fonts-src') + os.sep
-OUT = os.path.join(HERE, '..', 'apps', 'cluster_themes', 'hud', 'emblems')
+OUT = os.path.join(HERE, '..', 'apps', 'shaktheme', 'hud', 'emblems')
 S = 4                      # supersampling, then LANCZOS down to the box
 BOX_W, BOX_H = 360, 96     # the widget box in sport.json (the lettering is fitted into it)
 

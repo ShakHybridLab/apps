@@ -23,8 +23,8 @@ for (let x = 0; x < w; x++) { const p = px(out, w, x, 0); ok('x ' + x + ' not br
 const wide = paintEmblem({ w: 10, h: 2, alpha: Buffer.alloc(20, 255).toString('base64') }, 20, 6);
 ok('padding clear, ink centred', px(wide, 20, 0, 0)[3] === 0 && px(wide, 20, 5, 2)[3] === 255 && px(wide, 20, 15, 2)[3] === 0);
 // every baked mask fits the 600 x 130 box in sport.json
-const dir = path.join(__dirname, '..', 'apps', 'cluster_themes', 'hud', 'emblems');
-const layout = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'cluster_themes', 'hud', 'layouts', 'sport.json'), 'utf8'));
+const dir = path.join(__dirname, '..', 'apps', 'shaktheme', 'hud', 'emblems');
+const layout = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'shaktheme', 'hud', 'layouts', 'sport.json'), 'utf8'));
 const box = layout.widgets.filter((x) => x.type === 'emblem')[0];
 ok('sport.json has the emblem widget', !!box);
 fs.readdirSync(dir).filter((f) => /\.json$/.test(f)).forEach((f) => {
@@ -32,7 +32,7 @@ fs.readdirSync(dir).filter((f) => /\.json$/.test(f)).forEach((f) => {
     ok(f + ' fits the box', box && e.w <= box.w && e.h <= box.h && Buffer.from(e.alpha, 'base64').length === e.w * e.h);
 });
 // every choice of the setting has a file
-const app = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'cluster_themes', 'app.json'), 'utf8'));
+const app = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'shaktheme', 'app.json'), 'utf8'));
 app.settings.filter((s) => s.key === 'emblem')[0].options.forEach((o) => ok('option ' + o[0] + ' has a file', o[0] === 'off' || fs.existsSync(path.join(dir, o[0] + '.json'))));
 console.log(bad ? bad + ' FAILED' : 'emblems: all checks pass');
 process.exit(bad ? 1 : 0);

@@ -1,7 +1,7 @@
 'use strict';
 /**
- * cluster_info.js - the hand-over with eroobeeroo's Cluster Info / Cluster Centre / Cluster Layouts
- * (eroobeeroo/idrive7-cluster-info), through the files they share in /dev/shm/cluster-info:
+ * cluster_info.js - the hand-over with the Cluster Info / Cluster Centre / Cluster Layouts apps,
+ * through the files they share in /dev/shm/cluster-info:
  *
  *  - gives them the plug-in hybrid's battery charge: writes <app id>.json there ({ v: 1, t, app, values: { soc:
  *    { pct } } }, the format Cluster Info's providers.js documents) while this app has a fresh reading, a few
@@ -24,7 +24,7 @@
  *    showing }) while it does, and the theme opens the window while one is fresh (wantsWindow()).
  *
  * Never throws: every file operation is guarded, a folder that can't be written is logged once. Node 8 (no
- * recursive mkdir). Written for this fork (MIT, as the rest of bimmer-lab's shared/).
+ * recursive mkdir). Written for ShakTheme (MIT, as the rest of shared/).
  */
 const fs = require('fs');
 const path = require('path');
@@ -39,7 +39,7 @@ class ClusterInfo {
     /** opts: { id: the app's id (the file's name), name: the app's title, dir, themesDir }. */
     constructor(opts, log) {
         opts = opts || {};
-        this.id = opts.id || 'cluster_themes';
+        this.id = opts.id || 'shaktheme';
         this.name = opts.name || this.id;
         this.dir = opts.dir || INFO_DIR;
         this.themesDir = opts.themesDir || THEMES_DIR;

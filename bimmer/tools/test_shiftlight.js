@@ -38,7 +38,7 @@ check('no rpm reading: nothing on, no flash; a start too close to the red is pul
 });
 
 const read = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
-const layouts = { m: read('apps/cluster_themes/hud/layouts/m.json'), sport: read('apps/cluster_themes/hud/layouts/sport.json') };
+const layouts = { m: read('apps/shaktheme/hud/layouts/m.json'), sport: read('apps/shaktheme/hud/layouts/sport.json') };
 check('M and Sport have the widget: top centre, inside the panel, clear of the centre window, setting-switched', () => {
     Object.keys(layouts).forEach((n) => {
         const w = layouts[n].widgets.find((x) => x.type === 'shiftlight');
@@ -51,16 +51,16 @@ check('M and Sport have the widget: top centre, inside the panel, clear of the c
     });
 });
 check('the settings exist (on, red at 4500, flash from 5500) and the page lists them', () => {
-    const S = read('apps/cluster_themes/app.json').settings, by = (k) => S.find((s) => s.key === k);
+    const S = read('apps/shaktheme/app.json').settings, by = (k) => S.find((s) => s.key === k);
     assert.strictEqual(by('stockShiftLight').default, true);
     assert.strictEqual(by('shiftLightRed').default, 4500);
     assert.strictEqual(by('shiftLightFlash').default, 5500);
     assert(by('shiftLightRed').steps.includes(4500) && by('shiftLightFlash').steps.includes(5500));
-    const main = fs.readFileSync(path.join(ROOT, 'apps/cluster_themes/main.js'), 'utf8');
+    const main = fs.readFileSync(path.join(ROOT, 'apps/shaktheme/main.js'), 'utf8');
     ['stockShiftLight', 'shiftLightRed', 'shiftLightFlash'].forEach((k) => assert(main.includes("'" + k + "'"), k + ' not on the settings page'));
 });
 check('both apps ship the file (the build copies only what "shared" lists), and layouts know the type', () => {
-    ['apps/cluster_themes/app.json', 'apps/idrive_hud_widgets/app.json'].forEach((f) => assert(read(f).shared.includes('shift_light.js'), f));
+    ['apps/shaktheme/app.json', 'apps/idrive_hud_widgets/app.json'].forEach((f) => assert(read(f).shared.includes('shift_light.js'), f));
     assert(/shiftlight:\s*\[\]/.test(fs.readFileSync(path.join(ROOT, 'shared/layouts.js'), 'utf8')));
 });
 check('the shader uses no reserved GLSL ES 1.00 word as a name (half did: the layer drew nothing)', () => {

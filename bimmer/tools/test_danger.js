@@ -82,11 +82,11 @@ assert.strictEqual(formatLimit(null, false), '');
 
 // the wiring: both apps ship the file, the setting is off by default, the two themes draw the alert
 const read = (f) => JSON.parse(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'));
-['apps/cluster_themes/app.json', 'apps/idrive_hud_widgets/app.json'].forEach((f) => assert(read(f).shared.includes('danger.js'), f + ' ships danger.js'));
-const set = read('apps/cluster_themes/app.json').settings.find((s) => s.key === 'dangerAlert');
+['apps/shaktheme/app.json', 'apps/idrive_hud_widgets/app.json'].forEach((f) => assert(read(f).shared.includes('danger.js'), f + ' ships danger.js'));
+const set = read('apps/shaktheme/app.json').settings.find((s) => s.key === 'dangerAlert');
 assert(set && set.type === 'bool' && set.default === false, 'dangerAlert is a bool, off by default');
 ['mblade', 'navi'].forEach((n) => {
-    const L = read('apps/cluster_themes/hud/layouts/' + n + '.json');
+    const L = read('apps/shaktheme/hud/layouts/' + n + '.json');
     const by = (id) => L.widgets.find((w) => w.id === id);
     ['al_card', 'al_card2', 'al_cam', 'al_title', 'al_dist', 'al_unit', 'al_ring', 'al_limit'].forEach((id) => assert(by(id), n + ' has ' + id));
     assert.strictEqual(by('al_card').type, 'box'); assert.strictEqual(by('al_card').toggle, 'dangerLimit');

@@ -1,6 +1,6 @@
 # Licences
 
-Ce dépôt réunit des projets sous des licences différentes. Chaque dossier garde la sienne.
+Ce dépôt réunit des projets sous des licences différentes. Chaque dossier garde la sienne. ShakTheme et HUD Widgets (`bimmer/`) sont signés shakzer pour les changements et ajouts, sous MIT ; les mentions de copyright que les licences d'origine exigent restent dans les fichiers de ce tableau, car les enlever enfreindrait ces licences.
 
 | Dossier | Projet d'origine | Licence | Fichier |
 |---|---|---|---|

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes apps/cluster_themes/hud/layouts/mblade.json and navi.json (the M Blade and Navi cluster themes).
+"""Writes apps/shaktheme/hud/layouts/mblade.json and navi.json (the M Blade and Navi cluster themes).
 
 Both are traced off a photo of a BMW cluster (Nov 14 2026): positions measured on an enlarged copy, mapped to the X3's
 1920x720 panel by two anchors (BMW's seat-belt light at x 606, y 681; the map slot 416,120 1088x480), then kept clear of the
@@ -9,7 +9,7 @@ Usage: python3 tools/gen_mblade_navi.py   (from the app's root)
 """
 import json, os
 
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'apps', 'cluster_themes', 'hud', 'layouts')
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'apps', 'shaktheme', 'hud', 'layouts')
 
 
 def text(id, x, y, w, h, t, font, color='fg', align=None, conn=0, **kw):
