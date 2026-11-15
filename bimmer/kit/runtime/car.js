@@ -152,7 +152,12 @@ class Car {
         if (groups.includes('torque')) add('de.bmw.infotainment.drivingexcitement.FES', 'statusActualValueTorque2', (v) => { const tq = sc('torque', v.actualValueTorqueCrankshaft); put('torque', tq === null ? null : Math.max(0, tq)); });
         // extra[iface].$pollMs: re-read that interface's fields that often (signals.js), for fields the car never notifies
         const pollMs = {};
-        Object.keys(extra || {}).forEach((iface) => Object.keys(extra[iface]).forEach((f) => { if (f === '$pollMs') pollMs[iface] = extra[iface][f]; else add(iface, f, extra[iface][f]); }));
+        // a handler for a field the car reads itself (rpm, speed, ...) listens too: it runs after the car's own, it does not replace it
+        Object.keys(extra || {}).forEach((iface) => Object.keys(extra[iface]).forEach((f) => {
+            if (f === '$pollMs') { pollMs[iface] = extra[iface][f]; return; }
+            const own = watches[iface] && watches[iface][f], more = extra[iface][f];
+            add(iface, f, typeof own === 'function' && typeof more === 'function' ? (v) => { own(v); more(v); } : more);
+        }));
         // a parked car sends nothing new for minutes (fields are notified on change), so "no data for
         // a while" doesn't mean "no car": once a signal's provider is there, stay on live data
         this.subs = [];

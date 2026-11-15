@@ -499,7 +499,9 @@ def build(app_id, language='en'):
             body = file.read()
         with open(entry, 'wb') as file:
             file.write(comment.encode('utf-8') + body)
-    rt_spec = {k: spec.get(k) for k in ('id', 'title', 'version', 'screens', 'settings', 'config', 'startWidget')}
+    # 'signals' too: the app reads which signals it declared (hud.js asks the car only for those, probes.js, the camera's road signs); it was left out,
+    # so ctx.spec.signals was always empty on the car and none of those were ever read
+    rt_spec = {k: spec.get(k) for k in ('id', 'title', 'version', 'screens', 'settings', 'config', 'startWidget', 'signals')}
     rt_spec['stateIds'] = state_ids
     json.dump(rt_spec, open(os.path.join(src, 'javascript', 'kit', 'app-spec.json'), 'w', encoding='utf-8', newline='\n'), indent=1)
     locale = {'language': language, 'strings': load_locale(language)}

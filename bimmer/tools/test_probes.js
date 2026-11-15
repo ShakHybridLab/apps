@@ -12,7 +12,7 @@ const app = (n) => JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps',
 const theme = app('shaktheme'), hud = app('shakhud');
 
 // "get notify" in the catalog photos is "rs", "notify" alone "s" (a notifier without getter)
-const FLAGS = { sign: 's', next: 'rs', fas: 'rs', fasx: 'rs', wheel: 's', pdrive: 's', pdrive2: 's', pdist: 'rs', cc: 'rs', cbs: 'rs', ccrisk: 'rs' };
+const FLAGS = { rpm: 'rs', engt: 'rs', speed: 'rs', sign: 's', next: 'rs', fas: 'rs', fasx: 'rs', wheel: 's', pdrive: 's', pdrive2: 's', pdist: 'rs', cc: 'rs', cbs: 'rs', ccrisk: 'rs' };
 
 check('every probe is declared in ShakTheme\'s app.json with the flags the catalog lists (a signal the car does not have breaks the installation)', () => {
     assert.deepStrictEqual(PROBES.map((p) => p.id).sort(), Object.keys(FLAGS).sort(), 'the probes are not the ones listed here');
@@ -22,8 +22,42 @@ check('every probe is declared in ShakTheme\'s app.json with the flags the catal
         assert(/^de\.bmw\./.test(p.iface), p.id + ': the interface name starts with de.bmw.');
     });
 });
-check('ShakHUD declares none of them (it asks for no signal it does not use)', () => {
-    PROBES.forEach((p) => assert(!(hud.signals && hud.signals[p.iface] && hud.signals[p.iface][p.field]), p.id + ' is declared by ShakHUD'));
+// the three the app draws from itself (régime, températures, vitesse): ShakHUD declares them too, since its rev counter needs them
+const OWN = ['rpm', 'engt', 'speed'];
+check('ShakHUD declares only the three the app draws from (it asks for no signal it does not use)', () => {
+    PROBES.forEach((p) => {
+        const has = !!(hud.signals && hud.signals[p.iface] && hud.signals[p.iface][p.field]);
+        assert.strictEqual(has, OWN.indexOf(p.id) >= 0, p.id + (has ? ' is declared by ShakHUD' : ' is missing from ShakHUD'));
+        if (has) assert.strictEqual(hud.signals[p.iface][p.field], FLAGS[p.id], p.id + ': flags in ShakHUD');
+    });
+});
+check('the three the app draws from come first in the list, so they are the first rows of the Signals tab', () => {
+    assert.deepStrictEqual(PROBES.slice(0, 3).map((p) => p.id), OWN);
+});
+check('a handler added for a field the car reads itself runs after the car\'s own: the rev counter keeps its value (kit/runtime/car.js)', () => {
+    const Car = require('../kit/runtime/car');
+    const seen = {}, got = [];
+    const ctx = {
+        log: { info() {}, warn() {} }, spec: { config: {} }, settings: { get: () => 'off' },
+        signals: { watch: (iface, v, handlers) => { seen[iface] = handlers; return Promise.resolve({ iface, available: true }); } },
+    };
+    const CDS = 'de.bmw.infotainment.vehicle.CDS';
+    const car = new Car(ctx, ['rpm', 'speed'], { [CDS]: { statusEngineSpeed2: (v) => got.push(v), other: () => {} } });
+    seen[CDS].statusEngineSpeed2({ actualValueRPMEngineCrankshaft: 8000 });          // 8000 x 0.25 = 2000 rpm
+    assert.strictEqual(car.data().rpm, 2000, 'the car lost its own rpm handler');
+    assert.strictEqual(got.length, 1, 'the added handler did not run');
+    assert.strictEqual(got[0].actualValueRPMEngineCrankshaft, 8000);
+    seen[CDS].statusEngineSpeed2({ actualValueRPMEngineCrankshaft: 65535 });         // the car's "no value": the rpm stays, the added handler still hears it
+    assert.strictEqual(car.data().rpm, 2000);
+    assert.strictEqual(got.length, 2);
+    assert.strictEqual(typeof seen[CDS].other, 'function', 'a field only the added handler knows is lost');
+    car.subs.length = 0;
+});
+check('the build gives the app its declared signals (ctx.spec.signals): without them none of the probes, nor the camera\'s road signs, was ever read on the car', () => {
+    const build = fs.readFileSync(path.join(__dirname, '..', 'kit', 'tools', 'build.py'), 'utf8');
+    assert(/rt_spec = \{k: spec\.get\(k\) for k in \([^)]*'signals'\)/.test(build), 'build.py leaves signals out of app-spec.json');
+    const hudJs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
+    assert(/const decl = \(this\.ctx\.spec && this\.ctx\.spec\.signals\) \|\| \{\};/.test(hudJs), 'hud.js no longer reads ctx.spec.signals');
 });
 check('both apps ship probes.js, and ShakTheme has the Signals tab', () => {
     assert(theme.shared.indexOf('probes.js') >= 0 && hud.shared.indexOf('probes.js') >= 0, 'probes.js is not in a "shared" list');

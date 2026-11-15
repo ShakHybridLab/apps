@@ -32,6 +32,7 @@ const EXACT = {
     'Every tap moves the real HUD right away.': 'Chaque appui déplace le vrai HUD tout de suite.',
     // carte (cluster)
     '(empty)': '(vide)', 'Subscribing': 'Abonnement en cours', 'The car does not answer': 'La voiture ne répond pas', 'Subscribed, nothing received': 'Abonné, rien reçu', 'Car signals': 'Signaux', 'Signals of the car, read only': 'Signaux de la voiture, en lecture seule', 'Not heard yet': 'Pas encore reçu',
+    'Engine speed (rev counter)': 'Régime moteur (compte-tours)', 'Engine temperatures (oil, coolant)': 'Températures moteur (huile, liquide)', 'Car speed': 'Vitesse de la voiture',
     'Road sign read by the camera': 'Panneau lu par la caméra', 'Next limit read by the camera': 'Prochaine limite lue par la caméra',
     'Driver assistance: lane warnings': 'Aides à la conduite : alertes de voie', 'Driver assistance: steering wheel light': 'Aides à la conduite : voyant du volant',
     'Lane assist: steering wheel symbol': 'Maintien de voie : symbole du volant', 'Power meter: drive and recuperation': 'Puissance : propulsion et récupération',

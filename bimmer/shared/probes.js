@@ -17,8 +17,14 @@ const FAS = 'de.bmw.infotainment.fasus.FASuS';
 const LATERAL = 'de.bmw.dass.driverassistanceapplications.DisplayDriverAssistanceLateralCoordinated';
 const EFF = 'de.bmw.infotainment.drivingexcitement.Efficiencytainment2';
 const SIGN = 'de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl';
+const CDS = 'de.bmw.infotainment.vehicle.CDS';
+const VEHICLE2 = 'de.bmw.infotainment.vehicle.Vehicle2';
 
 const PROBES = [
+    // the three the app itself draws from (kit/runtime/car.js): listed first, to see whether the car sends the rev counter's value at all and what it holds
+    { id: 'rpm', iface: CDS, field: 'statusEngineSpeed2', name: 'Engine speed (rev counter)' },
+    { id: 'engt', iface: CDS, field: 'statusEngineTemperature', name: 'Engine temperatures (oil, coolant)' },
+    { id: 'speed', iface: VEHICLE2, field: 'statusCarSpeed2', name: 'Car speed' },
     { id: 'sign', iface: SIGN, field: 'displaySpeedLimitAndNoPassingRestriction', name: 'Road sign read by the camera' },
     { id: 'next', iface: FAS, field: 'statusNextSpeedLimitRecognition', name: 'Next limit read by the camera' },
     { id: 'fas', iface: FAS, field: 'statusIDriveFAS', name: 'Driver assistance: lane warnings' },
