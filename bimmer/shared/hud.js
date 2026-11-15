@@ -235,9 +235,10 @@
  * the 0-100 timer is up) and "limitBy": true on its text, or on the "ring" icon, makes them red while the speed is over it; the icon is
  * blank without a limit. The 0-100 km/h timer (0-60 mph; the setting "launchTimer"): {{launch}} is its time (0.1 s live, 0.01 s held 12 s once
  * it has finished), {{launchUnit}} an "s" while it shows, "launchBy": true on a text or on the "stopwatch" icon (blank otherwise; green for a new best time).
- * The launch cue (the setting "launchReady"): in the Sport drive mode, once the car has stood still, a chequered flag ("readyBy": true on the "flag" icon)
+ * The launch cue (cluster and HUD; the settings "launchReady" and "launchRpm"): in the Sport drive mode, once the car has stood still with the engine at the speed set, a chequered flag ("readyBy": true on the "flag" icon)
  * and {{launchReady}} ("Launch Control Ready", or {{launchReady1}} / {{launchReady2}} in two lines; "readyBy": true makes a text green) wait in green,
- * in the place of the speed limit ring (the car's own launch control can't be read: it is the timer that is ready).
+ * in the place of the speed limit ring (the car's own launch control can't be read: it is the timer that is ready). Only the layouts with a
+ * "readyBy" widget have it (the four cluster themes and the HUD).
  * Text "tempBy": "oil" | "coolant" (with the same token): blue while the reading is under "oilCold" / "coolantCold" (C; 0 = never
  * blue), green once it is warm (three white flashes when it gets there while the app runs), and over the warning limit it flashes between the
  * shift red and a dark red.
@@ -321,7 +322,7 @@ const PLACE_KEYS = ['hudX', 'hudY', 'hudScale', 'stripClear'];
 // cluster-render has no clip, so the switch squeezes every layer to 662 / 720 of its height about the panel's top.
 const STRIP_TOP = 662;
 // settings that only change what a text shows (the next tick paints it), no rebuild
-const LIVE_KEYS = ['iceBelow', 'evShare', 'launchReady', 'warnOil', 'warnCoolant', 'warnBoost', 'oilCold', 'coolantCold', 'tyreLow', 'badge', 'badgeBMW', 'gFlipLat', 'gFlipLong', 'gRange', 'gTrail'];
+const LIVE_KEYS = ['iceBelow', 'evShare', 'launchReady', 'launchRpm', 'warnOil', 'warnCoolant', 'warnBoost', 'oilCold', 'coolantCold', 'tyreLow', 'badge', 'badgeBMW', 'gFlipLat', 'gFlipLong', 'gRange', 'gTrail'];
 // g (the idea of a G-meter app, no code): a sample over G_BAD is a bad reading, not a corner;
 // the rest are averaged over G_AVG_MS so kerbs and potholes don't throw the dot about
 const G_BAD = 3;
@@ -335,6 +336,7 @@ const WARN = { oil: 'warnOil', coolant: 'warnCoolant', boost: 'warnBoost' };
 // a temperature text with "tempBy" is blue below this setting (C), green above it, and flashes red over its warning limit
 const COLD_BELOW = { oil: 'oilCold', coolant: 'coolantCold' };
 const ACCENT_ROLES = { sportdash: ['sblue'] };   // the theme roles that take the drive mode's colour (the shaders' blues: shaders.js ACCENT_LITERALS)
+const LAUNCH_RPM = 2000, LAUNCH_RPM_HYST = 400;   // the launch cue: the engine speed that means a foot on the throttle, and its hysteresis
 const ICE_BLINK_MS = 8000;       // the snowflake flashes this long when the ice alert comes on
 const WARM_PULSE_MS = 2400, WARM_FLASH_MS = 400;   // a temperature that reaches its warm value flashes white three times in this long, this fast
 const TYRE_RED_BAR = 0.4;               // a tyre pressure this far under the setting "tyreLow" is red (yellow from the setting)
@@ -545,6 +547,7 @@ class HudApp {
         this.needsIntake = false;        // a shown widget uses the intake temperature
         this.hvSoc = null; this.hvSocAt = 0;  // %, a plug-in hybrid's battery charge (HV_SOC)
         this.needsHv = false;            // a shown widget uses it
+        this.hasReady = false;           // the layout has the launch cue ("readyBy")
         this.fuelObd = null; this.fuelObdAt = 0;  // %, the fuel level from the engine unit (FUEL_OBD)
         this.needsFuel = false;          // a shown widget uses the fuel level
         this.boostPeak = null;           // bar, the highest boost since the last 0-60 run started ({{boostPeak}})
@@ -669,6 +672,7 @@ class HudApp {
         this.needsBoost = /boost/.test(j);
         this.needsIntake = /intake/.test(j);
         this.needsHv = /hvSoc|evRange|rangeTotal|evShare/.test(j);
+        this.hasReady = /"readyBy"/.test(j);        // the launch cue is on this layout: else the speed limit ring keeps its place
         this.needsFuel = /fuel|rangeTotal/i.test(j);
     }
     /** A sensor's value now, as its slot shows it ('--' without one). */
@@ -1450,13 +1454,20 @@ class HudApp {
     }
 
     /**
-     * The launch cue: the timer is armed (the car has stood still half a second, runs.js), the drive mode is Sport and there is no time to show
-     * yet; a chequered flag and "Launch Control Ready" then wait in green (the setting "launchReady"; the car's own launch control can't be
-     * read, it is the timer that is ready). They take the place of the speed limit ring.
+     * The launch cue: the timer is armed (the car has stood still half a second, runs.js), the drive mode is Sport, the engine speed is at the
+     * setting "launchRpm" (2000 tr/min; the foot is on the throttle, not at a red light) and there is no time to show yet; a chequered flag and "Launch Control Ready" then wait in green (the setting "launchReady"; the car's own launch control can't be
+     * read, it is the timer that is ready). They take the place of the speed limit ring.  Only on the layouts that have "readyBy" widgets.
      */
     _launchReady(now) {
-        return this.target === 'panel' && this.setting('launchTimer') !== false && this.setting('launchReady') !== false
+        const ok = this.hasReady === true && this.setting('launchTimer') !== false && this.setting('launchReady') !== false
             && this.driveMode === 'sport' && this.runs.state === 'armed' && !isNum(this.runs.shownHeld(now));
+        const lim = isNum(this.setting('launchRpm')) ? this.setting('launchRpm') : LAUNCH_RPM, rpm = this._raw('rpm');
+        // the engine speed asks for the throttle: on from the setting "launchRpm" (0 = from the stop), off again 400 rpm under it (a lifted foot
+        // doesn't make it flicker); no engine speed known, no cue
+        if (!ok || (lim > 0 && !isNum(rpm))) this.launchOn = false;
+        else if (lim <= 0 || rpm >= lim) this.launchOn = true;
+        else if (rpm < lim - LAUNCH_RPM_HYST) this.launchOn = false;
+        return this.launchOn === true;
     }
 
     /** The speed limit ring now: { text (the number shown), over (the speed shown is over it) }, or null when there is none to show. */

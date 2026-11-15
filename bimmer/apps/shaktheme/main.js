@@ -27,7 +27,7 @@ mgu.run({
             title: ctx.spec.title, what: 'cluster',
             look: { name: 'Themes', style: 'hero', tags: { m: 'M8 style', sport: 'Live Cockpit', mblade: 'blue card · red blade', navi: 'speed band · big map' } },
             tabs: ['look', 'badge', 'map', 'alerts', 'display', 'settings'],
-            settings: ['units', 'clock', 'timeZone', 'tankLitres', 'evRangeFull', 'reserveKm', 'reservePct', 'tyreLow', 'speedZone', 'startupSweep', 'limitRing', 'launchTimer', 'launchReady', 'accentByMode', 'iceBelow', 'evShare', 'redline', 'shiftBefore', 'coldGuard', 'showBoost', 'demo'],
+            settings: ['units', 'clock', 'timeZone', 'tankLitres', 'evRangeFull', 'reserveKm', 'reservePct', 'tyreLow', 'speedZone', 'startupSweep', 'limitRing', 'launchTimer', 'launchReady', 'launchRpm', 'accentByMode', 'iceBelow', 'evShare', 'redline', 'shiftBefore', 'coldGuard', 'showBoost', 'demo'],
             display: ['sportTint', 'sportFacets', 'sportPower', 'stockShiftLight', 'shiftLightRed', 'shiftLightFlash', 'nightDim', 'stripClear', 'cameraNotch'],
         }).start();
         process.on('exit', () => { try { hud.stop(); } catch (e) { /* exiting anyway */ } });

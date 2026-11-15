@@ -680,8 +680,9 @@ check('drive mode name: in the mode\'s colour on Sport, M and Navi (white on M B
     assert(/w\.accentBy\) role = this\._accentColor\(\) \|\| role/.test(fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8')), 'the text branch reads it');
 });
 check('launch cue: armed in the Sport drive mode with nothing to show, a chequered flag and "Launch Control Ready" wait in green; not in other modes, not with the setting off, not under a held time, not on the HUD', () => {
-    const h = make({ settings: { launchTimer: true, launchReady: true } });
-    h.target = 'panel'; h.driveMode = 'sport';
+    const h = make({ settings: { launchTimer: true, launchReady: true, launchRpm: 2000 } });
+    const rpm = (v) => { h.rpmF = v; h.D.rpm = v; };
+    rpm(2500); h.target = 'panel'; h.driveMode = 'sport'; h.hasReady = true;
     h.runs = { state: 'armed', record: false, shownHeld: () => null };
     h.speedLimit = { limit: () => 50 };
     assert.strictEqual(h._launchReady(1), true);
@@ -690,6 +691,21 @@ check('launch cue: armed in the Sport drive mode with nothing to show, a chequer
     assert.strictEqual(h._token('launchReady'), 'Launch Control Ready');
     assert.strictEqual(h._token('launchReady1'), 'Launch Control'); assert.strictEqual(h._token('launchReady2'), 'Ready');
     assert.strictEqual(h._limitNow(1), null, 'the limit ring gives way to it');
+    // the engine speed: the foot on the throttle, not a red light; 400 rpm of hysteresis; none known, no cue; 0 = from the stop
+    rpm(900); assert.strictEqual(h._launchReady(1), false, 'idling at the stop: no cue'); assert.strictEqual(h._token('launchReady'), '');
+    assert.notStrictEqual(h._limitNow(1), null, 'the ring is still there at a red light');
+    rpm(1999); assert.strictEqual(h._launchReady(1), false, 'just under');
+    rpm(2000); assert.strictEqual(h._launchReady(1), true, 'from the setting');
+    rpm(1700); assert.strictEqual(h._launchReady(1), true, 'a little lower: still on (hysteresis)');
+    rpm(1599); assert.strictEqual(h._launchReady(1), false, '400 rpm under: off');
+    rpm(1800); assert.strictEqual(h._launchReady(1), false, 'and it needs the setting again to come back');
+    rpm(2600); assert.strictEqual(h._launchReady(1), true);
+    h.runs.state = 'idle'; assert.strictEqual(h._launchReady(1), false); h.runs.state = 'armed'; rpm(1800); assert.strictEqual(h._launchReady(1), false, 'it was reset while not armed');
+    rpm(2600); h.S.launchRpm = 3000; assert.strictEqual(h._launchReady(1), false, 'a higher setting'); h.S.launchRpm = 0; rpm(800); assert.strictEqual(h._launchReady(1), true, '0 = from the stop');
+    h.S.launchRpm = 2000; rpm(null); assert.strictEqual(h._launchReady(1), false, 'no engine speed: no cue');
+    rpm(2500);
+    h.hasReady = false; assert.strictEqual(h._launchReady(1), false, 'a layout without the cue (Sport, M Blade, Navi): nothing'); assert.notStrictEqual(h._limitNow(1), null, 'and the speed limit ring keeps its place');
+    h.hasReady = true;
     h.driveMode = 'hybrid'; assert.strictEqual(h._launchReady(1), false, 'only in Sport'); assert.strictEqual(h._token('launchReady'), '');
     assert.notStrictEqual(h._limitNow(1), null, 'the ring is back with the cue gone');
     h.driveMode = 'eco'; assert.strictEqual(h._launchReady(1), false);
@@ -699,26 +715,45 @@ check('launch cue: armed in the Sport drive mode with nothing to show, a chequer
     h.runs.state = 'run'; assert.strictEqual(h._launchReady(1), false, 'timing: the clock shows, not the cue');
     h.runs.state = 'armed'; h.runs.shownHeld = () => 12.34; assert.strictEqual(h._launchReady(1), false, 'a finished time is held first');
     assert.strictEqual(h._launchTime(1), 12.34);
-    h.runs.shownHeld = () => null; h.target = 'hud'; assert.strictEqual(h._launchReady(1), false, 'cluster only');
+    h.runs.shownHeld = () => null; h.target = 'hud'; assert.strictEqual(h._launchReady(1), true, 'the HUD has it too (its layout has the widgets)');
+    assert.strictEqual(h._launchTime(1), null, 'but the timer and the ring stay on the cluster');
+    h.target = 'panel';
     const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
     assert((hud.match(/readyBy\)[^\n]*SPOT ON/g) || []).length === 2, 'the flag and the words are green');
     assert(/if \(w\.readyBy\) \{ hide = !this\._launchReady\(now\)/.test(hud), 'the flag is hidden unless ready');
     assert(/w\.evShareBy \|\| w\.readyBy\)\) \{/.test(hud), 'the flag icon takes the live path (else it would always show)');
     const set = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'app.json'), 'utf8')).settings.find((x) => x.key === 'launchReady');
     assert(set && set.type === 'bool' && set.default === true);
-    assert(/'launchReady'/.test(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'main.js'), 'utf8')));
-    assert(/LIVE_KEYS = \['iceBelow', 'evShare', 'launchReady'/.test(hud));
+    const rs = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'app.json'), 'utf8')).settings.find((x) => x.key === 'launchRpm');
+    assert(rs && rs.type === 'number' && rs.default === 2000 && rs.steps.indexOf(0) >= 0 && rs.steps.indexOf(2000) >= 0, 'the rpm setting');
+    assert(/'launchReady', 'launchRpm'/.test(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'main.js'), 'utf8')));
+    assert(/LIVE_KEYS = \['iceBelow', 'evShare', 'launchReady', 'launchRpm'/.test(hud));
     // the layouts: the flag and the words on the four themes, blank-safe, the glyphs exist, clear of the other widgets
     const icons = require(path.join(tmp, 'shared', 'icons.js')).ICONS;
     assert(typeof icons.flag === 'function');
     let ink = 0; for (let y = 0; y < 36; y++) for (let x = 0; x < 36; x++) if (icons.flag((x + 0.5) / 36, (y + 0.5) / 36) < 0) ink++;
     assert(ink > 150 && ink < 700, 'flag ink ' + ink);
+    // the HUD: a row under the temperatures, in the HUD's own fonts (no second connection there)
+    {
+        const hl = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shakhud', 'hud', 'layouts', 'mstyle.json'), 'utf8')), hf = (id) => JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shakhud', 'hud', 'fonts', id + '.json'), 'utf8'));
+        const by = (i) => hl.widgets.find((w) => w.id === i), fl = by('ready_flag'), tx = by('ready_text');
+        assert(fl && fl.icon === 'flag' && fl.readyBy && tx && tx.text === '{{launchReady}}' && tx.readyBy, 'the HUD has the flag and the words');
+        const f = hf(tx.font), adv = (c) => { const v = f.glyphs[c]; return typeof v === 'object' ? (v.advance || v.w) : v; };
+        assert('Launch Control Ready'.split('').every((c) => f.glyphs[c]), 'the HUD font lacks a letter');
+        const wd = 'Launch Control Ready'.split('').reduce((a, c) => a + adv(c), 0); assert(wd <= tx.w, 'the words are ' + wd + ' px in ' + tx.w);
+        assert(tx.x + tx.w <= 800 && tx.y + tx.h <= 480 && fl.x >= 0, 'inside the 800x480 HUD');
+        const box = (w) => [w.x, w.y, w.x + w.w, w.y + w.h], hit = (A, B) => A[0] < B[2] && B[0] < A[2] && A[1] < B[3] && B[1] < A[3];
+        hl.widgets.forEach((o) => { if (o === fl || o === tx) return; [fl, tx].forEach((b) => assert(!hit(box(b), box(o)), 'HUD: ' + b.id + ' overlaps ' + o.id)); });
+        const hs = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shakhud', 'app.json'), 'utf8')).settings.map((x) => x.key);
+        assert(hs.indexOf('launchReady') >= 0 && hs.indexOf('launchRpm') >= 0, 'the HUD app has the two settings');
+        assert(/'launchReady', 'launchRpm'/.test(fs.readFileSync(path.join(root, 'apps', 'shakhud', 'main.js'), 'utf8')));
+    }
     ['sport', 'm', 'mblade', 'navi'].forEach((id) => {
         const L = lay(id), by = (i) => L.widgets.find((w) => w.id === i);
         const flag = by('ready_flag'); assert(flag && flag.icon === 'flag' && flag.readyBy && flag.toggle === '!mapUp', id + ': the flag');
         assert.strictEqual(flag.conn, 1, id + ': the cue is on the second connection (the first has no layer to spare: Sport would go over 16 MiB of pixels)');
-        ['ready_text', 'ready_text1', 'ready_text2'].forEach((i) => { if (by(i)) assert.strictEqual(by(i).conn, 1, id + ': ' + i + ' on the second connection'); });
-        const words = id === 'mblade' ? [['ready_text1', '{{launchReady1}}'], ['ready_text2', '{{launchReady2}}']] : [['ready_text', '{{launchReady}}']];
+        assert.strictEqual(by('ready_text').conn, 1, id + ': the words on the second connection');
+        const words = [['ready_text', '{{launchReady}}']];
         words.forEach(([wid, tok]) => {
             const w = by(wid); assert(w && w.text === tok && w.readyBy && w.toggle === '!mapUp', id + ': ' + wid);
             const f = font(w.font), g = (c) => f.glyphs[c];

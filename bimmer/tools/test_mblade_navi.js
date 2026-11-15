@@ -117,10 +117,10 @@ NAMES.forEach((n) => {
         });
         check('mblade: nothing shown together overlaps anything else (text and icon boxes), in either view', () => {
             const g = (w) => (w.toggle === 'powerShut' ? '!mapUp' : w.toggle === 'powerOpen' ? 'mapUp' : w.toggle) || '';
-            // the danger alert (al_), the limit ring (lim_), the 0-100 timer (run_) and the launch cue (ready_) share their places by design: they take turns
-            const own = (w) => /^(al_|lim_|run_|ready_)/.test(w.id);
+            // the danger alert (al_), the limit ring (lim_) and the 0-100 timer (run_) share their places by design: they take turns
+            const own = (w) => /^(al_|lim_|run_)/.test(w.id);
             const ws = L.widgets.filter((w) => /^(text|icon)$/.test(w.type) && !own(w));
-            L.widgets.filter((w) => /^(lim_|run_|ready_)/.test(w.id)).forEach((a) => ws.forEach((b) => {
+            L.widgets.filter((w) => /^(lim_|run_)/.test(w.id)).forEach((a) => ws.forEach((b) => {
                 if ((g(a) === 'mapUp' && g(b) === '!mapUp') || (g(a) === '!mapUp' && g(b) === 'mapUp')) return;
                 assert(!(a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y), a.id + ' overlaps ' + b.id);
             }));

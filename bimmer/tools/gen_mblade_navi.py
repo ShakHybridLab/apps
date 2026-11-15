@@ -103,16 +103,12 @@ def ev_share(ix, iy, iw, ih, nx, ny, nw, nh, num_font, ux, uy, uw, uh, unit_font
             text('ev_share_unit', ux, uy, uw, uh, '{{evShareUnit}}', unit_font, 'dim')]
 
 
-def launch_cue(top, stacked_cx=None):
-    """The launch cue (Sport drive mode, standing still; on the second connection: the first has no layer to spare): a chequered flag and "Launch Control Ready" in green, in the place of the speed limit ring.
-    Side by side, centred on x 960 (a 36 px row at `top`); or, with `stacked_cx`, the flag over two short lines (the narrow black band of M Blade)."""
-    if stacked_cx is None:
-        return [icon('ready_flag', 'flag', 822, top, 36, 36, 'fg', 1, toggle='!mapUp', readyBy=True),
-                text('ready_text', 866, top + 1, 232, 34, '{{launchReady}}', 'badge', 'fg', 'left', 1, toggle='!mapUp', readyBy=True)]
-    cx = stacked_cx
-    return [icon('ready_flag', 'flag', cx - 17, top, 34, 34, 'fg', 1, toggle='!mapUp', readyBy=True),
-            text('ready_text1', cx - 75, top + 38, 150, 24, '{{launchReady1}}', 'mode', 'fg', 'center', 1, toggle='!mapUp', readyBy=True),
-            text('ready_text2', cx - 75, top + 60, 150, 24, '{{launchReady2}}', 'mode', 'fg', 'center', 1, toggle='!mapUp', readyBy=True)]
+def launch_cue(top, cx=960):
+    """The launch cue (Sport drive mode, standing still, the engine at the throttle speed): a chequered flag and "Launch Control Ready" in green, one row
+    centred on `cx` (a 36 px row at `top`), where the speed limit ring would be. On the second connection: the first has no layer to spare."""
+    x0 = cx - 138
+    return [icon('ready_flag', 'flag', x0, top, 36, 36, 'fg', 1, toggle='!mapUp', readyBy=True),
+            text('ready_text', x0 + 44, top + 1, 232, 34, '{{launchReady}}', 'badge', 'fg', 'left', 1, toggle='!mapUp', readyBy=True)]
 
 
 def limit_and_timer(cx, top, R, compact=False):
@@ -272,7 +268,7 @@ def mblade():
     # the hexagon, as the photo has it: the selector letter big in the void (D, or S / M by the shifter programme, P R N; BMW's own
     # box shows it too), the speed small right under it with "km/h" beside it, the battery's power in kW one line lower when eDrive
     # Live shares it, the drive mode on the tabs
-    W.append(text('gear', 770, 291, 190, 101, '{{stage}}', 'm_gear', align='center', toggle='!mapUp'))
+    W.append(text('gear', 725, 291, 280, 101, '{{stage}}', 'm_gear', align='center', toggle='!mapUp'))
     W.append(text('speed', 735, 449, 170, 40, '{{speed}}', 'm_spd', 'fg', 'right', toggle='!mapUp'))
     W.append(text('speed_unit', 915, 461, 80, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'left', toggle='!mapUp'))
     W.append(text('power', 740, 528, 120, 29, '{{powerKw}}', 'm_mid', 'fg', 'right', 1, toggle='powerShut'))
@@ -301,7 +297,7 @@ def mblade():
     W.append(text('range', 348, 684, 112, 29, '{{rangeTotal}}', 'm_mid', 'fg', 'right', 1))
     W.append(text('range_unit', 466, 687, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1))
     W.extend(limit_and_timer(672, 318, 76, True))                  # in the black void left of the gear letter
-    W.extend(launch_cue(292, 692))                                 # (the same band, the flag over two short lines)
+    W.extend(launch_cue(112, 895))                                 # one row above the hexagon, centred on its top face (the black band is too narrow)
     W.extend(ev_share(632, 681, 26, 34, 662, 687, 52, 32, 'm_tiny', 718, 687, 26, 32, 'm_tiny'))   # between the belt light and the hexagon's tabs
     # the right end follows the strips: in the map view they are SX px further right, so the oil, the electric range and the outside
     # temperature move with them (the coolant stays)

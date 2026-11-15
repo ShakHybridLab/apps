@@ -313,6 +313,32 @@
       "w": 82,
       "h": 29,
       "text": "{{coolant}}{{u:temp}}"
+    },
+    {
+      "id": "ready_flag",
+      "type": "icon",
+      "icon": "flag",
+      "z": 5,
+      "x": 400,
+      "y": 381,
+      "w": 30,
+      "h": 30,
+      "color": "fg",
+      "readyBy": true
+    },
+    {
+      "id": "ready_text",
+      "type": "text",
+      "z": 5,
+      "x": 438,
+      "y": 382,
+      "w": 214,
+      "h": 29,
+      "text": "{{launchReady}}",
+      "font": "mid",
+      "color": "fg",
+      "align": "left",
+      "readyBy": true
     }
   ]
 }

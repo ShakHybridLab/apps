@@ -1178,9 +1178,9 @@
       "w": 36,
       "h": 36,
       "color": "fg",
+      "conn": 1,
       "readyBy": true,
-      "toggle": "!mapUp",
-      "conn": 1
+      "toggle": "!mapUp"
     },
     {
       "id": "ready_text",
@@ -1194,9 +1194,9 @@
       "font": "badge",
       "color": "fg",
       "align": "left",
+      "conn": 1,
       "readyBy": true,
-      "toggle": "!mapUp",
-      "conn": 1
+      "toggle": "!mapUp"
     }
   ]
 }

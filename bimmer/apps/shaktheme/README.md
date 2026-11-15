@@ -94,7 +94,7 @@ Neither theme has been tried on a car; they are checked on the bench against the
 ## Détails de finition (0.19)
 
 - **Nom du mode de conduite en couleur :** Electric, Hybrid et Sport s'écrivent en bleu, vert et rouge sur Sport, M et Navi (sur le M, seul ce nom change ; sur M Blade il reste blanc, car il est posé sur l'onglet de l'hexagone, qui a déjà la couleur du mode).
-- **Launch Control Ready (0.19.1) :** en mode Sport, voiture immobile, un **drapeau à damier** et « Launch Control Ready » s'affichent en vert à la place de la bague de limitation ; le chrono compte dès que la voiture démarre. Réglage **Drapeau « Launch Control Ready » (mode Sport, à l'arrêt)**. L'appli ne lit pas le launch control de la voiture (ni le frein) : c'est le chrono qui est prêt.
+- **Launch Control Ready (0.19.1, condition de régime au 0.19.2) :** voiture immobile en mode Sport, **moteur à 2 000 tr/min ou plus** (le pied sur l'accélérateur ; pas au feu rouge), un **drapeau à damier** et « Launch Control Ready » s'affichent en vert à la place de la bague de limitation ; le chrono compte dès que la voiture démarre. Réglages **Drapeau « Launch Control Ready » (mode Sport, à l'arrêt)** et **Launch Control Ready : à partir de** (0 = dès l'arrêt). L'appli ne lit ni le launch control de la voiture ni le frein : c'est le chrono qui est prêt.
 
 ## Détails de finition (0.18.0)
 
