@@ -799,11 +799,18 @@ float slotD(vec2 p) {
     vec2 q = abs(p - vec2(1501.5, 380.5)) - (vec2(99.5, 42.5) - vec2(16.0));
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - 16.0;
 }
-float slot(vec2 p) { float d = slotD(p); return clamp(d + 0.5, 0.0, 1.0) * mix(0.45, 1.0, smoothstep(0.0, 36.0, d)); }
+float slotOf(float d, float fall) { return clamp(d + 0.5, 0.0, 1.0) * mix(0.45, 1.0, smoothstep(0.0, fall, d)); }
+// the same for BMW's gear letter at the bottom right and the small black box after it (x 1392..1448, y 666..702 + margin): a window
+// (1386,662)-(1454,708), with a shorter shadow
+float gearD(vec2 p) {
+    vec2 q = abs(p - vec2(1420.0, 685.0)) - (vec2(34.0, 23.0) - vec2(10.0));
+    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - 10.0;
+}
+float slot(vec2 p) { return min(slotOf(slotD(p), 36.0), slotOf(gearD(p), 22.0)); }
 // A thin pale rim just outside that window (2.5 px out, 1.5 px thick, with a faint glow): the black box then reads as an insert the theme
 // meant to have (a gear window), not as a hole in it. Added to the backdrop colour after slot().
 vec3 slotRim(vec2 p) {
-    float e = abs(slotD(p) - 2.5);
+    float e = min(abs(slotD(p) - 2.5), abs(gearD(p) - 2.5));
     return vec3(0.42, 0.55, 0.82) * (cov(e - 0.75) * 0.5 + exp(-e / 4.0) * 0.07);
 }
 float hash2(vec2 i) { return fract(sin(dot(i, vec2(12.9898, 78.233))) * 43758.5453); }

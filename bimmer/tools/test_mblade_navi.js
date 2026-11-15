@@ -114,8 +114,8 @@ NAMES.forEach((n) => {
                 assert(by(pre + 'oil_icon').x > right('cool_unit') && by(pre + 'ev_icon').x > right('oil_unit') && by(pre + 'outside').x > right('ev_range_unit'), pre + ': the readouts touch or are out of order');
                 assert(by(pre + 'outside').x - right('ev_range_unit') >= 0 && by(pre + 'outside_unit').x + 30 <= 1890, pre + ': outside temperature too close to the electric range or to the panel edge');
                 const under = (g) => g[0] + g[3] * (g[2] - g[1]);                          // a strip's left edge at its bottom
-                assert(Math.abs(by(pre + 'oil_icon').x + 40 - (under(b.g1) + 13)) <= 50, pre + ': the oil reading is not under the oil strip');
-                assert(by(pre + 'ev_icon').x >= under(b.g2) - 15 && by(pre + 'ev_icon').x <= under(b.g2) + 40, pre + ': the electric range is not under the battery strip (up to 40 px right of its foot: BMW\'s gear letter, x 1388..1436, pushes the oil and the range out of their old places)');
+                assert(Math.abs(by(pre + 'oil_icon').x + 40 - (under(b.g1) + 13)) <= 60, pre + ': the oil reading is not under the oil strip (up to 60 px right of it: BMW\'s gear letter pushes it out of its old place)');
+                assert(by(pre + 'ev_icon').x >= under(b.g2) - 15 && by(pre + 'ev_icon').x <= under(b.g2) + 55, pre + ': the electric range is not under the battery strip (up to 55 px right of its foot: BMW\'s gear letter, x 1386..1454, pushes the oil and the range out of their old places)');
             });
         });
         check('mblade: nothing shown together overlaps anything else (text and icon boxes), in either view', () => {

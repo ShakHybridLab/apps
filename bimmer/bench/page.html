@@ -250,7 +250,8 @@
       if (geo.GEAR_P) {
         const [gx0, gy0, gx1, gy1] = geo.GEAR_P;
         ctx.setLineDash([5, 4]); ctx.strokeStyle = '#ff8c1a'; ctx.strokeRect(gx0 + .5, gy0 + .5, gx1 - gx0 - 1, gy1 - gy0 - 1); ctx.setLineDash([]);
-        ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = 'bold 34px sans-serif'; ctx.fillText('P', gx0 + 12, gy0 + 40);
+        ctx.fillStyle = '#000'; ctx.fillRect(gx0 + 29, gy0 + 9, 33, 30);                       // the small black box after the letter (car photo Nov 15 2026)
+        ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.font = 'bold 34px sans-serif'; ctx.fillText('P', gx0 + 8, gy0 + 38);
         labelBox('gear letter', gx0 - 20, gy0 - 20, '#ff8c1a');
       }
       // the driver camera on newer cars (where the model badge sits on cars without it): solid while the app's

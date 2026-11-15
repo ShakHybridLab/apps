@@ -20,10 +20,10 @@ const HOOD = [
 const BLACK_BOX = [1406, 342, 1597, 419];
 /** BMW's seat-belt warning light is drawn over us here: [x0, y0, x1, y1]. */
 const BELT = [587, 663, 626, 700];
-/** BMW's own gear letter ("P", "D"...), at the bottom right of the panel, is drawn over whatever is there: [x0, y0, x1, y1].
- *  Estimated from the owner's photos of Nov 15 2026 (the letter is about x 1398..1424, y 670..707, found against our own widgets of
- *  the same photo; the zone has a margin all round): to be measured on a straight photo. */
-const GEAR_P = [1388, 662, 1436, 714];
+/** BMW's own gear letter ("P", "D"...), at the bottom right of the panel, is drawn over whatever is there, with a small black box after it
+ *  (the owner's photo of Nov 15 2026, against our own battery bar of the same photo: the letter is about x 1392..1415, y 666..701 and the
+ *  black box x 1415..1448, y 671..701). [x0, y0, x1, y1] with a few px of margin; the shaders make the backdrop meet it (slot() in shaders.js). */
+const GEAR_P = [1386, 662, 1454, 708];
 /** The part of the 800x480 HUD target seen through the windshield: BMW's own height-adjust frame (car photo Nov 7,
  *  measured Nov 9 2026) spans x 117..681, y ~85..395. The Nov 5 grid photo's right edge (x 600) was the phone's angle. */
 const HUD_WINDOW = { x: 120, y: 100, w: 560, h: 280 };

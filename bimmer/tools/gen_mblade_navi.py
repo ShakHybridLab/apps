@@ -227,16 +227,16 @@ def mb_bottom_right(pre='', tog=None, dx=0, y=684):
     302 F)."""
     k = {'toggle': tog} if tog else {}
     W = []
-    for x, name, icon_name, tok, sig in ((1205, 'cool', 'therm', '{{coolant}}', 'coolant'), (1440, 'oil', 'oilcan', '{{oil}}', 'oil')):
-        # the coolant is not under a strip: it keeps its place, ending before BMW's gear letter (x 1388..1436: shared/visible.js GEAR_P, drawn
-        # over the panel at the bottom); the oil starts right after the letter and the electric range after it, in both views (x 1592: the outside temperature's box starts at 1736)
+    for x, name, icon_name, tok, sig in ((1205, 'cool', 'therm', '{{coolant}}', 'coolant'), (1458, 'oil', 'oilcan', '{{oil}}', 'oil')):
+        # the coolant is not under a strip: it keeps its place, ending before BMW's gear letter and its black box (x 1386..1454: shared/visible.js
+        # GEAR_P, drawn over the panel at the bottom); the oil starts right after them, then the electric range, then the outside temperature
+        # (box x 1736), in both views, with tight boxes (the widest value: 302 = 87 px, an electric range 99 = 58, a unit 26 to 34)
         W.append(icon(pre + name + '_icon', icon_name, x, y - 3, 26, 34, 'fg', 1, tempBy=sig, **k))
-        W.append(text(pre + name, 1467 if name == 'oil' else x + 32, y, 87, 29, tok, 'm_mid', 'fg', 'right', 1, tempBy=sig, **k))
-        W.append(text(pre + name + '_unit', 1555 if name == 'oil' else x + 123, y + 3, 36, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, **k))
-    ex = 1592
-    W += [icon(pre + 'ev_icon', 'battery', ex, y - 3, 26, 34, 'fg', 1, **k),
-          text(pre + 'ev_range', ex + 32, y, 62, 29, '{{evRange}}', 'm_mid', 'fg', 'right', 1, **k),
-          text(pre + 'ev_range_unit', ex + 98, y + 3, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1, **k)]
+        W.append(text(pre + name, 1485 if name == 'oil' else x + 32, y, 87, 29, tok, 'm_mid', 'fg', 'right', 1, tempBy=sig, **k))
+        W.append(text(pre + name + '_unit', 1573 if name == 'oil' else x + 123, y + 3, 28 if name == 'oil' else 36, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, **k))
+    W += [icon(pre + 'ev_icon', 'battery', 1606, y - 3, 26, 34, 'fg', 1, **k),
+          text(pre + 'ev_range', 1637, y, 58, 29, '{{evRange}}', 'm_mid', 'fg', 'right', 1, **k),
+          text(pre + 'ev_range_unit', 1696, y + 3, 36, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1, **k)]
     return W
 
 
@@ -402,7 +402,7 @@ def navi():
     W.append(text('mspeed', 1570, 207, 280, 82, '{{speed}}', 'm_big', align='center', toggle='mapUp'))
     W.append(text('mspeed_unit', 1670, 314, 80, 29, '{{u:speedLc}}', 'm_tiny', 'dim', 'center', toggle='mapUp'))
     # the two bars along the bottom, each with its remaining range above its right end: the fuel on the left, the hybrid
-    # battery on the right of the middle, ending before BMW's gear letter (x 1388..1436, see shared/visible.js GEAR_P); the clock between them
+    # battery on the right of the middle, ending before BMW's gear letter (x 1386..1454, see shared/visible.js GEAR_P); the clock between them
     # stops before BMW's belt light (x 587)
     W.append(icon('fuel_icon', 'fuel', 112, 662, 29, 34))
     W.append(icon('range_icon', 'fuelBolt', 214, 632, 29, 34))                # the total range: fuel and electric

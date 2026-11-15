@@ -99,7 +99,7 @@ Neither theme has been tried on a car; they are checked on the bench against the
 ## Détails de finition (0.20.2)
 
 - **Bague de limitation de vitesse : la voiture la donne.** ShakTheme lit le panneau que la caméra de la voiture a reconnu (le signal que le cluster de BMW affiche lui-même) ; la bague reste jusqu'au panneau suivant ou jusqu'à « pas de panneau ». Les autres applis peuvent toujours écrire `speedlimit-<appli>.json` (le plus récent gagne). Pas encore essayé sur la voiture : le journal garde la valeur brute des premiers panneaux (`road sign …`).
-- **Lettre de rapport de BMW en bas à droite :** les autonomies et températures de Sport, M Blade et Navi se placent autour d'elle ; le nom du mode de Sport monte d'une rangée (plus de chevauchement avec la température extérieure).
+- **Lettre de rapport de BMW en bas à droite (et son petit rectangle noir) :** une petite fenêtre sombre à liseré pâle l'entoure sur Sport, M Blade et Navi, et les autonomies et températures se placent autour d'elle ; le nom du mode de Sport monte d'une rangée (plus de chevauchement avec la température extérieure).
 
 ## Détails de finition (0.20.1)
 
