@@ -4,7 +4,7 @@
  * Each icon is a distance function in a 0..1 box; coverage is anti-aliased over one pixel.
  *   gauge (engine), shock (chassis), wheel (steering), cog (gearbox), stack (the gear's shift program
  *   lines), therm (coolant), oilcan (oil), fuel (pump), tyre (a wheel seen from the side: ring, hub, tread notches),
- *   oilDrop, tempWave (ShakHUD's modern oil drop and thermometer),
+ *   oilPour, tempWave (ShakHUD's modern oil can and thermometer),
  *   battery (a plug-in hybrid's high-voltage battery: the cell with a bolt in it, terminal on top).
  */
 function seg(px, py, ax, ay, bx, by) {
@@ -44,8 +44,12 @@ const ICONS = {
         return d;
     },
     stack: (x, y) => Math.min(seg(x, y, 0.1, 0.22, 0.62, 0.22) - 0.055, seg(x, y, 0.1, 0.5, 0.78, 0.5) - 0.06, seg(x, y, 0.1, 0.8, 0.92, 0.8) - 0.075),
-    // ShakHUD's modern pair: an outlined oil drop, filled with oil from the middle down; a thermometer with two heat waves
-    oilDrop: (x, y) => Math.min(Math.abs(drop(x, y)) - 0.04, Math.max(drop(x, y) + 0.1, 0.58 - y)),
+    // ShakHUD's modern oil can with its drop, and a thermometer with two heat waves
+    oilPour: (x, y) => Math.min(rect(x, y, 0.4, 0.64, 0.25, 0.12) - 0.07,                                    // the can's low body
+        seg(x, y, 0.2, 0.56, 0.06, 0.4) - 0.05, seg(x, y, 0.06, 0.4, 0.06, 0.3) - 0.05,                      // the handle, up behind
+        seg(x, y, 0.3, 0.5, 0.3, 0.36) - 0.04, seg(x, y, 0.18, 0.34, 0.42, 0.34) - 0.045,                    // the filler neck and its cap
+        seg(x, y, 0.62, 0.56, 0.9, 0.3) - 0.05,                                                              // the long spout
+        Math.min(cone(x, y, 0.93, 0.5, 0.0, 0.93, 0.76, 0.09), disc(x, y, 0.93, 0.76, 0.09))),              // the drop falling from it
     tempWave: (x, y) => {
         let d = Math.min(Math.abs(tube(x, y)) - 0.04, disc(x, y, 0.36, 0.76, 0.19), seg(x, y, 0.36, 0.4, 0.36, 0.7) - 0.045);
         [0.26, 0.5].forEach((yy) => { d = Math.min(d, seg(x, y, 0.62, yy, 0.7, yy - 0.07) - 0.035, seg(x, y, 0.7, yy - 0.07, 0.78, yy) - 0.035, seg(x, y, 0.78, yy, 0.86, yy - 0.07) - 0.035); });

@@ -222,7 +222,7 @@
     {
       "id": "oil_icon",
       "type": "icon",
-      "icon": "oilDrop",
+      "icon": "oilPour",
       "color": "fg",
       "class": "content",
       "z": 10,
