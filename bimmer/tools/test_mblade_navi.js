@@ -84,7 +84,7 @@ NAMES.forEach((n) => {
             assert(o.fuelH === true && !n.fuelH, 'the fuel bar must be flat with the map up only');
             const left = 1920 - o.g0[2], right = 1920 - o.g0[1];                 // the flat bar, back in panel px
             assert(left >= win[0] && right <= win[2], 'the fuel bar is wider than the window');
-            assert(o.g0[0] >= win[3] + 8 && o.g0[0] + 27 <= by('time').y - 20, 'the fuel bar is not right under the window, clear of the bottom row');
+            assert(o.g0[0] >= win[3] + 8 && o.g0[0] + 27 <= by('o_time').y - 20, 'the fuel bar is not right under the window, clear of the bottom row');
             assert(o.g1[0] > n.g1[0] && o.g2[0] > n.g2[0] && o.bl[2] > n.bl[2], 'not moved to the right');
             assert(win[2] + 10 <= 1050, 'the window runs into the blade, whose base starts near x 1050 (' + win[2] + ')');
             const f = ['o_f_lo', 'o_f_mid', 'o_f_hi', 'o_fuel_icon'].map(by);
@@ -95,20 +95,25 @@ NAMES.forEach((n) => {
         // the bottom row's right end exists twice: for the normal view (no prefix, backdrop) and for the map view ("o_", backdrop_open),
         // where the oil, the electric range and the outside temperature follow the strips
         const VIEWS = [['', '!mapUp', 'backdrop'], ['o_', 'mapUp', 'backdrop_open']];
-        check('mblade: the clock, the fuel range, the electric range, the oil and coolant temperatures and the outside temperature share one line at the bottom (same y), in both views', () => {
+        check('mblade: the clock, the fuel range, the electric range, the oil and coolant temperatures and the outside temperature share one line at the bottom (same y), in both views: above BMW\'s gear box in the normal view, level with it (its middle on the box\'s) with the map up', () => {
             VIEWS.forEach(([pre]) => {
-                const ys = [by('time'), by('range'), by(pre + 'ev_range'), by(pre + 'oil'), by(pre + 'cool'), by(pre + 'outside')].map((w) => w.y);
+                const ys = [by(pre + 'time'), by(pre + 'range'), by(pre + 'ev_range'), by(pre + 'oil'), by(pre + 'cool'), by(pre + 'outside')].map((w) => w.y);
                 assert(ys.every((y) => y === ys[0]), pre + ' y differ: ' + ys.join(', '));
-                // the whole line sits above BMW's gear letter and its black box (visible.GEAR_P, y 662..708): the units, the lowest boxes, end above it
-                assert(ys[0] + 3 + 32 <= visible.GEAR_P[1], pre + ' the line runs into the gear letter\'s box: y ' + ys[0]);
-                ['range_icon', pre + 'ev_icon', pre + 'oil_icon', pre + 'cool_icon'].forEach((i) => assert(by(i).y === ys[0] - 3, i + ' is not on the line'));
-                ['range_unit', pre + 'ev_range_unit', pre + 'oil_unit', pre + 'cool_unit', pre + 'outside_unit'].forEach((i) => assert(by(i).y === ys[0] + 3, i + ' is not on the line'));
+                if (pre === '') {
+                    // the whole line sits above BMW's gear letter and its black box (visible.GEAR_P, y 662..708): the units, the lowest boxes, end above it
+                    assert(ys[0] + 3 + 32 <= visible.GEAR_P[1], 'the normal view\'s line runs into the gear letter\'s box: y ' + ys[0]);
+                } else {
+                    // with the map up it stays at the bottom, its middle on the middle of the gear letter and the belt light (y 663..708)
+                    assert(Math.abs(ys[0] + 29 / 2 - 683) <= 5, pre + ' the line is not centred on the belt light and the gear letter: y ' + ys[0]);
+                }
+                [pre + 'range_icon', pre + 'ev_icon', pre + 'oil_icon', pre + 'cool_icon'].forEach((i) => assert(by(i).y === ys[0] - 3, i + ' is not on the line'));
+                [pre + 'range_unit', pre + 'ev_range_unit', pre + 'oil_unit', pre + 'cool_unit', pre + 'outside_unit'].forEach((i) => assert(by(i).y === ys[0] + 3, i + ' is not on the line'));
             });
         });
         check('mblade: the coolant, the oil and the electric range are on the bottom row in the range\'s lettering and height, the oil under its strip and the electric range under the battery strip, before the outside temperature, in both views', () => {
             VIEWS.forEach(([pre, tog, bid]) => {
                 const ids = ['ev_range', 'oil', 'cool'].map((i) => by(pre + i));
-                assert(ids.every((w) => w.font === 'm_mid' && w.y === by('range').y), pre + ': not the range\'s lettering and line');
+                assert(ids.every((w) => w.font === 'm_mid' && w.y === by(pre + 'range').y), pre + ': not the range\'s lettering and line');
                 assert(by(pre + 'oil').tempBy === 'oil' && by(pre + 'cool').tempBy === 'coolant', pre + ': tempBy missing');
                 ['ev_range', 'oil', 'cool', 'oil_icon', 'cool_icon', 'ev_icon', 'oil_unit', 'cool_unit', 'ev_range_unit', 'outside', 'outside_unit'].forEach((i) => assert(by(pre + i).toggle === tog, pre + i + ': not for its own view'));
                 const right = (id) => by(pre + id).x + by(pre + id).w, b = by(bid);

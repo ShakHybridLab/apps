@@ -644,6 +644,7 @@ check('ice alert and electric share: in the four layouts (blank-safe), their ico
         const box = (w) => [w.x, w.y, w.x + w.w, w.y + w.h], hit = (A, B) => A[0] < B[2] && B[0] < A[2] && A[1] < B[3] && B[1] < A[3];
         ['ev_share_icon', 'ev_share', 'ev_share_unit'].forEach((i) => L.widgets.forEach((o) => {
             if (o.id === i || /^ev_share/.test(o.id) || o.type === 'effects' || o.type === 'image' || /^(bg|map|backdrop)/.test(o.id) || (o.w >= 800)) return;
+            if ((by(i).toggle === '!mapUp' && o.toggle === 'mapUp') || (by(i).toggle === 'mapUp' && o.toggle === '!mapUp')) return;   // M Blade: one set per view, never shown together
             assert(!hit(box(by(i)), box(o)), id + ': ' + i + ' overlaps ' + o.id);
         }));
     });

@@ -2,6 +2,10 @@
 
 ## 15 novembre 2026 (soir)
 
+### ShakTheme 0.20.7 (pas encore essayé sur la voiture)
+- **M Blade : la rangée du bas a deux hauteurs.** Sans carte, elle reste au-dessus de la case de BMW (y 624, températures espacées, comme en 0.20.6). **Avec la carte de Waze, elle redescend en bas** (y 668, le milieu de la rangée sur celui de la lettre de rapport et du voyant de ceinture, comme en 0.20.5) : la fenêtre de la carte retrouve 582 × 450 (au lieu de 418 de haut), la jauge d'essence plate y 598, la note « CHARGE » sa place d'origine ; le liquide de refroidissement x 1205, l'huile x 1458 (de part et d'autre de la case, comme avant). Les widgets de gauche (heure, autonomie, part électrique) existent donc en deux jeux, `time` / `o_time`, etc. : mémoire M Blade 4,7 Mio sans carte, 4,3 avec. Le rond de limite de vitesse reste en x 234, y 540 (vue normale uniquement).
+- Tests : `test_mblade_navi.js` (deux hauteurs : au-dessus de la case sans carte, milieu sur celui de la lettre avec la carte) et `test_zones.js` (la part électrique n'est comparée qu'aux widgets de sa propre vue).
+
 ### ShakTheme 0.20.6 (pas encore essayé sur la voiture)
 - **M Blade : toute la rangée du bas passe au-dessus de la case de BMW (lettre de rapport et petit rectangle noir)**, comme sur le thème M : texte à y 624, unités finissant à y 659, case à partir de y 662. Plus rien n'est serré à droite de la case : température du liquide de refroidissement x 1262, huile x 1450 (3 chiffres possibles), autonomie électrique x 1606, température extérieure x 1736 ; à gauche l'heure et l'autonomie ne bougent pas en x, la part électrique (feuille et pourcentage) passe de x 632 à x 662 (elle touchait le « 0 » de l'échelle de vitesse).
 - Pour que la rangée haute ne touche rien avec la carte de Waze : la fenêtre de la carte passe de 582 × 458 à **582 × 418** (x 446, y 120, toujours dans la zone de Waze on Cluster), la jauge d'essence plate de y 598 à y 558, la note « CHARGE » du pied de la lame descend sous l'échelle de la jauge (elle ne s'affiche que pendant la charge), le rond de limite de vitesse passe en x 234, y 540 (au-dessus de l'heure, en vue normale seulement).

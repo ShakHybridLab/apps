@@ -116,7 +116,7 @@
         613
       ],
       "g0": [
-        558,
+        598,
         958,
         1458,
         0
@@ -136,9 +136,9 @@
       "fuelH": true,
       "hole": [
         436,
-        110,
+        118,
         602,
-        438
+        470
       ],
       "holeWhen": "mapUp",
       "holeInset": 10,
@@ -213,7 +213,7 @@
         0,
         4
       ],
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "spd2",
@@ -240,7 +240,7 @@
         0,
         4
       ],
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "spd3",
@@ -267,8 +267,7 @@
         0,
         4
       ],
-      "sheet": "s2",
-      "conn": 1
+      "sheet": "s0"
     },
     {
       "id": "spd4",
@@ -295,7 +294,7 @@
         0,
         4
       ],
-      "sheet": "s2",
+      "sheet": "s1",
       "conn": 1
     },
     {
@@ -323,7 +322,7 @@
         0,
         4
       ],
-      "sheet": "s2",
+      "sheet": "s1",
       "conn": 1
     },
     {
@@ -351,8 +350,7 @@
         0,
         4
       ],
-      "sheet": "s2",
-      "conn": 1
+      "sheet": "s2"
     },
     {
       "id": "spd7",
@@ -379,8 +377,7 @@
         0,
         4
       ],
-      "sheet": "s2",
-      "conn": 1
+      "sheet": "s2"
     },
     {
       "id": "spd8",
@@ -407,7 +404,7 @@
         0,
         4
       ],
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "spd_unit",
@@ -422,7 +419,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "gear",
@@ -437,7 +434,8 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s1",
+      "conn": 1
     },
     {
       "id": "speed",
@@ -452,7 +450,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "speed_unit",
@@ -467,7 +465,7 @@
       "color": "fg",
       "align": "left",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "power",
@@ -482,7 +480,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "powerShut",
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "power_unit",
@@ -497,7 +495,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "powerShut",
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "drive_mode",
@@ -513,8 +511,7 @@
       "align": "center",
       "toggle": "!mapUp",
       "readyHides": true,
-      "sheet": "s6",
-      "conn": 1
+      "sheet": "s5"
     },
     {
       "id": "ready_flag",
@@ -529,7 +526,7 @@
       "conn": 1,
       "toggle": "!mapUp",
       "readyBy": "plain",
-      "sheet": "s7"
+      "sheet": "s6"
     },
     {
       "id": "ready_text",
@@ -546,7 +543,7 @@
       "conn": 1,
       "toggle": "!mapUp",
       "readyBy": "plain",
-      "sheet": "s7"
+      "sheet": "s6"
     },
     {
       "id": "o_gear",
@@ -561,8 +558,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
-      "sheet": "s6",
-      "conn": 1
+      "sheet": "s5"
     },
     {
       "id": "o_speed",
@@ -577,8 +573,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "mapUp",
-      "sheet": "s6",
-      "conn": 1
+      "sheet": "s5"
     },
     {
       "id": "o_speed_unit",
@@ -593,8 +588,7 @@
       "color": "fg",
       "align": "left",
       "toggle": "mapUp",
-      "sheet": "s6",
-      "conn": 1
+      "sheet": "s5"
     },
     {
       "id": "o_power",
@@ -609,7 +603,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "powerOpen",
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "o_power_unit",
@@ -624,7 +618,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "powerOpen",
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "o_drive_mode",
@@ -640,7 +634,7 @@
       "align": "center",
       "toggle": "mapUp",
       "readyHides": true,
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "o_ready_flag",
@@ -655,7 +649,7 @@
       "conn": 1,
       "toggle": "mapUp",
       "readyBy": "plain",
-      "sheet": "s2"
+      "sheet": "s1"
     },
     {
       "id": "o_ready_text",
@@ -672,7 +666,7 @@
       "conn": 1,
       "toggle": "mapUp",
       "readyBy": "plain",
-      "sheet": "s2"
+      "sheet": "s1"
     },
     {
       "id": "n0",
@@ -700,7 +694,8 @@
         1,
         4
       ],
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "n1",
@@ -728,7 +723,7 @@
         1,
         4
       ],
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "n2",
@@ -933,7 +928,8 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "o_n0",
@@ -961,7 +957,7 @@
         1,
         4
       ],
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_n1",
@@ -989,7 +985,7 @@
         1,
         4
       ],
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_n2",
@@ -1017,7 +1013,7 @@
         1,
         4
       ],
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_n3",
@@ -1045,7 +1041,7 @@
         1,
         4
       ],
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_n4",
@@ -1073,7 +1069,7 @@
         1,
         4
       ],
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_n5",
@@ -1101,7 +1097,7 @@
         1,
         4
       ],
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_n6",
@@ -1129,7 +1125,7 @@
         1,
         4
       ],
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_n7",
@@ -1157,7 +1153,7 @@
         1,
         4
       ],
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_rpm_unit",
@@ -1172,7 +1168,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1180,7 +1176,7 @@
       "type": "text",
       "z": 5,
       "x": 898,
-      "y": 622,
+      "y": 589,
       "w": 110,
       "h": 30,
       "text": "{{chargeNote}}",
@@ -1188,7 +1184,8 @@
       "color": "fg",
       "align": "right",
       "toggle": "mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "f_hi",
@@ -1203,8 +1200,7 @@
       "color": "fg",
       "align": "left",
       "toggle": "!mapUp",
-      "sheet": "s2",
-      "conn": 1
+      "sheet": "s0"
     },
     {
       "id": "f_mid",
@@ -1219,7 +1215,7 @@
       "color": "fg",
       "align": "left",
       "toggle": "!mapUp",
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "f_lo",
@@ -1234,7 +1230,8 @@
       "color": "fg",
       "align": "left",
       "toggle": "!mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "fuel_icon",
@@ -1248,7 +1245,8 @@
       "color": "fg",
       "toggle": "!mapUp",
       "lowWhen": "fuel",
-      "sheet": "s1"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "o_hi",
@@ -1263,7 +1261,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1279,7 +1277,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1295,7 +1293,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1311,7 +1309,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1326,7 +1324,7 @@
       "color": "fg",
       "toggle": "!mapUp",
       "tempBy": "oil",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1342,7 +1340,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1358,7 +1356,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1374,7 +1372,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1390,7 +1388,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1405,7 +1403,7 @@
       "color": "fg",
       "toggle": "!mapUp",
       "lowWhen": "battery",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1563,7 +1561,7 @@
       "color": "fg",
       "toggle": "mapUp",
       "lowWhen": "battery",
-      "sheet": "s9",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1572,20 +1570,20 @@
       "icon": "fuelPump",
       "z": 5,
       "x": 420,
-      "y": 555,
+      "y": 595,
       "w": 28,
       "h": 32,
       "color": "fg",
       "toggle": "mapUp",
       "lowWhen": "fuel",
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "o_f_lo",
       "type": "text",
       "z": 5,
       "x": 452,
-      "y": 591,
+      "y": 631,
       "w": 40,
       "h": 23,
       "text": "0",
@@ -1593,14 +1591,14 @@
       "color": "fg",
       "align": "left",
       "toggle": "mapUp",
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "o_f_mid",
       "type": "text",
       "z": 5,
       "x": 682,
-      "y": 591,
+      "y": 631,
       "w": 60,
       "h": 23,
       "text": "1/2",
@@ -1608,14 +1606,14 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "o_f_hi",
       "type": "text",
       "z": 5,
       "x": 932,
-      "y": 591,
+      "y": 631,
       "w": 40,
       "h": 23,
       "text": "1",
@@ -1623,7 +1621,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "mapUp",
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "time",
@@ -1637,7 +1635,9 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "sheet": "s0"
+      "toggle": "!mapUp",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "ampm",
@@ -1650,7 +1650,9 @@
       "text": "{{ampmLc}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s0"
+      "toggle": "!mapUp",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "range_icon",
@@ -1662,8 +1664,10 @@
       "w": 29,
       "h": 34,
       "color": "fg",
+      "toggle": "!mapUp",
       "lowWhen": "fuel",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "range",
@@ -1678,7 +1682,9 @@
       "color": "fg",
       "align": "right",
       "lowWhen": "fuel",
-      "sheet": "s0"
+      "toggle": "!mapUp",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "range_unit",
@@ -1691,7 +1697,87 @@
       "text": "{{u:distLc}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s0"
+      "toggle": "!mapUp",
+      "sheet": "s7",
+      "conn": 1
+    },
+    {
+      "id": "o_time",
+      "type": "text",
+      "z": 5,
+      "x": 40,
+      "y": 668,
+      "w": 130,
+      "h": 29,
+      "text": "{{time}}",
+      "font": "m_mid",
+      "color": "fg",
+      "align": "right",
+      "toggle": "mapUp",
+      "sheet": "s9",
+      "conn": 1
+    },
+    {
+      "id": "o_ampm",
+      "type": "text",
+      "z": 5,
+      "x": 176,
+      "y": 671,
+      "w": 53,
+      "h": 32,
+      "text": "{{ampmLc}}",
+      "font": "m_tiny",
+      "color": "dim",
+      "toggle": "mapUp",
+      "sheet": "s9",
+      "conn": 1
+    },
+    {
+      "id": "o_range_icon",
+      "type": "icon",
+      "icon": "fuelBolt",
+      "z": 5,
+      "x": 313,
+      "y": 665,
+      "w": 29,
+      "h": 34,
+      "color": "fg",
+      "toggle": "mapUp",
+      "lowWhen": "fuel",
+      "sheet": "s9",
+      "conn": 1
+    },
+    {
+      "id": "o_range",
+      "type": "text",
+      "z": 5,
+      "x": 348,
+      "y": 668,
+      "w": 112,
+      "h": 29,
+      "text": "{{rangeTotal}}",
+      "font": "m_mid",
+      "color": "fg",
+      "align": "right",
+      "lowWhen": "fuel",
+      "toggle": "mapUp",
+      "sheet": "s9",
+      "conn": 1
+    },
+    {
+      "id": "o_range_unit",
+      "type": "text",
+      "z": 5,
+      "x": 466,
+      "y": 671,
+      "w": 44,
+      "h": 32,
+      "text": "{{u:distLc}}",
+      "font": "m_tiny",
+      "color": "dim",
+      "toggle": "mapUp",
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "lim_ring",
@@ -1705,7 +1791,7 @@
       "color": "dim",
       "toggle": "!mapUp",
       "limitBy": true,
-      "sheet": "s9",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1737,7 +1823,8 @@
       "color": "dim",
       "toggle": "!mapUp",
       "launchBy": true,
-      "sheet": "s4"
+      "sheet": "s1",
+      "conn": 1
     },
     {
       "id": "run_time",
@@ -1754,7 +1841,8 @@
       "toggle": "!mapUp",
       "launchBy": true,
       "rate": 100,
-      "sheet": "s4"
+      "sheet": "s1",
+      "conn": 1
     },
     {
       "id": "ev_share_icon",
@@ -1772,7 +1860,9 @@
         255
       ],
       "evShareBy": true,
-      "sheet": "s0"
+      "toggle": "!mapUp",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "ev_share",
@@ -1786,7 +1876,9 @@
       "font": "m_tiny",
       "color": "fg",
       "align": "right",
-      "sheet": "s0"
+      "toggle": "!mapUp",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "ev_share_unit",
@@ -1799,7 +1891,60 @@
       "text": "{{evShareUnit}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s0"
+      "toggle": "!mapUp",
+      "sheet": "s7",
+      "conn": 1
+    },
+    {
+      "id": "o_ev_share_icon",
+      "type": "icon",
+      "icon": "leaf",
+      "z": 5,
+      "x": 632,
+      "y": 665,
+      "w": 26,
+      "h": 34,
+      "color": [
+        77,
+        191,
+        255,
+        255
+      ],
+      "evShareBy": true,
+      "toggle": "mapUp",
+      "sheet": "s9",
+      "conn": 1
+    },
+    {
+      "id": "o_ev_share",
+      "type": "text",
+      "z": 5,
+      "x": 662,
+      "y": 671,
+      "w": 52,
+      "h": 32,
+      "text": "{{evShare}}",
+      "font": "m_tiny",
+      "color": "fg",
+      "align": "right",
+      "toggle": "mapUp",
+      "sheet": "s9",
+      "conn": 1
+    },
+    {
+      "id": "o_ev_share_unit",
+      "type": "text",
+      "z": 5,
+      "x": 718,
+      "y": 671,
+      "w": 26,
+      "h": 32,
+      "text": "{{evShareUnit}}",
+      "font": "m_tiny",
+      "color": "dim",
+      "toggle": "mapUp",
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "cool_icon",
@@ -1813,7 +1958,8 @@
       "color": "fg",
       "tempBy": "coolant",
       "toggle": "!mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "cool",
@@ -1829,7 +1975,8 @@
       "align": "right",
       "tempBy": "coolant",
       "toggle": "!mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "cool_unit",
@@ -1843,7 +1990,8 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "oil_icon",
@@ -1857,7 +2005,8 @@
       "color": "fg",
       "tempBy": "oil",
       "toggle": "!mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "oil",
@@ -1873,7 +2022,8 @@
       "align": "right",
       "tempBy": "oil",
       "toggle": "!mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "oil_unit",
@@ -1887,7 +2037,8 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "ev_icon",
@@ -1901,7 +2052,8 @@
       "color": "fg",
       "toggle": "!mapUp",
       "lowWhen": "battery",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "ev_range",
@@ -1917,7 +2069,8 @@
       "align": "right",
       "lowWhen": "battery",
       "toggle": "!mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "ev_range_unit",
@@ -1931,29 +2084,30 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "o_cool_icon",
       "type": "icon",
       "icon": "tempWave",
       "z": 5,
-      "x": 1262,
-      "y": 621,
+      "x": 1205,
+      "y": 665,
       "w": 26,
       "h": 34,
       "color": "fg",
       "tempBy": "coolant",
       "toggle": "mapUp",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
       "id": "o_cool",
       "type": "text",
       "z": 5,
-      "x": 1294,
-      "y": 624,
+      "x": 1237,
+      "y": 668,
       "w": 87,
       "h": 29,
       "text": "{{coolant}}",
@@ -1962,22 +2116,22 @@
       "align": "right",
       "tempBy": "coolant",
       "toggle": "mapUp",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
       "id": "o_cool_unit",
       "type": "text",
       "z": 5,
-      "x": 1385,
-      "y": 627,
+      "x": 1328,
+      "y": 671,
       "w": 36,
       "h": 32,
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
       "toggle": "mapUp",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1985,22 +2139,22 @@
       "type": "icon",
       "icon": "oilPour",
       "z": 5,
-      "x": 1450,
-      "y": 621,
+      "x": 1458,
+      "y": 665,
       "w": 26,
       "h": 34,
       "color": "fg",
       "tempBy": "oil",
       "toggle": "mapUp",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
       "id": "o_oil",
       "type": "text",
       "z": 5,
-      "x": 1477,
-      "y": 624,
+      "x": 1485,
+      "y": 668,
       "w": 87,
       "h": 29,
       "text": "{{oil}}",
@@ -2009,22 +2163,22 @@
       "align": "right",
       "tempBy": "oil",
       "toggle": "mapUp",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
       "id": "o_oil_unit",
       "type": "text",
       "z": 5,
-      "x": 1565,
-      "y": 627,
+      "x": 1573,
+      "y": 671,
       "w": 28,
       "h": 32,
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
       "toggle": "mapUp",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -2033,13 +2187,13 @@
       "icon": "battBolt",
       "z": 5,
       "x": 1606,
-      "y": 621,
+      "y": 665,
       "w": 26,
       "h": 34,
       "color": "fg",
       "toggle": "mapUp",
       "lowWhen": "battery",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -2047,7 +2201,7 @@
       "type": "text",
       "z": 5,
       "x": 1637,
-      "y": 624,
+      "y": 668,
       "w": 58,
       "h": 29,
       "text": "{{evRange}}",
@@ -2056,7 +2210,7 @@
       "align": "right",
       "lowWhen": "battery",
       "toggle": "mapUp",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -2064,14 +2218,14 @@
       "type": "text",
       "z": 5,
       "x": 1696,
-      "y": 627,
+      "y": 671,
       "w": 36,
       "h": 32,
       "text": "{{u:distLc}}",
       "font": "m_tiny",
       "color": "dim",
       "toggle": "mapUp",
-      "sheet": "s8",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -2088,7 +2242,8 @@
       "align": "right",
       "toggle": "!mapUp",
       "iceBy": true,
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "ice_icon",
@@ -2102,7 +2257,8 @@
       "color": "dim",
       "toggle": "!mapUp",
       "iceBy": true,
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "outside_unit",
@@ -2116,14 +2272,15 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "o_outside",
       "type": "text",
       "z": 5,
       "x": 1736,
-      "y": 624,
+      "y": 668,
       "w": 118,
       "h": 29,
       "text": "{{ambient}}",
@@ -2132,7 +2289,7 @@
       "align": "right",
       "toggle": "mapUp",
       "iceBy": true,
-      "sheet": "s8",
+      "sheet": "s1",
       "conn": 1
     },
     {
@@ -2141,13 +2298,13 @@
       "icon": "snow",
       "z": 5,
       "x": 1848,
-      "y": 586,
+      "y": 630,
       "w": 24,
       "h": 32,
       "color": "dim",
       "toggle": "mapUp",
       "iceBy": true,
-      "sheet": "s9",
+      "sheet": "s1",
       "conn": 1
     },
     {
@@ -2155,14 +2312,14 @@
       "type": "text",
       "z": 5,
       "x": 1860,
-      "y": 627,
+      "y": 671,
       "w": 44,
       "h": 32,
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
       "toggle": "mapUp",
-      "sheet": "s10",
+      "sheet": "s7",
       "conn": 1
     },
     {
