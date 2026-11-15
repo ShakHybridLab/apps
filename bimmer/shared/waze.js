@@ -27,6 +27,20 @@ const net = require('net');
 const path = require('path');
 
 const STATUS_PATH = '/run/waze-on-cluster/status.json';
+
+/** The whole status file on one line ("key=value key=value ..."), for the Map tab and the log: this app reads only state and target, and
+ *  the owner was asked what else the file holds (a position would let the radar list work). Numbers to 5 decimals, long values cut. */
+function rawOf(j) {
+    if (!j || typeof j !== 'object') return '';
+    const v = (x) => {
+        if (typeof x === 'number') return String(Math.round(x * 1e5) / 1e5);
+        if (typeof x === 'string') return x.length > 30 ? x.slice(0, 29) + '…' : x;
+        let t = '';
+        try { t = JSON.stringify(x); } catch (e) { t = String(x); }
+        return t.length > 40 ? t.slice(0, 39) + '…' : t;
+    };
+    return Object.keys(j).slice(0, 24).map((k) => k + '=' + v(j[k])).join(' ').slice(0, 400);
+}
 const CONTROL_PATH = '/dev/shm/waze-on-cluster/ctl.sock';
 const POLL_MS = 1000;
 const STALE_MS = 10000;          // a status file older than this: the service isn't running
@@ -99,7 +113,7 @@ class Waze {
             if (err || Date.now() - st.mtime.getTime() > STALE_MS) return this._update(null);
             fs.readFile(this.statusPath, 'utf8', (e, txt) => {
                 let s = null;
-                try { if (!e) { const j = JSON.parse(txt); s = { state: String(j.state || ''), target: j.target == null ? null : String(j.target) }; } } catch (x) { s = null; }
+                try { if (!e) { const j = JSON.parse(txt); s = { state: String(j.state || ''), target: j.target == null ? null : String(j.target), raw: rawOf(j), keys: Object.keys(j).join(',') }; } } catch (x) { s = null; }
                 this._update(s);
             });
         });
@@ -107,6 +121,8 @@ class Waze {
 
     _update(s) {
         this.st = s;
+        const keys = s ? s.keys : '';
+        if (keys !== this.lastKeys) { this.lastKeys = keys; if (s && this.log) this.log.info('Waze on cluster status file: ' + s.raw); }
         if (s && s.target === 'map' && !this.wanted && this.moved) this._setMoved(false);   // it's back
         if (s && s.target === 'panel' && this.problem) this.problem = null;
         const up = !!(this.wanted && s && s.target === 'panel' && s.state === 'showing');
@@ -162,4 +178,5 @@ class Waze {
     }
 }
 
+Waze.rawOf = rawOf;
 module.exports = Waze;

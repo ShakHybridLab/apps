@@ -443,20 +443,24 @@ class Page {
         const info = this.hud.waze ? this.hud.waze.info() : { text: 'Not available in this app', up: false, ok: false };
         let text = info.text;
         if (this.get('mapInTheme') && !this.hud.mapLayout && this.hud.activeName !== 'off') text = 'This theme has no map version (Sport, M, M Blade and Navi do)';
-        glass(cv, CX, y, w, 46, false);
+        // the whole status file under it (this app reads only state and target; whether the file holds a position decides if the radar list can work)
+        const raw = this.hud.waze && this.hud.waze.st && this.hud.waze.st.raw;
+        const rows = raw ? Math.min(2, Math.ceil(raw.length / 100)) : 0, ch = 46 + rows * 15;
+        glass(cv, CX, y, w, ch, false);
         cv.circle(CX + 26, y + 23, 7, info.up ? C.live : info.ok ? C.dim : '#e0a340');
         cv.text(text, CX + 46, y + 30, 18, info.up ? C.live : C.text, { literal: true });
-        y += 54;
+        for (let i = 0; i < rows; i++) cv.text(raw.slice(i * 100, (i + 1) * 100), CX + 46, y + 51 + i * 15, 12, C.dim, { literal: true });
+        y += ch + 6;
         y = this.toggleRow(cv, CX, y, w, 'Centre window for Cluster Centre / Cluster Info', 'centreWindow');
         const ci = this.hud.windowOpen ? 'Window open: Cluster Centre / Cluster Info draw in it' : this.hud.ci && this.hud.ci.wantsWindow() ? 'Asked for, opening' : 'Closed (nothing asks for it)';
         note(cv, CX, y + 14, [ci + '. It is the same window Waze\'s map shows in (Sport, M, M Blade and Navi).']);
-        y += 40;
+        y += 34;
         // the danger zone alert (M Blade and Navi, danger.js): shows only while another app says a zone is ahead
         y = this.toggleRow(cv, CX, y, w, 'Danger zone alert (M Blade and Navi)', 'dangerAlert');
         const dz = this.hud.danger ? this.hud.danger.state() : null;
         note(cv, CX, y + 8, [dz && dz.on ? 'Showing a zone ' + Math.round(dz.distM) + ' m ahead (from ' + dz.app + ')' : 'Nothing to show: it needs an app that tells it where a zone is (danger-<app>.json in /dev/shm/cluster-themes).']);
-        y += 26;
-        note(cv, CX, y + 26, [
+        y += 20;
+        note(cv, CX, y + 22 - (rows > 1 ? 10 : 0), [
             'On: Sport, M, M Blade and Navi open a window in the middle and Waze on Cluster draws its map in it, above',
             'BMW\'s own map view, so nothing shows twice. When the map goes away the theme fills back in.',
             'While on, Waze\'s map on the HUD is off (the cluster and the HUD share one picture).',
@@ -557,7 +561,7 @@ class Page {
         cv.text('Reset', bx + bw / 2, by + 26, 17, C.text, { align: 'center', font: 'bold', literal: true });
         cv.target(bx, by, bw, 40, () => { if (this.hud.resetG) this.hud.resetG(); this.kick(); }, 'g:reset', 20);
         y += 112;
-        note(cv, CX, y + 22, [
+        note(cv, CX, y + 22 - (rows > 1 ? 10 : 0), [
             'From the car\'s own acceleration sensor. Parked on level ground it reads 0.00; hills add a little.',
             'The outline is the most g this drive in every direction; Reset clears it with the bests.',
         ]);
