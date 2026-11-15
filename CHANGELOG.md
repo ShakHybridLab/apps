@@ -2,6 +2,10 @@
 
 ## 15 novembre 2026 (soir)
 
+### ShakTheme 0.21.2, ShakHUD 0.6.8 (pas encore essayé sur la voiture)
+- **L'onglet « Signaux » dit pourquoi une ligne reste vide.** Après un trajet, les 11 lignes de la 0.21.0 affichaient « Pas encore reçu » : le câblage de `hud.js` marche (essai avec une fausse voiture : les 15 interfaces sont écoutées et une valeur arrive jusqu'à la ligne), donc le blocage est entre l'appli et la voiture. Chaque ligne vide affiche maintenant l'état de son abonnement : « Abonnement en cours », « Erreur : … » (interface inconnue de l'installation), « Refusé : … » ou « Lecture refusée : … » (la voiture refuse ce champ), « La voiture ne répond pas » (son fournisseur n'est pas là, par exemple une autre instance) ou « Abonné, rien reçu ».
+- `kit/runtime/signals.js` garde les refus (`failed`, `getFailed`, par champ) ; `shared/probes.js` : `stateOf()`. Tests : `test_probes.js`.
+
 ### ShakTheme 0.21.1, ShakHUD 0.6.7 (pas encore essayé sur la voiture)
 - **La case noire de BMW est plus haute que prévu : 117 px (y 322 à 440) et non 77 (y 342 à 419).** Mesuré sur les photos du 15 nov. 2026 (Sport, M Blade et Navi donnent la même hauteur) ; la preuve : sur M Blade le haut du « 150 » de la jauge de température était mordu, et sur M la première ligne de réglage (direction) était coupée en deux, ce qui la rendait illisible.
 - `shared/visible.js` : la zone passe à y 322..440 (x inchangés, 1406..1597). `shared/shaders.js` : la fenêtre que les fonds creusent autour de la case (et son liseré pâle) couvre maintenant toute la case, elle était trop courte de 20 px en haut et en bas, d'où le « gros rectangle » qui dépassait.

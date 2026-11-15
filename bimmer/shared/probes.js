@@ -70,4 +70,15 @@ class Probes {
     heard() { return SHOWN.filter((id) => this.by[id] && this.by[id].n > 0).length; }
 }
 
-module.exports = { PROBES, Probes, rawOf, SHOWN };
+/** Why a probe has not been heard, in a few words, from its interface's subscription (kit/runtime/signals.js watch(), kept in car.subs):
+ *  not made yet, refused, the car's provider not answering, or fine and silent. */
+function stateOf(sub, field) {
+    if (!sub) return 'Subscribing';
+    if (sub.error) return 'Error: ' + String(sub.error).slice(0, 70);
+    if (sub.failed && sub.failed[field]) return 'Refused: ' + sub.failed[field];
+    if (sub.getFailed && sub.getFailed[field]) return 'Read refused: ' + sub.getFailed[field];
+    if (!sub.available) return 'The car does not answer';
+    return 'Subscribed, nothing received';
+}
+
+module.exports = { PROBES, Probes, rawOf, SHOWN, stateOf };

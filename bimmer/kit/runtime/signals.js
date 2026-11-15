@@ -51,7 +51,8 @@ function loadConfig(iface) {
  * fields a car may not notify (BMW's x_call only ever reads TPMS, it never subscribes).
  */
 async function watch(iface, instance, handlers, log, opts) {
-    const res = { iface, available: false, proxy: null, error: null, shutdown: () => Promise.resolve() };
+    // failed / getFailed: field -> why the car refused its subscription / its first read (the Signals tab shows them: a field that stays silent has a reason)
+    const res = { iface, available: false, proxy: null, error: null, failed: {}, getFailed: {}, shutdown: () => Promise.resolve() };
     if (!someip) { res.error = 'someip native module not available'; return res; }
     try {
         const cfg = loadConfig(iface);
@@ -61,7 +62,7 @@ async function watch(iface, instance, handlers, log, opts) {
         const fields = Object.keys(handlers || {});
         const fetchAll = () => fields.forEach((f) => {
             if (cfg.fields && cfg.fields[f] && cfg.fields[f].getter) {
-                p.getValue(f, 3000).then((v) => handlers[f](v)).catch(() => {});
+                p.getValue(f, 3000).then((v) => handlers[f](v)).catch((e) => { res.getFailed[f] = String(e && e.message || e).slice(0, 60); });
             }
         });
         await nativeTick(() => {
@@ -71,6 +72,7 @@ async function watch(iface, instance, handlers, log, opts) {
             try {
                 await nativeTick(() => p.subscribe({ name: f, onReceive: (v) => { try { handlers[f](v); } catch (e) { if (log) log.warn(iface + '.' + f + ': ' + e); } } }));
             } catch (e) {
+                res.failed[f] = String(e && e.message || e).slice(0, 60);
                 if (log) log.warn('subscribe ' + iface + '.' + f + ': ' + e);
             }
         }

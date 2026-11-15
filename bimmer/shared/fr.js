@@ -31,7 +31,7 @@ const EXACT = {
     'The dashed frame is the part of the HUD you can see.': 'Le cadre en pointillés est la partie visible du HUD.',
     'Every tap moves the real HUD right away.': 'Chaque appui déplace le vrai HUD tout de suite.',
     // carte (cluster)
-    '(empty)': '(vide)', 'Car signals': 'Signaux', 'Signals of the car, read only': 'Signaux de la voiture, en lecture seule', 'Not heard yet': 'Pas encore reçu',
+    '(empty)': '(vide)', 'Subscribing': 'Abonnement en cours', 'The car does not answer': 'La voiture ne répond pas', 'Subscribed, nothing received': 'Abonné, rien reçu', 'Car signals': 'Signaux', 'Signals of the car, read only': 'Signaux de la voiture, en lecture seule', 'Not heard yet': 'Pas encore reçu',
     'Road sign read by the camera': 'Panneau lu par la caméra', 'Next limit read by the camera': 'Prochaine limite lue par la caméra',
     'Driver assistance: lane warnings': 'Aides à la conduite : alertes de voie', 'Driver assistance: steering wheel light': 'Aides à la conduite : voyant du volant',
     'Lane assist: steering wheel symbol': 'Maintien de voie : symbole du volant', 'Power meter: drive and recuperation': 'Puissance : propulsion et récupération',
@@ -83,6 +83,7 @@ const EXACT = {
 
 // les phrases qui contiennent un nom ou un nombre
 const PATTERNS = [
+    [/^Error: (.*)$/, 'Erreur : $1'], [/^Refused: (.*)$/, 'Refusé : $1'], [/^Read refused: (.*)$/, 'Lecture refusée : $1'],
     [/^(\d+) of (\d+) read$/, '$1 sur $2 lus'],
     [/^Turn HUD Widgets off so (.*) shows\?$/, 'Éteindre HUD Widgets pour afficher $1 ?'],
     [/^Turn the cluster theme off so (.*) shows\?$/, 'Éteindre le thème du cluster pour afficher $1 ?'],

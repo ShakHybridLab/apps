@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { PROBES, Probes, rawOf, SHOWN } = require('../shared/probes');
+const { PROBES, Probes, rawOf, SHOWN, stateOf } = require('../shared/probes');
 const fr = require('../shared/fr');
 let failed = 0;
 function check(name, fn) { try { fn(); console.log('ok   ' + name); } catch (e) { failed++; console.log('FAIL ' + name + ': ' + (e && e.message || e)); } }
@@ -73,6 +73,24 @@ check('the page redraws the Signals tab by itself (a timer, on that tab only) an
     assert.strictEqual(tabs.length, 7);
     const last = 54 + 6 * (Number(m[1]) + Number(m[2])) + Number(m[1]);          // the bottom of the seventh tab
     assert(last <= 520 - 62 - 6, 'the tabs reach the mark: ' + last);
+});
+check('a silent probe says why: no subscription yet, refused, error, provider not answering, or subscribed and silent (French too)', () => {
+    assert.strictEqual(stateOf(undefined, 'f'), 'Subscribing');
+    assert.strictEqual(stateOf({ error: 'no SOME/IP config for x' }, 'f'), 'Error: no SOME/IP config for x');
+    assert.strictEqual(stateOf({ failed: { f: 'nope' }, available: true }, 'f'), 'Refused: nope');
+    assert.strictEqual(stateOf({ getFailed: { f: 'timeout' }, available: true }, 'f'), 'Read refused: timeout');
+    assert.strictEqual(stateOf({ available: false, failed: {}, getFailed: {} }, 'f'), 'The car does not answer');
+    assert.strictEqual(stateOf({ available: true, failed: {}, getFailed: { g: 'x' } }, 'f'), 'Subscribed, nothing received');
+    assert.strictEqual(fr.tr('Subscribing'), 'Abonnement en cours');
+    assert.strictEqual(fr.tr('The car does not answer'), 'La voiture ne répond pas');
+    assert.strictEqual(fr.tr('Subscribed, nothing received'), 'Abonné, rien reçu');
+    assert.strictEqual(fr.tr('Error: no SOME/IP config for x'), 'Erreur : no SOME/IP config for x');
+    assert.strictEqual(fr.tr('Refused: nope'), 'Refusé : nope');
+    assert.strictEqual(fr.tr('Read refused: timeout'), 'Lecture refusée : timeout');
+});
+check('signals.js keeps why a field was refused (failed / getFailed), for the Signals tab', () => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'kit', 'runtime', 'signals.js'), 'utf8');
+    assert(/failed: \{\}, getFailed: \{\}/.test(src) && /res\.failed\[f\] =/.test(src) && /res\.getFailed\[f\] =/.test(src), 'signals.js does not record the refusals');
 });
 console.log(failed ? failed + ' FAILED' : 'probes: all checks pass');
 process.exit(failed ? 1 : 0);
