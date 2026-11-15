@@ -76,7 +76,9 @@ check('SpeedLimit : un fichier d\'une autre appli plus récent passe devant la v
 
 check('hud.js lit le signal de la voiture seulement si l\'appli le déclare, et ShakTheme le déclare', () => {
     const hud = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
-    ['TrafficSignDisplayControl', 'displaySpeedLimitAndNoPassingRestriction', "this._carSign('sign', v)", 'de.bmw.infotainment.fasus.FASuS', 'statusNextSpeedLimitRecognition', 'this.speedLimit.feed(d.limit'].forEach((s) => assert(hud.includes(s), 'hud.js : ' + s));
+    const probes = fs.readFileSync(path.join(__dirname, '..', 'shared', 'probes.js'), 'utf8');       // les noms des signaux sont dans la table de probes.js (depuis la 0.21.0)
+    ['TrafficSignDisplayControl', 'displaySpeedLimitAndNoPassingRestriction', 'de.bmw.infotainment.fasus.FASuS', 'statusNextSpeedLimitRecognition'].forEach((s) => assert(probes.includes(s), 'probes.js : ' + s));
+    ["this._carSign(p.id, v)", 'this.speedLimit.feed(d.limit'].forEach((s) => assert(hud.includes(s), 'hud.js : ' + s));
     assert(/const decl = \(this\.ctx\.spec && this\.ctx\.spec\.signals\) \|\| \{\};/.test(hud), 'garde : seulement si l\'appli déclare les signaux (HUD Widgets ne les a pas)');
     const app = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'shaktheme', 'app.json'), 'utf8'));
     assert.strictEqual(app.signals['de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl'].displaySpeedLimitAndNoPassingRestriction, 's');

@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.20.7",
+  "version": "0.21.0",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -36,7 +36,8 @@
     "hybrid_tach.js",
     "runs.js",
     "tz.js",
-    "shift_light.js"
+    "shift_light.js",
+    "probes.js"
   ],
   "signals": {
     "de.bmw.infotainment.vehicle.CDS": {
@@ -71,7 +72,10 @@
     },
     "de.bmw.infotainment.KombiIF": {
       "statusRangeTankStatus": "rs",
-      "displayRangeElectricVehicle": "rs"
+      "displayRangeElectricVehicle": "rs",
+      "statusDisplayElectricalPowerDistribution": "rs",
+      "statusActiveCCMessage": "rs",
+      "_optional": "the last two are only read, for the Signals tab: the power of the drive and of the air conditioning, and the check control message showing (names and flags as on the owner's car, photos of Nov 15 2026)"
     },
     "de.bmw.infotainment.vehicle.Vehicle": {
       "statusNewCurrentUnitsStatusExt": "rs",
@@ -95,7 +99,23 @@
     },
     "de.bmw.infotainment.fasus.FASuS": {
       "statusNextSpeedLimitRecognition": "rs",
-      "_optional": "the next limit the camera recognised (nextClassLimitSpeed, nextWithdrawalLimitSpeed): logged only, until a drive's log shows what it means"
+      "statusIDriveFAS": "rs",
+      "statusIDriveFASExtended": "rs",
+      "_optional": "the next limit the camera recognised (nextClassLimitSpeed, nextWithdrawalLimitSpeed) and the driver assistance's lane warnings and steering wheel light: only read, shown on the Signals tab, until a drive shows what they mean"
+    },
+    "de.bmw.dass.driverassistanceapplications.DisplayDriverAssistanceLateralCoordinated": {
+      "displaySteeringWheel": "s",
+      "_optional": "the lane assist's steering wheel symbol (displayLateralWarning, steeringWheelDisplay, steeringWheelColor, steeringWheelAnimation, handsOnSymbol): a notifier without getter, only read, shown on the Signals tab"
+    },
+    "de.bmw.infotainment.drivingexcitement.Efficiencytainment2": {
+      "displayPowerDrive": "s",
+      "displayPowerDrive2": "s",
+      "_optional": "the cluster's own power meter (quotaImmediateElectricEngineDriveRecuperation): notifiers without getter, only read, shown on the Signals tab"
+    },
+    "de.bmw.infotainment.KombiInterface_2": {
+      "cbsDataServiceList": "rs",
+      "ccListRiskClass": "rs",
+      "_optional": "the services due (condition based service) and the risk class of the check control messages: only read, shown on the Signals tab"
     }
   },
   "screens": [

@@ -283,6 +283,7 @@ const { shiftLightState } = require('./shift_light');
 const badges = require('./badges');
 const Runs = require('./runs');
 const { SpeedLimit, decodeSign } = require('./speedlimit');
+const { Probes, PROBES } = require('./probes');
 const { hueOfMode, accentTheme, mapRole } = require('./accent');
 const ACCENT_BRIGHT = [92, 158, 255, 255];   // the Sport theme's brightest blue (0.36, 0.62, 1.0), whose hue the drive mode's name takes
 const tz = require('./tz');
@@ -863,14 +864,19 @@ class HudApp {
                 },
             },
         };
-        // the car's own reading of the road signs (its camera), for the speed limit ring: only an app that declares the signals (ShakTheme) asks for them
+        // the signals the car's catalog lists that this app only reads for now (probes.js: their last values go to the page's Signals tab and the log),
+        // and the car's own reading of the road signs (its camera), which also feeds the speed limit ring: only an app that declares them (ShakTheme) asks for them
+        this.probes = new Probes(this.log);
         const decl = (this.ctx.spec && this.ctx.spec.signals) || {};
-        if (decl['de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl']) {
-            extra['de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl'] = { displaySpeedLimitAndNoPassingRestriction: (v) => this._carSign('sign', v) };
-        }
-        if (decl['de.bmw.infotainment.fasus.FASuS']) {
-            extra['de.bmw.infotainment.fasus.FASuS'] = { statusNextSpeedLimitRecognition: (v) => this._carSign('next', v) };
-        }
+        PROBES.forEach((p) => {
+            if (!decl[p.iface] || !decl[p.iface][p.field]) return;
+            const group = (extra[p.iface] = extra[p.iface] || {}), prev = group[p.field];
+            group[p.field] = (v) => {
+                if (prev) prev(v);
+                this.probes.feed(p.id, v);
+                if (p.id === 'sign' || p.id === 'next') this._carSign(p.id, v);
+            };
+        });
         this.car = new Car(this.ctx, ['rpm', 'speed', 'temps', 'accel', 'gear', 'torque'], extra);
         this.car.setRedline(this.setting('redline'));
         this.gBuf = [];                  // [t, lat, long] of the last G_AVG_MS

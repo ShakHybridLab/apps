@@ -26,6 +26,7 @@ const sensors = require('./sensors');
 const visible = require('./visible');
 const badges = require('./badges');
 const fr = require('./fr');
+const probes = require('./probes');
 const tz = require('./tz');
 
 const W = 1600, H = 520;
@@ -35,7 +36,8 @@ const C = {
     blue: '#1e8fff', blueHi: '#62b4ff', blueDeep: '#1266d8', live: '#6fd69b', off: '#c7cdd8',
 };
 const RAIL = { x: 16, y: 54, w: 252, h: 66, gap: 8 };
-const RAIL7 = { x: 16, y: 54, w: 252, h: 54, gap: 6 };     // six tabs or more: a little shorter, so they fit (and the app's mark below)
+const RAIL7 = { x: 16, y: 54, w: 252, h: 54, gap: 6 };     // six tabs: a little shorter, so they fit (and the app's mark below)
+const RAIL8 = { x: 16, y: 54, w: 252, h: 50, gap: 4 };     // seven tabs or more
 const CX = 300, CR = 1584, CW = CR - CX;
 const MODES = [['inHybrid', 'Hybrid'], ['inEco', 'Electric Eco Pro'], ['inSport', 'Sport Plus']];
 const MODE_KEY = { hybrid: 'inHybrid', electric: 'inEco', eco: 'inEco', sport: 'inSport', comfort: 'inHybrid' };
@@ -50,6 +52,7 @@ const TAB = {
     colours: { name: 'Colours', icon: 'colour' },
     display: { name: 'Display', icon: 'colour' },
     settings: { name: 'Settings', icon: 'cog' },
+    signals: { name: 'Car signals', icon: 'signal' },
 };
 
 // the kit's own chrome (header, bar, Settings sheet) in BMW blue, to match the page
@@ -75,6 +78,9 @@ class Page {
         ctx.settings.onChange(() => this.kick());
         ctx.onLayout(() => this.kick());
         this.hud.onStatus(() => this.kick());
+        // the Signals tab: new readings and the dots (green for 5 seconds) are redrawn every 2 seconds, on that tab only
+        this.sigTimer = setInterval(() => { if (this.tab === 'signals') this.kick(); }, 2000);
+        if (this.sigTimer.unref) this.sigTimer.unref();
         this.render();
     }
     kick() { if (this.loop && this.loop.kick) this.loop.kick(); }
@@ -180,7 +186,7 @@ class Page {
         const target = cv.target;
         if (this.picker || this.confirm) cv.target = function () { return this; };
         this.rail(cv, bottom);
-        const body = { look: this.lookTab, readouts: this.readoutsTab, position: this.positionTab, map: this.mapTab, colours: this.coloursTab, badge: this.badgeTab, alerts: this.alertsTab, gmeter: this.gmeterTab, display: this.displayTab, settings: this.settingsTab }[this.tab];
+        const body = { look: this.lookTab, readouts: this.readoutsTab, position: this.positionTab, map: this.mapTab, colours: this.coloursTab, badge: this.badgeTab, alerts: this.alertsTab, gmeter: this.gmeterTab, display: this.displayTab, settings: this.settingsTab, signals: this.signalsTab }[this.tab];
         if (body) body.call(this, cv, bottom);
         cv.target = target;
         if (this.picker) this.drawPicker(cv, bottom);
@@ -190,7 +196,7 @@ class Page {
     theme() { return this.ctx.theme(); }
 
     rail(cv, bottom) {
-        const R = this.cfg.tabs.length > 5 ? RAIL7 : RAIL, dy = (66 - R.h) / 2;
+        const R = this.cfg.tabs.length > 6 ? RAIL8 : this.cfg.tabs.length > 5 ? RAIL7 : RAIL, dy = (66 - R.h) / 2;
         this.cfg.tabs.forEach((id, i) => {
             const x = R.x, y = R.y + i * (R.h + R.gap), w = R.w, h = R.h, sel = id === this.tab;
             if (sel) {
@@ -225,6 +231,7 @@ class Page {
             const p = this.hud.placeInfo();
             return (p.x || p.y ? 'moved' : 'centred') + ' · ' + Math.round(p.scale * 100) + ' %';
         }
+        if (id === 'signals') return (this.hud.probes ? this.hud.probes.heard() : 0) + ' of ' + probes.SHOWN.length + ' read';
         if (id === 'map') return (this.get('mapInTheme') ? 'Waze map · on' : 'Waze map · off') + (this.get('centreWindow') === false ? ' · centre off' : '');
         if (id === 'badge') return badges.text(this.get('badge'), this.get('badgeBMW') === true) || 'none';
         if (id === 'alerts') { const n = WARN_KEYS.filter((k) => this.get(k) > 0).length; return n ? n + ' warning' + (n > 1 ? 's' : '') + ' on' : 'warnings off'; }
@@ -466,6 +473,28 @@ class Page {
             'While on, Waze\'s map on the HUD is off (the cluster and the HUD share one picture).',
             'Needs the Waze on Cluster app. Turning this off gives Waze its usual place back.',
         ]);
+    }
+
+    /* ---------- Car signals (cluster) ---------- */
+    /** The signals of the car this app only reads for now (probes.js): the last values heard, the newest first, for a photo of the screen. */
+    signalsTab(cv, bottom) {
+        label(cv, CX, 70, 'Signals of the car, read only');
+        const list = probes.PROBES, pr = this.hud.probes, now = Date.now();
+        const rh = Math.max(26, Math.min(34, Math.floor((bottom - 150) / list.length)));
+        let y = 84;
+        list.forEach((p) => {
+            const d = pr && pr.get(p.id), fresh = d && now - d.at < 5000;
+            glass(cv, CX, y, CW, rh - 4, false);
+            cv.circle(CX + 18, y + (rh - 4) / 2, 5, fresh ? C.live : d ? C.off : '#ffffff22');      // green: heard in the last 5 seconds
+            cv.text(p.name, CX + 34, y + rh / 2 + 3, 15, C.text, { literal: true });
+            const vx = CX + 470, room = CR - 12 - vx, got = d && d.vals.length;
+            const fit = (t, w) => { while (t.length > 1 && cv.textWidth(t, 12, { literal: true }) > w) t = t.slice(0, -2) + '…'; return t; };
+            let v = got ? fit(d.vals[0], room) : 'Not heard yet';                                       // the newest value, then the one before it if there is room
+            if (got && d.vals[1] && room - cv.textWidth(v, 12, { literal: true }) > 160) v += '   |   ' + fit(d.vals[1], room - cv.textWidth(v, 12, { literal: true }) - 40);
+            cv.text(v, vx, y + rh / 2 + 3, 12, got ? C.dim : C.label, { literal: true });
+            y += rh;
+        });
+        note(cv, CX, y + 14, ['Photograph this page after a drive: it shows the last values the car sent.', 'Read only: nothing here changes the car.']);
     }
 
     /* ---------- Badge (cluster) ---------- */
@@ -830,6 +859,8 @@ function icon(cv, name, x, y, c) {
         cv.arc(x, y, 11, 13.2, 0, 360, c);
         cv.line(x - 8, y, x + 8, y, 1.4, c); cv.line(x, y - 8, x, y + 8, 1.4, c);
         cv.circle(x + 4.5, y - 4, 3.2, c);
+    } else if (name === 'signal') {
+        [[-9, 8], [0, 14], [9, 20]].forEach((b) => cv.line(x + b[0], y + 10, x + b[0], y + 10 - b[1], 3.5, c));
     } else if (name === 'cog') {
         cv.arc(x, y, 6.5, 9, 0, 360, c);
         for (let i = 0; i < 8; i++) {
