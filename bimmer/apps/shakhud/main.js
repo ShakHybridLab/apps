@@ -26,7 +26,7 @@ mgu.run({
             title: ctx.spec.title, what: 'HUD',
             look: { name: 'Layouts', style: 'cards', tags: { mstyle: 'bent rev bar · hybrid colours' } },
             tabs: ['look', 'position', 'colours', 'settings'],
-            settings: ['units', 'clock', 'timeZone', 'redline', 'shiftBefore', 'shiftLights', 'shiftLightRed', 'shiftLightFlash', 'hybridRev', 'demo'],
+            settings: ['units', 'clock', 'timeZone', 'redline', 'shiftBefore', 'shiftLights', 'hideWithWaze', 'shiftLightRed', 'shiftLightFlash', 'hybridRev', 'demo'],
         }).start();
         process.on('exit', () => { try { hud.stop(); } catch (e) { /* exiting anyway */ } });
     },

@@ -2,7 +2,7 @@
   "id": "shakhud",
   "title": "ShakHUD",
   "description": "ShakHUD: a HUD of its own for the windshield, the M Style rev counter (a bent bar, red in the red zone, light blue while electric, green while charging), made to sit with Waze's HUD map",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "vendor": "custom",
   "loggingId": "OAS1",
   "iconGlyph": "SH",
@@ -783,6 +783,12 @@
       "default": true
     },
     {
+      "key": "hideWithWaze",
+      "label": "Hide the whole HUD while Waze's map shows",
+      "type": "bool",
+      "default": true
+    },
+    {
       "key": "shiftLightRed",
       "label": "Shift light turns red at",
       "type": "number",
@@ -818,6 +824,7 @@
     "utcOffsetMinutes": null,
     "_comment": "socketPath: cluster-render's documented default. utcOffsetMinutes: leave null to use the head unit's own time zone.",
     "tankLitres": 50,
-    "evRangeFull": 40
+    "evRangeFull": 40,
+    "hideWithWaze": true
   }
 }

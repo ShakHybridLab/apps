@@ -1130,6 +1130,8 @@ class HudApp {
     _layoutName() {
         if (this.screen && this.screen.yielded) return 'off';
         if (this.claimBy) return 'off';
+        // config "hideWithWaze" (ShakHUD) and its setting on: the whole HUD steps aside while Waze's map shows (Waze on Cluster, status.json)
+        if (this.config.hideWithWaze === true && this.ctx.settings.get('hideWithWaze') !== false && this._wazeShowing(Date.now())) return 'off';
         return this._chosenName();
     }
     /** The layout the driver picked for now, before anything that makes us step aside. */
@@ -1917,6 +1919,19 @@ class HudApp {
         if (c) this._blit(x, [c.rect], c.px);
     }
 
+    /** Waze on Cluster says its map is showing (status.json state "showing", fresh), wherever it draws it. Read once a second. */
+    _wazeShowing(now) {
+        if (this._wzAt !== undefined && now - this._wzAt < 1000) return this._wz === true;
+        this._wzAt = now;
+        let on = false;
+        try {
+            const f = process.env.WAZE_STATUS || '/run/waze-on-cluster/status.json';
+            if (Date.now() - fs.statSync(f).mtime.getTime() < 10000) on = JSON.parse(fs.readFileSync(f, 'utf8')).state === 'showing';
+        } catch (e) { on = false; }
+        this._wz = on;
+        return on;
+    }
+
     /** "key" is on while that bool setting is on; "!key" while it is off. */
     _toggleOn(t) {
         const not = t.charAt(0) === '!';
@@ -2304,6 +2319,7 @@ class HudApp {
     _tick() {
         const now = Date.now();
         this._smoothRpm(now);
+        if (this.config.hideWithWaze === true && this.started && this._layoutName() !== this.activeName) { this._rebuild(); return; }
         // the 0-60 timer only on the car's own data (the demo drive would set a best time)
         if (!this.car.data().demo) this.runs.update(this.car.data().speed, now, this.setting('units') === 'us' ? 'us' : 'metric');
         this._trip(now);
