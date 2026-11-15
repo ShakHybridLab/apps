@@ -21,7 +21,7 @@ check('the app is complete: every shared file exists, ids are its own, the layou
     const ids = ['idrive_hud_widgets', 'shaktheme', 'ridetube_cluster'].map((a) => read('apps/' + a + '/app.json'));
     ids.forEach((o) => { assert.notStrictEqual(o.id, app.id); assert.notStrictEqual(o.loggingId, app.loggingId, 'same loggingId as ' + o.id); });
     assert.strictEqual(app.config.target, 'hud');
-    ['hybridRev', 'hudLayout', 'redline', 'units'].forEach((k) => assert(app.settings.some((s) => s.key === k), 'setting ' + k));
+    ['hybridRev', 'shiftLights', 'hudLayout', 'redline', 'units'].forEach((k) => assert(app.settings.some((s) => s.key === k), 'setting ' + k));
     ['hudLayout', 'inHybrid', 'inSport', 'inEco'].forEach((k) => {
         const s = app.settings.find((x) => x.key === k);
         assert.deepStrictEqual(s.options.map((o) => o[0]), ['off', 'mstyle'], k);
@@ -48,6 +48,15 @@ check('the top middle stays clear for the turn-signal arrows (Cluster Info draws
     L.widgets.filter((w) => w.type === 'text').forEach((w) => arrows.forEach((a) => {
         assert(!(w.x < a[2] && w.x + w.w > a[0] && w.y < a[3] && w.y + w.h > a[1]), w.id + ' over an arrow');
     }));
+});
+
+check('the shift lights: a lights widget behind the "shiftLights" setting, in the window, clear of the arrows, the numbers and BMW\'s speed', () => {
+    const w = L.widgets.find((x) => x.type === 'lights');
+    assert(w && w.toggle === 'shiftLights' && w.round === true && w.count === 12);
+    const hit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    [[349, 146, 30, 24], [421, 146, 30, 24]].forEach((r) => assert(!hit(w, { x: r[0], y: r[1], w: r[2], h: r[3] }), 'over an arrow'));
+    L.widgets.filter((x) => x.type === 'text').forEach((t) => assert(!hit(w, t), 'over ' + t.id));
+    assert.strictEqual(app.settings.find((s) => s.key === 'shiftLights').default, true);
 });
 
 check('the labels sit under the bar\'s ticks: 0, 2, 4, 6 (rpmMax 7000), none past the window\'s right edge', () => {

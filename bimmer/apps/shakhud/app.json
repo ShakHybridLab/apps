@@ -775,6 +775,12 @@
       "label": "Hybrid rev counter (light blue while electric, green while charging)",
       "type": "bool",
       "default": true
+    },
+    {
+      "key": "shiftLights",
+      "label": "Shift lights (a row of lights filling up to the shift point)",
+      "type": "bool",
+      "default": true
     }
   ],
   "config": {
