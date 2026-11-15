@@ -39,12 +39,15 @@ check('les lignes que la bande de BMW redit sont retirées (heure, portées, ext
     ['oil', 'cool', 'coolant', 'oil_unit', 'ice_icon', 'ev_share', 'badge', 'boost', 'power', 'ev_pct', 'sport', 'backdrop', 'strip_band0', 'ready_text'].forEach((id) => assert(!bs.duplicates(id), id));
 });
 
-check('les fonds Sport et Navi : u_slotOff éteint la fenêtre et le liseré autour de la case', () => {
+check('les fonds Sport et Navi : u_slotOff éteint la fenêtre autour de la case ; sans lui, un fondu noir sans marche ni liseré', () => {
     ['sdash', 'navi'].forEach((t) => {
         const src = String(shaders[t]);
         assert(/uniform float u_slotOff;/.test(src), t + ' : pas d\'u_slotOff');
         assert(/u_slotOff > 0\.5 \? 1\.0/.test(src), t + ' : slot() ne s\'éteint pas');
-        assert(/if \(u_slotOff > 0\.5\) return vec3\(0\.0\);/.test(src), t + ' : slotRim() ne s\'éteint pas');
+        // le fondu part de 0 (la case de BMW est noire) : pas de plancher d'ombre (l'ancien mix(0.45, 1.0, ...) dessinait un rectangle), pas de liseré clair
+        assert(/float slotOf\(float d, float fall\) \{ return clamp\(d \+ 0\.5, 0\.0, 1\.0\) \* smoothstep\(0\.0, fall, d\); \}/.test(src), t + ' : slotOf() ne fond pas depuis le noir');
+        assert(!/mix\(0\.45, 1\.0/.test(src), t + ' : il reste un plancher d\'ombre');
+        assert(/vec3 slotRim\(vec2 p\) \{\s*return vec3\(0\.0\);\s*\}/.test(src), t + ' : il reste un liseré autour de la case');
     });
     const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
     assert.strictEqual((hud.match(/'u_slotOff'/g) || []).length, 2, 'hud.js doit donner u_slotOff à sdash et à navi');

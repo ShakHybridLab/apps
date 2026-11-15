@@ -794,27 +794,26 @@ void main() {
 `;
 const FACETS = `// BMW draws a solid black box over our panel at its gear slot (1406,322)-(1597,440), the same zone as shared/visible.js (photos of Nov 15 2026:
 // the box is about 117 px high, not 77: it bit the top of the oil strip's "150" and half of the M theme's steering row). It cannot be
-// removed, so the backdrop is made to meet it: slot() is 0 inside a rounded window 4 px bigger all round (the box, whose edges are
-// only measured to a few px, hides inside it) and, outside it, a soft shadow (45 % of the backdrop, back to all of it over 36 px).
+// removed, and eroobeeroo's Cluster Layouts hides it the same way we do now: by leaving plain black round it (its "Background: pure black"), so
+// the box's black window disappears into the backdrop. slot() is 0 inside a rounded window 4 px bigger all round (the box, whose edges are
+// only measured to a few px, hides inside it), then the backdrop comes back with a smooth start over fall px: no step and no rim, so no
+// rectangle to see (the earlier window with a pale rim and a 45 % shadow drew the eye to it).
 float slotD(vec2 p) {
     vec2 q = abs(p - vec2(1501.5, 381.0)) - (vec2(99.5, 63.0) - vec2(16.0));
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - 16.0;
 }
-float slotOf(float d, float fall) { return clamp(d + 0.5, 0.0, 1.0) * mix(0.45, 1.0, smoothstep(0.0, fall, d)); }
+float slotOf(float d, float fall) { return clamp(d + 0.5, 0.0, 1.0) * smoothstep(0.0, fall, d); }
 // the same for BMW's gear letter at the bottom right and the small black box after it (x 1392..1448, y 666..702 + margin): a window
-// (1386,662)-(1454,708), with a shorter shadow
+// (1386,662)-(1454,708), with a shorter fade
 float gearD(vec2 p) {
     vec2 q = abs(p - vec2(1420.0, 685.0)) - (vec2(34.0, 23.0) - vec2(10.0));
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - 10.0;
 }
-uniform float u_slotOff;   // 1: BMW's bottom strip is left clear (setting stripClear), the KOMBI draws no black box: no window, no rim
-float slot(vec2 p) { return u_slotOff > 0.5 ? 1.0 : min(slotOf(slotD(p), 36.0), slotOf(gearD(p), 22.0)); }
-// A thin pale rim just outside that window (2.5 px out, 1.5 px thick, with a faint glow): the black box then reads as an insert the theme
-// meant to have (a gear window), not as a hole in it. Added to the backdrop colour after slot().
+uniform float u_slotOff;   // 1: BMW's bottom strip is left clear (setting stripClear), the KOMBI draws no black box: no window
+float slot(vec2 p) { return u_slotOff > 0.5 ? 1.0 : min(slotOf(slotD(p), 72.0), slotOf(gearD(p), 36.0)); }
+// (kept for the callers: no rim any more, it made the black box read as an insert the theme meant to have, which is what the owner did not want)
 vec3 slotRim(vec2 p) {
-    if (u_slotOff > 0.5) return vec3(0.0);
-    float e = min(abs(slotD(p) - 2.5), abs(gearD(p) - 2.5));
-    return vec3(0.42, 0.55, 0.82) * (cov(e - 0.75) * 0.5 + exp(-e / 4.0) * 0.07);
+    return vec3(0.0);
 }
 float hash2(vec2 i) { return fract(sin(dot(i, vec2(12.9898, 78.233))) * 43758.5453); }
 // the facets of the Sport view's backdrop, in the left frame (the right one is mirrored): lozenges between two families of
