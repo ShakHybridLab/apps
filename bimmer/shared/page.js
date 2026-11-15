@@ -484,25 +484,31 @@ class Page {
     /* ---------- Car signals (cluster) ---------- */
     /** The signals of the car this app only reads for now (probes.js): the last values heard, the newest first, for a photo of the screen. */
     signalsTab(cv, bottom) {
+        const pg = this.sigPage === 1 ? 1 : 0, ids = probes.PAGES[pg];
         label(cv, CX, 70, 'Signals of the car, read only');
-        const list = probes.PROBES, pr = this.hud.probes, now = Date.now();
-        const rh = Math.max(26, Math.min(34, Math.floor((bottom - 150) / list.length)));
+        // the two pages as small chips at the right of the title
+        let px = CR - 2 * (cv.textWidth('1/2', 13, { font: 'bold', literal: true }) + 18) - 6;
+        [['1/2', 0], ['2/2', 1]].forEach((c) => { px += miniChip(cv, px, 48, c[0], pg === c[1], () => { this.sigPage = c[1]; this.kick(); }, 'sigpage:' + c[1]) + 6; });
+        const list = ids.map((id) => probes.PROBES.concat([probes.GUIDE]).find((p) => p.id === id)), pr = this.hud.probes, now = Date.now();
+        const rh = Math.max(38, Math.min(52, Math.floor((bottom - 128) / list.length)));      // two lines a row: the name, then what the app understood; the two note lines fit under
         const sig = this.hud.ctx && this.hud.ctx.signals, busy = sig && sig.busyWith ? sig.busyWith() : null;      // the native step running now (signals.js)
         let y = 84;
         list.forEach((p) => {
             const d = pr && pr.get(p.id), fresh = d && now - d.at < 5000;
             glass(cv, CX, y, CW, rh - 4, false);
             cv.circle(CX + 18, y + (rh - 4) / 2, 5, fresh ? C.live : d ? C.off : '#ffffff22');      // green: heard in the last 5 seconds
-            cv.text(p.name, CX + 34, y + rh / 2 + 3, 15, C.text, { literal: true });
+            cv.text(p.name, CX + 34, y + 19, 15, C.text, { literal: true });
+            const mean = d && d.n ? probes.meaningOf(p.id, d.last) : '';
+            if (mean) cv.text(mean, CX + 34, y + rh - 11, 13, /not understood$/.test(mean) ? C.label : C.blueHi);
             const vx = CX + 470, room = CR - 12 - vx, got = d && d.vals.length;
             const fit = (t, w) => { while (t.length > 1 && cv.textWidth(t, 12, { literal: true }) > w) t = t.slice(0, -2) + '…'; return t; };
             const sub = (this.hud.car && this.hud.car.subs || []).find((s) => s && s.iface === p.iface);
             let v = got ? fit(d.vals[0], room) : fit(probes.stateOf(sub, p.field, p.iface, busy), room);                                       // the newest value, then the one before it if there is room
             if (got && d.vals[1] && room - cv.textWidth(v, 12, { literal: true }) > 160) v += '   |   ' + fit(d.vals[1], room - cv.textWidth(v, 12, { literal: true }) - 40);
-            cv.text(v, vx, y + rh / 2 + 3, 12, got ? C.dim : C.label, { literal: true });
+            cv.text(v, vx, y + (rh - 4) / 2 + 4, 12, got ? C.dim : C.label, { literal: true });
             y += rh;
         });
-        note(cv, CX, y + 14, ['Photograph this page after a drive: it shows the last values the car sent.', 'Read only: nothing here changes the car.']);
+        note(cv, CX, y + 12, ['Photograph both pages after a drive: they show the last values the car sent.', 'Blue: what the app understood of the value. Read only: nothing here changes the car.']);
     }
 
     /* ---------- Badge (cluster) ---------- */

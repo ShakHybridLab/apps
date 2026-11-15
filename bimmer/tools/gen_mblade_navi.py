@@ -137,12 +137,13 @@ def limit_and_timer(cx, top, R, compact=False, ring=None, next_at=None):
         out = [icon('lim_ring', 'ring', rx, ry, rs, rs, 'dim', toggle='!mapUp', limitBy=True),
                text('lim_num', rx, ry + (rs - 29) // 2 + 1, rs, 29, '{{limit}}', 'm_tiny', 'fg', 'center', toggle='!mapUp', limitBy=True)]
         # the next limit the camera recognised: a smaller ring under it (blank until there is one), and the car's check control message: a warning
-        # triangle above it (yellow, only with the setting "carAlert"); the same two in the Sport and M themes (hud/layouts/*.json)
+        # triangle above it (yellow, only with the setting "carAlert"); and the lane assist's steering wheel above it (setting "carLane"); the same in the Sport and M themes (hud/layouts/*.json)
         nx = 64
         dx, dy = next_at or ((rs - nx) // 2, rs + 4)          # the next limit's ring sits under the ring, or where `next_at` = (dx, dy) says (BMW's black box takes the bottom)
         out += [icon('lim_nxt_ring', 'ring', rx + dx, ry + dy, nx, nx, 'dim', toggle='!mapUp', nextBy=True),
                 text('lim_nxt_num', rx + dx, ry + dy + (nx - 29) // 2 + 1, nx, 29, '{{nextLimit}}', 'm_tiny', 'dim', 'center', toggle='!mapUp', nextBy=True),
-                icon('lim_alert', 'warn', rx + (rs - 56) // 2, ry - 60, 56, 56, 'dim', toggle='!mapUp', alertBy=True)]
+                icon('lim_alert', 'warn', rx + (rs - 56) // 2, ry - 60, 56, 56, 'dim', toggle='!mapUp', alertBy=True),
+                icon('lim_lane', 'wheel', rx + (rs - 56) // 2, ry - 120, 56, 56, 'dim', toggle='!mapUp', laneBy=True)]       # the lane assist's steering wheel (setting "carLane"), above the triangle
     else:
         out = [icon('lim_ring', 'ring', cx - R // 2, top, R, R, 'fg', toggle='!mapUp', limitBy=True),
                text('lim_num', cx - R // 2, top + (R - 37) // 2, R, 37, '{{limit}}', 'unit', 'fg', 'center', toggle='!mapUp', limitBy=True)]

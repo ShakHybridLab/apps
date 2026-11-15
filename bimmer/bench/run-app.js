@@ -94,6 +94,8 @@ setInterval(() => {
     if (typeof v.limit === 'number') hu.feed('de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl', 'displaySpeedLimitAndNoPassingRestriction', { invalidFlag: false, displaySpeedLimit: v.limit });
     if (typeof v.nextLimit === 'number') hu.feed('de.bmw.infotainment.fasus.FASuS', 'statusNextSpeedLimitRecognition', { nextWithdrawalLimitSpeed: v.nextLimit, nextClassLimitSpeed: 255 });
     if (typeof v.alert === 'boolean') hu.feed('de.bmw.infotainment.KombiIF', 'statusActiveCCMessage', { numberDisplayControlCheckControlMessage: v.alert ? 12 : 0 });
+    // the lane assist's steering wheel (`lane`: 'green' | 'yellow' | 'grey' | 'warn' | 'off')
+    if (typeof v.lane === 'string') hu.feed('de.bmw.dass.driverassistanceapplications.DisplayDriverAssistanceLateralCoordinated', 'displaySteeringWheel', { steeringWheelDisplay: v.lane === 'off' ? 0 : 1, steeringWheelColor: v.lane === 'warn' ? 'RED' : v.lane.toUpperCase(), displayLateralWarning: v.lane === 'warn' ? 'LEFT' : 0 });
     if (typeof v.quota === 'number') hu.feed('de.bmw.infotainment.drivingexcitement.Efficiencytainment2', 'displayPowerDrive', { quotaImmediateElectricEngineDriveRecuperation: v.quota });
     if (typeof v.route === 'boolean') hu.feed('de.bmw.infotainment.a4a.carplay.CarPlayManager', 'projectedGuidanceActive', v.route);
     hu.feed('de.bmw.infotainment.vehicle.Vehicle2', 'statusCarSpeed2', { speedVehicleCentreOfGravity: raw('speed', num('speed', 0)) });

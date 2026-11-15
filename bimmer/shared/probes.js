@@ -10,6 +10,8 @@
  * Plain Node 8. Written for ShakTheme (MIT, as the rest of shared/).
  */
 const Waze = require('./waze');
+const Extras = require('./car_extras');
+const { limitOf } = require('./speedlimit');
 
 const KOMBI = 'de.bmw.infotainment.KombiIF';
 const KOMBI2 = 'de.bmw.infotainment.KombiInterface_2';
@@ -38,10 +40,13 @@ const PROBES = [
     { id: 'cbs', iface: KOMBI2, field: 'cbsDataServiceList', name: 'Services due' },
     { id: 'ccrisk', iface: KOMBI2, field: 'ccListRiskClass', name: 'Check control risk class' },
 ];
-// the car's own word for "a route is being guided on the phone (CarPlay)": not a line of the Signals tab (it has no room left), the Map tab
-// shows it, and hud.js reads it (guidanceOf) to show Waze's map in the theme only while a route is on
+// the car's own word for "a route is being guided on the phone (CarPlay)": not in PROBES (those are the signals every app lists and counts), but
+// the second line of the Signals tab's first page (PAGES) and the Map tab show it, and hud.js reads it (guidanceOf) to show Waze's map in the
+// theme only while a route is on
 const GUIDE = { id: 'guide', iface: CARPLAY, field: 'projectedGuidanceActive', name: 'CarPlay guidance active (route)' };
 const SHOWN = PROBES.map((p) => p.id);
+// the Signals tab's two pages (ids; 'guide' is the one probe above): the engine and the energy first, then the road signs and the assistance
+const PAGES = [['rpm', 'engt', 'speed', 'pdrive', 'pdrive2', 'pdist', 'guide'], ['sign', 'next', 'fas', 'fasx', 'wheel', 'cc', 'ccrisk', 'cbs']];
 const KEEP = 3;               // distinct values kept for each (the page shows the newest first)
 const LOG_FIRST = 12;         // distinct values of each that go to the log, then one a minute at most
 const LOG_EVERY_MS = 60000;
@@ -81,6 +86,38 @@ function guidanceOf(v, depth) {
     return null;
 }
 
+/**
+ * What the app understood of the value `v` of probe `id`, as a short line for the Signals tab ("→ limit 70"), '' when no reader of the app
+ * uses that signal (nothing to say) or there is no value, "→ not understood" when its reader answers nothing for it. A tolerant mirror of
+ * the readers the themes and the HUD use, so that a photo of the tab says at once whether a value is read the way the app thinks.
+ */
+function meaningOf(id, v) {
+    if (v === null || v === undefined) return '';
+    const num = (lo, hi) => { const n = Extras.scalar(v); return typeof n === 'number' && isFinite(n) && n >= lo && n <= hi ? Math.round(n) : null; };
+    const yn = (b, w) => b === null ? null : w + ': ' + (b ? 'yes' : 'no');
+    let t = null;
+    switch (id) {
+    case 'rpm': { const n = num(0, 9999); t = n === null ? null : n + ' rpm'; break; }
+    case 'speed': { const n = num(0, 400); t = n === null ? null : n + ' km/h'; break; }
+    case 'sign': { const n = limitOf(v); t = n === null ? 'no limit read' : 'limit ' + n; break; }
+    case 'next': { const n = Extras.nextLimitOf(v); t = n === null ? 'no next limit' : 'next limit ' + n; break; }
+    case 'wheel': {
+        const l = Extras.laneOf(v);
+        t = l.on === null && !l.warn ? null : (l.on === false && !l.warn ? 'wheel off' : 'wheel on' + (l.tone ? ', ' + l.tone : '') + (l.warn ? ', warning' : ''));
+        break;
+    }
+    case 'pdrive': case 'pdrive2': {
+        const q = Extras.powerQuotaOf(v);
+        t = q === null ? null : (q === 0 ? 'motor at rest' : (q > 0 ? 'motor ' : 'recuperation ') + Math.abs(Math.round(q)) + ' % · ' + Math.abs(Math.round(Extras.powerKw(q))) + ' kW');
+        break;
+    }
+    case 'cc': t = yn(Extras.alertOf(v), 'alert'); break;
+    case 'guide': t = yn(guidanceOf(v), 'route'); break;
+    default: return '';
+    }
+    return '→ ' + (t === null ? 'not understood' : t);
+}
+
 class Probes {
     constructor(log) { this.log = log; this.by = {}; }
     /** A new reading of probe `id` (any value; null / undefined count as nothing, an empty object shows as "(empty)"). */
@@ -88,8 +125,8 @@ class Probes {
         if (v === null || v === undefined) return false;
         now = now || Date.now();
         const raw = rawOf(v) || '(empty)';
-        const p = this.by[id] || (this.by[id] = { at: 0, n: 0, vals: [], logs: 0, logAt: 0 });
-        p.at = now; p.n++;
+        const p = this.by[id] || (this.by[id] = { at: 0, n: 0, vals: [], logs: 0, logAt: 0, last: null });
+        p.at = now; p.n++; p.last = v;
         if (p.vals[0] === raw) return false;
         p.vals.unshift(raw);
         if (p.vals.length > KEEP) p.vals.length = KEEP;
@@ -128,4 +165,4 @@ function stateOf(sub, field, iface, busy) {
     return 'Subscribed, nothing received';
 }
 
-module.exports = { PROBES, GUIDE, Probes, rawOf, guidanceOf, SHOWN, stateOf };
+module.exports = { PROBES, GUIDE, PAGES, Probes, rawOf, guidanceOf, meaningOf, SHOWN, stateOf };

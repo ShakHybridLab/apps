@@ -768,7 +768,7 @@ check('launch cue: armed in the Sport drive mode with nothing to show, a chequer
     const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
     assert((hud.match(/readyBy[^\n]*SPOT ON/g) || []).length === 2, 'the flag and the words are green');
     assert(/if \(w\.readyBy\) \{ hide = !this\._launchReady\(now\)/.test(hud), 'the flag is hidden unless ready');
-    assert(/w\.evShareBy \|\| w\.nextBy \|\| w\.alertBy \|\| w\.readyBy \|\| w\.readyHides\)\) \{/.test(hud), 'the flag icon takes the live path (else it would always show)');
+    assert(/w\.evShareBy \|\| w\.nextBy \|\| w\.alertBy \|\| w\.laneBy \|\| w\.readyBy \|\| w\.readyHides\)\) \{/.test(hud), 'the flag icon takes the live path (else it would always show)');
     assert(/if \(w\.readyHides && this\._launchReady\(now\)\) hide = true;/.test(hud), 'an icon can give way to the cue');
     const set = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'app.json'), 'utf8')).settings.find((x) => x.key === 'launchReady');
     assert(set && set.type === 'bool' && set.default === true);

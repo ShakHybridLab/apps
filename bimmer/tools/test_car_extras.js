@@ -47,11 +47,12 @@ check('powerQuotaOf: -100..100 from the struct or a plain number; 255, 65535, te
 const hudSrc = fs.readFileSync(path.join(ROOT, 'shared', 'hud.js'), 'utf8');
 const grab = (name) => { const m = hudSrc.match(new RegExp('\\n    ' + name + '\\([^)]*\\) \\{[\\s\\S]*?\\n    \\}\\n')); assert(m, 'hud.js has no ' + name); return m[0]; };
 const isNum = (v) => typeof v === 'number' && isFinite(v);
-const names = ['_carNext', '_nextLimitNow', '_carAlertSet', '_alertNow', '_carPowerSet', '_carPower', '_hybridTach'];
-const Cls = new Function('extras', 'hybridTach', 'isNum', 'formatLimit', 'return class {' + names.map(grab).join('') + '}')(ex, hybridTach, isNum, formatLimit);
+const names = ['_carNext', '_nextLimitNow', '_carAlertSet', '_alertNow', '_laneSet', '_laneNow', '_carPowerSet', '_carPower', '_hybridTach'];
+const VERDICT = require('../shared/hud_themes').VERDICT;
+const Cls = new Function('extras', 'hybridTach', 'isNum', 'formatLimit', 'VERDICT', 'return class {' + names.map(grab).join('') + '}')(ex, hybridTach, isNum, formatLimit, VERDICT);
 function mk(set, over) {
     const o = Object.create(Cls.prototype);
-    Object.assign(o, { target: 'panel', nextLim: null, carAlert: null, carQuota: null, logs: [], log: { info: (m) => o.logs.push(m) },
+    Object.assign(o, { target: 'panel', nextLim: null, carAlert: null, carQuota: null, lane: null, logs: [], log: { info: (m) => o.logs.push(m) },
         speedLimit: { limit: () => null }, ci: { sharedPower: () => null },
         ctx: { settings: { item: (k) => (set[k] !== undefined ? { key: k } : undefined), get: (k) => set[k] } },
         setting: (k) => (set[k] === undefined ? undefined : set[k]) }, over || {});
@@ -79,6 +80,28 @@ check('car alert: only with the setting on (off by default) and a message showin
     on._carAlertSet({ numberDisplayControlCheckControlMessage: 0 }); assert.strictEqual(!!on._alertNow(), false, 'gone');
     assert.strictEqual(!!mk({ carAlert: true }, { target: 'hud', carAlert: true })._alertNow(), false, 'not on the HUD');
 });
+check('laneOf: the wheel symbol is on, off or unclear; the colour by its name; a lane departure warning is the one red', () => {
+    assert.deepStrictEqual(ex.laneOf({ steeringWheelDisplay: 1, steeringWheelColor: 'GREEN', displayLateralWarning: 0 }), { on: true, tone: 'green', warn: false });
+    assert.deepStrictEqual(ex.laneOf({ steeringWheelDisplay: { name: 'ON', value: 1 }, steeringWheelColor: { name: 'YELLOW', value: 2 } }), { on: true, tone: 'yellow', warn: false });
+    assert.strictEqual(ex.laneOf({ steeringWheelDisplay: 0 }).on, false); assert.strictEqual(ex.laneOf({ steeringWheelDisplay: 'NO_SYMBOL' }).on, false); assert.strictEqual(ex.laneOf({ steeringWheelDisplay: 'OFF' }).on, false);
+    assert.strictEqual(ex.laneOf({ steeringWheelDisplay: 255 }).on, null); assert.strictEqual(ex.laneOf({ steeringWheelDisplay: 65535 }).on, null);
+    assert.strictEqual(ex.laneOf({ displayLateralWarning: 'LEFT' }).warn, true); assert.strictEqual(ex.laneOf({ displayLateralWarning: 'NO_WARNING' }).warn, false); assert.strictEqual(ex.laneOf({ displayLateralWarning: 255 }).warn, false);
+    assert.strictEqual(ex.laneOf({ steeringWheelColor: 7 }).tone, null, 'a number is no colour');
+    [null, undefined, 3, 'x', [1], {}].forEach((v) => assert.deepStrictEqual(ex.laneOf(v), { on: null, tone: null, warn: false }, JSON.stringify(v)));
+});
+check('lane icon: only with the setting on (off by default), on the cluster, with the symbol on; the car\'s colour, red only for a warning; a reading it does not understand changes nothing', () => {
+    const feed = (o, v) => o._laneSet(v);
+    const on = mk({ carLane: true }), off = mk({ carLane: false }), none = mk({});
+    [on, off, none].forEach((o) => feed(o, { steeringWheelDisplay: 1, steeringWheelColor: 'GREEN' }));
+    assert.strictEqual(on._laneNow(), VERDICT['SPOT ON']); assert.strictEqual(off._laneNow(), null); assert.strictEqual(none._laneNow(), null);
+    feed(on, { steeringWheelDisplay: 65535 }); assert.strictEqual(on._laneNow(), VERDICT['SPOT ON'], 'unclear: the last stays');
+    feed(on, { steeringWheelDisplay: 1, steeringWheelColor: 'GREY' }); assert.strictEqual(on._laneNow(), 'dim');
+    feed(on, { steeringWheelDisplay: 1, steeringWheelColor: 'YELLOW' }); assert.strictEqual(on._laneNow(), VERDICT.EARLY);
+    feed(on, { steeringWheelDisplay: 1, steeringWheelColor: 'GREEN', displayLateralWarning: 'RIGHT' }); assert.strictEqual(on._laneNow(), 'hot', 'a warning is red');
+    feed(on, { steeringWheelDisplay: 0, displayLateralWarning: 0 }); assert.strictEqual(on._laneNow(), null, 'symbol off');
+    feed(on, null); feed(on, 7); assert.strictEqual(on._laneNow(), null);
+    const hudo = mk({ carLane: true }, { target: 'hud' }); feed(hudo, { steeringWheelDisplay: 1, steeringWheelColor: 'GREEN' }); assert.strictEqual(hudo._laneNow(), null, 'not on the HUD');
+});
 check('hybrid rev counter: without eDrive Live the car\'s motor share gives the blue power (setting carPower, off by default); an rpm that never comes counts as the engine at rest', () => {
     const w = { hybridTach: true };
     const base = { sportPower: true, carPower: true };
@@ -100,9 +123,23 @@ check('hybrid rev counter: without eDrive Live the car\'s motor share gives the 
     assert.strictEqual(hudOn._hybridTach(w, 0).ev, true, 'the HUD too (setting hybridRev)');
     o._carPowerSet({ quotaImmediateElectricEngineDriveRecuperation: 255 }); o._carPowerSet('x'); assert.strictEqual(o.carQuota.q, -50, 'unclear readings change nothing');
 });
+check('hud.js wires the lane assist symbol, the setting exists (off, French) and the signal is declared optional', () => {
+    assert(/p\.id === 'wheel'\) this\._guard\('lane', \(\) => this\._laneSet\(v\)\)/.test(hudSrc), 'not wired');
+    assert(/w\.laneBy\) \{ const ln = this\._laneNow\(\)/.test(hudSrc), 'the flag is not used');
+    const it = theme.settings.find((x) => x.key === 'carLane');
+    assert(it && it.type === 'bool' && it.default === false && /[éèàç ]/.test(it.label), 'setting');
+    assert(!hud.settings.find((x) => x.key === 'carLane'), 'ShakHUD has no lane icon');
+    const l = theme.signals['de.bmw.dass.driverassistanceapplications.DisplayDriverAssistanceLateralCoordinated'];
+    assert(l && l.displaySteeringWheel === 's' && typeof l._optional === 'string');
+    ['sport', 'm', 'mblade', 'navi'].forEach((n) => {
+        const L = json('apps/shaktheme/hud/layouts/' + n + '.json'), w = L.widgets.find((x) => x.id === 'lim_lane');
+        assert(w && w.icon === 'wheel' && w.laneBy === true && w.toggle === '!mapUp' && !w.alertBy, n + ': lane widget');
+        assert(w.x >= 0 && w.x + w.w <= 1920 && w.y >= 0 && w.y + w.h <= 660, n + ': lane icon is not clear of the screen');
+    });
+});
 check('hud.js wires the three readings and the live icon path takes the two new flags', () => {
     assert(/p\.id === 'next'\) this\._guard\('nextLimit'/.test(hudSrc) && /p\.id === 'cc'\) this\._guard\('carAlert'/.test(hudSrc) && /p\.id === 'pdrive' \|\| p\.id === 'pdrive2'\) this\._guard\('carPower'/.test(hudSrc));
-    assert(/w\.evShareBy \|\| w\.nextBy \|\| w\.alertBy \|\| w\.readyBy/.test(hudSrc), 'the icons would always show');
+    assert(/w\.evShareBy \|\| w\.nextBy \|\| w\.alertBy \|\| w\.laneBy \|\| w\.readyBy/.test(hudSrc), 'the icons would always show');
     assert(/case 'nextLimit':/.test(hudSrc));
     assert(/_hybridTach\(w, rpm\) \{[\s\S]*?_carPower\(\)/.test(hudSrc), '_hybridTach does not use the car\'s own power');
 });

@@ -1198,6 +1198,20 @@
       "sheet": "s1"
     },
     {
+      "id": "lim_lane",
+      "type": "icon",
+      "icon": "wheel",
+      "z": 5,
+      "x": 712,
+      "y": 190,
+      "w": 56,
+      "h": 56,
+      "color": "dim",
+      "toggle": "!mapUp",
+      "laneBy": true,
+      "sheet": "s1"
+    },
+    {
       "id": "run_icon",
       "type": "icon",
       "icon": "stopwatch",

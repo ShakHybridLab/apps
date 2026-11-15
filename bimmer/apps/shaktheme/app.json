@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.21.11",
+  "version": "0.21.12",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -112,7 +112,7 @@
     },
     "de.bmw.dass.driverassistanceapplications.DisplayDriverAssistanceLateralCoordinated": {
       "displaySteeringWheel": "s",
-      "_optional": "the lane assist's steering wheel symbol (displayLateralWarning, steeringWheelDisplay, steeringWheelColor, steeringWheelAnimation, handsOnSymbol): a notifier without getter, only read, shown on the Signals tab"
+      "_optional": "the lane assist's steering wheel symbol (displayLateralWarning, steeringWheelDisplay, steeringWheelColor, steeringWheelAnimation, handsOnSymbol): a notifier without getter, read and shown on the Signals tab, and drawn by the lane icon of the themes (setting carLane)"
     },
     "de.bmw.infotainment.drivingexcitement.Efficiencytainment2": {
       "displayPowerDrive": "s",
@@ -1231,6 +1231,12 @@
     {
       "key": "carAlert",
       "label": "Triangle jaune quand la voiture affiche un message d'alerte (essai)",
+      "type": "bool",
+      "default": false
+    },
+    {
+      "key": "carLane",
+      "label": "Volant de l'assistance de voie, dans la couleur de la voiture (essai)",
       "type": "bool",
       "default": false
     },

@@ -100,6 +100,43 @@ check('a value is one line of key=value, long ones cut', () => {
     assert.strictEqual(rawOf([1, 2]), '[1,2]'); assert.strictEqual(rawOf(null), '');
     assert(rawOf(JSON.parse('[' + '1,'.repeat(400) + '1]')).length <= 500, 'an array is not cut');
 });
+check('the Signals tab: two pages that hold every probe once, each row fits above the app\'s mark, and what the app understood is shown', () => {
+    const { PAGES, meaningOf } = require('../shared/probes');
+    assert.deepStrictEqual(PAGES.reduce((a, b) => a.concat(b), []).sort(), PROBES.map((p) => p.id).concat([GUIDE.id]).sort(), 'the pages do not hold every probe once');
+    const page = fs.readFileSync(path.join(__dirname, '..', 'shared', 'page.js'), 'utf8');
+    const m = /    signalsTab\(cv, bottom\) \{[\s\S]*?\n    \}\n/.exec(page);
+    assert(m, 'no signalsTab');
+    const body = m[0].replace(/^    signalsTab\(cv, bottom\) \{/, '').replace(/\n    \}\n$/, '');
+    const C = { text: '#fff', dim: '#aaa', label: '#888', blue: '#00f', blueHi: '#0af', live: '#0f0', off: '#ccc' };
+    const run = (pg, feed) => {
+        const calls = { text: [], glass: [], chips: [] };
+        const cv = { circle() {}, text(t, x, y, size, col) { calls.text.push({ t, x, y, size, col }); }, textWidth: (t, sz) => String(t).length * sz * 0.55, target() {} };
+        const hud = { probes: new Probes(null), ctx: {}, car: { subs: [] } };
+        if (feed) PROBES.concat([GUIDE]).forEach((p) => hud.probes.feed(p.id, feed[p.id] === undefined ? { a: 1, b: 'x'.repeat(80) } : feed[p.id], Date.now()));
+        const self = { sigPage: pg, hud, kick() {} };
+        new Function('cv', 'bottom', 'label', 'miniChip', 'glass', 'note', 'C', 'CX', 'CR', 'CW', 'probes', 'Date', body)
+            .call(self, cv, 512, () => {}, (c, x, y, t) => { calls.chips.push(t); return 50; }, (c, x, y, w, h) => { calls.glass.push({ y, h }); }, (c, x, y, lines) => { calls.note = { y, n: lines.length }; }, C, 300, 1584, 1284, require('../shared/probes'), Date);
+        return calls;
+    };
+    [0, 1].forEach((pg) => [false, true].forEach((fed) => {
+        const c = run(pg, fed ? { rpm: 2500, speed: 62, sign: 70, guide: true, cc: { numberDisplayControlCheckControlMessage: 3 } } : null);
+        assert.strictEqual(c.chips.join(), '1/2,2/2');
+        const last = c.glass[c.glass.length - 1];
+        assert.strictEqual(c.glass.length, PAGES[pg].length, 'rows on page ' + pg);
+        assert(last.y + last.h <= 512, 'page ' + pg + ' rows end at ' + (last.y + last.h) + ', past 512');
+        c.text.forEach((t) => assert(t.y <= 512, 'text below the page: ' + t.t));
+        assert(c.note && c.note.y + (c.note.n - 1) * 26 + 6 <= 512, 'the note runs past 512: ' + JSON.stringify(c.note));
+        if (fed && pg === 0) assert(c.text.some((t) => /^→ 2500 rpm$/.test(t.t)) && c.text.some((t) => t.t === '→ route: yes'), 'no meaning line');
+    }));
+    const FR = { '→ 2500 rpm': '→ 2500 tr/min', '→ limit 70': '→ limite 70', '→ next limit 90': '→ limite suivante 90', '→ no limit read': '→ aucune limite lue', '→ no next limit': '→ aucune limite suivante', '→ not understood': '→ non compris', '→ alert: yes': '→ alerte : oui', '→ route: no': '→ itinéraire : non',
+        '→ motor 40 % · 32 kW': '→ moteur 40 % · 32 kW', '→ recuperation 25 % · 20 kW': '→ récupération 25 % · 20 kW', '→ motor at rest': '→ moteur au repos', '→ wheel on, green': '→ volant allumé, vert', '→ wheel on, yellow, warning': '→ volant allumé, jaune, alerte', '→ wheel off': '→ volant éteint' };
+    Object.keys(FR).forEach((k) => assert.strictEqual(fr.tr(k), FR[k], k));
+    // the readings: a value that is not clear is never taken for one
+    assert.strictEqual(meaningOf('rpm', 65535), '→ not understood'); assert.strictEqual(meaningOf('rpm', 2499.6), '→ 2500 rpm');
+    assert.strictEqual(meaningOf('pdrive', { quota: 255 }), '→ not understood'); assert.strictEqual(meaningOf('pdrive', { quota: 40 }), '→ motor 40 % · 32 kW');
+    assert.strictEqual(meaningOf('fas', 3), ''); assert.strictEqual(meaningOf('rpm', null), ''); assert.strictEqual(meaningOf('guide', 'weird'), '→ not understood');
+    assert.strictEqual(meaningOf('wheel', { steeringWheelDisplay: 1, steeringWheelColor: 'YELLOW', displayLateralWarning: 'LEFT' }), '→ wheel on, yellow, warning');
+});
 check('the page redraws the Signals tab by itself (a timer, on that tab only) and the tab list has seven entries that fit above the app\'s mark', () => {
     const page = fs.readFileSync(path.join(__dirname, '..', 'shared', 'page.js'), 'utf8');
     assert(/this\.sigTimer = setInterval\(\(\) => \{ if \(this\.tab === 'signals'\) this\.kick\(\); \}, 2000\)/.test(page), 'no redraw timer');
