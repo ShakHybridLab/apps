@@ -35,6 +35,7 @@ const SHOWN = PROBES.map((p) => p.id);
 const KEEP = 3;               // distinct values kept for each (the page shows the newest first)
 const LOG_FIRST = 12;         // distinct values of each that go to the log, then one a minute at most
 const LOG_EVERY_MS = 60000;
+const STUCK_MS = 8000;        // a native step this long without an end is shown as stuck (they normally take well under a second)
 const CLIP = 500;
 
 /** A value on one line ("key=value key=value ..."), long values cut. */
@@ -72,8 +73,20 @@ class Probes {
 
 /** Why a probe has not been heard, in a few words, from its interface's subscription (kit/runtime/signals.js watch(), kept in car.subs):
  *  not made yet, refused, the car's provider not answering, or fine and silent. */
-function stateOf(sub, field) {
-    if (!sub) return 'Subscribing';
+function stateOf(sub, field, iface, busy) {
+    if (!sub) {
+        // not subscribed yet: while the native step running now has lasted a while, say which one it is (they go one at a time, one that never
+        // answers holds back every interface behind it)
+        if (busy && busy.ms >= STUCK_MS) {
+            const s = Math.round(busy.ms / 1000);
+            if (iface && iface.split('.').pop() === busy.iface) {
+                return busy.step === 'open' ? 'Stuck while opening (' + s + ' s)'
+                    : busy.step === 'availability' ? 'Stuck while waiting for the car (' + s + ' s)' : 'Stuck while subscribing to ' + busy.step + ' (' + s + ' s)';
+            }
+            return 'Waiting: ' + busy.iface + ' is stuck (' + s + ' s)';
+        }
+        return 'Subscribing';
+    }
     if (sub.error) return 'Error: ' + String(sub.error).slice(0, 70);
     if (sub.failed && sub.failed[field]) return 'Refused: ' + sub.failed[field];
     if (sub.getFailed && sub.getFailed[field]) return 'Read refused: ' + sub.getFailed[field];

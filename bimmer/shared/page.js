@@ -481,6 +481,7 @@ class Page {
         label(cv, CX, 70, 'Signals of the car, read only');
         const list = probes.PROBES, pr = this.hud.probes, now = Date.now();
         const rh = Math.max(26, Math.min(34, Math.floor((bottom - 150) / list.length)));
+        const sig = this.hud.ctx && this.hud.ctx.signals, busy = sig && sig.busyWith ? sig.busyWith() : null;      // the native step running now (signals.js)
         let y = 84;
         list.forEach((p) => {
             const d = pr && pr.get(p.id), fresh = d && now - d.at < 5000;
@@ -490,7 +491,7 @@ class Page {
             const vx = CX + 470, room = CR - 12 - vx, got = d && d.vals.length;
             const fit = (t, w) => { while (t.length > 1 && cv.textWidth(t, 12, { literal: true }) > w) t = t.slice(0, -2) + '…'; return t; };
             const sub = (this.hud.car && this.hud.car.subs || []).find((s) => s && s.iface === p.iface);
-            let v = got ? fit(d.vals[0], room) : fit(probes.stateOf(sub, p.field), room);                                       // the newest value, then the one before it if there is room
+            let v = got ? fit(d.vals[0], room) : fit(probes.stateOf(sub, p.field, p.iface, busy), room);                                       // the newest value, then the one before it if there is room
             if (got && d.vals[1] && room - cv.textWidth(v, 12, { literal: true }) > 160) v += '   |   ' + fit(d.vals[1], room - cv.textWidth(v, 12, { literal: true }) - 40);
             cv.text(v, vx, y + rh / 2 + 3, 12, got ? C.dim : C.label, { literal: true });
             y += rh;

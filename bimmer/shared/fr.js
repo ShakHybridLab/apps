@@ -84,10 +84,28 @@ const EXACT = {
     'US Pacific': 'États-Unis Pacifique', 'Alaska': 'Alaska', 'Hawaii': 'Hawaï', 'Arizona': 'Arizona', 'Canada Atlantic': 'Canada Atlantique',
     'Mexico': 'Mexique', 'UK, Ireland, Portugal': 'Royaume-Uni, Irlande, Portugal', 'Central Europe': 'Europe centrale',
     'Eastern Europe': "Europe de l'Est",
+    // l'état de Waze on Cluster, sur l'onglet Carte (shared/waze.js)
+    "Waze on Cluster isn't running": "Waze on Cluster n'est pas lancé",
+    "Waze on Cluster: this car isn't supported": "Waze on Cluster : cette voiture n'est pas prise en charge",
+    'Waze map is turned off in the Waze app': "La carte Waze est éteinte dans l'appli Waze",
+    "Off. Waze shows the map in BMW's own map view": 'Éteint. Waze affiche la carte dans la vue carte de BMW',
+    'Waze app is open, retrying': "L'appli Waze est ouverte, nouvel essai",
+    'Moving the map into the theme': 'La carte passe dans le thème',
+    'Map showing in the theme': 'Carte affichée dans le thème',
+    'Map frozen, waiting for the phone': 'Carte figée, en attente du téléphone',
+    'Waze on Cluster reports an error': 'Waze on Cluster signale une erreur',
+    'Waiting for the map': 'En attente de la carte',
 };
 
 // les phrases qui contiennent un nom ou un nombre
 const PATTERNS = [
+    [/^Can't reach Waze on Cluster \((.*)\)$/, 'Waze on Cluster est injoignable ($1)'],
+    [/^(.*)\. It is the same window Waze's map shows in \(Sport, M, M Blade and Navi\)\.$/, (m, a) => tr(a) + ". C'est la fenêtre de la carte Waze (Sport, M, M Blade, Navi)."],
+    // onglet Signaux : l'étape de la voiture qui ne finit jamais (kit/runtime/signals.js busyWith)
+    [/^Stuck while opening \((\d+) s\)$/, "Bloqué à l'ouverture ($1 s)"],
+    [/^Stuck while waiting for the car \((\d+) s\)$/, 'Bloqué : attend la voiture ($1 s)'],
+    [/^Stuck while subscribing to (.*) \((\d+) s\)$/, "Bloqué à l'abonnement à $1 ($2 s)"],
+    [/^Waiting: (.*) is stuck \((\d+) s\)$/, 'En attente : $1 est bloqué ($2 s)'],
     [/^Error: (.*)$/, 'Erreur : $1'], [/^Refused: (.*)$/, 'Refusé : $1'], [/^Read refused: (.*)$/, 'Lecture refusée : $1'],
     [/^(\d+) of (\d+) read$/, '$1 sur $2 lus'],
     [/^Turn HUD Widgets off so (.*) shows\?$/, 'Éteindre HUD Widgets pour afficher $1 ?'],

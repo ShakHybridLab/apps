@@ -28,12 +28,22 @@ const DIRS = [path.join(APP_ROOT, 'someipInterfaces'), path.join(__dirname, '..'
 // traffic. The SDK always calls them from a fresh setImmediate tick, one at a
 // time - do the same.
 let chain = Promise.resolve();
-function nativeTick(fn) {
-    const run = () => new Promise((resolve, reject) => setImmediate(() => { try { Promise.resolve(fn()).then(resolve, reject); } catch (e) { reject(e); } }));
+// The step running now ({ iface, step, since }), for the Signals tab: they go one at a time, so a step that never ends holds back every
+// interface behind it, and those show "Subscribing" for ever (owner's photos of Nov 15 2026: 9 of 11 lines, the 2 of KombiIF being ahead of it).
+let busy = null;
+function nativeTick(fn, what) {
+    const run = () => new Promise((resolve, reject) => setImmediate(() => {
+        const mine = busy = what ? { iface: what[0], step: what[1], since: Date.now() } : null;
+        const end = (f) => (v) => { if (mine && busy === mine) busy = null; f(v); };
+        try { Promise.resolve(fn()).then(end(resolve), end(reject)); } catch (e) { end(reject)(e); }
+    }));
     const p = chain.then(run, run);
     chain = p.catch(() => {});
     return p;
 }
+
+/** The step the native binding is stuck in or busy with, { iface (short name), step ('open', 'availability' or a field), ms }, or null. */
+function busyWith() { return busy ? { iface: busy.iface, step: busy.step, ms: Date.now() - busy.since } : null; }
 
 function loadConfig(iface) {
     const f = iface.replace(/\./g, '_') + '.json';
@@ -56,7 +66,8 @@ async function watch(iface, instance, handlers, log, opts) {
     if (!someip) { res.error = 'someip native module not available'; return res; }
     try {
         const cfg = loadConfig(iface);
-        const p = await nativeTick(() => someip.buildProxy(cfg, String(instance)).then((px) => px.init().then(() => px)));
+        const short = iface.split('.').pop();
+        const p = await nativeTick(() => someip.buildProxy(cfg, String(instance)).then((px) => px.init().then(() => px)), [short, 'open']);
         res.proxy = p;
         res.shutdown = () => Promise.resolve().then(() => p.shutdown && p.shutdown()).catch(() => {});
         const fields = Object.keys(handlers || {});
@@ -67,10 +78,10 @@ async function watch(iface, instance, handlers, log, opts) {
         });
         await nativeTick(() => {
             try { return p.subscribeToAvailability((a) => { res.available = !!a; if (a) setImmediate(fetchAll); }); } catch (e) { return null; /* older binding */ }
-        });
+        }, [short, 'availability']);
         for (const f of fields) {
             try {
-                await nativeTick(() => p.subscribe({ name: f, onReceive: (v) => { try { handlers[f](v); } catch (e) { if (log) log.warn(iface + '.' + f + ': ' + e); } } }));
+                await nativeTick(() => p.subscribe({ name: f, onReceive: (v) => { try { handlers[f](v); } catch (e) { if (log) log.warn(iface + '.' + f + ': ' + e); } } }), [short, f]);
             } catch (e) {
                 res.failed[f] = String(e && e.message || e).slice(0, 60);
                 if (log) log.warn('subscribe ' + iface + '.' + f + ': ' + e);
@@ -118,4 +129,4 @@ function onAvailable(p, fn) {
         .then(() => { if (p.isAvailable && p.isAvailable()) fn(true); });
 }
 
-module.exports = { watch, proxy, call, set, on, onAvailable, loadConfig, hasNative: () => !!someip };
+module.exports = { watch, proxy, call, set, on, onAvailable, loadConfig, busyWith, hasNative: () => !!someip };
