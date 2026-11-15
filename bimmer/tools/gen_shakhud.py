@@ -10,12 +10,12 @@ import json, math, os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, '..', 'apps', 'shakhud', 'hud', 'layouts', 'mstyle.json')
-P0, P1, P2 = (128, 188), (238, 114), (632, 114)       # the bar's start, its bend, its end
-BAR = 10                                               # its width
+P0, P1, P2 = (136, 190), (246, 116), (626, 116)       # the bar's start, its bend, its end
+BAR = 20                                               # its width
 RPM_MAX, CORNER = 7000, 2000                           # the scale's end, the rpm at the bend
 TICK_GAP, TICK_LEN = 3, 10                             # the long tick (even thousands), from the bar's edge
 LAB_W, LAB_H = 24, 18                                  # a number's box (font "small")
-RECT = (120, 100, 520, 124)                            # the effect layer, x y w h
+RECT = (120, 100, 530, 128)                            # the effect layer, x y w h
 
 def unit(v):
     n = math.hypot(*v)
@@ -53,9 +53,9 @@ widgets = [{
 widgets += [label(k) for k in (0, 2, 4, 6)]
 widgets += [
     {'id': 'rev_unit', 'type': 'text', 'font': 'small', 'color': 'dim', 'align': 'left', 'class': 'content', 'z': 10,
-     'x': 574, 'y': 135, 'w': 104, 'h': 18, 'text': '{{tachUnit}}'},
+     'x': 574, 'y': 142, 'w': 104, 'h': 18, 'text': '{{tachUnit}}'},
     {'id': 'rev_charge', 'type': 'text', 'font': 'small', 'color': 'fg', 'align': 'left', 'class': 'content', 'z': 10,
-     'x': 574, 'y': 154, 'w': 104, 'h': 18, 'text': '{{chargeNote}}'},
+     'x': 574, 'y': 161, 'w': 104, 'h': 18, 'text': '{{chargeNote}}'},
 ]
 doc = {
     'schemaVersion': 2, 'name': 'M Style',

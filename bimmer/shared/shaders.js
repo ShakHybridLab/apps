@@ -1774,8 +1774,8 @@ void main() {
     vec3 lit = u_hy.a > 0.5 ? u_hy.rgb : (u_v.x > 0.0 && u_v.y > 0.5 ? vec3(1.0) : u_hot);
     vec4 fill = f <= u_v.x ? vec4(lit, 1.0) : (f >= u_g.w ? vec4(u_hot, 0.45) : u_track);
     vec4 col = vec4(fill.rgb, fill.a * clamp(hw + 0.5 - d, 0.0, 1.0));
-    // the outline, 1.5 px at the bar's edge
-    col = over(vec4(u_fg.rgb, clamp(1.5 - abs(d - hw + 0.75), 0.0, 1.0)), col);
+    // the outline, 2 px at the bar's edge
+    col = over(vec4(u_fg.rgb, clamp(2.0 - abs(d - hw + 1.0), 0.0, 1.0)), col);
     // the needle: the bright edge of the fill, a little wider than the bar
     float sv = u_v.x <= u_g.y ? u_v.x / u_g.y * l1 : l1 + (u_v.x - u_g.y) / (1.0 - u_g.y) * l2;
     if (u_v.x > 0.01) col = over(vec4(1.0, 1.0, 1.0, clamp(2.5 - abs(s - sv), 0.0, 1.0) * clamp(hw + 3.5 - d, 0.0, 1.0)), col);

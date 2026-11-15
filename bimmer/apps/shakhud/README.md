@@ -4,7 +4,7 @@
 
 A HUD of its own for the iDrive 7 windshield, by shakzer. Its first layout, **M Style**, is a rev counter drawn as a bent bar: a rising
 slant, then a level run to 7, with the numbers under it. It is made to sit with **Waze's HUD map** (Waze on cluster): thin lines and
-small numbers only, nothing that fills an area, clear of BMW's own speed (bottom left) and of the turn-signal arrows (top middle).
+small numbers only (the bar is 20 px thick), nothing that fills an area, clear of BMW's own speed (bottom left) and of the turn-signal arrows (top middle).
 Not tried on a car yet: the shader and the layout run on the bench.
 
 ## M Style
