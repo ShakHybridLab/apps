@@ -1,4 +1,5 @@
 'use strict';
+const { accentSource } = require('./accent');
 /**
  * The HUD's GLSL ES 1.00 fragment shaders for cluster-render "effect" layers, drawn on the
  * car's GPU. Kept as JS strings because the kit's build ships an app's top-level .js files
@@ -825,6 +826,17 @@ const NAVY = `vec3 navyFacets(vec2 p, vec2 size, float amount) {
     return (navy + (vec3(0.014, 0.045, 0.11) * fc.x + vec3(0.03, 0.08, 0.17) * fc.y * 0.55) * side * amount) * slot(p);
 }
 `;
+// The Waze map window's frame (Sport, M Blade, Navi): hd is the distance outside the window's edge. bezel() draws, outside it, a
+// dark gap against the glass and a bright silver rim (lighter on top, y 0..1 down the panel); glass() then shades the map's own edge a little, drawn
+// after the window has been cut out, so the map looks set into the panel. Thin enough to fit between the Sport brackets' lines and the window.
+const BEZEL = `vec4 bezel(float hd, float y, vec4 c) {
+    float ga = 0.9 * cov(abs(hd - 0.6) - 0.9), ra = 0.95 * cov(abs(hd - 2.4) - 1.0);
+    return over(vec4(ra > ga ? mix(vec3(0.93, 0.96, 1.0), vec3(0.5, 0.55, 0.67), y) : vec3(0.0, 0.01, 0.03), max(ga, ra)), c);
+}
+vec4 glass(float hd, vec4 c) {
+    return hd < 0.0 ? vec4(0.0, 0.0, 0.0, max(c.a, 0.55 * exp(hd * 0.5))) : c;
+}
+`;
 const SDASH = `// The Sport theme in one cluster-render "effect" layer (GLSL ES 1.00), after BMW's Live Cockpit Sport view:
 // a blue speed bracket left and a red rev bracket right (the left one mirrored). Each is a thin bright outer
 // line, a band that fills from the bottom (white marker at the value), a dark gap and a thin inner line round a
@@ -957,6 +969,7 @@ vec4 bar(vec2 p, vec4 s, float val, float zones, float low, vec4 c) {
     return c;
 }
 
+${BEZEL}
 void main() {
     vec2 p = v_uv * u_size;
     vec2 pm = vec2(u_size.x - p.x, p.y);
@@ -986,8 +999,9 @@ void main() {
         vec2 hs = u_hole.zw * 0.5;
         vec2 q = abs(p - (u_hole.xy + hs)) - (hs - vec2(u_holeR));
         float hd = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_holeR;
-        c = over(vec4(0.74, 0.78, 0.86, 0.85 * cov(abs(hd - 2.2) - 0.9)), c);       // a silver hairline just outside the window, as the M theme's
+        c = bezel(hd, p.y / 720.0, c);                                              // the frame just outside the window
         c.a *= clamp(hd + 0.5, 0.0, 1.0);
+        c = glass(hd, c);
     } else {
         c = bar(p, u_fuelSeg, u_fuel, 0.0, u_low.x, c);
         c = bar(p, u_oilSeg, u_oil, 1.0, u_low.y, c);
@@ -1108,6 +1122,7 @@ vec4 strip(vec2 p, vec4 g, float lvl, vec3 lit, float low, vec4 c) {
     return over(vec4(col, a * inside), c);
 }
 
+${BEZEL}
 void main() {
     vec2 p = v_uv * u_size;
     // the near black navy, with the photo's faint hexagon outlines
@@ -1156,8 +1171,9 @@ void main() {
         vec2 hs = u_hole.zw * 0.5;
         vec2 qq = abs(p - (u_hole.xy + hs)) - (hs - vec2(u_holeR));
         float hd = length(max(qq, 0.0)) + min(max(qq.x, qq.y), 0.0) - u_holeR;
-        c = over(vec4(0.74, 0.78, 0.86, 0.85 * cov(abs(hd - 2.2) - 0.9)), c);       // a silver hairline just outside the window, as the M theme's
+        c = bezel(hd, p.y / 720.0, c);                                              // the frame just outside the window
         c.a *= clamp(hd + 0.5, 0.0, 1.0);
+        c = glass(hd, c);
     }
 
     // ---- the speed scale: a cyan line (cap, a long slant up to the knee, a long slant down), a tick at each label, a marker ----
@@ -1293,6 +1309,7 @@ vec4 bar(vec2 p, vec4 b, vec3 glowA, vec3 glowB, float low, vec4 c) {
     return c;
 }
 
+${BEZEL}
 void main() {
     vec2 p = v_uv * u_size;
     vec4 c = vec4(u_tint > 0.0 ? navyFacets(p, u_size, u_facets) * u_tint : vec3(0.0), 1.0);
@@ -1301,8 +1318,9 @@ void main() {
         vec2 hs = u_hole.zw * 0.5;
         vec2 q = abs(p - (u_hole.xy + hs)) - (hs - vec2(u_holeR));
         float hd = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_holeR;
+        c = bezel(hd, p.y / 720.0, c);                                              // the frame just outside the window
         c.a *= clamp(hd + 0.5, 0.0, 1.0);
-        c = over(vec4(0.74, 0.78, 0.86, 0.85 * cov(abs(hd - 2.2) - 0.9)), c);       // a silver hairline just outside the window, as the M theme's
+        c = glass(hd, c);
     }
     // the line under the map
     float lw = 1.7;
@@ -1874,4 +1892,23 @@ void main() {
 }
 `;
 
-module.exports = { slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, navi: NAVI, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES };
+// The blue literals of the three blue themes that follow the drive mode (accent.js): the speed bracket, the hexagon and its tabs, the
+// backdrop's tint and facets, the speed stripe. The hybrid's blue, the cold oil's, the fuel and battery bars stay blue.
+const ACCENT_LITERALS = {
+    sdash: ['0.36, 0.62, 1.0', '0.13, 0.3, 0.78', '0.62, 0.86, 1.0', '0.2, 0.45, 0.98', '0.012, 0.036, 0.09', '0.03, 0.09, 0.19', '0.04, 0.12, 0.24',
+        '0.02, 0.07, 0.16', '0.07, 0.2, 0.38', '0.06, 0.2, 0.62', '0.15, 0.36, 0.92'],
+    mblade: ['0.016, 0.026, 0.078', '0.09, 0.31, 0.7', '0.085, 0.34, 0.79', '0.075, 0.31, 0.72', '0.07, 0.275, 0.66', '0.08, 0.31, 0.74', '0.075, 0.28, 0.68',
+        '0.095, 0.32, 0.76', '0.45, 0.6, 1.0', '0.5, 0.7, 1.0', '0.4, 0.62, 1.0', '0.12, 0.3, 0.62', '0.12, 0.34, 0.7', '0.1, 0.3, 0.66', '0.3, 0.78, 1.0'],
+    navi: ['0.016, 0.05, 0.125', '0.026, 0.08, 0.19', '0.014, 0.045, 0.11', '0.03, 0.08, 0.17', '0.1, 0.18, 0.84'],
+};
+const _accented = {};
+/** The shader `type` in the drive mode's hue ('blue' = as it is; 'green' | 'red'): the same source with the listed blues rewritten (cached). */
+function accented(type, hue) {
+    const base = module.exports[type];
+    if (hue !== 'green' && hue !== 'red') return base;
+    if (!ACCENT_LITERALS[type]) return base;
+    const key = type + '/' + hue;
+    if (!_accented[key]) _accented[key] = accentSource(base, ACCENT_LITERALS[type], hue);
+    return _accented[key];
+}
+module.exports = { slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, navi: NAVI, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, accented, ACCENT_LITERALS };

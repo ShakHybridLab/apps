@@ -224,6 +224,12 @@
  * Warnings: a text showing oil, coolant or boost (a {{oil}} / {{coolant}} / {{boost}} token, or a readout slot with that
  * sensor) flashes in the shift red while the value is over "warnOil" / "warnCoolant" (C) / "warnBoost" (bar); 0 = off.
  * Text "tyreBy": "FL" | "FR" | "RL" | "RR" (with {{tyreP:..}}): yellow while that tyre's pressure is under "tyreLow" (bar, 0 = never; 2.0), red 0.4 bar under it.
+ * The ice alert (cluster only, the setting "iceBelow" in C, 0 = never; 3 by default): "iceBy": true on the "snow" icon (blank until the outside
+ * temperature is at or under it; flashes 8 s, then lit, in the cold blue) and on the outside temperature's text (cold blue meanwhile).
+ * The electric share of the drive (the setting "evShare"): {{evShare}} in %, {{evShareUnit}} a "%" (both blank without a battery or under 0.3 km),
+ * "evShareBy": true on the "leaf" icon (blank when there is no share).
+ * Colour by drive mode (cluster only, the setting "accentByMode"): Sport, M Blade and Navi take blue in Electric Eco Pro, green in Hybrid, red in Sport
+ * (accent.js: the shaders' listed blues and the theme's "sblue" role are rewritten when the layout is built; the layout is rebuilt when the mode changes).
  * The speed limit ring (cluster only; speedlimit.js, the setting "limitRing"): {{limit}} is the limit in the unit shown ('' without one, or while
  * the 0-100 timer is up) and "limitBy": true on its text, or on the "ring" icon, makes them red while the speed is over it; the icon is
  * blank without a limit. The 0-100 km/h timer (0-60 mph; the setting "launchTimer"): {{launch}} is its time (0.1 s live, 0.01 s held 12 s once
@@ -272,6 +278,7 @@ const { shiftLightState } = require('./shift_light');
 const badges = require('./badges');
 const Runs = require('./runs');
 const { SpeedLimit } = require('./speedlimit');
+const { hueOfMode, accentTheme } = require('./accent');
 const tz = require('./tz');
 // sharing the HUD with other kit apps (Redline, issue #4): kit/runtime/hud_claim.js, from cauliflowermossgrape's kit
 // (MIT). HUD Widgets is a "standing" app, like Cluster functions: it gives way while another app holds a fresh
@@ -309,7 +316,7 @@ const PLACE_KEYS = ['hudX', 'hudY', 'hudScale', 'stripClear'];
 // cluster-render has no clip, so the switch squeezes every layer to 662 / 720 of its height about the panel's top.
 const STRIP_TOP = 662;
 // settings that only change what a text shows (the next tick paints it), no rebuild
-const LIVE_KEYS = ['warnOil', 'warnCoolant', 'warnBoost', 'oilCold', 'coolantCold', 'tyreLow', 'badge', 'badgeBMW', 'gFlipLat', 'gFlipLong', 'gRange', 'gTrail'];
+const LIVE_KEYS = ['iceBelow', 'evShare', 'warnOil', 'warnCoolant', 'warnBoost', 'oilCold', 'coolantCold', 'tyreLow', 'badge', 'badgeBMW', 'gFlipLat', 'gFlipLong', 'gRange', 'gTrail'];
 // g (the idea of a G-meter app, no code): a sample over G_BAD is a bad reading, not a corner;
 // the rest are averaged over G_AVG_MS so kerbs and potholes don't throw the dot about
 const G_BAD = 3;
@@ -322,6 +329,8 @@ const G_SECTORS = 48, G_SPREAD = 3, G_TRAIL = 16;
 const WARN = { oil: 'warnOil', coolant: 'warnCoolant', boost: 'warnBoost' };
 // a temperature text with "tempBy" is blue below this setting (C), green above it, and flashes red over its warning limit
 const COLD_BELOW = { oil: 'oilCold', coolant: 'coolantCold' };
+const ACCENT_ROLES = { sportdash: ['sblue'] };   // the theme roles that take the drive mode's colour (the shaders' blues: shaders.js ACCENT_LITERALS)
+const ICE_BLINK_MS = 8000;       // the snowflake flashes this long when the ice alert comes on
 const WARM_PULSE_MS = 2400, WARM_FLASH_MS = 400;   // a temperature that reaches its warm value flashes white three times in this long, this fast
 const TYRE_RED_BAR = 0.4;               // a tyre pressure this far under the setting "tyreLow" is red (yellow from the setting)
 const WARN_DIM = [120, 16, 22, 255];   // the dark red a temperature flashes from, up to the shift red, while over its warning limit
@@ -536,6 +545,7 @@ class HudApp {
         this.boostPeak = null;           // bar, the highest boost since the last 0-60 run started ({{boostPeak}})
         this.runs = new Runs(ctx.dataDir, this.log);   // the 0-60 timer (runs.js)
         this.runs.onStart = () => { this.boostPeak = null; };
+        this.evKm = 0;                   // of it, km driven with the engine off (a plug-in hybrid): {{evShare}}
         this.tripKm = 0;                 // this drive (since the app started with the car): km driven and
         this.tripMs = 0;                 // ms moving, for {{avgSpeed}}
         this.tripT = 0;
@@ -596,6 +606,8 @@ class HudApp {
         this.powerShown = '';            // whether the layout was built for the power shown or not
         // the "danger zone" alert (danger.js): a file another app writes while a zone is ahead; the layout is rebuilt when it comes
         // or goes (widgets with toggle "danger"), the distance and limit are the tokens {{dangerDist}} {{dangerUnit}} {{dangerLimit}}
+        // the theme's colour from the drive mode (accent.js): blue in Electric Eco Pro, green in Hybrid, red in Sport; read when the layout is built
+        this.accentHue = 'blue'; this.accentLayout = false;
         this.danger = new Danger({}, this.log, () => this._guard('danger', () => this._dangerChanged()));
         // the speed limit (speedlimit.js): a file another app writes; the ring and its number read it every frame (no rebuild)
         this.speedLimit = new SpeedLimit({}, this.log);
@@ -651,7 +663,7 @@ class HudApp {
         const j = JSON.stringify(shown) + ' ' + ids.join(' ');
         this.needsBoost = /boost/.test(j);
         this.needsIntake = /intake/.test(j);
-        this.needsHv = /hvSoc|evRange|rangeTotal/.test(j);
+        this.needsHv = /hvSoc|evRange|rangeTotal|evShare/.test(j);
         this.needsFuel = /fuel|rangeTotal/i.test(j);
     }
     /** A sensor's value now, as its slot shows it ('--' without one). */
@@ -838,7 +850,7 @@ class HudApp {
                     if (m === this.driveMode && variant === this.driveVariant && name === this.driveName) return;
                     this.log.info('drive mode ' + (name || MODE_NAME[m]) + ' (' + raw + ')');
                     this.driveMode = m; this.driveVariant = variant; this.driveName = name;
-                    if (this._layoutName() !== this.activeName) this._rebuild(); else this._status();
+                    if (this._layoutName() !== this.activeName || this._accentHue() !== this.accentHue) this._rebuild(); else this._status();
                 },
             },
         };
@@ -1406,6 +1418,26 @@ class HudApp {
         return s.at > 0 && now - s.at < WARM_PULSE_MS && Math.floor((now - s.at) / WARM_FLASH_MS) % 2 === 0;
     }
 
+    /** The share of this drive done on electricity, 0..100, or null (not a hybrid, the setting off, under 0.3 km, or not the cluster). */
+    _evShare() {
+        if (this.target !== 'panel' || this.setting('evShare') === false || !isNum(this._raw('hvSoc')) || !(this.tripKm >= 0.3)) return null;
+        return Math.round(100 * Math.min(1, this.evKm / this.tripKm));
+    }
+
+    /**
+     * The ice alert: { on, blink } while the outside temperature (C) is at or under the setting "iceBelow" (0 = never), off again 1 degree above it
+     * (so it doesn't flicker at the limit). `blink`: for the first ICE_BLINK_MS after it came on (or after the app started in the cold) the
+     * snowflake flashes, then it stays lit.
+     */
+    _ice(now) {
+        const s = this.ice || (this.ice = { on: false, at: 0 });
+        const v = this._raw('ambient'), lim = this.setting('iceBelow');
+        if (!isNum(v) || !isNum(lim) || lim <= 0) s.on = false;
+        else if (!s.on && v <= lim) { s.on = true; s.at = now; }
+        else if (s.on && v > lim + 1) s.on = false;
+        return { on: s.on, blink: s.on && now - s.at < ICE_BLINK_MS && Math.floor((now - s.at) / 500) % 2 === 1 };
+    }
+
     /** The 0-100 timer's time now (s), or null: it shows on the cluster only, while the setting "launchTimer" is on. */
     _launchTime(now) {
         if (this.target !== 'panel' || this.setting('launchTimer') === false) return null;
@@ -1820,6 +1852,9 @@ class HudApp {
             case 'limit': { const l = this._limitNow(Date.now()); return l ? l.text : ''; }
             // the 0-100 km/h timer (0-60 mph): the running clock, then the finished run held a few seconds; blank otherwise
             case 'launch': { const v = this._launchTime(Date.now()); return isNum(v) ? v.toFixed(this.runs.state === 'run' || v >= 10 ? 1 : 2) : ''; }
+            // the share of this drive done with the engine off, in % (a plug-in hybrid only, from 0.3 km on; the setting "evShare"); blank otherwise
+            case 'evShare': { const v = this._evShare(); return isNum(v) ? String(v) : ''; }
+            case 'evShareUnit': return isNum(this._evShare()) ? '%' : '';
             case 'launchUnit': return isNum(this._launchTime(Date.now())) ? 's' : '';
             case 'hvSoc': { const v = this._raw('hvSoc'); return isNum(v) ? String(Math.round(v)) : '--'; }
             case 'evRange': { const v = this._raw('evRange'); return isNum(v) ? String(Math.round(us ? v * 0.621371 : v)) : '--'; }
@@ -2016,8 +2051,10 @@ class HudApp {
             const on = !this.ctx.settings.item('startupSweep') || this.setting('startupSweep') !== false;
             this.sweepAt = on ? Date.now() + SWEEP_WAIT_MS : null;
         }
+        this.accentLayout = layout.widgets.some((w) => !!shaders.ACCENT_LITERALS[w.type]);
+        this.accentHue = this._accentHue();
         this.themeName = this._themeName();
-        this.theme = THEMES[this.themeName] || THEMES.classic;
+        this.theme = accentTheme(THEMES[this.themeName] || THEMES.classic, ACCENT_ROLES[this.themeName], this.accentHue);
         this.nightOn = this._nightDim();
         if (this.nightOn) this.theme = dimTheme(this.theme, NIGHT_DIM);
         this.log.info('layout "' + layout.name + '", theme ' + this.theme.name + (this.layoutTheme ? '' : ' (' + this.setting('hudTheme') + ')'));
@@ -2184,7 +2221,7 @@ class HudApp {
             c = this._clientAt(this._connOf(w));
             const base = { target: this.target, klass: w.class || 'content', z: w.z || 0, x: w.x, y: w.y, w: w.w, h: w.h };
             if (IMAGE_TYPES[w.type]) ref = c.image(Object.assign({ iw: w.w, ih: w.h }, base));
-            else ref = c.effect(Object.assign({ fs: w.type === 'swatch' ? calibration.SWATCH : shaders[w.type] }, base));
+            else ref = c.effect(Object.assign({ fs: w.type === 'swatch' ? calibration.SWATCH : shaders.accented(w.type, this.accentHue) }, base));
             if (!ref) { this.log.warn('widget "' + w.id + '": layer refused'); return; }
             this.placed.push({ c, ref, x: w.x, y: w.y, w: w.w, h: w.h });
         }
@@ -2567,6 +2604,12 @@ class HudApp {
     }
 
     _holeRadius(w) { return isNum(w.holeRadius) ? w.holeRadius : 28; }
+    /** The hue the blue themes (Sport, M Blade, Navi) take now: from the drive mode while the setting "accentByMode" is on; blue elsewhere (accent.js). */
+    _accentHue() {
+        if (!this.accentLayout || this.target !== 'panel' || this.setting('accentByMode') === false) return 'blue';
+        return hueOfMode(this.driveMode);
+    }
+
     /** The strength of the navy backdrop of the Sport, M Blade and Navi themes: the setting "sportTint" in % of the car's own blue (0 = pure black). */
     _tint() { return this.ctx.settings.item('sportTint') ? Math.max(0, this.setting('sportTint')) / 100 : 0; }
     /** The strength of the facets on that backdrop: the setting "sportFacets" in % (100 = the full pattern, 0 = the plain navy). */
@@ -2597,6 +2640,7 @@ class HudApp {
         if (d.demo || !isNum(d.speed) || d.speed < 2) return;
         this.tripKm += d.speed * dt / 3600000;
         this.tripMs += dt;
+        if (isNum(d.rpm) && d.rpm < hybridTach.ENGINE_RPM) this.evKm += d.speed * dt / 3600000;      // the engine is at rest: the battery drives
     }
 
     /** km/h: the average moving speed this drive, from the first minute on (null before it, 54 on the demo). */
@@ -2647,6 +2691,7 @@ class HudApp {
             }
             if (w.tyreBy) role = this._tyreRole(w.tyreBy, role);               // a low tyre pressure: yellow, then red
             if (w.limitBy) { const l = this._limitNow(now); if (l && l.over) role = 'hot'; }                         // over the speed limit: the shift red
+            if (w.iceBy && this._ice(now).on) role = VERDICT.COLD;                                                    // ice: the outside temperature in the cold blue
             if (w.launchBy && this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];            // a new best time: green
             if (w.lowWhen && this._lowNow(w.lowWhen)) role = 'hot';             // in reserve: the shift red, steady
             // over its warning limit: the value flashes in the shift red
@@ -2702,7 +2747,7 @@ class HudApp {
                 glow: w.glow ? this.theme.glow : 0,
             });
             this._blitDiff(x, buf);
-        } else if (w.type === 'icon' && ((w.tempBy && COLD_BELOW[w.tempBy]) || w.lowWhen || w.tyreBy || w.limitBy || w.launchBy)) {
+        } else if (w.type === 'icon' && ((w.tempBy && COLD_BELOW[w.tempBy]) || w.lowWhen || w.tyreBy || w.limitBy || w.launchBy || w.iceBy || w.evShareBy)) {
             // an oil or coolant icon in the colour of its number (blue while cold, green once warm, flashing red over the limit);
             // a fuel or battery icon in the shift red while that is in reserve ("lowWhen")
             let role = w.color || 'fg';
@@ -2718,6 +2763,8 @@ class HudApp {
             if (w.tyreBy) { role = this._tyreRole(w.tyreBy, role); hide = w.tyreOnly === true && this._tyreLevel(w.tyreBy) === 0; }
             // the speed limit ring (white, red while over) shows only with a limit; the stopwatch only while the 0-100 timer shows
             if (w.limitBy) { const l = this._limitNow(now); hide = !l; if (l && l.over) role = 'hot'; }
+            if (w.iceBy) { const ic = this._ice(now); hide = !ic.on || ic.blink; role = VERDICT.COLD; }              // the snowflake: flashing, then lit
+            if (w.evShareBy) hide = !isNum(this._evShare());                                                          // the leaf only with a share to show
             if (w.launchBy) {
                 hide = !isNum(this._launchTime(now));
                 if (this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];

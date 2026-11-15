@@ -93,6 +93,16 @@ RPM_Y0, RPM_Y7 = 613, 160            # y of the 0 and of the 7 mark on the photo
 SPD_Y = [613, 555, 497, 440, 380, 321, 266, 210, 153]    # y of the speed labels 0, 30 .. 150, 210, 270, 330
 
 
+HYB_BLUE = [77, 191, 255, 255]
+
+
+def ev_share(ix, iy, iw, ih, nx, ny, nw, nh, num_font, ux, uy, uw, uh, unit_font):
+    """The share of the drive done on electricity: a leaf in the hybrid blue, the percentage, a % (all blank without a hybrid battery or under 0.3 km)."""
+    return [icon('ev_share_icon', 'leaf', ix, iy, iw, ih, HYB_BLUE, evShareBy=True),
+            text('ev_share', nx, ny, nw, nh, '{{evShare}}', num_font, 'fg', 'right'),
+            text('ev_share_unit', ux, uy, uw, uh, '{{evShareUnit}}', unit_font, 'dim')]
+
+
 def limit_and_timer(cx, top, R, compact=False):
     """The speed limit ring (a ring with the limit in it, white, red while the car is over it) and the 0-100 timer (a stopwatch, the time, an s):
     both are blank until they have something to show, the timer takes the ring's place while it shows, and neither is drawn while the Waze map is
@@ -278,14 +288,17 @@ def mblade():
     W.append(text('range', 348, 684, 112, 29, '{{rangeTotal}}', 'm_mid', 'fg', 'right', 1))
     W.append(text('range_unit', 466, 687, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1))
     W.extend(limit_and_timer(672, 318, 76, True))                  # in the black void left of the gear letter
+    W.extend(ev_share(632, 681, 26, 34, 662, 687, 52, 32, 'm_tiny', 718, 687, 26, 32, 'm_tiny'))   # between the belt light and the hexagon's tabs
     # the right end follows the strips: in the map view they are SX px further right, so the oil, the electric range and the outside
     # temperature move with them (the coolant stays)
     W.extend(mb_bottom_right('', '!mapUp', 0))
     W.extend(mb_bottom_right('o_', 'mapUp', SX))
-    W.append(text('outside', 1722, 684, 118, 29, '{{ambient}}', 'm_mid', 'fg', 'right', 1, toggle='!mapUp'))
+    W.append(text('outside', 1722, 684, 118, 29, '{{ambient}}', 'm_mid', 'fg', 'right', 1, toggle='!mapUp', iceBy=True))
+    W.append(icon('ice_icon', 'snow', 1834, 646, 24, 32, 'dim', toggle='!mapUp', iceBy=True))        # over the temperature (its box has no room beside it)
     W.append(text('outside_unit', 1846, 687, 44, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, toggle='!mapUp'))
     OX = SX - 16          # (its value box holds '+104', so its left 30 px are empty for '+22': it needs less than the strips' shift)
-    W.append(text('o_outside', 1722 + OX, 684, 118, 29, '{{ambient}}', 'm_mid', 'fg', 'right', 1, toggle='mapUp'))
+    W.append(text('o_outside', 1722 + OX, 684, 118, 29, '{{ambient}}', 'm_mid', 'fg', 'right', 1, toggle='mapUp', iceBy=True))
+    W.append(icon('o_ice_icon', 'snow', 1834 + OX, 646, 24, 32, 'dim', toggle='mapUp', iceBy=True))
     W.append(text('o_outside_unit', 1846 + OX, 687, 44, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, toggle='mapUp'))
     W += danger_alert(1612, 340, 78)       # right of BMW's black box (x < 1597), above the strips (y 435)
     return {
@@ -368,6 +381,7 @@ def navi():
     W.append(text('range', 226, 630, 114, 34, '{{rangeTotal}}', 'm_mid', 'fg', 'right'))
     W.append(text('range_unit', 346, 636, 48, 29, '{{u:distLc}}', 'm_tiny', 'dim'))
     W.extend(limit_and_timer(960, 420, 92))                        # under the speed
+    W.extend(ev_share(696, 664, 29, 34, 728, 664, 90, 34, 'm_mid', 822, 670, 36, 29, 'm_tiny'))   # bottom row, between the clock and the battery bar
     W.append(text('time', 395, 664, 140, 34, '{{time}}', 'm_mid', 'fg', 'right'))
     W.append(text('ampm', 541, 670, 44, 29, '{{ampmLc}}', 'm_tiny', 'dim'))
     W.append(icon('batt_icon', 'battery', 1230, 662, 26, 34, 'dim', 1))
@@ -380,7 +394,8 @@ def navi():
     W.append(text('oil', 1684, 447, 96, 34, '{{oil}}', 'm_mid', 'fg', 'right', 1, tempBy='oil'))
     W.append(text('oil_unit', 1786, 453, 44, 29, '{{u:temp}}', 'm_tiny', 'dim', conn=1))
     W.append(icon('out_icon', 'tempOut', 1644, 506, 29, 34, 'dim', 1))
-    W.append(text('outside', 1676, 507, 104, 34, '{{ambient}}', 'm_mid', 'fg', 'right', 1))
+    W.append(text('outside', 1676, 507, 104, 34, '{{ambient}}', 'm_mid', 'fg', 'right', 1, iceBy=True))
+    W.append(icon('ice_icon', 'snow', 1610, 506, 26, 34, 'dim', iceBy=True))
     W.append(text('outside_unit', 1786, 513, 44, 29, '{{u:temp}}', 'm_tiny', 'dim', conn=1))
     W += danger_alert(1196, 38, 76)         # in the top strip right of the shift light: clear of the map window (y 120) and of the hood
     W.append(text('drive_mode', 1664, 698, 216, 22, '{{modeName}}', 'mode', 'dim', 'right', 1))

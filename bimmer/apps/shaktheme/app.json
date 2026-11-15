@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -30,6 +30,7 @@
     "cluster_info.js",
     "danger.js",
     "speedlimit.js",
+    "accent.js",
     "free_rect.js",
     "map_window.js",
     "hybrid_tach.js",
@@ -1151,6 +1152,33 @@
     {
       "key": "launchTimer",
       "label": "Chrono 0-100 km/h (0-60 mph)",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "accentByMode",
+      "label": "Couleur du thème selon le mode de conduite (bleu électrique, vert hybride, rouge sport)",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "iceBelow",
+      "label": "Alerte gel : flocon sous (0 = jamais)",
+      "type": "number",
+      "unit": "°C",
+      "default": 3,
+      "steps": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "key": "evShare",
+      "label": "Part d'électrique du trajet (hybride rechargeable)",
       "type": "bool",
       "default": true
     }

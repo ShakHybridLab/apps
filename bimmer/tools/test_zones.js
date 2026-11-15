@@ -532,5 +532,140 @@ check('limit ring and timer: in the four layouts, blank-safe, clear of the map a
     assert(set.indexOf('limitRing') >= 0 && set.indexOf('launchTimer') >= 0);
     assert(typeof require(path.join(tmp, 'shared', 'icons.js')).ICONS.stopwatch === 'function');
 });
+check('ice alert: on at or under the setting, off 1 degree above it (no flicker), the snowflake flashes 8 s then stays lit; 0 = never; unknown = off', () => {
+    const h = make({ settings: { iceBelow: 3 } });
+    let t = null;
+    h._raw = (k) => (k === 'ambient' ? t : null);
+    assert.deepStrictEqual(h._ice(1000), { on: false, blink: false }, 'no reading');
+    t = 5; assert.strictEqual(h._ice(2000).on, false, 'warm');
+    t = 3; const a = h._ice(3000); assert.strictEqual(a.on, true, 'at the limit: on');
+    assert.strictEqual(a.blink, false, 'the first half second is lit (the flash starts dark)');
+    assert.strictEqual(h._ice(3500).blink, true); assert.strictEqual(h._ice(4000).blink, false);
+    assert.strictEqual(h._ice(10999).blink, true, 'still flashing just before 8 s');
+    assert.deepStrictEqual(h._ice(11000), { on: true, blink: false }, 'after 8 s: lit');
+    assert.deepStrictEqual(h._ice(11500), { on: true, blink: false });
+    t = 3.9; assert.strictEqual(h._ice(12000).on, true, 'between the limit and 1 degree above: stays on');
+    t = 4.1; assert.strictEqual(h._ice(13000).on, false, 'over it by more than 1 degree: off');
+    t = 2; const b = h._ice(20000); assert.strictEqual(b.on, true, 'cold again: it comes on again');
+    assert.strictEqual(h._ice(20500).blink, true, 'and flashes again');
+    h.S.iceBelow = 0; assert.strictEqual(h._ice(30000).on, false, '0 = never');
+    h.S.iceBelow = 3; t = -10; assert.strictEqual(h._ice(31000).on, true, 'far under zero');
+    t = null; assert.strictEqual(h._ice(32000).on, false, 'the reading is lost: off');
+    // the engine reads it for the icon and the outside temperature's text; cold blue meanwhile
+    const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
+    assert(/w\.iceBy && this\._ice\(now\)\.on\) role = VERDICT\.COLD/.test(hud), 'the text turns cold blue');
+    assert(/if \(w\.iceBy\)[^\n]*hide = !ic\.on \|\| ic\.blink/.test(hud), 'the icon is hidden off and on the flash');
+});
+check('electric share: km with the engine at rest over km driven, from 0.3 km, a hybrid only, the cluster only, off with its setting', () => {
+    const h = make({ settings: { evShare: true } });
+    h.target = 'panel'; h.tripKm = 0; h.evKm = 0;
+    let soc = 62; h._raw = (k) => (k === 'hvSoc' ? soc : null);
+    assert.strictEqual(h._evShare(), null, 'nothing driven yet');
+    h.tripKm = 0.29; h.evKm = 0.29; assert.strictEqual(h._evShare(), null, 'under 0.3 km it is noise');
+    h.tripKm = 4; h.evKm = 3; assert.strictEqual(h._evShare(), 75);
+    assert.strictEqual(h._token('evShare'), '75'); assert.strictEqual(h._token('evShareUnit'), '%');
+    h.evKm = 4.2; assert.strictEqual(h._evShare(), 100, 'never over 100');
+    h.evKm = 0; assert.strictEqual(h._evShare(), 0, 'all on petrol is a real 0');
+    soc = null; assert.strictEqual(h._token('evShare'), '', 'no battery (a petrol car): blank');
+    assert.strictEqual(h._token('evShareUnit'), '');
+    soc = 62; h.S.evShare = false; assert.strictEqual(h._evShare(), null, 'the setting off');
+    h.S.evShare = true; h.target = 'hud'; assert.strictEqual(h._evShare(), null, 'not on the HUD');
+    // the trip counts km with the engine at rest (rpm under the hybrid tach's idle), and only while moving
+    const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
+    assert(/d\.rpm < hybridTach\.ENGINE_RPM\) this\.evKm \+= /.test(hud), 'the km on electricity are counted');
+    assert(/needsHv = \/hvSoc\|evRange\|rangeTotal\|evShare\//.test(hud), 'the battery is read for the share');
+});
+check('ice alert and electric share: in the four layouts (blank-safe), their icons exist, the settings are in the app', () => {
+    ['sport', 'm', 'mblade', 'navi'].forEach((id) => {
+        const L = lay(id), by = (i) => L.widgets.find((w) => w.id === i);
+        const outs = L.widgets.filter((w) => /^(o_)?outside$/.test(w.id)), ices = L.widgets.filter((w) => /^(o_)?ice_icon$/.test(w.id) || (w.icon === 'snow'));
+        assert(outs.length >= 1 && outs.every((w) => w.iceBy), id + ': the outside temperature must go cold blue');
+        assert(ices.length >= 1 && ices.every((w) => w.icon === 'snow' && w.iceBy), id + ': the snowflake is missing');
+        // a mapUp variant has its own snowflake (M Blade)
+        assert.strictEqual(ices.length, outs.length === 2 ? 2 : 1, id + ': one snowflake per outside temperature');
+        ices.forEach((w, i) => { if (outs.length === 2) assert.strictEqual(w.toggle, outs[i].toggle, id + ': the snowflake follows its temperature'); });
+        ['ev_share_icon', 'ev_share', 'ev_share_unit'].forEach((i) => assert(by(i), id + ': ' + i + ' missing'));
+        assert.strictEqual(by('ev_share_icon').icon, 'leaf'); assert(by('ev_share_icon').evShareBy);
+        assert.strictEqual(by('ev_share').text, '{{evShare}}'); assert.strictEqual(by('ev_share_unit').text, '{{evShareUnit}}');
+        const f = font(by('ev_share').font);
+        assert('0123456789'.split('').every((d) => f.glyphs[d]), id + ': the share\'s font has no digits');
+        assert(f.glyphs['%'] || font(by('ev_share_unit').font).glyphs['%'], id + ': no % glyph');
+        assert(font(by('ev_share_unit').font).glyphs['%'], id + ': the unit\'s font has no %');
+        // three digits ("100") fit the number's box
+        const adv = f.glyphs['0'], a = typeof adv === 'object' ? (adv.advance || adv.w) : adv;
+        assert(3 * a <= by('ev_share').w, id + ': "100" is wider than its box (' + 3 * a + ' > ' + by('ev_share').w + ')');
+        // clear of every other widget (the share sits in free space)
+        const box = (w) => [w.x, w.y, w.x + w.w, w.y + w.h], hit = (A, B) => A[0] < B[2] && B[0] < A[2] && A[1] < B[3] && B[1] < A[3];
+        ['ev_share_icon', 'ev_share', 'ev_share_unit'].forEach((i) => L.widgets.forEach((o) => {
+            if (o.id === i || /^ev_share/.test(o.id) || o.type === 'effects' || o.type === 'image' || /^(bg|map|backdrop)/.test(o.id) || (o.w >= 800)) return;
+            assert(!hit(box(by(i)), box(o)), id + ': ' + i + ' overlaps ' + o.id);
+        }));
+    });
+    const icons = require(path.join(tmp, 'shared', 'icons.js')).ICONS;
+    assert(typeof icons.snow === 'function' && typeof icons.leaf === 'function');
+    // both are drawn (not empty) and different from each other: sample the distance fields
+    const ink = (fn) => { let c = 0; for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) if (fn((x + 0.5) / 24, (y + 0.5) / 24) < 0) c++; return c; };
+    const sn = ink(icons.snow), lf = ink(icons.leaf);
+    assert(sn > 30 && sn < 300, 'snowflake ink ' + sn); assert(lf > 30 && lf < 400, 'leaf ink ' + lf);
+    const j = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'app.json'), 'utf8'));
+    const ice = j.settings.find((x) => x.key === 'iceBelow'), ev = j.settings.find((x) => x.key === 'evShare');
+    assert(ice && ice.type === 'number' && ice.default === 3 && ice.steps.indexOf(0) >= 0 && ice.steps.indexOf(3) >= 0);
+    assert(ev && ev.type === 'bool' && ev.default === true);
+    const main = fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'main.js'), 'utf8');
+    assert(/'iceBelow'/.test(main) && /'evShare'/.test(main), 'main.js must list the settings');
+    assert(/LIVE_KEYS = \['iceBelow', 'evShare'/.test(fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8')), 'both repaint without a rebuild');
+});
+check('accent by mode: blue is the identity; green and red rewrite only the listed blues; every listed triple is in its shader', () => {
+    const acc = require(path.join(tmp, 'shared', 'accent.js')), sh = require(path.join(tmp, 'shared', 'shaders.js'));
+    assert.strictEqual(acc.hueOfMode('eco'), 'blue'); assert.strictEqual(acc.hueOfMode('hybrid'), 'green'); assert.strictEqual(acc.hueOfMode('sport'), 'red');
+    assert.strictEqual(acc.hueOfMode(null), 'blue', 'until the car has said, blue'); assert.strictEqual(acc.hueOfMode(undefined), 'blue');
+    assert.deepStrictEqual(acc.mapRgb(0.1, 0.3, 0.8, 'blue'), [0.1, 0.3, 0.8]);
+    ['sdash', 'mblade', 'navi'].forEach((t) => {
+        assert.strictEqual(sh.accented(t, 'blue'), sh[t], t + ': blue is the unchanged source');
+        assert(sh.ACCENT_LITERALS[t].length >= 5);
+        sh.ACCENT_LITERALS[t].forEach((tr) => assert(sh[t].indexOf(tr) >= 0, t + ': "' + tr + '" is not in the shader'));
+        ['green', 'red'].forEach((hue) => {
+            const o = sh.accented(t, hue);
+            assert.notStrictEqual(o, sh[t], t + '/' + hue + ': nothing changed');
+            assert.strictEqual(o.length > 0 && o.split('\n').length, sh[t].split('\n').length, t + '/' + hue + ': the line count changed');
+            assert.strictEqual(sh.accented(t, hue), o, 'cached');
+            // the same GLSL tokens: every rewritten literal is still "r, g, b"
+            const tri = (x) => (x.match(/\d+\.\d+, \d+\.\d+, \d+\.\d+/g) || []).length;
+            assert.strictEqual(tri(o), tri(sh[t]), t + '/' + hue + ': the number of colour triples changed (' + tri(o) + ' vs ' + tri(sh[t]) + ')');
+            assert(!/\u0000|\u0001|NaN|undefined/.test(o), t + '/' + hue + ': a marker or a NaN leaked into the shader');
+        });
+        // a green is green-dominant, a red red-dominant: the brightest listed literal
+        const v = sh.ACCENT_LITERALS[t].filter((x) => /1\.0$/.test(x))[0];
+        if (v) { const [r, g, b] = v.split(',').map(Number), gr = acc.mapRgb(r, g, b, 'green'), rd = acc.mapRgb(r, g, b, 'red'); assert(gr[1] > gr[0] && gr[1] > gr[2], t + ': green'); assert(rd[0] > rd[1] && rd[0] > rd[2], t + ': red'); }
+    });
+    assert.throws(() => acc.accentSource('vec3(1.0, 1.0, 1.0)', ['0.1, 0.2, 0.3'], 'green'), /not in the shader/);
+    // the M theme and the HUD keep their blue: no accent list for them, no accent role
+    assert.strictEqual(sh.ACCENT_LITERALS.mdash, undefined); assert.strictEqual(sh.accented('mdash', 'red'), sh.mdash);
+    const th = { sblue: [20, 60, 200, 255], other: [1, 2, 3, 255] }, t2 = acc.accentTheme(th, ['sblue'], 'red');
+    assert.strictEqual(acc.accentTheme(th, ['sblue'], 'blue'), th, 'blue: the same object'); assert.deepStrictEqual(t2.other, th.other);
+    assert(t2.sblue[0] > t2.sblue[2], 'sblue turned red'); assert.deepStrictEqual(th.sblue, [20, 60, 200, 255], 'the original is untouched');
+    // the setting exists, hud.js asks for it, the module is in the three apps
+    const a = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'app.json'), 'utf8'));
+    const st = a.settings.find((x) => x.key === 'accentByMode'); assert(st && st.type === 'bool' && st.default === true);
+    assert(/'accentByMode'/.test(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'main.js'), 'utf8')));
+    ['shaktheme', 'shakhud', 'idrive_hud_widgets'].forEach((app) => assert(JSON.parse(fs.readFileSync(path.join(root, 'apps', app, 'app.json'), 'utf8')).shared.indexOf('accent.js') >= 0, app + ': accent.js missing'));
+    // hue from the setting and the mode; blue off the cluster, with the setting off, or on a layout without an accent
+    const h = make({ settings: { accentByMode: true } });
+    h.target = 'panel'; h.accentLayout = true; h.driveMode = 'sport'; assert.strictEqual(h._accentHue(), 'red');
+    h.driveMode = 'hybrid'; assert.strictEqual(h._accentHue(), 'green'); h.driveMode = 'eco'; assert.strictEqual(h._accentHue(), 'blue');
+    h.driveMode = 'sport'; h.S.accentByMode = false; assert.strictEqual(h._accentHue(), 'blue', 'the setting off');
+    h.S.accentByMode = true; h.accentLayout = false; assert.strictEqual(h._accentHue(), 'blue', 'the M theme: no accent');
+    h.accentLayout = true; h.target = 'hud'; assert.strictEqual(h._accentHue(), 'blue', 'not on the HUD');
+});
+check('Waze contour: the bezel and glass pass is in Sport, M Blade and Navi (not the M theme), and the map window is still cut out', () => {
+    const sh = require(path.join(tmp, 'shared', 'shaders.js'));
+    ['sdash', 'mblade', 'navi'].forEach((t) => {
+        const src = sh[t];
+        assert(/vec4 bezel\(float hd, float y, vec4 c\)/.test(src) && /vec4 glass\(float hd, vec4 c\)/.test(src), t + ': bezel / glass missing');
+        assert(/c = bezel\(hd, p\.y \/ 720\.0, c\);/.test(src) && /c = glass\(hd, c\);/.test(src), t + ': they are not applied');
+        assert.strictEqual((src.match(/void main\(\)/g) || []).length, 1, t + ': main() count');
+    });
+    assert(!/vec4 bezel\(/.test(sh.mdash), 'the M theme keeps its own plate');
+});
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log('test_zones: ' + n + ' checks' + (process.exitCode ? ' (some failed)' : ' ok'));

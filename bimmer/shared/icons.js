@@ -7,7 +7,7 @@
  *   oilPour, tempWave, tempOut (ShakHUD's modern oil can, the thermometer with heat waves for the coolant, a plain one for the outside),
  *   battery (a plug-in hybrid's high-voltage battery: the cell with a bolt in it, terminal on top).
  *   fuelBolt (the total range, fuel and electric: the pump's body with the battery's bolt in it).
- *   ring (the speed limit sign's ring, also the danger alert's), stopwatch (the 0-100 timer).
+ *   ring (the speed limit sign's ring, also the danger alert's), stopwatch (the 0-100 timer), snow (the ice alert), leaf (the trip's electric share).
  */
 function seg(px, py, ax, ay, bx, by) {
     const pax = px - ax, pay = py - ay, bax = bx - ax, bay = by - ay;
@@ -80,6 +80,22 @@ const ICONS = {
     cam: (x, y) => Math.min(Math.abs(rect(x, y, 0.44, 0.36, 0.34, 0.2)) - 0.045, ring(x, y, 0.34, 0.36, 0.1) - 0.04, disc(x, y, 0.34, 0.36, 0.04), seg(x, y, 0.7, 0.3, 0.74, 0.3) - 0.03, seg(x, y, 0.5, 0.56, 0.5, 0.92) - 0.055, seg(x, y, 0.3, 0.93, 0.7, 0.93) - 0.045),
     // the round outline of a speed-limit sign (the number sits inside it as text)
     ring: (x, y) => ring(x, y, 0.5, 0.5, 0.435) - 0.065,
+    // the ice alert: a snowflake (three arms through the middle, a V on each end)
+    snow: (x, y) => {
+        let d = 9;
+        for (let i = 0; i < 3; i++) {
+            const a = i * Math.PI / 3, ux = Math.cos(a), uy = Math.sin(a);
+            d = Math.min(d, seg(x, y, 0.5 - 0.42 * ux, 0.5 - 0.42 * uy, 0.5 + 0.42 * ux, 0.5 + 0.42 * uy) - 0.04);
+            [-1, 1].forEach((sg) => {
+                const bx = 0.5 + 0.27 * sg * ux, by = 0.5 + 0.27 * sg * uy, out = a + (sg > 0 ? 0 : Math.PI);
+                [-0.9, 0.9].forEach((t) => { d = Math.min(d, seg(x, y, bx, by, bx + 0.15 * Math.cos(out + t), by + 0.15 * Math.sin(out + t)) - 0.035); });
+            });
+        }
+        return d;
+    },
+    // the share of the trip driven on electricity: a leaf (an outline lens with its vein and stem)
+    leaf: (x, y) => Math.min(Math.abs(Math.max(disc(x, y, 0.288, 0.288, 0.59), disc(x, y, 0.712, 0.712, 0.59))) - 0.04,
+        seg(x, y, 0.2, 0.8, 0.62, 0.38) - 0.03, seg(x, y, 0.14, 0.86, 0.06, 0.94) - 0.04),
     // the 0-100 timer: a stopwatch, its crown on top and its hand
     stopwatch: (x, y) => Math.min(ring(x, y, 0.5, 0.58, 0.34) - 0.05, seg(x, y, 0.5, 0.16, 0.5, 0.24) - 0.05, seg(x, y, 0.4, 0.1, 0.6, 0.1) - 0.04,
         seg(x, y, 0.5, 0.58, 0.63, 0.4) - 0.045, disc(x, y, 0.5, 0.58, 0.06), seg(x, y, 0.8, 0.28, 0.86, 0.22) - 0.04),

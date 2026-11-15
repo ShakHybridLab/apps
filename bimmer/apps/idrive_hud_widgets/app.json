@@ -29,6 +29,7 @@
     "cluster_info.js",
     "danger.js",
     "speedlimit.js",
+    "accent.js",
     "free_rect.js",
     "map_window.js", "hybrid_tach.js",
     "runs.js",

@@ -1636,6 +1636,48 @@
       "rate": 100
     },
     {
+      "id": "ev_share_icon",
+      "type": "icon",
+      "icon": "leaf",
+      "z": 5,
+      "x": 632,
+      "y": 681,
+      "w": 26,
+      "h": 34,
+      "color": [
+        77,
+        191,
+        255,
+        255
+      ],
+      "evShareBy": true
+    },
+    {
+      "id": "ev_share",
+      "type": "text",
+      "z": 5,
+      "x": 662,
+      "y": 687,
+      "w": 52,
+      "h": 32,
+      "text": "{{evShare}}",
+      "font": "m_tiny",
+      "color": "fg",
+      "align": "right"
+    },
+    {
+      "id": "ev_share_unit",
+      "type": "text",
+      "z": 5,
+      "x": 718,
+      "y": 687,
+      "w": 26,
+      "h": 32,
+      "text": "{{evShareUnit}}",
+      "font": "m_tiny",
+      "color": "dim"
+    },
+    {
       "id": "cool_icon",
       "type": "icon",
       "icon": "tempWave",
@@ -1912,7 +1954,21 @@
       "color": "fg",
       "align": "right",
       "conn": 1,
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "iceBy": true
+    },
+    {
+      "id": "ice_icon",
+      "type": "icon",
+      "icon": "snow",
+      "z": 5,
+      "x": 1834,
+      "y": 646,
+      "w": 24,
+      "h": 32,
+      "color": "dim",
+      "toggle": "!mapUp",
+      "iceBy": true
     },
     {
       "id": "outside_unit",
@@ -1941,7 +1997,21 @@
       "color": "fg",
       "align": "right",
       "conn": 1,
-      "toggle": "mapUp"
+      "toggle": "mapUp",
+      "iceBy": true
+    },
+    {
+      "id": "o_ice_icon",
+      "type": "icon",
+      "icon": "snow",
+      "z": 5,
+      "x": 1848,
+      "y": 646,
+      "w": 24,
+      "h": 32,
+      "color": "dim",
+      "toggle": "mapUp",
+      "iceBy": true
     },
     {
       "id": "o_outside_unit",

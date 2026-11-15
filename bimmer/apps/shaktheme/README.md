@@ -78,7 +78,7 @@ Neither theme has been tried on a car; they are checked on the bench against the
 - **Hybride :** pendant que la barre montre la puissance de la batterie, le chiffre sous l'aiguille est **bleu clair** en électrique et **vert** en recharge (Sport, M Blade, Navi), comme la barre ; le moteur qui tourne le remet en rouge. Le M n'a pas de couleurs hybrides, par choix.
 - **Repère de pointe :** un fin trait blanc reste 1,5 s à la valeur la plus haute du régime puis redescend sur l'aiguille (Sport, M, M Blade, Navi, HUD) ; il n'apparaît pas en hybride électrique.
 - **Balayage au démarrage :** à l'allumage (voiture à l'arrêt), les barres montent au maximum puis redescendent en 1,6 s, une fois par thème affiché ; il s'arrête dès que la voiture roule. Réglage **Balayage des barres au démarrage** (activé).
-- **Liseré argent autour de la carte Waze** sur Sport, M Blade et Navi, comme sur le M.
+- **Liseré argent autour de la carte Waze** sur Sport, M Blade et Navi, comme sur le M (refait en contour complet au 0.18.0).
 - **Repères de zone rouge identiques sur les quatre thèmes (0.16.1) :** de petits traits jaunes dans les 700 tr/min avant le Redline, puis un trait rouge plein à partir de lui, le long du bord de l'échelle du compte-tours (ils suivent le réglage Redline et ne bougent pas avec le régime). Navi les a maintenant comme Sport, M et M Blade ; le HUD n'en a pas, sa barre devient déjà orange puis rouge.
 - **Pneus (M) :** la pression passe au **jaune** sous le réglage **Pneus : pression en jaune sous** (2,0 bar par défaut ; 0 coupe) et au **rouge** 0,4 bar plus bas. Les températures gardent leur couleur.
 
@@ -90,6 +90,13 @@ Neither theme has been tried on a car; they are checked on the bench against the
 - **Chrono 0-100 km/h (0-60 mph en unités US) :** voiture à l'arrêt une demi-seconde, puis on accélère : un chronomètre (icône) compte en direct, puis le temps final reste **12 s** (vert si c'est un record, gardé dans `runs.json`). Il se met au centre, sous la vitesse (à gauche de la lettre du rapport sur M Blade), à la place de la bague de limitation. Réglage **Chrono 0-100 km/h (0-60 mph)**.
 - **Bague de limitation de vitesse :** une bague blanche avec la limite, **rouge** (chiffre compris) dès que la vitesse affichée la dépasse. **L'appli ne peut pas trouver la limite seule** (ni position ni carte) : il faut une autre appli qui l'écrit dans `/dev/shm/cluster-themes/speedlimit-<appli>.json` avec `{ "t": <ms depuis 1970, maintenant>, "app": "<nom>", "limit": <km/h> }`, réécrit environ chaque seconde (un fichier de plus de 6 s est ignoré ; si plusieurs applis écrivent, le plus récent gagne ; la limite va de 5 à 200 km/h, toujours en km/h : le thème convertit en mph, arrondi à 5). Rien n'écrit ce fichier pour l'instant, donc la bague ne s'affiche pas tant qu'aucune appli ne le fait. Réglage **Bague de limitation de vitesse**. Ni la bague ni le chrono ne s'affichent quand la carte Waze est ouverte dans le thème (Waze montre déjà la limite).
 - Pas de consommation instantanée (choix fait).
+
+## Détails de finition (0.18.0)
+
+- **Couleur selon le mode de conduite (Sport, M Blade, Navi) :** le thème est **bleu** en électrique / Eco Pro, **vert** en Hybride et **rouge** en Sport. Seuls ses propres bleus changent (supports, hexagone, fond, chiffres de vitesse) ; le bleu et le vert de l'hybride, l'huile froide et les avertissements gardent les leurs. Le M ne change pas. Réglage **Couleur du thème selon le mode de conduite** (activé par défaut ; le thème est reconstruit quand le mode change).
+- **Contour de la carte Waze (Sport, M Blade, Navi) :** la fenêtre est entourée d'un petit jour sombre et d'un liseré argent, plus clair en haut, avec un léger ombrage sur le bord de la carte : elle paraît enchâssée dans le tableau de bord.
+- **Alerte gel :** un flocon (clignote 8 s, puis reste allumé) et la température extérieure en bleu froid quand il fait au plus le réglage **Alerte gel : flocon sous** (3 °C par défaut, 0 = jamais) ; il s'éteint 1 °C au-dessus.
+- **Part d'électrique du trajet (hybride rechargeable) :** une feuille et le pourcentage de kilomètres faits moteur éteint depuis le démarrage de l'appli (à partir de 0,3 km). Réglage **Part d'électrique du trajet** ; rien sur une voiture sans batterie.
 
 ## Off and drive modes
 

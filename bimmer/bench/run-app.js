@@ -100,6 +100,8 @@ setInterval(() => {
     // a plug-in hybrid's own electric range (km here: the car is set to metric above, the app's "units" setting decides)
     hu.feed('de.bmw.infotainment.KombiIF', 'displayRangeElectricVehicle', Math.round(num('evRange', 30)));
     hu.feed('de.bmw.infrastructure.EnvironmentalInformation', 'ExteriorTemperature', { temperatureExterior: Math.round((num('ambient', 22) + 40) / 0.5) });
+    // a plug-in hybrid's battery charge (%), which the real app reads from the battery unit: the bench hands it over as if it had
+    if (hud && typeof v.hvSoc === 'number' && isFinite(v.hvSoc)) { hud.hvSoc = v.hvSoc; hud.hvSocAt = Date.now(); }
     // the car's display units (bar, C), so the tyre values below read as 0.1 bar and C + 40; the shifter programme from `program` (S / M)
     hu.feed('de.bmw.infotainment.vehicle.Vehicle', 'statusNewCurrentUnitsStatusExt', { unitOfMeasurementAirPressure: 1, unitOfMeasurementTemperature: 1 });
     hu.feed('de.bmw.infotainment.misc.MDrive', 'dataDisplayGearbox', { displayProgramGearbox: manual.program === 'S' ? 'S_MINUS_PROGRAMM' : manual.program === 'M' ? 'M_MINUS_PROGRAMM' : 'D_PROGRAMM' });

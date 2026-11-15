@@ -989,7 +989,8 @@
       "text": "{{ambient}}",
       "font": "s_val",
       "color": "fg",
-      "align": "right"
+      "align": "right",
+      "iceBy": true
     },
     {
       "id": "outside_unit",
@@ -1110,6 +1111,61 @@
       "color": "dim",
       "align": "left",
       "toggle": "!mapUp"
+    },
+    {
+      "id": "ice_icon",
+      "type": "icon",
+      "icon": "snow",
+      "z": 5,
+      "x": 1456,
+      "y": 679,
+      "w": 24,
+      "h": 30,
+      "color": "dim",
+      "iceBy": true
+    },
+    {
+      "id": "ev_share_icon",
+      "type": "icon",
+      "icon": "leaf",
+      "z": 5,
+      "x": 1296,
+      "y": 679,
+      "w": 26,
+      "h": 30,
+      "color": [
+        77,
+        191,
+        255,
+        255
+      ],
+      "evShareBy": true
+    },
+    {
+      "id": "ev_share",
+      "type": "text",
+      "z": 5,
+      "x": 1326,
+      "y": 681,
+      "w": 84,
+      "h": 26,
+      "text": "{{evShare}}",
+      "font": "s_val",
+      "color": "fg",
+      "align": "right"
+    },
+    {
+      "id": "ev_share_unit",
+      "type": "text",
+      "z": 5,
+      "x": 1416,
+      "y": 682,
+      "w": 30,
+      "h": 29,
+      "text": "{{evShareUnit}}",
+      "font": "s_unit",
+      "color": "dim",
+      "align": "left"
     }
   ]
 }
