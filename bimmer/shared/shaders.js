@@ -507,14 +507,16 @@ uniform vec4 u_segMax;    // segments per bar
 uniform float u_segSlant; // px each segment leans
 uniform vec4 u_hole;      // the map window x, y, w, h px, already inset (w 0 = none): cut see-through over the map
 uniform float u_holeR;    // its corner radius px
+uniform vec4 u_plate;     // the plate under the map window (the gear and the speed sit on it) x, y, w, h px; only while the window is cut
+uniform float u_split;    // the x of the thin divider between the gear and the speed on that plate
+uniform vec2 u_low;       // 1 while the fuel (left dial) / the battery (right dial) is in reserve: the lit glass turns red
 
 const float PI = 3.14159265;
 
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
-vec4 over(vec4 top, vec4 under) {
-    float a = top.a + under.a * (1.0 - top.a);
-    if (a <= 0.0) return vec4(0.0);
-    return vec4((top.rgb * top.a + under.rgb * under.a * (1.0 - top.a)) / a, a);
+vec4 over(vec4 top, vec4 under) {           // straight-alpha "top over under"
+    float k = under.a * (1.0 - top.a), a = top.a + k;
+    return vec4((top.rgb * top.a + under.rgb * k) / max(a, 0.0001), a);
 }
 float segD(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }
 
@@ -611,7 +613,7 @@ vec4 streak(vec2 q, float py, float len, vec3 col, float k, vec4 c) {
     c = over(vec4(col, 0.3 * exp(-max(sd, 0.0) / (5.0 * k))), c);
     return over(vec4(mix(col, vec3(1.0, 0.55, 0.5), 0.25 * taper), cov(sd)), c);
 }
-vec4 gauge(vec2 p, vec4 g, float zones, vec4 c) {
+vec4 gauge(vec2 p, vec4 g, float zones, float low, vec4 c) {
     float k = g.z / 120.0;
     vec2 q = (p - g.xy) / k;
     if (q.x < -140.0 || q.x > 70.0 || q.y < -22.0 || q.y > 140.0) return c;
@@ -636,7 +638,7 @@ vec4 gauge(vec2 p, vec4 g, float zones, vec4 c) {
         float yv = zones > 0.5 ? mix(97.0, 7.0, v) : mix(100.0, 2.0, v);
         float lit = smoothstep(yv - 2.0, yv + 4.0, q.y);
         vec4 dark = vec4(0.85, 0.87, 0.92, 0.75 * (1.0 - smoothstep(0.0, 6.0, dOut)));
-        vec4 bright = vec4(mix(vec3(0.96, 0.97, 0.99), vec3(0.55, 0.57, 0.63), f), mix(1.0, 0.55, f));
+        vec4 bright = vec4(mix(mix(vec3(0.96, 0.97, 0.99), vec3(0.55, 0.57, 0.63), f), vec3(1.0, 0.2, 0.22) * mix(1.0, 0.7, f), low), mix(1.0, 0.55, f));
         vec4 glass = mix(dark, bright, lit);
         c = over(vec4(glass.rgb, glass.a * cov(-inside * k)), c);
         c = over(vec4(1.0, 1.0, 1.0, 0.7 * cov(abs(inside * k) - 0.6) * (1.0 - lit) * step(dOut, 3.0)), c);
@@ -672,8 +674,8 @@ void main() {
     c = tyreBlock(p, c);
 
     // the side dials, traced off the M8 photo: the glass crescent, the fuel one as laid out, the oil one its mirror
-    c = gauge(p, u_gaugeL, 0.0, c);
-    c = gauge(pm, vec4(u_size.x - u_gaugeR.x, u_gaugeR.yzw), 1.0, c);
+    c = gauge(p, u_gaugeL, 0.0, u_low.x, c);
+    c = gauge(pm, vec4(u_size.x - u_gaugeR.x, u_gaugeR.yzw), 1.0, u_low.y, c);
 
     c = segbar(p, u_seg0, vec2(u_segLit.x, u_segMax.x), c);
     c = segbar(p, u_seg1, vec2(u_segLit.y, u_segMax.y), c);
@@ -685,6 +687,10 @@ void main() {
         vec2 hs = u_hole.zw * 0.5;
         vec2 q = abs(p - (u_hole.xy + hs)) - (hs - vec2(u_holeR));
         float hd = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_holeR;
+        // a silver hairline just outside the glass, then the cut; the plate under it: an outline card like the side ones with a thin divider
+        float pd = sdRoundBox(p, u_plate, 20.0);
+        float dv = max(abs(p.x - u_split) - 0.8, abs(p.y - u_plate.y - u_plate.w * 0.5) - u_plate.w * 0.5 + 18.0);
+        c = over(vec4(0.74, 0.78, 0.86, max(0.85 * cov(abs(hd - 2.2) - 0.9), u_plate.z > 0.0 ? max(0.3 * cov(abs(pd + 1.0) - 0.9), 0.75 * cov(dv)) : 0.0)), c);
         c.a *= clamp(hd + 0.5, 0.0, 1.0);
     }
 
@@ -705,8 +711,8 @@ void main() {
 `;
 const MTACH = `// The M theme's rev bar (GLSL ES 1.00), after the M8's: a bowed glass blade (the curve bends at u_geoA.z with a
 // large roundness, so it reads as one arc), wide at 0 rpm and narrow at the top, with a bright silver outer
-// edge and bright ticks running in from it every 1000 rpm. The part below the rpm is lit dim grey, a glowing red
-// block rides the blade at the rpm (the M8's marker), an outlined grey foot block fills the bottom 20 px, orange dashes sit before
+// edge and bright ticks running in from it every 1000 rpm. The part below the rpm is lit dim grey, a glowing
+// block rides the blade at the rpm (the M8's marker, white; orange, then red in the zone), an outlined grey foot block fills the bottom 20 px, orange dashes sit before
 // the redline and a solid red line past it. Drawn as the left bar; u_side 1 mirrors it. v_uv (0,0) is the top-left.
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
@@ -723,14 +729,13 @@ uniform float u_ticks;    // max / 1000
 uniform float u_value;    // 0..1
 uniform float u_orange;   // 0..1, orange dashes from here
 uniform float u_redFrom;  // 0..1, red dashes from here (the redline)
-uniform float u_shiftNow;
+uniform float u_zone;     // 0 = white, 1 = the run-up to the redline (orange), 2 = the red zone: the lit glass and the marker take its colour
 uniform vec3 u_red;
 
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
-vec4 over(vec4 top, vec4 under) {
-    float a = top.a + under.a * (1.0 - top.a);
-    if (a <= 0.0) return vec4(0.0);
-    return vec4((top.rgb * top.a + under.rgb * under.a * (1.0 - top.a)) / a, a);
+vec4 over(vec4 top, vec4 under) {           // straight-alpha "top over under"
+    float k = under.a * (1.0 - top.a), a = top.a + k;
+    return vec4((top.rgb * top.a + under.rgb * k) / max(a, 0.0001), a);
 }
 float segD(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }
 
@@ -752,14 +757,15 @@ void main() {
         float across = clamp(d / w, 0.0, 1.0);
         float yn = y0 - u_value * (y0 - y8);
         vec4 g = vec4(0.62, 0.67, 0.74, mix(0.42, 0.06, across));          // empty glass (bright at the outer edge, as the M8's)
-        if (p.y > yn) g = u_shiftNow > 0.5 ? vec4(u_red * 0.8, 0.6) : vec4(mix(vec3(0.86, 0.88, 0.92), vec3(0.6, 0.63, 0.68), across), mix(0.34, 0.22, across));
+        vec3 zc = u_zone > 1.5 ? u_red : (u_zone > 0.5 ? vec3(1.0, 0.68, 0.1) : vec3(1.0));       // the colour of the zone: white, orange, red
+        if (p.y > yn) g = u_zone > 0.5 ? vec4(zc * 0.85, 0.6) : vec4(mix(vec3(0.86, 0.88, 0.92), vec3(0.6, 0.63, 0.68), across), mix(0.34, 0.22, across));
         // the foot: the bottom 20 px as an outlined grey block, as the M8 draws it
         if (p.y > y0 - 20.0) g = over(vec4(0.7, 0.72, 0.78, 0.22), g);
         g = over(vec4(0.9, 0.92, 0.95, 0.7 * cov(min(abs(p.y - (y0 - 19.0)), abs(p.y - (y0 - 1.5))) - 0.8)), g);
         // the marker: a red block at the rpm with a glow either side of it
         float dm = abs(p.y - yn);
-        g = over(vec4(u_red, 0.5 * exp(-dm / 26.0)), g);
-        g = over(vec4(mix(u_red, vec3(1.0, 0.45, 0.4), 0.35 * cov(dm - 5.0)), cov(dm - 14.0)), g);
+        g = over(vec4(zc, 0.5 * exp(-dm / 26.0)), g);
+        g = over(vec4(mix(zc, vec3(1.0), 0.35 * cov(dm - 5.0)), cov(dm - 14.0)), g);
         c = vec4(g.rgb, g.a * inBand);
         c = over(vec4(0.93, 0.95, 0.98, cov(abs(d) - 1.6)), c);               // outer edge
         c = over(vec4(1.0, 1.0, 1.0, 0.3 * cov(abs(d - 4.0) - 0.6)), c);       // its bevel
@@ -840,9 +846,11 @@ uniform float u_speed;    // 0..1 along the scale
 uniform float u_rpm;      // 0..1
 uniform float u_redFrom;  // 0..1 (the redline)
 uniform float u_orange;   // 0..1, yellow marks from here to the redline
+uniform vec2 u_low;       // 1 while the fuel bar / the right bar (the battery, when it shows it) is in reserve: red
 uniform float u_fuel;     // 0..1
 uniform float u_oil;      // 0..1
-uniform vec4 u_hy;        // the hybrid rev counter: the colour (rgb) that fills the rev bracket in place of the red, a = 1 (0 = the red rpm)
+uniform vec4 u_hy;        // the hybrid rev counter: the colour (rgb) that fills the rev bracket in place of the engine's colours, a = 1 (0 = the engine's rpm)
+uniform vec2 u_zone;      // the speed bracket's and the rev bracket's zone: 0 = white fill, 1 = orange (the run-up), 2 = red
 uniform vec4 u_fuelSeg;   // full end x, y, empty end x, y
 uniform vec4 u_oilSeg;
 uniform vec4 u_hole;      // map window x, y, w, h, already inset (w 0 = none)
@@ -860,12 +868,14 @@ const vec3 RED_LINE = vec3(0.95, 0.12, 0.16);
 const vec3 RED_BAND = vec3(0.33, 0.06, 0.1);
 const vec3 RED_LIT = vec3(0.93, 0.1, 0.15);
 const vec3 RED_IN = vec3(0.86, 0.08, 0.13);
+const vec3 ZONE_AMBER = vec3(1.0, 0.68, 0.1);
+const vec3 ZONE_WHITE = vec3(0.97, 0.98, 1.0);
+vec3 zoneLit(float z) { return z > 1.5 ? RED_LIT : (z > 0.5 ? ZONE_AMBER : ZONE_WHITE); }
 
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
-vec4 over(vec4 top, vec4 under) {
-    float a = top.a + under.a * (1.0 - top.a);
-    if (a <= 0.0) return vec4(0.0);
-    return vec4((top.rgb * top.a + under.rgb * under.a * (1.0 - top.a)) / a, a);
+vec4 over(vec4 top, vec4 under) {           // straight-alpha "top over under"
+    float k = under.a * (1.0 - top.a), a = top.a + k;
+    return vec4((top.rgb * top.a + under.rgb * k) / max(a, 0.0001), a);
 }
 float segD(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }
 float segH(vec2 p, vec2 a, vec2 b) { vec2 ba = b - a; return clamp(dot(p - a, ba) / dot(ba, ba), 0.0, 1.0); }
@@ -924,7 +934,7 @@ vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, vec3 l
 }
 
 // a two-tone slanted bar from the empty end b to the full end a, with a thin rail beside it
-vec4 bar(vec2 p, vec4 s, float val, float zones, vec4 c) {
+vec4 bar(vec2 p, vec4 s, float val, float zones, float low, vec4 c) {
     vec2 a = s.xy, b = s.zw;
     float h = 1.0 - segH(p, a, b);
     vec2 dir = normalize(a - b), nrm = vec2(-dir.y, dir.x);
@@ -935,6 +945,7 @@ vec4 bar(vec2 p, vec4 s, float val, float zones, vec4 c) {
     vec3 col = vec3(0.92, 0.94, 0.97);
     if (zones > 0.5 && h > 0.88) col = vec3(1.0, 0.2, 0.22);
     if (zones > 0.5 && h < 0.1) col = vec3(0.25, 0.5, 1.0);
+    col = mix(col, vec3(1.0, 0.2, 0.22), low);                    // in reserve: all of it red
     c = over(vec4(0.36, 0.38, 0.44, 0.9 * body), c);
     c = over(vec4(col, body * step(h, val) * step(0.001, val)), c);
     c = over(vec4(0.5, 0.52, 0.58, 0.8 * cov(abs(side + 12.0) - 1.0) * cov(segD(p, a, b) - 13.0)), c);
@@ -961,8 +972,9 @@ void main() {
         c.rgb *= slot(p);
     }
 
-    c = bracket(p, u_speed, 2.0, 2.0, u_ticks.x, BLUE_LINE, BLUE_BAND, BLUE_LIT, BLUE_IN, c);
-    c = bracket(pm, u_rpm, u_redFrom, u_orange, u_ticks.y, RED_LINE, mix(RED_BAND, u_hy.rgb * 0.25, u_hy.a), mix(RED_LIT, u_hy.rgb, u_hy.a), RED_IN, c);
+    // the fills are white, orange in the run-up to a zone and red in it; the hybrid's electric power and charge keep their blue and green
+    c = bracket(p, u_speed, 2.0, 2.0, u_ticks.x, BLUE_LINE, BLUE_BAND, zoneLit(u_zone.x), BLUE_IN, c);
+    c = bracket(pm, u_rpm, u_redFrom, u_orange, u_ticks.y, RED_LINE, mix(RED_BAND, u_hy.rgb * 0.25, u_hy.a), mix(zoneLit(u_zone.y), u_hy.rgb, u_hy.a), RED_IN, c);
     // the map window: a rounded hole cut out of the backdrop and brackets, so the map shows clean; the fuel and
     // oil bars come off while it is open (they ran across the map, car photos Nov 7 2026), the bottom strip stays
     if (u_hole.z > 0.0) {
@@ -971,8 +983,8 @@ void main() {
         float hd = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_holeR;
         c.a *= clamp(hd + 0.5, 0.0, 1.0);
     } else {
-        c = bar(p, u_fuelSeg, u_fuel, 0.0, c);
-        c = bar(p, u_oilSeg, u_oil, 1.0, c);
+        c = bar(p, u_fuelSeg, u_fuel, 0.0, u_low.x, c);
+        c = bar(p, u_oilSeg, u_oil, 1.0, u_low.y, c);
     }
     // the bottom line between the brackets
     if (abs(p.y - u_geo.z) < 3.0 && abs(p.x - u_size.x * 0.5) < u_size.x * 0.5 - outerX(u_geo.z))
@@ -1023,23 +1035,25 @@ uniform float u_fh;       // 1 = the fuel strip lies flat: u_g0 is then in a fra
 uniform vec4 u_g1;        // oil temperature strip
 uniform vec4 u_g2;        // hybrid battery strip
 uniform vec3 u_gv;        // the strips' levels 0..1: fuel, oil, battery
+uniform vec2 u_low;       // 1 while the fuel / the battery strip is in reserve: red
 uniform vec3 u_oc;        // the oil strip's lit colour (blue cold, green warm, red in alert)
 uniform float u_ticks;    // marks: max rpm / 1000
 uniform float u_value;    // rpm 0..1
 uniform float u_orange;   // 0..1, orange dashes from here to the redline
 uniform float u_redFrom;  // 0..1
-uniform float u_shiftNow;
-uniform vec4 u_red;       // the lit blade's colour (red on rpm, blue on the electric power), then the charge 0..1 filling the foot green
+uniform vec2 u_zone;      // the speed line's and the rev blade's zone: 0 = white, 1 = orange (the run-up), 2 = red
+uniform vec4 u_red;       // the lit blade's colour (white, orange, red on the rpm; blue on the electric power), then the charge 0..1 filling the foot green
 uniform float u_deco;     // 1 = the tabs and the swoosh under the hexagon
 uniform vec4 u_hole;      // map window x, y, w, h, already inset (w 0 = none)
 uniform float u_holeR;
 uniform float u_tint;     // the backdrop's strength 0..1.4 (0 = pure black)
 uniform float u_facets;   // the faint hexagon outlines' strength 0..1
 
+const vec3 RED_Z = vec3(1.0, 0.2, 0.22), AMBER_Z = vec3(1.0, 0.68, 0.1), WHITE_Z = vec3(0.96, 0.98, 1.0), STRIP_W = vec3(0.94, 0.96, 1.0);
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
 vec4 over(vec4 t, vec4 u) {
-    float a = t.a + u.a * (1.0 - t.a);
-    return vec4((t.rgb * t.a + u.rgb * u.a * (1.0 - t.a)) / max(a, 0.0001), a);
+    float k = u.a * (1.0 - t.a), a = t.a + k;
+    return vec4((t.rgb * t.a + u.rgb * k) / max(a, 0.0001), a);
 }
 float segD(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }
 float smax(float a, float b, float k) { float h = clamp(0.5 + 0.5 * (a - b) / k, 0.0, 1.0); return mix(b, a, h) + k * h * (1.0 - h); }
@@ -1061,7 +1075,7 @@ float lineX(float y) {
 }
 // one slanted strip of five segments (never an empty one: g.z > g.y): g = left edge x at the top, top y, bottom y, slope; the outer line is on the left when the
 // strip leans right, on the right when it leans left; the part under the level is lit white
-vec4 strip(vec2 p, vec4 g, float lvl, vec3 lit, vec4 c) {
+vec4 strip(vec2 p, vec4 g, float lvl, vec3 lit, float low, vec4 c) {
     float len = g.z - g.y;
     float xl = g.x + g.w * (p.y - g.y);
     float cs = 1.0 / sqrt(1.0 + g.w * g.w);
@@ -1075,13 +1089,13 @@ vec4 strip(vec2 p, vec4 g, float lvl, vec3 lit, vec4 c) {
     vec3 col;
     float a = 1.0;
     if (uo < ow) {
-        col = vec3(0.96, 0.98, 1.0);
+        col = mix(WHITE_Z, RED_Z, low);
         if (mir) col = f < 0.12 ? vec3(0.36, 0.86, 1.0) : (f > 0.9 ? vec3(1.0, 0.55, 0.78) : col);
     } else if (uo < ow + 2.5) {
         a = 0.0;
     } else {
         float sep = min(min(abs(f - 0.2), abs(f - 0.4)), min(abs(f - 0.6), abs(f - 0.8))) * len;
-        col = f <= lvl ? lit : mix(vec3(0.56, 0.64, 0.9), vec3(0.5, 0.58, 0.84), f);
+        col = f <= lvl ? mix(lit, RED_Z, low) : mix(vec3(0.56, 0.64, 0.9), vec3(0.5, 0.58, 0.84), f);
         a = 1.0 - 0.9 * cov(sep - 0.9);
     }
     return over(vec4(col, a * inside), c);
@@ -1141,8 +1155,10 @@ void main() {
     if (u_sq.z > 0.0) {
         vec2 a = u_sp.xy, k = u_sp.zw, b = u_sq.xy;
         float d = min(segD(p, a, a + vec2(u_sq.z, 0.0)), min(segD(p, a, k), segD(p, k, b)));
-        c = over(vec4(0.25, 0.75, 1.0, 0.2 * exp(-d * 0.2)), c);
-        c = over(vec4(0.4, 0.84, 1.0, cov(d - 1.9)), c);
+        // the line is white, orange in the run-up to the speed zone, red in it
+        vec3 sz = u_zone.x > 1.5 ? RED_Z : (u_zone.x > 0.5 ? AMBER_Z : WHITE_Z);
+        c = over(vec4(sz, 0.2 * exp(-d * 0.2)), c);
+        c = over(vec4(sz, cov(d - 1.9)), c);
         float tl = clamp(floor((u_sy.x - p.y) / (u_sy.x - u_sy.y) * 5.0 + 0.5), 0.0, 5.0);
         float tu = clamp(floor((u_sy.y - p.y) / (u_sy.y - u_sy.z) * 3.0 + 0.5), 0.0, 3.0);
         float ty = p.y >= u_sy.y - 4.0 ? u_sy.x + (u_sy.y - u_sy.x) * tl / 5.0 : u_sy.y + (u_sy.z - u_sy.y) * tu / 3.0;
@@ -1152,8 +1168,8 @@ void main() {
         float my = f <= u_sy.w ? u_sy.x + (u_sy.y - u_sy.x) * f / u_sy.w : u_sy.y + (u_sy.z - u_sy.y) * (f - u_sy.w) / (1.0 - u_sy.w);
         float mx = lineX(my);
         float dm = max(abs(p.x - (mx + 18.0)) - 15.0, abs(p.y - my) - 2.4);
-        c = over(vec4(0.7, 0.9, 1.0, 0.3 * exp(-max(dm, 0.0) * 0.3)), c);
-        c = over(vec4(1.0, 1.0, 1.0, cov(dm)), c);
+        c = over(vec4(mix(sz, vec3(1.0), 0.4), 0.3 * exp(-max(dm, 0.0) * 0.3)), c);
+        c = over(vec4(mix(sz, vec3(1.0), 0.75), cov(dm)), c);
     }
 
     // ---- the rev blade ----
@@ -1171,9 +1187,9 @@ void main() {
     float inM = cov(max(max(xl - p.x, p.x - xl - mw) * cl, max(yT - p.y, p.y - yB)));
     if (inM > 0.0) {
         vec3 dark = mix(vec3(0.4, 0.15, 0.27), vec3(0.34, 0.12, 0.23), clamp((p.y - yT) / (yB - yT), 0.0, 1.0));
-        vec3 lit = u_shiftNow > 0.5 ? vec3(1.0, 0.45, 0.5) : mix(u_red.rgb, u_red.rgb * vec3(0.91, 0.63, 0.82), clamp((p.y - yn) / 200.0, 0.0, 1.0));
+        vec3 lit = mix(u_red.rgb, u_red.rgb * 0.78, clamp((p.y - yn) / 220.0, 0.0, 1.0));
         c = over(vec4(p.y > yn ? lit : dark, inM), c);
-        if (u_value > 0.003) c = over(vec4(1.0, 0.78, 0.82, 0.85 * cov(abs(p.y - yn) - 1.2 * s) * inM), c);
+        if (u_value > 0.003) c = over(vec4(1.0, 0.96, 0.97, 0.85 * cov(abs(p.y - yn) - 1.2 * s) * inM), c);
     }
     // the left edge (thin, pink), the top line with its overhang, the thick bright right edge
     float dlE = (p.x - xl) * cl;
@@ -1201,10 +1217,11 @@ void main() {
     float xb1 = u_bl.z + u_bl.w * (yF1 - yT) + 12.0 * s;
     c = over(vec4(0.97, 0.16, 0.3, cov(max(abs(p.y - (yF1 - 2.0 * s)) - 1.7 * s, max(u_bx.z - p.x, p.x - xb1))) * smoothstep(u_bx.z, u_bx.z + 140.0 * s, p.x)), c);
 
+
     // ---- the two strips ----
-    c = strip(u_fh > 0.5 ? vec2(p.y, u_size.x - p.x) : p, u_g0, u_gv.x, vec3(0.94, 0.96, 1.0), c);
-    c = strip(p, u_g1, u_gv.y, u_oc, c);
-    c = strip(p, u_g2, u_gv.z, vec3(0.94, 0.96, 1.0), c);
+    c = strip(u_fh > 0.5 ? vec2(p.y, u_size.x - p.x) : p, u_g0, u_gv.x, STRIP_W, u_low.x, c);
+    c = strip(p, u_g1, u_gv.y, u_oc, 0.0, c);
+    c = strip(p, u_g2, u_gv.z, STRIP_W, u_low.y, c);
     gl_FragColor = c;
 }
 `;
@@ -1229,9 +1246,11 @@ uniform vec2 u_sc;        // y of the scale's top mark and of its 0
 uniform float u_speed;    // 0..1 along the scale
 uniform float u_rev;      // the rev counter, 0..1 along the same scale
 uniform vec4 u_hy;        // the hybrid rev counter: the lit colour while the battery drives or charges (a = 1), else a = 0
+uniform vec2 u_zone;      // the speed band's and the rev stripe's zone: 0 = white, 1 = orange (the run-up), 2 = red
 uniform vec4 u_ln;        // the white line under the map: x of its start, y, x where it steps up, x where it is back level
 uniform vec3 u_ln2;       // y of the upper level, x where the upper level fades out, x where it ends
 uniform vec4 u_barL;      // left bar: x, y, width, level 0..1
+uniform vec2 u_low;       // 1 while the fuel (left bar) / the battery (right bar) is in reserve: red
 uniform vec4 u_barR;
 uniform vec4 u_hole;      // map window x, y, w, h, already inset (w 0 = none)
 uniform float u_holeR;
@@ -1241,21 +1260,20 @@ uniform float u_facets;   // the facets' strength 0..1 (0 = plain navy)
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
 ${FACETS}
 ${NAVY}
-vec4 over(vec4 top, vec4 under) {
-    float a = top.a + under.a * (1.0 - top.a);
-    if (a <= 0.0) return vec4(0.0);
-    return vec4((top.rgb * top.a + under.rgb * under.a * (1.0 - top.a)) / a, a);
+vec4 over(vec4 top, vec4 under) {           // straight-alpha "top over under"
+    float k = under.a * (1.0 - top.a), a = top.a + k;
+    return vec4((top.rgb * top.a + under.rgb * k) / max(a, 0.0001), a);
 }
 float segD(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }
 // a thin bar with end ticks and a brighter, thicker part up to the level; u_ = (x, y, width, level)
-vec4 bar(vec2 p, vec4 b, vec3 glowA, vec3 glowB, vec4 c) {
+vec4 bar(vec2 p, vec4 b, vec3 glowA, vec3 glowB, float low, vec4 c) {
     float f = (p.x - b.x) / b.z;
     if (f < -0.03 || f > 1.03 || abs(p.y - b.y) > 14.0) return c;
-    vec3 g = mix(glowA, glowB, clamp(f, 0.0, 1.0));
+    vec3 g = mix(mix(glowA, glowB, clamp(f, 0.0, 1.0)), vec3(1.0, 0.2, 0.22), low);
     c = over(vec4(g, 0.5 * exp(-abs(p.y - b.y - 8.0) / 5.0) * cov(abs(f - 0.5) * b.z - b.z * 0.5)), c);
     float on = step(f, b.w);
     float th = mix(0.8, 2.0, on);
-    c = over(vec4(vec3(0.95, 0.97, 1.0) * mix(0.55, 1.0, on), cov(abs(p.y - b.y) - th) * cov(abs(f - 0.5) * b.z - b.z * 0.5)), c);
+    c = over(vec4(mix(vec3(0.95, 0.97, 1.0), vec3(1.0, 0.2, 0.22), low) * mix(0.55, 1.0, on), cov(abs(p.y - b.y) - th) * cov(abs(f - 0.5) * b.z - b.z * 0.5)), c);
     float tk = cov(abs(mod(p.x - b.x + 12.5, 25.0) - 12.5) - 0.6) * cov(abs(p.y - b.y) - 5.0) * 0.4;
     c = over(vec4(0.9, 0.95, 1.0, tk * cov(abs(f - 0.5) * b.z - b.z * 0.5)), c);
     c = over(vec4(0.95, 0.97, 1.0, cov(min(abs(p.x - b.x), abs(p.x - b.x - b.z)) - 1.0) * cov(abs(p.y - b.y) - 6.0)), c);
@@ -1292,20 +1310,25 @@ void main() {
         // the textured blue stripe
         float bl = cov(-(s - 7.0) * kk) * cov((s - (sep - 4.0)) * kk);
         float tex = 0.9 + 0.1 * sin((p.x + p.y) * 0.45) * sin((p.x - p.y) * 0.3);
-        c = over(vec4(vec3(0.1, 0.18, 0.84) * tex, 0.96 * bl * down), c);
+        // the speed: the stripe is lit white from the bottom up to the marker (orange in the run-up to the speed zone, red in it), blue above
+        float ym = u_sc.y - u_speed * (u_sc.y - u_sc.x);
+        vec3 sz = u_zone.x > 1.5 ? vec3(0.95, 0.12, 0.18) : (u_zone.x > 0.5 ? vec3(1.0, 0.62, 0.08) : vec3(0.93, 0.95, 1.0));
+        vec3 sc = mix(vec3(0.1, 0.18, 0.84), sz * (0.82 + 0.18 * smoothstep(ym, u_sc.y, p.y)), step(ym, p.y) * step(0.003, u_speed));
+        c = over(vec4(sc * tex, 0.96 * bl * down), c);
         // the purple stripe: black at its left, then violet, brightest at the pale edge and low down
         float pu = clamp((s - sep - 5.0) / (edge - sep - 5.0), 0.0, 1.0);
         vec3 pc = mix(vec3(0.02, 0.0, 0.05), mix(vec3(0.3, 0.07, 0.52), vec3(0.56, 0.26, 0.9), pu), smoothstep(0.0, 0.55, pu));
         pc *= 0.35 + 0.65 * smoothstep(u_top, u_top + 260.0, p.y);
         float yr = u_sc.y - u_rev * (u_sc.y - u_sc.x);
-        pc = mix(pc * 0.2, mix(pc, u_hy.rgb * (0.45 + 0.55 * pu), u_hy.a), step(yr, p.y));
+        // the rev counter is lit white (orange in the run-up to the redline, red in the zone); the hybrid's power and charge keep blue and green
+        vec3 rz = u_zone.y > 1.5 ? vec3(1.0, 0.18, 0.24) : (u_zone.y > 0.5 ? vec3(1.0, 0.66, 0.1) : vec3(0.97, 0.97, 1.0));
+        pc = mix(pc * 0.2, mix(rz * (0.5 + 0.5 * pu), u_hy.rgb * (0.45 + 0.55 * pu), u_hy.a), step(yr, p.y));
         c = over(vec4(pc, cov(-(s - sep - 5.0) * kk) * cov((s - edge) * kk) * step(u_top, p.y) * down), c);
         // the outer white line, the divider, the pale edge
         c = over(vec4(0.97, 0.98, 1.0, cov(abs(s - 5.0) * kk - 3.6) * down), c);
         c = over(vec4(0.92, 0.95, 1.0, 0.95 * cov(abs(s - sep) * kk - 0.9) * down), c);
         c = over(vec4(0.95, 0.82, 1.0, 0.9 * cov(abs(s - edge) * kk - 0.9) * step(u_top, p.y) * down), c);
         // the marker across the blue stripe at the speed, the one across the purple stripe at the rpm, and a tick at each of the eight marks
-        float ym = u_sc.y - u_speed * (u_sc.y - u_sc.x);
         float mk = cov(abs(p.y - ym) - 2.2) * cov(-(s - 2.0) * kk) * cov((s - sep) * kk);
         c = over(vec4(1.0, 1.0, 1.0, 0.95 * mk * down), c);
         float mr = cov(abs(p.y - yr) - 1.6) * cov(-(s - sep - 5.0) * kk) * cov((s - edge) * kk);
@@ -1314,8 +1337,8 @@ void main() {
         c = over(vec4(1.0, 1.0, 1.0, (0.9 * mr + 0.7 * tk) * step(u_top, p.y) * down), c);
     }
     // the bars along the bottom
-    c = bar(p, u_barL, vec3(0.15, 0.3, 1.0), vec3(0.15, 0.3, 1.0), c);
-    c = bar(p, u_barR, vec3(0.95, 0.15, 0.2), vec3(0.2, 0.4, 1.0), c);
+    c = bar(p, u_barL, vec3(0.15, 0.3, 1.0), vec3(0.15, 0.3, 1.0), u_low.x, c);
+    c = bar(p, u_barR, vec3(0.95, 0.15, 0.2), vec3(0.2, 0.4, 1.0), u_low.y, c);
     gl_FragColor = c;
 }
 `;
@@ -1763,8 +1786,8 @@ const MSTYLE = `// M Style HUD rev counter for a cluster-render "effect" layer (
 //   u_A    P0 (the bar's start) and P1 (the bend), x0 y0 x1 y1
 //   u_B    P2 (the bar's end)
 //   u_g    bar width, the share of the scale at the bend (0..1), ticks (thousands of rpm on the scale), where the red zone starts (0..1)
-//   u_v    value 0..1, 1 = at the shift point, spare, spare
-//   u_hy   rgb the lit colour while the battery drives or charges, a = 1 then (0 = the engine's rpm, lit in u_hot)
+//   u_v    value 0..1, spare, the zone (0 = the bar is white, 1 = orange in the run-up to the redline, 2 = red), spare
+//   u_hy   rgb the lit colour while the battery drives or charges, a = 1 then (0 = the engine's rpm, lit white, orange, u_hot by the zone)
 //   u_hot rgb;  u_fg, u_track rgba (straight alpha)
 precision mediump float;
 varying vec2 v_uv;
@@ -1778,10 +1801,9 @@ uniform vec3 u_hot;
 uniform vec4 u_fg;
 uniform vec4 u_track;
 
-vec4 over(vec4 top, vec4 under) {
-    float a = top.a + under.a * (1.0 - top.a);
-    if (a <= 0.0) return vec4(0.0);
-    return vec4((top.rgb * top.a + under.rgb * under.a * (1.0 - top.a)) / a, a);
+vec4 over(vec4 top, vec4 under) {           // straight-alpha "top over under"
+    float k = under.a * (1.0 - top.a), a = top.a + k;
+    return vec4((top.rgb * top.a + under.rgb * k) / max(a, 0.0001), a);
 }
 
 float seg(vec2 p, vec2 a, vec2 b, out float t) {
@@ -1801,7 +1823,7 @@ void main() {
     float f = first ? t1 * u_g.y : u_g.y + t2 * (1.0 - u_g.y);
     float s = first ? t1 * l1 : l1 + t2 * l2;
     float hw = u_g.x * 0.5;
-    vec3 lit = u_hy.a > 0.5 ? u_hy.rgb : (u_v.x > 0.0 && u_v.y > 0.5 ? vec3(1.0) : u_hot);
+    vec3 lit = u_hy.a > 0.5 ? u_hy.rgb : (u_v.z > 1.5 ? u_hot : (u_v.z > 0.5 ? vec3(1.0, 0.68, 0.1) : vec3(1.0)));
     vec4 fill = f <= u_v.x ? vec4(lit, 1.0) : (f >= u_g.w ? vec4(u_hot, 0.45) : u_track);
     vec4 col = vec4(fill.rgb, fill.a * clamp(hw + 0.5 - d, 0.0, 1.0));
     // the outline, 2 px at the bar's edge

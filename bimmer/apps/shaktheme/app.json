@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.14.12",
+  "version": "0.15.0",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -1068,6 +1068,54 @@
           "off",
           "Désactivé"
         ]
+      ]
+    },
+    {
+      "key": "reserveKm",
+      "label": "Réserve : autonomie essence en rouge à partir de",
+      "type": "number",
+      "unit": "km",
+      "default": 90,
+      "steps": [
+        0,
+        30,
+        50,
+        70,
+        90,
+        110,
+        130,
+        150
+      ]
+    },
+    {
+      "key": "reservePct",
+      "label": "Réserve : batterie en rouge à partir de",
+      "type": "number",
+      "unit": "%",
+      "default": 10,
+      "steps": [
+        0,
+        5,
+        10,
+        15,
+        20,
+        25
+      ]
+    },
+    {
+      "key": "speedZone",
+      "label": "Zone de vitesse : barre orange puis rouge à partir de",
+      "type": "number",
+      "unit": "km/h",
+      "default": 130,
+      "steps": [
+        0,
+        90,
+        110,
+        130,
+        150,
+        180,
+        200
       ]
     }
   ],

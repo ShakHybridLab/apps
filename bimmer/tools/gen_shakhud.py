@@ -63,27 +63,27 @@ widgets += [
      'x': 574, 'y': 161, 'w': 104, 'h': 18, 'text': '{{chargeNote}}'},
 ]
 # The bottom right block, what the windshield shows to the right of BMW's own speed (x 120..350): the battery's charge big, the electric and
-# the fuel range beside it, a slanted battery bar (light blue, green while charging, amber when nearly empty), the oil and coolant
+# the fuel range beside it, a slanted battery bar (light blue, green while charging, red in reserve: 10 %, as the numbers and the ranges: 90 km of fuel), the oil and coolant
 # temperatures under it (an oil can and a thermometer, no words). Hidden with the setting "showBattery". All inside x 372..676, y 246..361.
 BX, BW = 372, 304
 widgets += [
-    {'id': 'soc', 'type': 'text', 'font': 'big', 'color': 'fg', 'align': 'left', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+    {'id': 'soc', 'lowWhen': 'battery', 'type': 'text', 'font': 'big', 'color': 'fg', 'align': 'left', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'x': BX, 'y': 246, 'w': 150, 'h': 46, 'text': '{{hvSoc}}%'},
-    {'id': 'ev_icon', 'type': 'icon', 'icon': 'battBolt', 'color': 'dim', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+    {'id': 'ev_icon', 'lowWhen': 'battery', 'type': 'icon', 'icon': 'battBolt', 'color': 'dim', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'x': 546, 'y': 247, 'w': 28, 'h': 28},
-    {'id': 'ev_range', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'right', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+    {'id': 'ev_range', 'lowWhen': 'battery', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'right', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'x': 576, 'y': 247, 'w': 100, 'h': 29, 'text': '{{evRange}} {{u:distLc}}'},
-    {'id': 'fuel_icon', 'type': 'icon', 'icon': 'fuelPump', 'color': 'dim', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+    {'id': 'fuel_icon', 'lowWhen': 'fuel', 'type': 'icon', 'icon': 'fuelPump', 'color': 'dim', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'x': 546, 'y': 277, 'w': 28, 'h': 28},
-    {'id': 'fuel_range', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'right', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+    {'id': 'fuel_range', 'lowWhen': 'fuel', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'right', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'x': 576, 'y': 276, 'w': 100, 'h': 29, 'text': '{{range}} {{u:distLc}}'},
-    {'id': 'batbar', 'type': 'slantbar', 'class': 'overlay', 'z': 10, 'toggle': 'showBattery', 'signal': 'hvSoc',
+    {'id': 'batbar', 'lowWhen': 'battery', 'type': 'slantbar', 'class': 'overlay', 'z': 10, 'toggle': 'showBattery', 'signal': 'hvSoc',
      'x': BX, 'y': 310, 'w': BW, 'h': 16, 'slant': 12, 'low': 15},
-    {'id': 'oil_icon', 'type': 'icon', 'icon': 'oilPour', 'color': 'fg', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+    {'id': 'oil_icon', 'type': 'icon', 'icon': 'oilPour', 'tempBy': 'oil', 'color': 'fg', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'x': BX, 'y': 332, 'w': 30, 'h': 30},
     {'id': 'oil', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'left', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'tempBy': 'oil', 'x': BX + 36, 'y': 333, 'w': 84, 'h': 29, 'text': '{{oil}}{{u:temp}}'},
-    {'id': 'coolant_icon', 'type': 'icon', 'icon': 'tempWave', 'color': 'fg', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+    {'id': 'coolant_icon', 'type': 'icon', 'icon': 'tempWave', 'tempBy': 'coolant', 'color': 'fg', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'x': BX + BW - 118, 'y': 332, 'w': 30, 'h': 30},
     {'id': 'coolant', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'left', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'tempBy': 'coolant', 'x': BX + BW - 82, 'y': 333, 'w': 82, 'h': 29, 'text': '{{coolant}}{{u:temp}}'},

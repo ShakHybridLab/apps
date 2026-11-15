@@ -1,5 +1,16 @@
 # Modifications par rapport aux projets d'origine
 
+## 15 novembre 2026
+
+### ShakTheme 0.15.0 et ShakHUD 0.3.0 (pas encore essayés sur la voiture ; tout est vérifié sur le banc d'essai)
+- **Zones blanc → orange → rouge** sur les barres de régime et de vitesse de Sport, M, M Blade, Navi et du HUD, dans les couleurs du thème : régime orange 700 tr/min avant la zone rouge puis rouge (Redline ou point de passage) ; vitesse orange à 85 % puis rouge à partir du nouveau réglage **Zone de vitesse** (130 km/h par défaut, 0 = coupé). Le compte-tours hybride garde le bleu (électrique) et le vert (recharge) : les zones ne jouent que pour le régime du moteur. Le M n'a pas de barre de vitesse, donc seulement le régime. Shaders : `u_zone` dans `sdash`, `mblade`, `navi`, `mtach`, `mstyle` (`shared/shaders.js`), choix de la zone dans `shared/hud.js` (`_zoneRev`, `_zoneSpeed`).
+- **Loupe très légère sur les chiffres** des échelles de régime et de vitesse quand leur barre est dans sa zone : environ +20 %, dans la couleur de la zone (sur Navi, les chiffres du régime ne font que grossir). Polices `s_scale_z`, `m_num_z`, `m_gl_z` (`tools/bake_fonts.py`), placement et contrôle de chaque boîte par `tools/zoom_labels.py` (aucun recouvrement de la boîte noire BMW, de la veilleuse de ceinture, de la caméra ni du capot), étiquettes `near`, `nearFont`, `grow` dans les mises en page.
+- **Icônes de la couleur de leur chiffre** (bleu à froid, vert à chaud, rouge qui clignote au-dessus de la limite), icônes modernes (`oilPour`, `tempWave`, `battBolt`, `fuelPump`, `tempOut` pour la température extérieure).
+- **Réserve en rouge** : autonomie essence à 90 km ou moins, batterie à 10 % ou moins (réglages **Réserve : autonomie essence en rouge à partir de** et **Réserve : batterie en rouge à partir de**), sur tous les thèmes et sur le HUD.
+- **Thème M avec Waze, refait** : filet argent fin autour de la fenêtre de la carte, plaque sous la carte avec le rapport et la vitesse (polices `m_gear_p` et `m_speed_p`) séparés par un trait fin, unité à droite de la vitesse. Dessinée par `mdash` (`plate` dans `m.json`, uniformes `u_plate` et `u_split`), seulement quand la carte est affichée ; budget du shader 8614 jetons (limite connue sur la voiture : 8748). Sans carte, le M est inchangé.
+- **Budget des shaders** : `over()` compacté dans six shaders et constantes nommées, tous les calques sous 8748 jetons (`tools/shader_budget.js --all`) ; l'effet de loupe sur les barres, abandonné, n'y est plus.
+- Aperçus des quatre thèmes et du HUD refaits.
+
 ## 14 novembre 2026
 
 ### ShakHUD (15 novembre ; nouvelle appli, pas encore essayée sur la voiture)

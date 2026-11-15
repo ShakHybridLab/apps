@@ -4,7 +4,7 @@
  * Each icon is a distance function in a 0..1 box; coverage is anti-aliased over one pixel.
  *   gauge (engine), shock (chassis), wheel (steering), cog (gearbox), stack (the gear's shift program
  *   lines), therm (coolant), oilcan (oil), fuel (pump), tyre (a wheel seen from the side: ring, hub, tread notches),
- *   oilPour, tempWave (ShakHUD's modern oil can and thermometer),
+ *   oilPour, tempWave, tempOut (ShakHUD's modern oil can, the thermometer with heat waves for the coolant, a plain one for the outside),
  *   battery (a plug-in hybrid's high-voltage battery: the cell with a bolt in it, terminal on top).
  */
 function seg(px, py, ax, ay, bx, by) {
@@ -32,6 +32,7 @@ function cone(px, py, ax, ay, ar, bx, by, br) {
 }
 const drop = (px, py) => Math.min(cone(px, py, 0.5, 0.06, 0.0, 0.5, 0.62, 0.3), disc(px, py, 0.5, 0.62, 0.3));
 const tube = (px, py) => cone(px, py, 0.36, 0.2, 0.115, 0.36, 0.62, 0.115);
+const tubeC = (px, py) => cone(px, py, 0.5, 0.18, 0.12, 0.5, 0.6, 0.12);
 
 /** Distance (in box units) from (x, y) to the icon's ink; < 0 or < stroke half-width = ink. */
 const ICONS = {
@@ -50,6 +51,7 @@ const ICONS = {
         seg(x, y, 0.3, 0.5, 0.3, 0.36) - 0.04, seg(x, y, 0.18, 0.34, 0.42, 0.34) - 0.045,                    // the filler neck and its cap
         seg(x, y, 0.62, 0.56, 0.9, 0.3) - 0.05,                                                              // the long spout
         Math.min(cone(x, y, 0.93, 0.5, 0.0, 0.93, 0.76, 0.09), disc(x, y, 0.93, 0.76, 0.09))),              // the drop falling from it
+    tempOut: (x, y) => Math.min(Math.abs(tubeC(x, y)) - 0.04, disc(x, y, 0.5, 0.76, 0.19), seg(x, y, 0.5, 0.4, 0.5, 0.7) - 0.045),      // a plain thermometer (the outside temperature)
     tempWave: (x, y) => {
         let d = Math.min(Math.abs(tube(x, y)) - 0.04, disc(x, y, 0.36, 0.76, 0.19), seg(x, y, 0.36, 0.4, 0.36, 0.7) - 0.045);
         [0.26, 0.5].forEach((yy) => { d = Math.min(d, seg(x, y, 0.62, yy, 0.7, yy - 0.07) - 0.035, seg(x, y, 0.7, yy - 0.07, 0.78, yy) - 0.035, seg(x, y, 0.78, yy, 0.86, yy - 0.07) - 0.035); });

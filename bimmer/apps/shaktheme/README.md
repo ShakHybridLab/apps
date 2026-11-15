@@ -62,6 +62,16 @@ Neither theme has been tried on a car; they are checked on the bench against the
 
 <p align="center"><img src="../../docs/images/cluster-navi.png" width="900" alt="Navi theme"></p>
 
+## Couleurs d'alerte, réserve et loupe sur les chiffres (0.15.0)
+
+- **Zones des barres (Sport, M, M Blade, Navi) :** les barres de régime et de vitesse sont **blanches** au départ, passent à l'**orange** quand tu t'approches de la zone, puis au **rouge** dedans, dans les couleurs du thème. Régime : orange 700 tr/min avant la zone rouge, rouge à partir du réglage Redline (ou du point de passage s'il arrive avant). Vitesse : orange à partir de 85 % du réglage **Zone de vitesse** (130 km/h par défaut), rouge à partir de lui ; 0 coupe la zone. Le M n'a pas de barre de vitesse (que les chiffres), donc seulement le régime.
+- **Hybride :** le compte-tours hybride garde ses couleurs : **bleu** en électrique, **vert** en recharge. Les zones ne jouent que pour le régime du moteur.
+- **Loupe très légère sur les chiffres de l'échelle :** le chiffre de l'échelle le plus proche du repère grossit d'environ 20 % tant que sa barre est dans sa zone, et prend la couleur de la zone (orange puis rouge). Sur Navi, les chiffres du régime ne font que grossir (ils sont sur le fond orange de la barre). Les polices agrandies sont cuites par `tools/bake_fonts.py` (`s_scale_z`, `m_num_z`, `m_gl_z`) et placées par `tools/zoom_labels.py` : rien ne touche la boîte noire de BMW, la veilleuse de ceinture ni la caméra.
+- **Icônes de la même couleur que leur chiffre :** bleu à froid, vert à chaud, rouge qui clignote au-dessus de la limite (huile, liquide de refroidissement). Nouvelles icônes modernes (burette d'huile avec sa goutte, thermomètre à vagues, batterie avec éclair, pompe à essence) et la température extérieure a sa propre icône (`tempOut`).
+- **Réserve en rouge :** l'autonomie essence à 90 km ou moins (réglage **Réserve : autonomie essence en rouge à partir de**) et la batterie à 10 % ou moins (réglage **Réserve : batterie en rouge à partir de**) passent au rouge, icône, chiffre et jauge, dans tous les thèmes et sur le HUD.
+- **M avec la carte Waze, refait :** un filet argent fin entoure la fenêtre de la carte (avec une lueur à peine visible), et le rapport et la vitesse sont posés sur une **plaque** sous la carte, séparés par un fin trait vertical, avec « km/h » (ou « mph ») à droite de la vitesse. Plus petits, mieux centrés, ils laissent la carte respirer. Sans carte, le M est inchangé.
+- Pas encore essayé sur la voiture : tout est vérifié sur le banc d'essai (captures normales, en zone orange et rouge, en électrique, en recharge, en réserve, en mph, avec et sans carte).
+
 ## Off and drive modes
 
 - **Off (BMW's own cluster):** pick it as the theme and the app draws nothing, so BMW's cluster comes back.

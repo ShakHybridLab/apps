@@ -56,7 +56,7 @@
  *             redline's thousand the scale runs to (1000: a 7000 redline gives 0..8)
  *   slantbar  effect layer (shaders.js slantbar): ShakHUD's battery bar, a slanted parallelogram with an outline and quarter gaps, lit from the
  *             left by "signal" (hvSoc) between "min" (0) and "max" (100); "slant" px (10); light blue, green while the battery charges
- *             (hybrid_tach.js), amber under "low" % (15)
+ *             (hybrid_tach.js), red while the charge is in reserve (the setting "reservePct")
  *   lights    effect layer; shaders.js lights, shift lights filling from "from" rpm (3000) up to the shift point
  *   badge     image layer; a rounded tag with text: "tone" verdict (the last shift's grade colour) or cold
  *   fill      effect layer; a solid colour (role "color", default "bg") over the whole widget, with an
@@ -75,7 +75,9 @@
  *             "line" [x0, y, x1, cap], "tyres" [cx, cy, scale] (the tyre block's car glyph and dividers; the eight
  *             readouts are text widgets with {{tyreP:FL}} .. {{tyreT:RR}} and {{u:pressure}}), "gaugeL" / "gaugeR" { cx, cy, r, (a dial as the M8's: a thin glass bracket whose outer edge is the circle cx, cy, r, lit from the bottom up to the value, drawn over the card; the right one is the left one's mirror)
  *             signal, min, max }, "mark" [x, y, scale], "segbars" [{ x, y, w, h, max, signal } x up to 4] (the
- *             setup level bars, "segSlant" px; the segment at round(signal) is red). Positions in target px.
+ *             setup level bars, "segSlant" px; the segment at round(signal) is red), "plate" [x, y, w, h, splitX] (the card under the
+ *             map window that holds the gear and the speed, with a thin divider at splitX; drawn only while "hole" is cut; a silver
+ *             hairline then also runs round the window). Positions in target px.
  *   mtach     effect layer; the M rev bar: "side" left|right, "max" rpm, and in target px for the LEFT bar
  *             "y0" (0 rpm), "y8" (max), "ym" (the bend), "xm" (outer edge x at the bend; the right bar gives
  *             its own, mirrored), "kTop" / "kBot" (x per y px above / below the bend), "round", "wBot" / "wTop" / "wBend"
@@ -103,7 +105,9 @@
  *   emblem    image layer; lettering baked by tools/bake_emblems.py (hud/emblems/<name>.json), painted in a light blue / dark blue /
  *             red gradient (emblems.js); "setting" names the choice setting that picks which (off = none; hidden while the Waze map is up,
  *             unless the widget says "keepWithMap": true, for a theme that keeps it clear of the map window)
- *   icon      image layer; a line icon from icons.js ("icon": gauge, shock, wheel, cog, stack, therm, oilcan, fuel)
+ *   icon      image layer; a line icon from icons.js ("icon": gauge, shock, wheel, cog, stack, therm, oilcan, fuel, oilPour, tempWave, battBolt, fuelPump);
+ *             "lowWhen": "fuel" | "battery" (an icon or a text) turns it the shift red while the fuel range is at or under "reserveKm" (90) / the charge at or under "reservePct" (10);
+ *             "tempBy": "oil" | "coolant" paints it in the colour of that temperature's number (blue cold, green warm, flashing red over the limit)
  *   arc also takes "start" and "sweep" in degrees (clockwise from 12 o'clock; negative = anticlockwise)
  *   grid      calibration: effect layer of lines every "step" px (brighter every "major" steps)
  *   gridlabels  calibration: image layer, "x/y" at every "step" px (only the labels are uploaded)
@@ -189,7 +193,12 @@
  * "off" the alpha of an unlit light (0.14).
  * Text "warnFlash": false: no flash over the warning limit (a tile that turns red itself).
  * Text "colorBy": "verdict" colours it by the last shift's grade. Text "near": ["speed" | "rpm", i] turns it
- * "nearColor" (fg) while scale label i is the one nearest the value (BMW lights up the label by the needle).
+ * "nearColor" (fg) while scale label i is the one nearest the value (BMW lights up the label by the needle); "mspeed" is the M Blade's scale.
+ *   The zoom of the scale numbers: with "nearFont" (a bigger bake of the font, tools/bake_fonts.py *_z) that label is drawn larger, in the
+ *   orange (run-up) or the shift red (zone), while its bar is in its zone: "speed"/"mspeed" labels follow the speed bar (setting "speedZone"),
+ *   "rpm" labels the rev counter ("rpmMax": the scale's top; orange the 700 rpm before the redline, red from it or the shift point; none
+ *   on the hybrid's electric power or charge). "grow" [left, top, right, bottom]: the box is already grown by these px for the larger digits
+ *   (tools/zoom_labels.py). "zoomColor": false: the number only grows, it keeps its colour (it sits on the bar's own fill).
  *
  * rpm is smoothed (a 120 ms filter, and the readout moves in 50 rpm steps only when it changes by 40 or
  * more), so idle wobble doesn't show, as on BMW's own tach. Shift scoring uses the raw rpm.
@@ -348,6 +357,8 @@ const FUEL_EVERY_MS = 10000, FUEL_RETRY_MS = 300000, FUEL_STALE_MS = 60000;
 const HV_EVERY_MS = 5000, HV_RETRY_MS = 60000, HV_STALE_MS = 20000;
 const WINDOW_HOLD_MS = 6000;            // the centre window stays open this long after the last app that asked for it stopped asking
 const CAR_ERANGE_MS = 10 * 60 * 1000;   // the car's own electric range counts for this long after it last said (it changes slowly)
+// the zone colours of the rev and speed bars: white at first, orange in the run-up to the zone, then the theme's red
+const ZONE_RGB = [[0.97, 0.98, 1.0], [1.0, 0.68, 0.1], [1.0, 0.18, 0.24]];
 // BMW's speed scale: even steps to 120 mph (180 km/h), then wider ones to 200 mph (320 km/h)
 const SPEED_SCALE = { us: [0, 20, 40, 60, 80, 100, 120, 160, 200], metric: [0, 30, 60, 90, 120, 150, 180, 250, 320] };
 // the M Blade theme's own speed scale (the photo it follows): 0..330 km/h, the knee at 150
@@ -1313,6 +1324,24 @@ class HudApp {
         else if (t.indexOf('{{boost}}') >= 0) id = 'boost';
         return this._overLimit(id);
     }
+    /**
+     * The reserve: "fuel" is true while the fuel range is at or under the setting "reserveKm" (90), "battery" while the battery's charge is at or
+     * under "reservePct" (10 %). A widget with "lowWhen": "fuel" | "battery" (a number or an icon) turns the shift red then.
+     */
+    _lowNow(kind) {
+        const set = this.ctx.settings;
+        if (kind === 'fuel') {
+            const lim = set.item('reserveKm') ? this.setting('reserveKm') : 0, r = this._raw('range');
+            return isNum(lim) && lim > 0 && isNum(r) && r <= lim;
+        }
+        if (kind === 'battery') {
+            const lim = set.item('reservePct') ? this.setting('reservePct') : 0, v = this._raw('hvSoc');
+            return isNum(lim) && lim > 0 && isNum(v) && v <= lim;
+        }
+        return false;
+    }
+    /** [fuel, battery] reserve flags (1 / 0) for the themes' bars and dials, and their key part. */
+    _lows() { return [this._lowNow('fuel') ? 1 : 0, this._lowNow('battery') ? 1 : 0]; }
     /** `id` (oil / coolant / boost) if that reading is over its warning limit now, else null. */
     _overLimit(id) {
         if (!WARN[id]) return null;
@@ -1330,6 +1359,37 @@ class HudApp {
         sp.now = isNum(rpm) && rpm >= sp.rpm;
         sp.oilCold = isNum(d.oil) && d.oil < 80;
         return sp;
+    }
+
+    /**
+     * The zone of the rev counter now: 0 normal (the bar is white), 1 the run-up (orange: the 700 rpm before the redline, see _redMarks),
+     * 2 the red zone (from the redline, or the shift point if that comes first). The engine's rpm only: the hybrid's electric power keeps
+     * its blue and its charge its green, so the callers pass 0 there.
+     */
+    _zoneRev(max) {
+        const d = this.car.data(), rpm = isNum(this.rpmF) ? this.rpmF : d.rpm;
+        if (!isNum(rpm) || !(max > 0)) return 0;
+        const [red, orange] = this._redMarks(max), f = rpm / max;
+        return this._shift().now || f >= red ? 2 : f >= orange ? 1 : 0;
+    }
+
+    /**
+     * The zone (0 / 1 / 2) of the bar that a scale label belongs to: 'speed' and 'mspeed' labels follow the speed bar, 'rpm' labels the rev
+     * counter (rpmMax = the scale's top, as the bars' own _redMarks). The hybrid's electric power and charge have no zone.
+     */
+    _zoneOf(kind, rpmMax) {
+        if (kind === 'rpm') return this.hybridEv ? 0 : this._zoneRev(rpmMax || 7000);
+        return this._zoneSpeed();
+    }
+
+    /**
+     * The zone of the speed bar now: 0 normal (white), 1 orange from 85 % of the setting "speedZone" (km/h, 0 = none), 2 red from it. The
+     * car's speed is in km/h whatever the display unit is.
+     */
+    _zoneSpeed() {
+        const lim = this.ctx.settings.item('speedZone') ? this.setting('speedZone') : 0, v = this._raw('speed');
+        if (!isNum(lim) || !(lim > 0) || !isNum(v)) return 0;
+        return v >= lim ? 2 : v >= lim * 0.85 ? 1 : 0;
     }
 
     /** Boost in bar: the sport display's value while fresh, else the engine unit's, else null. */
@@ -1991,6 +2051,7 @@ class HudApp {
             c.uniform(ref, 'u_redFrom', [redFrom]);
             c.uniform(ref, 'u_orange', [orange]);
             c.uniform(ref, 'u_hy', [0, 0, 0, 0]);
+            c.uniform(ref, 'u_zone', [0, 0]);
             c.uniform(ref, 'u_fuelSeg', w.fuelSeg);
             c.uniform(ref, 'u_oilSeg', w.oilSeg);
             c.uniform(ref, 'u_hole', this._hole(w));
@@ -2024,8 +2085,8 @@ class HudApp {
             c.uniform(ref, 'u_value', [0]);
             c.uniform(ref, 'u_orange', [orange]);
             c.uniform(ref, 'u_redFrom', [redFrom]);
-            c.uniform(ref, 'u_shiftNow', [0]);
-            c.uniform(ref, 'u_red', [0.99, 0.19, 0.33, 0]);
+            c.uniform(ref, 'u_zone', [0, 0]);
+            c.uniform(ref, 'u_red', [0.97, 0.98, 1.0, 0]);
             c.uniform(ref, 'u_hole', this._hole(w));
             c.uniform(ref, 'u_holeR', [this._holeRadius(w)]);
             c.uniform(ref, 'u_tint', [this._tint()]);
@@ -2039,6 +2100,7 @@ class HudApp {
             c.uniform(ref, 'u_sc', w.scale || [236, B.bottom]);
             c.uniform(ref, 'u_speed', [0]);
             c.uniform(ref, 'u_rev', [0]);
+            c.uniform(ref, 'u_zone', [0, 0]);
             c.uniform(ref, 'u_hy', [0, 0, 0, 0]);
             c.uniform(ref, 'u_ln', L);
             c.uniform(ref, 'u_ln2', L2);
@@ -2070,6 +2132,10 @@ class HudApp {
             c.uniform(ref, 'u_segSlant', [isNum(w.segSlant) ? w.segSlant : 9]);
             c.uniform(ref, 'u_hole', this._hole(w));
             c.uniform(ref, 'u_holeR', [this._holeRadius(w)]);
+            // the plate under the cut window (the gear and the speed on it): only while the window is cut, as the hole
+            const pl = Array.isArray(w.plate) && w.plate.length === 5 && w.plate.every(isNum) && this._hole(w)[2] > 0 ? w.plate : null;
+            c.uniform(ref, 'u_plate', pl ? [pl[0] - w.x, pl[1] - w.y, pl[2], pl[3]] : [0, 0, 0, 0]);
+            c.uniform(ref, 'u_split', [pl ? pl[4] - w.x : 0]);
             x.gauges = [['u_gaugeL', L], ['u_gaugeR', R]];
             x.bars = bars;
         } else if (w.type === 'mtach') {
@@ -2084,6 +2150,7 @@ class HudApp {
             c.uniform(ref, 'u_orange', [orange]);
             c.uniform(ref, 'u_redFrom', [redFrom]);
             c.uniform(ref, 'u_red', rgb(t.hot));
+            c.uniform(ref, 'u_zone', [0]);
         }
         else if (w.type === 'grid') {
             c.uniform(ref, 'u_size', [w.w, w.h]);
@@ -2383,6 +2450,9 @@ class HudApp {
             let role = w.color || 'fg';
             if (w.colorBy === 'verdict' && this.score.last) role = VERDICT[this.score.last.verdict] || role;
             if (w.near && this._nearMark(w.near[0]) === w.near[1]) role = w.nearColor || 'fg';
+            // the zoom: the number at the marker grows (a bigger bake of the same font, "nearFont") and takes the zone's colour while its bar is in its zone
+            const zone = w.nearFont && w.near && this._nearMark(w.near[0]) === w.near[1] ? this._zoneOf(w.near[0], w.rpmMax) : 0;
+            if (zone > 0 && w.zoomColor !== false) role = zone > 1 ? 'hot' : VERDICT.EARLY;
             // a readout slot goes red / blue at the shift point only while it shows engine speed or the shift point
             const shiftish = !w.slot || ['rpm', 'shiftAt'].indexOf((this.slotSensor(this.activeName, w.slot, this.layoutSlots) || {}).id) >= 0;
             if ((w.hotWhen || w.coldWhen) && shiftish) {
@@ -2396,16 +2466,27 @@ class HudApp {
                 if (isNum(tv)) role = isNum(cold) && cold > 0 && tv < cold ? VERDICT.COLD : VERDICT['SPOT ON'];
                 if (this._warning(w)) role = WARN_DIM;
             }
+            if (w.lowWhen && this._lowNow(w.lowWhen)) role = 'hot';             // in reserve: the shift red, steady
             // over its warning limit: the value flashes in the shift red
             // ("warnFlash": false: not on a tile that turns red itself, the Dyno theme's)
             if (w.warnFlash !== false && this._warning(w) && Math.floor(now / WARN_FLASH_MS) % 2 === 0) role = 'hot';
-            const key = s + '|' + role;
+            const key = s + '|' + role + '|' + zone;
             if (!force && key === x.last) return;
             x.last = key; x.lastPaint = now;
             // "fit": smaller fonts to fall back on when the text is wider than the box (a readout slot showing a
             // longer value than its default) or has a character the font lacks (Retro's seven-segment digits have no
             // letters, + or °), on the same baseline
-            let font = w.font, offsetY = 0;
+            let font = zone > 0 ? w.nearFont : w.font, offsetY = 0, shiftX = 0;
+            if (w.grow) {
+                // a box grown for the zoomed digits ("grow" [left, top, right, bottom]): the normal digits stay where the nominal box has them, the
+                // larger ones sit on the same line and keep the nominal box's edge their alignment names
+                const gr = w.grow, hNom = w.h - gr[1] - gr[3];
+                if (zone > 0) offsetY = gr[1] + Math.round((hNom - textRaster.loadFont(w.nearFont).metrics.cellHeight) / 2);
+                else {
+                    offsetY = gr[1];
+                    shiftX = w.align === 'right' ? -gr[2] : w.align === 'left' ? gr[0] : Math.round((gr[0] - gr[2]) / 2);
+                }
+            }
             const has = (n) => { const g = textRaster.loadFont(n).metrics.glyphs; return s.split('').every((ch) => ch === ' ' || g[ch]); };
             if (w.fit && (textRaster.measure(s, font, w.spacing) > w.w || !has(font))) {
                 const f = w.fit.find((n) => has(n) && textRaster.measure(s, n, w.spacing) <= w.w) || w.fit[w.fit.length - 1];
@@ -2413,11 +2494,25 @@ class HudApp {
                 font = f;
             }
             const buf = textRaster.drawText(w.w, w.h, s, {
-                font, offsetY, color: color(this.theme, role), align: w.align, spacing: w.spacing,
+                font, offsetY, x: shiftX, color: color(this.theme, role), align: w.align, spacing: w.spacing,
                 color2: w.color2 && role !== 'hot' ? color(this.theme, w.color2) : null,
                 glow: w.glow ? this.theme.glow : 0,
             });
             this._blitDiff(x, buf);
+        } else if (w.type === 'icon' && ((w.tempBy && COLD_BELOW[w.tempBy]) || w.lowWhen)) {
+            // an oil or coolant icon in the colour of its number (blue while cold, green once warm, flashing red over the limit);
+            // a fuel or battery icon in the shift red while that is in reserve ("lowWhen")
+            let role = w.color || 'fg';
+            if (w.tempBy && COLD_BELOW[w.tempBy]) {
+                const tv = this._raw(w.tempBy), cold = this.setting(COLD_BELOW[w.tempBy]);
+                if (isNum(tv)) role = isNum(cold) && cold > 0 && tv < cold ? VERDICT.COLD : VERDICT['SPOT ON'];
+                if (this._overLimit(w.tempBy)) role = Math.floor(now / WARN_FLASH_MS) % 2 === 0 ? 'hot' : WARN_DIM;
+            }
+            if (w.lowWhen && this._lowNow(w.lowWhen)) role = 'hot';
+            const key = JSON.stringify(role);
+            if (!force && key === x.last) return;
+            x.last = key;
+            this._blitDiff(x, paintIcon(w.icon, w.w, w.h, color(this.theme, role)));
         } else if (w.type === 'badge') {
             if (!force && now - x.lastPaint < TEXT_MS) return;
             const s = this._resolve(w.text);
@@ -2544,9 +2639,14 @@ class HudApp {
                 q(isNum(fuel) ? fuel : 0),
                 q(isNum(oil) ? (oil - oMin) / (oMax - oMin) : 0),
             ];
-            const key = vals.join('|') + '|' + bar;
+            // the right bar is the battery on the plug-in hybrid layouts: red in reserve too
+            const low = this._lows(), lowR = w.oilSignal === 'hvSoc' ? low[1] : 0;
+            const zone = [this._zoneSpeed(), bar ? 0 : this._zoneRev(w.rpmMax || 8000)];
+            const key = vals.join('|') + '|' + bar + '|' + low[0] + lowR + '|' + zone.join('');
             if (!force && key === x.last) return;
             x.last = key;
+            x.c.uniform(x.ref, 'u_zone', zone);
+            x.c.uniform(x.ref, 'u_low', [low[0], lowR]);
             x.c.uniform(x.ref, 'u_speed', [vals[0]]);
             const marks = bar ? [2, 2] : this._redMarks(w.rpmMax || 8000);
             x.c.uniform(x.ref, 'u_redFrom', [marks[0]]);
@@ -2559,7 +2659,7 @@ class HudApp {
             // rpm on the blade, the speed on the scale line (the M_SCALE labels); the strips are the fuel, the oil temperature (50..150 C,
             // lit blue while cold, green once warm, flashing red over its warning limit) and the hybrid battery (0..100 %)
             const us = this.setting('units') === 'us';
-            const rpm = this._raw('rpm'), sp = this._shift(), hv = this._raw('hvSoc'), fuel = this._raw('fuel'), spd = this._raw('speed'), oil = this._raw('oil');
+            const rpm = this._raw('rpm'), hv = this._raw('hvSoc'), fuel = this._raw('fuel'), spd = this._raw('speed'), oil = this._raw('oil');
             const q = (v) => Math.round(Math.min(1, Math.max(0, v)) * 500) / 500;
             const cold = this.setting('oilCold');
             const over = !!this._overLimit('oil');
@@ -2570,15 +2670,19 @@ class HudApp {
             this.hybridEv = ev; this.hybridCharge = chg > 0;
             const vals = [q(ev ? kw * 100 / (w.rpmMax || 7000) : isNum(rpm) ? rpm / (w.rpmMax || 7000) : 0), q(isNum(fuel) ? fuel : 0), q(isNum(oil) ? (oil - 50) / 100 : 0), q(isNum(hv) ? hv / 100 : 0),
                 q(isNum(spd) ? scaleFrac(us ? spd * 0.621371 : spd, M_SCALE[us ? 'us' : 'metric']) : 0), q(chg)];
-            const key = vals.join('|') + '|' + sp.now + '|' + oc.join(',') + '|' + ev;
+            const low = this._lows();
+            const zone = [this._zoneSpeed(), ev ? 0 : this._zoneRev(w.rpmMax || 7000)];
+            const key = vals.join('|') + '|' + oc.join(',') + '|' + ev + '|' + low.join('') + '|' + zone.join('');
             if (!force && key === x.last) return;
             x.last = key;
+            x.c.uniform(x.ref, 'u_zone', zone);
+            x.c.uniform(x.ref, 'u_low', low);
             x.c.uniform(x.ref, 'u_value', [vals[0]]);
             x.c.uniform(x.ref, 'u_gv', [vals[1], vals[2], vals[3]]);
             x.c.uniform(x.ref, 'u_oc', rgb(oc));
             x.c.uniform(x.ref, 'u_speed', [vals[4]]);
-            x.c.uniform(x.ref, 'u_red', ev ? [0.2, 0.55, 1.0, vals[5]] : [0.99, 0.19, 0.33, vals[5]]);
-            x.c.uniform(x.ref, 'u_shiftNow', [sp.now ? 1 : 0]);
+            // the blade: blue on the electric power, else white, orange in the run-up to the redline, red from it
+            x.c.uniform(x.ref, 'u_red', ev ? [0.2, 0.55, 1.0, vals[5]] : ZONE_RGB[zone[1]].concat([vals[5]]));
         } else if (w.type === 'navi') {
             // the marker on the speed band (the same scale as the Sport theme's), the rev counter (the purple stripe: the rpm, or while the
             // battery alone drives its power in light blue, or while it charges in green, as Sport's bar) and the two bottom bars
@@ -2589,9 +2693,13 @@ class HudApp {
             this.hybridEv = bar > 0; this.hybridCharge = bar === 2;
             const vals = [q(isNum(sp) ? scaleFrac(us ? sp * 0.621371 : sp, SPEED_SCALE[us ? 'us' : 'metric']) : 0), q(isNum(fuel) ? fuel : 0), q(isNum(hv) ? hv / 100 : 0),
                 q(bar ? Math.abs(hy.kw) * 100 / (w.rpmMax || 7000) : isNum(rpm) ? rpm / (w.rpmMax || 7000) : 0)];
-            const key = vals.join('|') + '|' + bar;
+            const low = this._lows();
+            const zone = [this._zoneSpeed(), bar ? 0 : this._zoneRev(w.rpmMax || 7000)];
+            const key = vals.join('|') + '|' + bar + '|' + low.join('') + '|' + zone.join('');
             if (!force && key === x.last) return;
             x.last = key;
+            x.c.uniform(x.ref, 'u_zone', zone);
+            x.c.uniform(x.ref, 'u_low', low);
             x.c.uniform(x.ref, 'u_speed', [vals[0]]);
             x.c.uniform(x.ref, 'u_rev', [vals[3]]);
             x.c.uniform(x.ref, 'u_hy', bar === 1 ? [0.3, 0.75, 1.0, 1] : bar === 2 ? [0.2, 0.85, 0.5, 1] : [0, 0, 0, 0]);
@@ -2607,41 +2715,44 @@ class HudApp {
                 const s = x.bars[i], v = s && s.signal ? this._raw(s.signal) : null;
                 return s && isNum(v) ? Math.max(0, Math.min(s.max || 1, Math.round(v))) : 0;
             });
-            const key = vals.map((v) => v[2]).join('|') + '|' + lit.join('|');
+            const low = this._lows();
+            const key = vals.map((v) => v[2]).join('|') + '|' + lit.join('|') + '|' + low.join('');
             if (!force && key === x.last) return;
             x.last = key;
+            x.c.uniform(x.ref, 'u_low', low);
             vals.forEach(([u, G, v]) => x.c.uniform(x.ref, u, [G.cx || 0, G.cy || 0, G.r || 0, v]));
             x.c.uniform(x.ref, 'u_segLit', lit);
         } else if (w.type === 'mtach') {
-            const rpm = this._raw('rpm'), sp = this._shift();
+            const rpm = this._raw('rpm'), zone = this._zoneRev(w.max || 8000);
             const v = isNum(rpm) ? Math.min(1, Math.max(0, rpm / (w.max || 8000))) : 0;
-            const key = Math.round(v * 600) + '|' + sp.now;
+            const key = Math.round(v * 600) + '|' + zone;
             if (!force && key === x.last) return;
             x.last = key;
             x.c.uniform(x.ref, 'u_value', [v]);
-            x.c.uniform(x.ref, 'u_shiftNow', [sp.now ? 1 : 0]);
+            x.c.uniform(x.ref, 'u_zone', [zone]);
         } else if (w.type === 'mstyle') {
-            const rpm = this._raw('rpm'), sp = this._shift(), max = w.rpmMax || 7000;
+            const rpm = this._raw('rpm'), max = w.rpmMax || 7000;
             const hy = this._hybridTach(w, rpm), bar = hy.ev ? 1 : (w.chgOnBar === true && hy.engineOff && hy.chg > 0 ? 2 : 0);
             this.hybridEv = bar > 0; this.hybridCharge = bar === 2;
             const v = Math.round(Math.min(1, Math.max(0, bar ? Math.abs(hy.kw) * 100 / max : isNum(rpm) ? rpm / max : 0)) * 500) / 500;
-            const key = v + '|' + bar + '|' + (!bar && sp.now ? 1 : 0);
+            const zone = bar ? 0 : this._zoneRev(max);
+            const key = v + '|' + bar + '|' + zone;
             if (!force && key === x.last) return;
             x.last = key;
-            x.c.uniform(x.ref, 'u_v', [v, !bar && sp.now ? 1 : 0, 0, 0]);
+            x.c.uniform(x.ref, 'u_v', [v, 0, zone, 0]);
             x.c.uniform(x.ref, 'u_hy', bar === 1 ? [0.3, 0.75, 1.0, 1] : bar === 2 ? [0.2, 0.85, 0.5, 1] : [0, 0, 0, 0]);
         } else if (w.type === 'slantbar') {
             const raw = this._raw(w.signal || 'hvSoc'), mn = isNum(w.min) ? w.min : 0, mx = isNum(w.max) ? w.max : 100;
             const v = isNum(raw) && mx !== mn ? Math.min(1, Math.max(0, (raw - mn) / (mx - mn))) : 0, q = Math.round(v * 200) / 200;
             // light blue; green while the battery charges (recuperation, the plug); amber when nearly empty
             const chg = this._hybridTach({ hybridTach: true }, this._raw('rpm')).chg > 0;
-            const low = isNum(raw) && raw < (isNum(w.low) ? w.low : 15);
-            const tone = chg ? 2 : low ? 3 : 1;
+            const low = this._lowNow('battery');
+            const tone = low ? 3 : chg ? 2 : 1;
             const key = q + '|' + tone;
             if (!force && key === x.last) return;
             x.last = key;
             x.c.uniform(x.ref, 'u_value', [q]);
-            x.c.uniform(x.ref, 'u_on', tone === 2 ? [0.2, 0.85, 0.5, 1] : tone === 3 ? [1.0, 0.6, 0.1, 1] : [0.3, 0.75, 1.0, 1]);
+            x.c.uniform(x.ref, 'u_on', tone === 3 ? [1.0, 0.16, 0.16, 1] : tone === 2 ? [0.2, 0.85, 0.5, 1] : [0.3, 0.75, 1.0, 1]);
         } else if (w.type === 'segbar') {
             const v = this._raw(w.signal);
             const lit = isNum(v) ? Math.max(0, Math.min(w.max, Math.round(v))) : 0;

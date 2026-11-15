@@ -2,7 +2,7 @@
   "id": "shakhud",
   "title": "ShakHUD",
   "description": "ShakHUD : un HUD pour le pare-brise, le compte-tours M Style (une barre brisée, rouge dans la zone rouge, bleu clair en électrique, verte en recharge), avec la batterie, les autonomies et les températures en bas à droite ; il se cache tout seul quand la carte Waze du HUD est affichée",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "vendor": "custom",
   "loggingId": "OAS1",
   "iconGlyph": "SH",
@@ -821,6 +821,71 @@
         6000,
         6500,
         7000
+      ]
+    },
+    {
+      "key": "oilCold",
+      "label": "Température d'huile : bleu en dessous de",
+      "type": "number",
+      "unit": "°C",
+      "default": 75,
+      "steps": [
+        0,
+        50,
+        60,
+        70,
+        75,
+        80,
+        85,
+        90
+      ]
+    },
+    {
+      "key": "coolantCold",
+      "label": "Température du liquide : bleu en dessous de",
+      "type": "number",
+      "unit": "°C",
+      "default": 70,
+      "steps": [
+        0,
+        50,
+        60,
+        70,
+        75,
+        80,
+        85
+      ]
+    },
+    {
+      "key": "reserveKm",
+      "label": "Réserve : autonomie essence en rouge à partir de",
+      "type": "number",
+      "unit": "km",
+      "default": 90,
+      "steps": [
+        0,
+        30,
+        50,
+        70,
+        90,
+        110,
+        130,
+        150
+      ]
+    },
+    {
+      "key": "reservePct",
+      "label": "Réserve : batterie en rouge à partir de",
+      "type": "number",
+      "unit": "%",
+      "default": 10,
+      "steps": [
+        0,
+        5,
+        10,
+        15,
+        20,
+        25
       ]
     }
   ],

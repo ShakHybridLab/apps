@@ -7,7 +7,9 @@ car's own zones (hood, the black box at x 1406..1597 y 342..419, the belt light 
 Edit this and run it again; the shaders (shared/shaders.js mblade, navi) take their geometry from the "backdrop" widget.
 Usage: python3 tools/gen_mblade_navi.py   (from the app's root)
 """
-import json, math, os
+import json, math, os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from zoom_labels import zoomify
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'apps', 'shaktheme', 'hud', 'layouts')
 
@@ -18,11 +20,22 @@ def text(id, x, y, w, h, t, font, color='fg', align=None, conn=0, **kw):
         d['align'] = align
     if conn:
         d['conn'] = conn
+    if t in LOW_TEXT:
+        d['lowWhen'] = LOW_TEXT[t]
     d.update(kw)
     return d
 
 
+# the modern icons (shared/icons.js): the oil can with its drop, the thermometer with heat waves, the cell with a bolt, the pump
+LOW_ICON = {'fuelPump': 'fuel', 'battBolt': 'battery'}          # the reserve: the fuel range at 90 km, the charge at 10 %
+LOW_TEXT = {'{{range}}': 'fuel', '{{evRange}}': 'battery', '{{hvSoc}}': 'battery'}
+MODERN = {'oilcan': 'oilPour', 'therm': 'tempWave', 'battery': 'battBolt', 'fuel': 'fuelPump'}
+
+
 def icon(id, name, x, y, w, h, color='dim', conn=0, **kw):
+    name = MODERN.get(name, name)
+    if name in LOW_ICON:
+        kw.setdefault('lowWhen', LOW_ICON[name])      # in reserve: the shift red
     d = {'id': id, 'type': 'icon', 'icon': name, 'z': 5, 'x': x, 'y': y, 'w': w, 'h': h, 'color': color}
     if conn:
         d['conn'] = conn
@@ -144,8 +157,11 @@ def mb_right_strip(pre, tog, G, name, hi, mid, lo, unit, icon_name, icon_w=26):
     if unit:
         W.append(text(pre + name + '_unit', round(strip_x(G, top + 50 * (bot - top) / 176.0) - 13 - 52 - 8), round(top + 38 * (bot - top) / 176.0), 60, 32,
                       unit, 'm_tiny', 'fg', 'right', 1, **k))
+    ik = dict(k)
+    if name == 'o':
+        ik['tempBy'] = 'oil'                  # the oil can takes the colour of the oil temperature's number
     W.append(icon(pre + name + '_icon', icon_name, round(strip_x(G, top + 117 * (bot - top) / 176.0) - 13 - 36), round(top + 110 * (bot - top) / 176.0),
-                  icon_w, 34, 'fg', 1, **k))
+                  icon_w, 34, 'fg', 1, **ik))
     return W
 
 
@@ -160,7 +176,7 @@ def mb_bottom_right(pre='', tog=None, dx=0, y=684):
     for x, name, icon_name, tok, sig in ((1205, 'cool', 'therm', '{{coolant}}', 'coolant'), (1383, 'oil', 'oilcan', '{{oil}}', 'oil')):
         # the coolant is not under a strip: it keeps its place; the oil, and the electric range, follow their strips (dx)
         d = 0 if name == 'cool' else dx
-        W.append(icon(pre + name + '_icon', icon_name, x + d, y - 3, 26, 34, 'fg', 1, **k))
+        W.append(icon(pre + name + '_icon', icon_name, x + d, y - 3, 26, 34, 'fg', 1, tempBy=sig, **k))
         W.append(text(pre + name, x + d + 32, y, 87, 29, tok, 'm_mid', 'fg', 'right', 1, tempBy=sig, **k))
         W.append(text(pre + name + '_unit', x + d + 123, y + 3, 36, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, **k))
     W += [icon(pre + 'ev_icon', 'battery', 1562 + dx, y - 3, 26, 34, 'fg', 1, **k),
@@ -340,10 +356,10 @@ def navi():
     W.append(text('ev_range', 1400, 630, 60, 34, '{{evRange}}', 'm_mid', 'fg', 'right', 1))
     W.append(text('ev_range_unit', 1466, 636, 44, 29, '{{u:distLc}}', 'm_tiny', 'dim', conn=1))
     # the oil and outside temperatures in the free space on the right (right of the map window, under BMW's black box)
-    W.append(icon('oil_icon', 'oilcan', 1644, 446, 29, 34, 'dim', 1))
+    W.append(icon('oil_icon', 'oilcan', 1644, 446, 29, 34, 'dim', 1, tempBy='oil'))
     W.append(text('oil', 1684, 447, 96, 34, '{{oil}}', 'm_mid', 'fg', 'right', 1, tempBy='oil'))
     W.append(text('oil_unit', 1786, 453, 44, 29, '{{u:temp}}', 'm_tiny', 'dim', conn=1))
-    W.append(icon('out_icon', 'therm', 1644, 506, 29, 34, 'dim', 1))
+    W.append(icon('out_icon', 'tempOut', 1644, 506, 29, 34, 'dim', 1))
     W.append(text('outside', 1676, 507, 104, 34, '{{ambient}}', 'm_mid', 'fg', 'right', 1))
     W.append(text('outside_unit', 1786, 513, 44, 29, '{{u:temp}}', 'm_tiny', 'dim', conn=1))
     W += danger_alert(1196, 38, 76)         # in the top strip right of the shift light: clear of the map window (y 120) and of the hood
@@ -365,6 +381,7 @@ def navi():
 
 if __name__ == '__main__':
     for name, L in (('mblade', mblade()), ('navi', navi())):
+        zoomify(name, L['widgets'])                        # the scale numbers that grow in their zone: bigger boxes (tools/zoom_labels.py)
         p = os.path.join(OUT, name + '.json')
         with open(p, 'w') as f:
             json.dump(L, f, indent=2)

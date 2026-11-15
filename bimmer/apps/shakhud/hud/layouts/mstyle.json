@@ -136,6 +136,7 @@
     },
     {
       "id": "soc",
+      "lowWhen": "battery",
       "type": "text",
       "font": "big",
       "color": "fg",
@@ -151,6 +152,7 @@
     },
     {
       "id": "ev_icon",
+      "lowWhen": "battery",
       "type": "icon",
       "icon": "battBolt",
       "color": "dim",
@@ -164,6 +166,7 @@
     },
     {
       "id": "ev_range",
+      "lowWhen": "battery",
       "type": "text",
       "font": "mid",
       "color": "fg",
@@ -179,6 +182,7 @@
     },
     {
       "id": "fuel_icon",
+      "lowWhen": "fuel",
       "type": "icon",
       "icon": "fuelPump",
       "color": "dim",
@@ -192,6 +196,7 @@
     },
     {
       "id": "fuel_range",
+      "lowWhen": "fuel",
       "type": "text",
       "font": "mid",
       "color": "fg",
@@ -207,6 +212,7 @@
     },
     {
       "id": "batbar",
+      "lowWhen": "battery",
       "type": "slantbar",
       "class": "overlay",
       "z": 10,
@@ -223,6 +229,7 @@
       "id": "oil_icon",
       "type": "icon",
       "icon": "oilPour",
+      "tempBy": "oil",
       "color": "fg",
       "class": "content",
       "z": 10,
@@ -252,6 +259,7 @@
       "id": "coolant_icon",
       "type": "icon",
       "icon": "tempWave",
+      "tempBy": "coolant",
       "color": "fg",
       "class": "content",
       "z": 10,
