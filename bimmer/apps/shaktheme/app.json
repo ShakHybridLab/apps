@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.21.3",
+  "version": "0.21.4",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -37,7 +37,8 @@
     "runs.js",
     "tz.js",
     "shift_light.js",
-    "probes.js"
+    "probes.js",
+    "bottom_strip.js"
   ],
   "signals": {
     "de.bmw.infotainment.vehicle.CDS": {

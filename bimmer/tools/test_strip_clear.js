@@ -1,0 +1,65 @@
+'use strict';
+// « Laisser libre la bande du bas de BMW » : le thème s'arrête à y 646 (l'appli d'origine, "Bottom strip : the car's own", où BMW ne
+// dessine plus ses cases noires), une bande noire couvre le bord des cadrans de BMW, les lignes que la bande de BMW redit disparaissent,
+// et les fonds ne creusent plus de fenêtre autour de la case. node tools/test_strip_clear.js
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const assert = require('assert');
+const bs = require('../shared/bottom_strip');
+const shaders = require('../shared/shaders');
+let failed = 0;
+function check(name, fn) { try { fn(); console.log('ok   ' + name); } catch (e) { failed++; console.log('FAIL ' + name + ': ' + (e && e.message || e)); } }
+const root = path.join(__dirname, '..');
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'strip-'));
+fs.mkdirSync(path.join(tmp, 'shared'));
+fs.readdirSync(path.join(root, 'shared')).filter((f) => f.endsWith('.js')).forEach((f) => fs.copyFileSync(path.join(root, 'shared', f), path.join(tmp, 'shared', f)));
+fs.symlinkSync(path.join(root, 'kit', 'runtime'), path.join(tmp, 'shared', 'kit'));
+const HudApp = require(path.join(tmp, 'shared', 'hud.js'));
+const app = (n) => JSON.parse(fs.readFileSync(path.join(root, 'apps', n, 'app.json'), 'utf8'));
+const fake = (on, target) => ({ target: target || 'panel', ctx: { settings: { item: (k) => (k === 'stripClear' ? {} : null) } }, setting: () => on });
+
+check('la limite est y 646 et la compression 646 / 720 (662 laissait les cases noires)', () => {
+    assert.strictEqual(bs.TOP, 646);
+    assert.strictEqual(HudApp.prototype._stripSy.call(Object.assign(fake(true), { _stripOn: HudApp.prototype._stripOn })), 646 / 720);
+    assert.strictEqual(HudApp.prototype._stripSy.call(Object.assign(fake(false), { _stripOn: HudApp.prototype._stripOn })), 1);
+    assert.strictEqual(HudApp.prototype._stripOn.call(fake(true, 'hud')), false, 'le HUD n\'a pas de bande');
+});
+
+check('la bande noire : trois couches pleines de y 646 à 662, 658 devant le mode de conduite et le rapport (x 1196..1424)', () => {
+    const b = bs.band();
+    assert.strictEqual(b.length, 3);
+    b.forEach((w) => { assert.strictEqual(w.type, 'fill'); assert.strictEqual(w.y, 646); assert(w.fixed); assert.deepStrictEqual(w.color, [0, 0, 0, 255]); });
+    assert.deepStrictEqual(b.map((w) => [w.x, w.x + w.w, w.y + w.h]), [[0, 1196, 662], [1196, 1424, 658], [1424, 1920, 662]]);
+});
+
+check('les lignes que la bande de BMW redit sont retirées (heure, portées, extérieur, mode), pas les autres (huile, liquide, badge)', () => {
+    ['time', 'ampm', 'range', 'range_icon', 'range_unit', 'outside', 'outside_unit', 'ev_range', 'ev_icon', 'ev_range_unit', 'drive_mode', 'o_time', 'o_range', 'o_drive_mode', 'fuel_icon', 'batt_icon']
+        .forEach((id) => assert(bs.duplicates(id), id));
+    ['oil', 'cool', 'coolant', 'oil_unit', 'ice_icon', 'ev_share', 'badge', 'boost', 'power', 'ev_pct', 'sport', 'backdrop', 'strip_band0', 'ready_text'].forEach((id) => assert(!bs.duplicates(id), id));
+});
+
+check('les fonds Sport et Navi : u_slotOff éteint la fenêtre et le liseré autour de la case', () => {
+    ['sdash', 'navi'].forEach((t) => {
+        const src = String(shaders[t]);
+        assert(/uniform float u_slotOff;/.test(src), t + ' : pas d\'u_slotOff');
+        assert(/u_slotOff > 0\.5 \? 1\.0/.test(src), t + ' : slot() ne s\'éteint pas');
+        assert(/if \(u_slotOff > 0\.5\) return vec3\(0\.0\);/.test(src), t + ' : slotRim() ne s\'éteint pas');
+    });
+    const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
+    assert.strictEqual((hud.match(/'u_slotOff'/g) || []).length, 2, 'hud.js doit donner u_slotOff à sdash et à navi');
+});
+
+check('le réglage reconstruit le thème (la bande noire et les doublons ne se posent pas à la volée)', () => {
+    const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
+    const line = hud.split('\n').find((l) => /^const PLACE_KEYS/.test(l));
+    assert(line && line.indexOf('stripClear') < 0, line);
+});
+
+check('les deux applis livrent bottom_strip.js', () => {
+    ['shaktheme', 'shakhud'].forEach((n) => assert(app(n).shared.indexOf('bottom_strip.js') >= 0, n));
+});
+
+fs.rmSync(tmp, { recursive: true, force: true });
+if (failed) { console.log(failed + ' en échec'); process.exit(1); }
+console.log('tout est bon');

@@ -2,6 +2,12 @@
 
 ## 15 novembre 2026 (soir)
 
+### ShakTheme 0.21.4, ShakHUD 0.6.10 (pas encore essayé sur la voiture)
+- **« Laisser libre la bande du bas de BMW » refait comme l'appli d'origine (« Bottom strip : the car's own »).** Les photos du 15 nov. 2026 ont montré qu'à y 662 les cases noires de BMW restent (et qu'une petite apparaît près de la portée électrique). L'appli d'origine arrête le thème à **y 646** : BMW n'y dessine alors plus ses cases (essayé sur des voitures à mode « Electric Individual » ; pas encore sur l'X3 30e). La limite passe donc de 662 à 646.
+- Avec l'option : une **bande noire** (y 646 à 662, jusqu'à 658 devant le mode de conduite et le rapport, x 1196 à 1424) cache le bord des cadrans de BMW ; les **lignes que la bande de BMW redit déjà** disparaissent de nos thèmes (heure, portée, température extérieure, portée électrique, mode de conduite) ; les fonds Sport et Navi **ne creusent plus de fenêtre ni de liseré** autour de l'ancienne case (`u_slotOff`).
+- Le réglage reconstruit le thème (il ne se pose plus à la volée). Le thème reste comprimé de 10 % en hauteur ; avec la carte Waze la fenêtre est un peu plus basse que la carte de BMW : à reprendre si les cases noires disparaissent.
+- Nouveau fichier `shared/bottom_strip.js` (limite, bande noire, doublons), livré par les deux applis. Test : `test_strip_clear.js`.
+
 ### ShakTheme 0.21.3, ShakHUD 0.6.9 (pas encore essayé sur la voiture)
 - **L'horloge des thèmes avait une heure de moins : 19:36 au lieu de 20:36.** La voiture donne l'heure UTC et le fuseau était sur « Automatique », qui ne corrige rien. Le fuseau par défaut est maintenant **Europe centrale** (+1 h en hiver, +2 h en été, changement tout seul le dernier dimanche de mars et d'octobre). Si le réglage avait déjà été touché, le remettre sur Europe centrale (Réglages, « Fuseau horaire »).
 - Effet de bord utile : le coucher du soleil (thème Auto, couleurs de nuit) est calculé pour l'Europe centrale et non plus pour le milieu des États-Unis.

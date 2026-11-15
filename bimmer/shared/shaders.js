@@ -807,10 +807,12 @@ float gearD(vec2 p) {
     vec2 q = abs(p - vec2(1420.0, 685.0)) - (vec2(34.0, 23.0) - vec2(10.0));
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - 10.0;
 }
-float slot(vec2 p) { return min(slotOf(slotD(p), 36.0), slotOf(gearD(p), 22.0)); }
+uniform float u_slotOff;   // 1: BMW's bottom strip is left clear (setting stripClear), the KOMBI draws no black box: no window, no rim
+float slot(vec2 p) { return u_slotOff > 0.5 ? 1.0 : min(slotOf(slotD(p), 36.0), slotOf(gearD(p), 22.0)); }
 // A thin pale rim just outside that window (2.5 px out, 1.5 px thick, with a faint glow): the black box then reads as an insert the theme
 // meant to have (a gear window), not as a hole in it. Added to the backdrop colour after slot().
 vec3 slotRim(vec2 p) {
+    if (u_slotOff > 0.5) return vec3(0.0);
     float e = min(abs(slotD(p) - 2.5), abs(gearD(p) - 2.5));
     return vec3(0.42, 0.55, 0.82) * (cov(e - 0.75) * 0.5 + exp(-e / 4.0) * 0.07);
 }

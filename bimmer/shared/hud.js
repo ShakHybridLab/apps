@@ -284,6 +284,7 @@ const badges = require('./badges');
 const Runs = require('./runs');
 const { SpeedLimit, decodeSign } = require('./speedlimit');
 const { Probes, PROBES } = require('./probes');
+const bottomStrip = require('./bottom_strip');
 const { hueOfMode, accentTheme, mapRole } = require('./accent');
 const ACCENT_BRIGHT = [92, 158, 255, 255];   // the Sport theme's brightest blue (0.36, 0.62, 1.0), whose hue the drive mode's name takes
 const tz = require('./tz');
@@ -317,11 +318,14 @@ const TYRE_CORNERS = ['FL', 'FR', 'RL', 'RR'];
 // the Roadster's speed dial: 0..160 mph or 0..240 km/h in 8 steps (labels {{dial:speed:<i>}})
 const DIAL_SPEED = { us: { max: 160, ticks: 8 }, metric: { max: 240, ticks: 8 } };
 // the HUD's place (the page's Position tab): settings that move / scale the layers already there, no rebuild
-const PLACE_KEYS = ['hudX', 'hudY', 'hudScale', 'stripClear'];
+const PLACE_KEYS = ['hudX', 'hudY', 'hudScale'];
 // "Leave BMW's bottom strip clear" (cluster, issues #5 / #1): BMW's own strip (range, clock, belt light, P) starts at
-// y 662. A theme drawn only above it is reported (#5, an M car) to stop BMW painting its black boxes over the theme.
-// cluster-render has no clip, so the switch squeezes every layer to 662 / 720 of its height about the panel's top.
-const STRIP_TOP = 662;
+// y 662. A theme that stops at 646 (shared/bottom_strip.js) makes the KOMBI draw no black boxes over it: the original app's
+// "Bottom strip: the car's own", found on cars; at 662 the owner's photos of Nov 15 2026 still showed them.
+// cluster-render has no clip, so the switch squeezes every layer to 646 / 720 of its height about the panel's top; the rows of the
+// bottom the strip already shows are left out, a black band covers the stock dials' edge, and the backdrops lose the window and rim
+// they dug round the box (u_slotOff).
+const STRIP_TOP = bottomStrip.TOP;
 // settings that only change what a text shows (the next tick paints it), no rebuild
 const LIVE_KEYS = ['iceBelow', 'evShare', 'launchReady', 'launchRpm', 'warnOil', 'warnCoolant', 'warnBoost', 'oilCold', 'coolantCold', 'tyreLow', 'badge', 'badgeBMW', 'gFlipLat', 'gFlipLong', 'gRange', 'gTrail'];
 // g (the idea of a G-meter app, no code): a sample over G_BAD is a bad reading, not a corner;
@@ -695,6 +699,7 @@ class HudApp {
         if (!this.placed.length) return;
         const b = this._placedBox(), cx = b.x + b.w / 2, cy = b.y + b.h / 2;
         this.placed.forEach((l) => {
+            if (l.fixed) { l.c.set(l.ref, { x: l.x, y: l.y }); return; }       // the black band: never moved, never squeezed
             const o = { x: l.x + off.x, y: l.y + off.y };
             if (st !== 1) { o.sx = 1; o.sy = st; o.px = 0; o.py = -l.y; l.scaled = true; }      // about the panel's top, y 0
             else if (sc !== 1 || l.scaled) { o.sx = sc; o.sy = sc; o.px = cx - l.x; o.py = cy - l.y; l.scaled = sc !== 1; }
@@ -702,7 +707,7 @@ class HudApp {
         });
     }
     _placedBox() {
-        const ls = this.placed;
+        const ls = this.placed.filter((l) => !l.fixed);
         if (!ls.length) return { x: 0, y: 0, w: 0, h: 0 };
         const x0 = Math.min.apply(null, ls.map((l) => l.x)), y0 = Math.min.apply(null, ls.map((l) => l.y));
         const x1 = Math.max.apply(null, ls.map((l) => l.x + l.w)), y1 = Math.max.apply(null, ls.map((l) => l.y + l.h));
@@ -727,11 +732,12 @@ class HudApp {
     }
     _cameraOn() { return this.target === 'panel' && !!this.ctx.settings.item('cameraNotch') && this.setting('cameraNotch') === true; }
 
-    /** The cluster's squeeze for "Leave BMW's bottom strip clear": 662 / 720 while it's on, else 1. */
-    _stripSy() {
-        if (this.target !== 'panel' || !this.ctx.settings.item('stripClear')) return 1;
-        return this.setting('stripClear') === true ? STRIP_TOP / TARGET_SIZES.panel[1] : 1;
+    /** "Leave BMW's bottom strip clear" is on (the cluster panel only). */
+    _stripOn() {
+        return this.target === 'panel' && !!this.ctx.settings.item('stripClear') && this.setting('stripClear') === true;
     }
+    /** The cluster's squeeze for "Leave BMW's bottom strip clear": 646 / 720 while it's on, else 1. */
+    _stripSy() { return this._stripOn() ? STRIP_TOP / TARGET_SIZES.panel[1] : 1; }
     _scale() {
         if (!this.ctx.settings.item('hudScale')) return 1;
         const v = this.setting('hudScale');
@@ -2135,7 +2141,10 @@ class HudApp {
         this.nightOn = this._nightDim();
         if (this.nightOn) this.theme = dimTheme(this.theme, NIGHT_DIM);
         this.log.info('layout "' + layout.name + '", theme ' + this.theme.name + (this.layoutTheme ? '' : ' (' + this.setting('hudTheme') + ')'));
-        const shown = layout.widgets.filter((w) => !(w.toggle && !this._toggleOn(w.toggle)) && !(w.themes && w.themes.indexOf(this.themeName) < 0));
+        const stripOn = this._stripOn();         // BMW's bottom strip left clear: no row it already shows, a black band under the theme
+        const shown = layout.widgets.filter((w) => !(w.toggle && !this._toggleOn(w.toggle)) && !(w.themes && w.themes.indexOf(this.themeName) < 0)
+            && !(stripOn && bottomStrip.duplicates(w.id)));
+        if (stripOn) bottomStrip.band().forEach((b) => shown.push(b));
         this.shown = shown;              // for a scale to find its rev bar (driver camera wings)
         this.hybridEv = false; this.hybridCharge = false; this.hybridPow = null;   // the bar of this layout says again
         this.nearLabels = {};            // the scale labels this layout has, per kind ("near"): the needle lights the last one it has reached
@@ -2309,7 +2318,7 @@ class HudApp {
             if (IMAGE_TYPES[w.type]) ref = c.image(Object.assign({ iw: w.w, ih: w.h }, base));
             else ref = c.effect(Object.assign({ fs: w.type === 'swatch' ? calibration.SWATCH : shaders.accented(w.type, this.accentHue) }, base));
             if (!ref) { this.log.warn('widget "' + w.id + '": layer refused'); return; }
-            this.placed.push({ c, ref, x: w.x, y: w.y, w: w.w, h: w.h });
+            this.placed.push({ c, ref, x: w.x, y: w.y, w: w.w, h: w.h, fixed: !!w.fixed });
         }
         const x = { w, ref, c, ci: sheet ? sheet.ci : this._connOf(w), sheet: sheet || null, last: null, lastPaint: 0, px: null };
         this.widgets.set(w.id, x);
@@ -2357,6 +2366,7 @@ class HudApp {
             c.uniform(ref, 'u_topEnd', [w.topEnd]);
             c.uniform(ref, 'u_tint', [this._tint()]);
             c.uniform(ref, 'u_facets', [this._facets()]);
+            c.uniform(ref, 'u_slotOff', [this._stripOn() ? 1 : 0]);
         } else if (w.type === 'mblade') {
             // the M Blade theme (shaders.js mblade): geometry in panel px from the layout, see the widget notes in the header
             const [redFrom, orange] = this._redMarks(w.rpmMax || 7000);
@@ -2411,6 +2421,7 @@ class HudApp {
             c.uniform(ref, 'u_holeR', [this._holeRadius(w)]);
             c.uniform(ref, 'u_tint', [this._tint()]);
             c.uniform(ref, 'u_facets', [this._facets()]);
+            c.uniform(ref, 'u_slotOff', [this._stripOn() ? 1 : 0]);
         } else if (w.type === 'mdash') {
             const ty = w.tyres || [0, 0, 0], L = w.gaugeL || {}, R = w.gaugeR || {}, b = w.blade || {};
             const bars = Array.isArray(w.segbars) ? w.segbars.slice(0, 4) : [];
