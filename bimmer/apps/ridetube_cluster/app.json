@@ -2,7 +2,7 @@
   "id": "ridetube_cluster",
   "title": "RideTube on cluster",
   "description": "Shows the video RideTube plays in the cluster theme's window and on the HUD, only while the car is parked",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "vendor": "custom",
   "loggingId": "OAV1",
   "iconGlyph": "RT",

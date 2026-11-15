@@ -2,7 +2,7 @@
 /**
  * video_app.js - "RideTube on cluster": shows the video RideTube plays (its decoder's frame file, video_bridge.js) in a cluster
  * theme's centre window and in the HUD's free room, through cluster-render video layers. ONLY WHILE THE CAR STANDS: the gate is
- * video_bridge.Standing (speed known, fresh, zero for 2 s); the first reading that is not hides every picture in the same tick and
+ * video_bridge.Standing (speed known, fresh, zero for 2 s) AND RideTube's own parked check (deps.moving); the first reading that is not hides every picture in the same tick and
  * gives the theme its window back. There is no setting that changes that, and none may be added.
  *
  * On the instrument cluster it draws only inside a theme's window: it asks for it like Cluster Centre does
@@ -34,7 +34,7 @@ const HUD_FALLBACK = { x: visible.HUD_BMW[2] + 10, y: visible.HUD_WINDOW.y, w: v
 class VideoApp {
     /**
      * deps: { id, log, now(), setting(key), makeRender(target) -> a ClusterRender-like { video, set, drop, frame, connect, close,
-     * ready, image, pixels }, videoPath, themesDir }. Speed readings come in
+     * ready, image, pixels }, videoPath, themesDir, moving() -> true while the car drives (RideTube's own check) }. Speed readings come in
      * through speed(kmh).
      */
     constructor(deps) {
@@ -184,7 +184,9 @@ class VideoApp {
      */
     _videos(now) {
         // THE GATE FIRST: not standing = no picture anywhere, whatever else is true
-        const standing = this.gate.ok(now);
+        // two independent checks, both must say "parked": this app's own (Standing) and RideTube's original (kit/parked.js, strict);
+        // with no second check wired, the car counts as moving
+        const standing = this.gate.ok(now) && typeof this.d.moving === 'function' && this.d.moving() === false;
         this.state.standing = standing;
         if (!standing) { this._hideVideos(); this.state.playing = false; return { panel: false, hud: false }; }
         const frame = this._read();

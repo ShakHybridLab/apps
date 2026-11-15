@@ -27,7 +27,7 @@ function rig(settings) {
         R.renders[target] = c;
         return c;
     };
-    R.app = new VideoApp({ id: 'ridetube_cluster', now: () => R.t, setting: (k) => settings[k], makeRender: R.cr, videoPath: video, themesDir: themes });
+    R.app = new VideoApp({ id: 'ridetube_cluster', now: () => R.t, setting: (k) => settings[k], makeRender: R.cr, videoPath: video, themesDir: themes, moving: () => R.second !== undefined ? R.second : R.kmh > 3 });
     R.writeFrame = () => {
         R.seq++; R.slot = (R.slot + 1) % 3;
         const b = Buffer.alloc(64 + 3 * FB, 90);
@@ -42,7 +42,7 @@ function rig(settings) {
         for (let i = 0; i < ms; i += 33) {
             R.t += 33;
             if (playing !== false) R.writeFrame();
-            if (speed !== undefined) R.app.speed(speed);
+            if (speed !== undefined) { R.kmh = speed; R.app.speed(speed); }
             if (R.themeUp !== false) R.theme(R.asked(), R.mapUp === true);
             R.app.tick();
         }
@@ -133,7 +133,7 @@ check('the gate cannot be configured away: the pictures have no setting, option 
     const a = src.indexOf('    _videos(now) {'), b = src.indexOf('    tick() {');
     assert(a > 0 && b > a, '_videos / tick not found');
     const vids = src.slice(a, b), rest = src.slice(0, a) + src.slice(b);
-    assert(/const standing = this\.gate\.ok\(now\);[\s\S]*?if \(!standing\) \{ this\._hideVideos\(\);[^}]*return \{ panel: false, hud: false \}; \}/.test(vids), '_videos() does not start with the gate');
+    assert(/const standing = this\.gate\.ok\(now\) && [\s\S]*?if \(!standing\) \{ this\._hideVideos\(\);[^}]*return \{ panel: false, hud: false \}; \}/.test(vids), '_videos() does not start with the gate');
     assert(vids.indexOf('this.gate.ok') < vids.indexOf('this._read()'), 'a frame is read before the gate');
     assert(!/this\._read\(\)|this\._draw\(/.test(rest), 'a frame is read or drawn outside _videos()');
     assert(!/parkedOnly|whileDriving|allowMoving|privateRoad|process\.env\.[A-Z_]*(GATE|PARK|MOVING|SPEED)/.test(src), 'a switch around the gate');
@@ -146,6 +146,18 @@ check('the cluster: Waze\'s map or another app\'s page in the window = no pictur
     assert(R.visible('panel'), 'no picture once the map is gone');
     for (let i = 0; i < 60; i++) { R.t += 33; R.writeFrame(); R.app.speed(0); fs.writeFileSync(path.join(R.themes, 'window-cluster_centre.json'), JSON.stringify({ t: R.t, app: 'Cluster Centre', kind: 'pages', showing: true })); R.theme(true); R.app.tick(); }
     assert(!R.visible('panel'), 'the picture covers Cluster Centre\'s page');
+});
+
+check('the second safety (RideTube\'s own parked check): when it says moving, or is not wired, no picture even if this app\'s speed says standing', () => {
+    let R = rig({ videoCluster: true, videoHud: true });
+    R.second = true; R.run(6000, 0);
+    assert(!R.visible('panel') && !R.visible('hud') && !R.asked(), 'shown while the second check says moving');
+    R.second = false; R.run(3000, 0);
+    assert(R.visible('panel') && R.visible('hud'), 'not shown when both say parked');
+    R.second = true; R.t += 33; R.writeFrame(); R.app.tick();
+    assert(!R.visible('panel') && !R.visible('hud'), 'still shown one tick after the second check says moving');
+    R = rig({ videoCluster: true, videoHud: true }); R.app.d.moving = undefined; R.run(6000, 0);
+    assert(!R.visible('panel') && !R.visible('hud'), 'shown with no second check');
 });
 
 console.log(n + ' checks passed');

@@ -7,15 +7,19 @@
 const mgu = require('./kit/mgu');
 const { VideoApp } = require('./video_app');
 const { ClusterRender } = require('./cluster_render_client');
+const Parked = require('./kit/parked');
 
 mgu.run({
     start(ctx) {
         let app;
         try {
             const cfg = ctx.spec.config || {};
+            // RideTube's own parked check (the same module, strict: no speed or a stale one counts as moving), the second safety
+            const parked = Parked.watch(ctx, ctx.log, { strict: true });
             app = new VideoApp({
                 id: ctx.spec.id, log: ctx.log,
                 setting: (k) => ctx.settings.get(k),
+                moving: () => parked.moving(),
                 makeRender: (target) => new ClusterRender(ctx.spec.id + '_' + target, cfg.socketPath),
                 videoPath: process.env.RIDETUBE_VIDEO || cfg.videoPath,
             });

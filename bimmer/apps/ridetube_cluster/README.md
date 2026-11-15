@@ -5,7 +5,9 @@ on the instrument cluster and on the HUD. **Only while the car stands.** Not tri
 
 ## Parked only, with no switch
 
-The picture shows only when the car's speed is known, fresh (read less than 5 s ago) and zero, and has been for 2 seconds.
+Two independent checks, both must say parked. The second is RideTube's own (its `kit/parked.js`, strict: no speed, or a speed read more than 5 s ago, counts as moving, and so does more than 3 km/h); with it not wired, the car counts as moving.
+
+The first: the picture shows only when the car's speed is known, fresh (read less than 5 s ago) and zero, and has been for 2 seconds.
 The first reading that is not (the car moves, the speed is unknown, the readings stop) hides the picture at once and gives the
 theme its window back. There is no setting for this. The sound is RideTube's own and is not touched.
 
