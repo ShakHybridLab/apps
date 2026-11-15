@@ -1167,6 +1167,36 @@
       "font": "s_unit",
       "color": "dim",
       "align": "left"
+    },
+    {
+      "id": "ready_flag",
+      "type": "icon",
+      "icon": "flag",
+      "z": 5,
+      "x": 822,
+      "y": 330,
+      "w": 36,
+      "h": 36,
+      "color": "fg",
+      "readyBy": true,
+      "toggle": "!mapUp",
+      "conn": 1
+    },
+    {
+      "id": "ready_text",
+      "type": "text",
+      "z": 5,
+      "x": 866,
+      "y": 331,
+      "w": 232,
+      "h": 34,
+      "text": "{{launchReady}}",
+      "font": "badge",
+      "color": "fg",
+      "align": "left",
+      "readyBy": true,
+      "toggle": "!mapUp",
+      "conn": 1
     }
   ]
 }

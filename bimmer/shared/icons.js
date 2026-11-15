@@ -7,7 +7,7 @@
  *   oilPour, tempWave, tempOut (ShakHUD's modern oil can, the thermometer with heat waves for the coolant, a plain one for the outside),
  *   battery (a plug-in hybrid's high-voltage battery: the cell with a bolt in it, terminal on top).
  *   fuelBolt (the total range, fuel and electric: the pump's body with the battery's bolt in it).
- *   ring (the speed limit sign's ring, also the danger alert's), stopwatch (the 0-100 timer), snow (the ice alert), leaf (the trip's electric share).
+ *   ring (the speed limit sign's ring, also the danger alert's), stopwatch (the 0-100 timer), snow (the ice alert), leaf (the trip's electric share), flag (the launch cue: a chequered flag).
  */
 function seg(px, py, ax, ay, bx, by) {
     const pax = px - ax, pay = py - ay, bax = bx - ax, bay = by - ay;
@@ -99,6 +99,13 @@ const ICONS = {
     // the 0-100 timer: a stopwatch, its crown on top and its hand
     stopwatch: (x, y) => Math.min(ring(x, y, 0.5, 0.58, 0.34) - 0.05, seg(x, y, 0.5, 0.16, 0.5, 0.24) - 0.05, seg(x, y, 0.4, 0.1, 0.6, 0.1) - 0.04,
         seg(x, y, 0.5, 0.58, 0.63, 0.4) - 0.045, disc(x, y, 0.5, 0.58, 0.06), seg(x, y, 0.8, 0.28, 0.86, 0.22) - 0.04),
+    // the launch cue: a chequered flag on its pole (a frame of 4 x 3 squares, every other one filled)
+    flag: (x, y) => {
+        const fx = 0.2, fy = 0.1, cw = 0.1875, ch = 0.2, fw = 4 * cw, fh = 3 * ch;
+        let d = Math.min(seg(x, y, 0.13, 0.06, 0.13, 0.96) - 0.04, Math.abs(Math.max(Math.abs(x - fx - fw / 2) - fw / 2, Math.abs(y - fy - fh / 2) - fh / 2)) - 0.025);
+        for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) if ((i + j) % 2 === 0) d = Math.min(d, Math.max(Math.abs(x - fx - (i + 0.5) * cw) - cw / 2, Math.abs(y - fy - (j + 0.5) * ch) - ch / 2));
+        return d;
+    },
     oilcan: (x, y) => Math.min(seg(x, y, 0.2, 0.62, 0.6, 0.62) - 0.12, seg(x, y, 0.6, 0.58, 0.9, 0.44) - 0.04, disc(x, y, 0.92, 0.66, 0.05), seg(x, y, 0.3, 0.46, 0.3, 0.34) - 0.035, seg(x, y, 0.22, 0.34, 0.38, 0.34) - 0.04),
 };
 

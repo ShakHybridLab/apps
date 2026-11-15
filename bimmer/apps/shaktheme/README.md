@@ -91,10 +91,10 @@ Neither theme has been tried on a car; they are checked on the bench against the
 - **Bague de limitation de vitesse :** une bague blanche avec la limite, **rouge** (chiffre compris) dès que la vitesse affichée la dépasse. **L'appli ne peut pas trouver la limite seule** (ni position ni carte) : il faut une autre appli qui l'écrit dans `/dev/shm/cluster-themes/speedlimit-<appli>.json` avec `{ "t": <ms depuis 1970, maintenant>, "app": "<nom>", "limit": <km/h> }`, réécrit environ chaque seconde (un fichier de plus de 6 s est ignoré ; si plusieurs applis écrivent, le plus récent gagne ; la limite va de 5 à 200 km/h, toujours en km/h : le thème convertit en mph, arrondi à 5). Rien n'écrit ce fichier pour l'instant, donc la bague ne s'affiche pas tant qu'aucune appli ne le fait. Réglage **Bague de limitation de vitesse**. Ni la bague ni le chrono ne s'affichent quand la carte Waze est ouverte dans le thème (Waze montre déjà la limite).
 - Pas de consommation instantanée (choix fait).
 
-## Détails de finition (0.19.0)
+## Détails de finition (0.19)
 
 - **Nom du mode de conduite en couleur :** Electric, Hybrid et Sport s'écrivent en bleu, vert et rouge sur Sport, M et Navi (sur le M, seul ce nom change ; sur M Blade il reste blanc, car il est posé sur l'onglet de l'hexagone, qui a déjà la couleur du mode).
-- **Chrono prêt au départ :** en mode Sport, voiture immobile, le chronomètre et « 0.0 s » attendent en vert, puis comptent dès que la voiture démarre. Réglage **Chrono : prêt au départ (mode Sport, à l'arrêt)**. L'appli ne lit pas le launch control de la voiture : c'est le chrono qui est prêt.
+- **Launch Control Ready (0.19.1) :** en mode Sport, voiture immobile, un **drapeau à damier** et « Launch Control Ready » s'affichent en vert à la place de la bague de limitation ; le chrono compte dès que la voiture démarre. Réglage **Drapeau « Launch Control Ready » (mode Sport, à l'arrêt)**. L'appli ne lit pas le launch control de la voiture (ni le frein) : c'est le chrono qui est prêt.
 
 ## Détails de finition (0.18.0)
 

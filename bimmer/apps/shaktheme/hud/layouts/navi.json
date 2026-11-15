@@ -1190,6 +1190,36 @@
       "toggle": "!mapUp"
     },
     {
+      "id": "ready_flag",
+      "type": "icon",
+      "icon": "flag",
+      "z": 5,
+      "x": 822,
+      "y": 447,
+      "w": 36,
+      "h": 36,
+      "color": "fg",
+      "conn": 1,
+      "toggle": "!mapUp",
+      "readyBy": true
+    },
+    {
+      "id": "ready_text",
+      "type": "text",
+      "z": 5,
+      "x": 866,
+      "y": 448,
+      "w": 232,
+      "h": 34,
+      "text": "{{launchReady}}",
+      "font": "badge",
+      "color": "fg",
+      "align": "left",
+      "conn": 1,
+      "toggle": "!mapUp",
+      "readyBy": true
+    },
+    {
       "id": "ev_share_icon",
       "type": "icon",
       "icon": "leaf",

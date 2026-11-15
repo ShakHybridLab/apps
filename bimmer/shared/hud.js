@@ -235,7 +235,9 @@
  * the 0-100 timer is up) and "limitBy": true on its text, or on the "ring" icon, makes them red while the speed is over it; the icon is
  * blank without a limit. The 0-100 km/h timer (0-60 mph; the setting "launchTimer"): {{launch}} is its time (0.1 s live, 0.01 s held 12 s once
  * it has finished), {{launchUnit}} an "s" while it shows, "launchBy": true on a text or on the "stopwatch" icon (blank otherwise; green for a new best time).
- * The launch cue (the setting "launchReady"): in the Sport drive mode, once the car has stood still, the same stopwatch and "0.0 s" wait in green (the car's own launch control can't be read).
+ * The launch cue (the setting "launchReady"): in the Sport drive mode, once the car has stood still, a chequered flag ("readyBy": true on the "flag" icon)
+ * and {{launchReady}} ("Launch Control Ready", or {{launchReady1}} / {{launchReady2}} in two lines; "readyBy": true makes a text green) wait in green,
+ * in the place of the speed limit ring (the car's own launch control can't be read: it is the timer that is ready).
  * Text "tempBy": "oil" | "coolant" (with the same token): blue while the reading is under "oilCold" / "coolantCold" (C; 0 = never
  * blue), green once it is warm (three white flashes when it gets there while the app runs), and over the warning limit it flashes between the
  * shift red and a dark red.
@@ -1444,13 +1446,13 @@ class HudApp {
     /** The 0-100 timer's time now (s), or null: it shows on the cluster only, while the setting "launchTimer" is on. */
     _launchTime(now) {
         if (this.target !== 'panel' || this.setting('launchTimer') === false) return null;
-        const v = this.runs.shownHeld(now);
-        return isNum(v) ? v : this._launchReady(now) ? 0 : null;
+        return this.runs.shownHeld(now);
     }
 
     /**
      * The launch cue: the timer is armed (the car has stood still half a second, runs.js), the drive mode is Sport and there is no time to show
-     * yet; the stopwatch and "0.0 s" then wait in green, ready to go (the setting "launchReady"; the car's own launch control can't be read).
+     * yet; a chequered flag and "Launch Control Ready" then wait in green (the setting "launchReady"; the car's own launch control can't be
+     * read, it is the timer that is ready). They take the place of the speed limit ring.
      */
     _launchReady(now) {
         return this.target === 'panel' && this.setting('launchTimer') !== false && this.setting('launchReady') !== false
@@ -1461,7 +1463,7 @@ class HudApp {
     _limitNow(now) {
         if (this.target !== 'panel' || this.setting('limitRing') === false) return null;
         const kmh = this.speedLimit.limit();
-        if (!isNum(kmh) || isNum(this._launchTime(now))) return null;
+        if (!isNum(kmh) || isNum(this._launchTime(now)) || this._launchReady(now)) return null;
         const us = this.setting('units') === 'us', text = formatLimit(kmh, us), v = this._raw('speed');
         return { text, over: isNum(v) && Math.round(us ? v * 0.621371 : v) > Number(text) };
     }
@@ -1864,7 +1866,11 @@ class HudApp {
             // the speed limit ring's number (blank when no limit is known, the ring is off, or the 0-100 timer takes its place)
             case 'limit': { const l = this._limitNow(Date.now()); return l ? l.text : ''; }
             // the 0-100 km/h timer (0-60 mph): the running clock, then the finished run held a few seconds; blank otherwise
-            case 'launch': { const now = Date.now(), v = this._launchTime(now); return isNum(v) ? v.toFixed(this.runs.state === 'run' || v >= 10 || this._launchReady(now) ? 1 : 2) : ''; }
+            case 'launch': { const v = this._launchTime(Date.now()); return isNum(v) ? v.toFixed(this.runs.state === 'run' || v >= 10 ? 1 : 2) : ''; }
+            // the launch cue's words, whole or in two lines (blank unless the cue is up)
+            case 'launchReady': return this._launchReady(Date.now()) ? 'Launch Control Ready' : '';
+            case 'launchReady1': return this._launchReady(Date.now()) ? 'Launch Control' : '';
+            case 'launchReady2': return this._launchReady(Date.now()) ? 'Ready' : '';
             // the share of this drive done with the engine off, in % (a plug-in hybrid only, from 0.3 km on; the setting "evShare"); blank otherwise
             case 'evShare': { const v = this._evShare(); return isNum(v) ? String(v) : ''; }
             case 'evShareUnit': return isNum(this._evShare()) ? '%' : '';
@@ -2712,7 +2718,8 @@ class HudApp {
             if (w.limitBy) { const l = this._limitNow(now); if (l && l.over) role = 'hot'; }                         // over the speed limit: the shift red
             if (w.accentBy) role = this._accentColor() || role;                                                       // the drive mode's own text: in the mode's colour
             if (w.iceBy && this._ice(now).on) role = VERDICT.COLD;                                                    // ice: the outside temperature in the cold blue
-            if (w.launchBy && (this._launchReady(now) || this.runs.state !== 'run' && this.runs.record)) role = VERDICT['SPOT ON'];   // ready, or a new best time: green
+            if (w.launchBy && this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];            // a new best time: green
+            if (w.readyBy) role = VERDICT['SPOT ON'];                                                                 // the launch cue: green
             if (w.lowWhen && this._lowNow(w.lowWhen)) role = 'hot';             // in reserve: the shift red, steady
             // over its warning limit: the value flashes in the shift red
             // ("warnFlash": false: not on a tile that turns red itself, the Dyno theme's)
@@ -2767,7 +2774,7 @@ class HudApp {
                 glow: w.glow ? this.theme.glow : 0,
             });
             this._blitDiff(x, buf);
-        } else if (w.type === 'icon' && ((w.tempBy && COLD_BELOW[w.tempBy]) || w.lowWhen || w.tyreBy || w.limitBy || w.launchBy || w.iceBy || w.evShareBy)) {
+        } else if (w.type === 'icon' && ((w.tempBy && COLD_BELOW[w.tempBy]) || w.lowWhen || w.tyreBy || w.limitBy || w.launchBy || w.iceBy || w.evShareBy || w.readyBy)) {
             // an oil or coolant icon in the colour of its number (blue while cold, green once warm, flashing red over the limit);
             // a fuel or battery icon in the shift red while that is in reserve ("lowWhen")
             let role = w.color || 'fg';
@@ -2787,8 +2794,9 @@ class HudApp {
             if (w.evShareBy) hide = !isNum(this._evShare());                                                          // the leaf only with a share to show
             if (w.launchBy) {
                 hide = !isNum(this._launchTime(now));
-                if (this._launchReady(now) || this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];
+                if (this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];
             }
+            if (w.readyBy) { hide = !this._launchReady(now); role = VERDICT['SPOT ON']; }                              // the chequered flag, only while ready
             const key = JSON.stringify(role) + hide;
             if (!force && key === x.last) return;
             x.last = key;

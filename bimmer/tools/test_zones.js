@@ -679,32 +679,62 @@ check('drive mode name: in the mode\'s colour on Sport, M and Navi (white on M B
     assert(!require(path.join(tmp, 'shared', 'shaders.js')).ACCENT_LITERALS.mdash, 'the M theme\'s shader is not recoloured');
     assert(/w\.accentBy\) role = this\._accentColor\(\) \|\| role/.test(fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8')), 'the text branch reads it');
 });
-check('launch cue: armed in the Sport drive mode with nothing to show, 0.0 s and the stopwatch wait in green; not in other modes, not with the setting off, not under a held time, not on the HUD', () => {
+check('launch cue: armed in the Sport drive mode with nothing to show, a chequered flag and "Launch Control Ready" wait in green; not in other modes, not with the setting off, not under a held time, not on the HUD', () => {
     const h = make({ settings: { launchTimer: true, launchReady: true } });
     h.target = 'panel'; h.driveMode = 'sport';
     h.runs = { state: 'armed', record: false, shownHeld: () => null };
     h.speedLimit = { limit: () => 50 };
-    assert.strictEqual(h._launchReady(1), true); assert.strictEqual(h._launchTime(1), 0);
-    const shown = (k) => h._token(k);
-    assert.strictEqual(shown('launch'), '0.0'); assert.strictEqual(shown('launchUnit'), 's');
-    assert.strictEqual(h._limitNow(1), null, 'the limit ring gives way to it, as to the timer');
-    h.driveMode = 'hybrid'; assert.strictEqual(h._launchReady(1), false, 'only in Sport'); assert.strictEqual(h._launchTime(1), null);
-    assert.strictEqual(shown('launch'), '');
+    assert.strictEqual(h._launchReady(1), true);
+    assert.strictEqual(h._launchTime(1), null, 'the timer itself has no time to show');
+    assert.strictEqual(h._token('launch'), '', 'no "0.0 s"'); assert.strictEqual(h._token('launchUnit'), '');
+    assert.strictEqual(h._token('launchReady'), 'Launch Control Ready');
+    assert.strictEqual(h._token('launchReady1'), 'Launch Control'); assert.strictEqual(h._token('launchReady2'), 'Ready');
+    assert.strictEqual(h._limitNow(1), null, 'the limit ring gives way to it');
+    h.driveMode = 'hybrid'; assert.strictEqual(h._launchReady(1), false, 'only in Sport'); assert.strictEqual(h._token('launchReady'), '');
+    assert.notStrictEqual(h._limitNow(1), null, 'the ring is back with the cue gone');
     h.driveMode = 'eco'; assert.strictEqual(h._launchReady(1), false);
-    h.driveMode = 'sport'; h.S.launchReady = false; assert.strictEqual(h._launchReady(1), false, 'the setting off');
+    h.driveMode = 'sport'; h.S.launchReady = false; assert.strictEqual(h._launchReady(1), false, 'the setting off'); assert.strictEqual(h._token('launchReady2'), '');
     h.S.launchReady = true; h.S.launchTimer = false; assert.strictEqual(h._launchReady(1), false, 'the timer off');
     h.S.launchTimer = true; h.runs.state = 'idle'; assert.strictEqual(h._launchReady(1), false, 'not armed (moving, or not still yet)');
     h.runs.state = 'run'; assert.strictEqual(h._launchReady(1), false, 'timing: the clock shows, not the cue');
     h.runs.state = 'armed'; h.runs.shownHeld = () => 12.34; assert.strictEqual(h._launchReady(1), false, 'a finished time is held first');
     assert.strictEqual(h._launchTime(1), 12.34);
     h.runs.shownHeld = () => null; h.target = 'hud'; assert.strictEqual(h._launchReady(1), false, 'cluster only');
-    // the engine paints them green
     const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
-    assert((hud.match(/_launchReady\(now\) \|\| this\.runs\.state !== 'run' && this\.runs\.record\)/g) || []).length === 2, 'the text and the icon');
+    assert((hud.match(/readyBy\)[^\n]*SPOT ON/g) || []).length === 2, 'the flag and the words are green');
+    assert(/if \(w\.readyBy\) \{ hide = !this\._launchReady\(now\)/.test(hud), 'the flag is hidden unless ready');
+    assert(/w\.evShareBy \|\| w\.readyBy\)\) \{/.test(hud), 'the flag icon takes the live path (else it would always show)');
     const set = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'app.json'), 'utf8')).settings.find((x) => x.key === 'launchReady');
     assert(set && set.type === 'bool' && set.default === true);
     assert(/'launchReady'/.test(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'main.js'), 'utf8')));
     assert(/LIVE_KEYS = \['iceBelow', 'evShare', 'launchReady'/.test(hud));
+    // the layouts: the flag and the words on the four themes, blank-safe, the glyphs exist, clear of the other widgets
+    const icons = require(path.join(tmp, 'shared', 'icons.js')).ICONS;
+    assert(typeof icons.flag === 'function');
+    let ink = 0; for (let y = 0; y < 36; y++) for (let x = 0; x < 36; x++) if (icons.flag((x + 0.5) / 36, (y + 0.5) / 36) < 0) ink++;
+    assert(ink > 150 && ink < 700, 'flag ink ' + ink);
+    ['sport', 'm', 'mblade', 'navi'].forEach((id) => {
+        const L = lay(id), by = (i) => L.widgets.find((w) => w.id === i);
+        const flag = by('ready_flag'); assert(flag && flag.icon === 'flag' && flag.readyBy && flag.toggle === '!mapUp', id + ': the flag');
+        assert.strictEqual(flag.conn, 1, id + ': the cue is on the second connection (the first has no layer to spare: Sport would go over 16 MiB of pixels)');
+        ['ready_text', 'ready_text1', 'ready_text2'].forEach((i) => { if (by(i)) assert.strictEqual(by(i).conn, 1, id + ': ' + i + ' on the second connection'); });
+        const words = id === 'mblade' ? [['ready_text1', '{{launchReady1}}'], ['ready_text2', '{{launchReady2}}']] : [['ready_text', '{{launchReady}}']];
+        words.forEach(([wid, tok]) => {
+            const w = by(wid); assert(w && w.text === tok && w.readyBy && w.toggle === '!mapUp', id + ': ' + wid);
+            const f = font(w.font), g = (c) => f.glyphs[c];
+            assert('Launch Control Ready'.split('').every((c) => g(c)), id + ': the font lacks a letter of the words');
+            const adv = (c) => { const v = g(c); return typeof v === 'object' ? (v.advance || v.w) : v; };
+            const full = tok === '{{launchReady}}' ? 'Launch Control Ready' : tok === '{{launchReady1}}' ? 'Launch Control' : 'Ready';
+            const wd = full.split('').reduce((a, c) => a + adv(c), 0);
+            assert(wd <= w.w, id + ': "' + full + '" is ' + wd + ' px in a ' + w.w + ' px box');
+        });
+        const boxes = [flag].concat(words.map(([wid]) => by(wid))), box = (w) => [w.x, w.y, w.x + w.w, w.y + w.h], hit = (A, B) => A[0] < B[2] && B[0] < A[2] && A[1] < B[3] && B[1] < A[3];
+        // with the speed limit ring and the timer: they never show together (the ring gives way), so only the others count
+        L.widgets.forEach((o) => {
+            if (boxes.indexOf(o) >= 0 || o.type === 'effects' || o.type === 'image' || /^(bg|map|backdrop)/.test(o.id) || o.w >= 800 || /^(lim_|run_)/.test(o.id)) return;
+            boxes.forEach((b) => assert(!hit(box(b), box(o)), id + ': ' + b.id + ' overlaps ' + o.id));
+        });
+    });
 });
 check('Waze contour: the bezel and glass pass is in Sport, M Blade and Navi (not the M theme), and the map window is still cut out', () => {
     const sh = require(path.join(tmp, 'shared', 'shaders.js'));
