@@ -79,6 +79,11 @@ const EXACT = {
     'Colours on the glass': 'Couleurs sur le pare-brise', 'In daylight': 'De jour',
     'Auto switches to Night after sunset. The HUD is a projector: bright, solid colours read best.':
         'Auto passe en Nuit après le coucher du soleil. Le HUD est un projecteur : les couleurs vives et pleines se lisent le mieux.',
+    // fuseaux de l'horloge (shared/tz.js)
+    'Automatic': 'Automatique', 'US Eastern': 'États-Unis Est', 'US Central': 'États-Unis Centre', 'US Mountain': 'États-Unis Rocheuses',
+    'US Pacific': 'États-Unis Pacifique', 'Alaska': 'Alaska', 'Hawaii': 'Hawaï', 'Arizona': 'Arizona', 'Canada Atlantic': 'Canada Atlantique',
+    'Mexico': 'Mexique', 'UK, Ireland, Portugal': 'Royaume-Uni, Irlande, Portugal', 'Central Europe': 'Europe centrale',
+    'Eastern Europe': "Europe de l'Est",
 };
 
 // les phrases qui contiennent un nom ou un nombre

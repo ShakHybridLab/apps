@@ -2,6 +2,11 @@
 
 ## 15 novembre 2026 (soir)
 
+### ShakTheme 0.21.3, ShakHUD 0.6.9 (pas encore essayé sur la voiture)
+- **L'horloge des thèmes avait une heure de moins : 19:36 au lieu de 20:36.** La voiture donne l'heure UTC et le fuseau était sur « Automatique », qui ne corrige rien. Le fuseau par défaut est maintenant **Europe centrale** (+1 h en hiver, +2 h en été, changement tout seul le dernier dimanche de mars et d'octobre). Si le réglage avait déjà été touché, le remettre sur Europe centrale (Réglages, « Fuseau horaire »).
+- Effet de bord utile : le coucher du soleil (thème Auto, couleurs de nuit) est calculé pour l'Europe centrale et non plus pour le milieu des États-Unis.
+- Les noms des fuseaux et « Automatique » sont traduits dans la page (`shared/fr.js`). Test : `test_clock_tz.js`.
+
 ### ShakTheme 0.21.2, ShakHUD 0.6.8 (pas encore essayé sur la voiture)
 - **L'onglet « Signaux » dit pourquoi une ligne reste vide.** Après un trajet, les 11 lignes de la 0.21.0 affichaient « Pas encore reçu » : le câblage de `hud.js` marche (essai avec une fausse voiture : les 15 interfaces sont écoutées et une valeur arrive jusqu'à la ligne), donc le blocage est entre l'appli et la voiture. Chaque ligne vide affiche maintenant l'état de son abonnement : « Abonnement en cours », « Erreur : … » (interface inconnue de l'installation), « Refusé : … » ou « Lecture refusée : … » (la voiture refuse ce champ), « La voiture ne répond pas » (son fournisseur n'est pas là, par exemple une autre instance) ou « Abonné, rien reçu ».
 - `kit/runtime/signals.js` garde les refus (`failed`, `getFailed`, par champ) ; `shared/probes.js` : `stateOf()`. Tests : `test_probes.js`.
