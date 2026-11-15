@@ -2,6 +2,13 @@
 
 ## 15 novembre 2026 (soir)
 
+### ShakTheme 0.21.1, ShakHUD 0.6.7 (pas encore essayé sur la voiture)
+- **La case noire de BMW est plus haute que prévu : 117 px (y 322 à 440) et non 77 (y 342 à 419).** Mesuré sur les photos du 15 nov. 2026 (Sport, M Blade et Navi donnent la même hauteur) ; la preuve : sur M Blade le haut du « 150 » de la jauge de température était mordu, et sur M la première ligne de réglage (direction) était coupée en deux, ce qui la rendait illisible.
+- `shared/visible.js` : la zone passe à y 322..440 (x inchangés, 1406..1597). `shared/shaders.js` : la fenêtre que les fonds creusent autour de la case (et son liseré pâle) couvre maintenant toute la case, elle était trop courte de 20 px en haut et en bas, d'où le « gros rectangle » qui dépassait.
+- **M Blade :** les deux jauges de droite (température d'huile et batterie) commencent à y 443 au lieu de 435 (8 px plus courtes), leurs chiffres suivent ; la vue avec Waze aussi.
+- **M :** les deux lignes du bas de la pile de droite (direction, boîte) descendent de 16 px (y 442 et 497), sous la case.
+- Tests : `test_zones.js` (la case fait 117 px, la fenêtre des fonds la couvre, aucun texte ni aucune icône des 4 thèmes ne la touche, vues exclusives comprises).
+
 ### ShakTheme 0.21.0, ShakHUD 0.6.6 (pas encore essayé sur la voiture)
 - **Nouvel onglet « Signaux » dans la page de l'appli (ShakTheme).** Il liste 11 signaux de la voiture que l'appli lit désormais **en lecture seule** (rien n'est envoyé à la voiture, aucun affichage du cluster ne change) : le panneau et la prochaine limite lus par la caméra, les aides à la conduite (alertes de voie, voyant du volant, symbole du maintien de voie), la puissance du cluster (propulsion et récupération, deux lectures), la puissance électrique (propulsion et clim), le message d'alerte affiché, les entretiens à prévoir et la classe de risque des alertes. Pour chacun : un point vert s'il a parlé dans les 5 dernières secondes, puis la dernière valeur reçue (et celle d'avant s'il reste de la place). L'onglet se redessine tout seul toutes les 2 secondes.
 - **À quoi ça sert :** après un trajet, on photographie l'onglet pour voir ce que la voiture envoie vraiment, sans lire de journal. Chaque valeur est aussi écrite dans le journal (`signal <nom> : …`), les 12 premières valeurs différentes puis une par minute au plus.

@@ -16,8 +16,9 @@ const HOOD = [
     [1000, 1], [1100, 2], [1200, 5], [1300, 10], [1400, 19], [1500, 37], [1600, 67], [1700, 84], [1800, 128], [1900, 196],
     [1920, 240],
 ];
-/** BMW draws a solid black box over our panel here (its gear slot): [x0, y0, x1, y1]. */
-const BLACK_BOX = [1406, 342, 1597, 419];
+/** BMW draws a solid black box over our panel here (its gear slot): [x0, y0, x1, y1]. Its height is measured on the owner's photos of Nov 15 2026
+ *  (about 117 px, three themes agree: y 322..440); before that it was 342..419, and labels placed under it were bitten. */
+const BLACK_BOX = [1406, 322, 1597, 440];
 /** BMW's seat-belt warning light is drawn over us here: [x0, y0, x1, y1]. */
 const BELT = [587, 663, 626, 700];
 /** BMW's own gear letter ("P", "D"...), at the bottom right of the panel, is drawn over whatever is there, with a small black box after it

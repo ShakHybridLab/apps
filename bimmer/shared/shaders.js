@@ -792,11 +792,12 @@ void main() {
     gl_FragColor = c;
 }
 `;
-const FACETS = `// BMW draws a solid black box over our panel at its gear slot (1406,342)-(1597,419), the same zone as shared/visible.js. It cannot be
+const FACETS = `// BMW draws a solid black box over our panel at its gear slot (1406,322)-(1597,440), the same zone as shared/visible.js (photos of Nov 15 2026:
+// the box is about 117 px high, not 77: it bit the top of the oil strip's "150" and half of the M theme's steering row). It cannot be
 // removed, so the backdrop is made to meet it: slot() is 0 inside a rounded window 4 px bigger all round (the box, whose edges are
 // only measured to a few px, hides inside it) and, outside it, a soft shadow (45 % of the backdrop, back to all of it over 36 px).
 float slotD(vec2 p) {
-    vec2 q = abs(p - vec2(1501.5, 380.5)) - (vec2(99.5, 42.5) - vec2(16.0));
+    vec2 q = abs(p - vec2(1501.5, 381.0)) - (vec2(99.5, 63.0) - vec2(16.0));
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - 16.0;
 }
 float slotOf(float d, float fall) { return clamp(d + 0.5, 0.0, 1.0) * mix(0.45, 1.0, smoothstep(0.0, fall, d)); }

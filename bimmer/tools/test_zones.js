@@ -835,5 +835,23 @@ check('Waze contour: the bezel and glass pass is in Sport, M Blade and Navi (not
     });
     assert(!/vec4 bezel\(/.test(sh.mdash), 'the M theme keeps its own plate');
 });
+check('la case noire de BMW : 117 px de haut (photos du 15 nov. 2026), la fenêtre des fonds la couvre, rien de lisible dessous', () => {
+    const vis = require(path.join(__dirname, '..', 'shared', 'visible.js'));
+    const B = vis.BLACK_BOX;
+    assert(B[3] - B[1] >= 115 && B[3] - B[1] <= 120, 'hauteur de la case : ' + (B[3] - B[1]));
+    const src = fs.readFileSync(path.join(__dirname, '..', 'shared', 'shaders.js'), 'utf8');
+    const m = /abs\(p - vec2\(([\d.]+), ([\d.]+)\)\) - \(vec2\(([\d.]+), ([\d.]+)\) - vec2\(16\.0\)\)/.exec(src);
+    assert(m, 'fenêtre de la case introuvable dans shaders.js');
+    const cx = +m[1], cy = +m[2], hx = +m[3], hy = +m[4];
+    assert(cx - hx <= B[0] && cx + hx >= B[2] && cy - hy <= B[1] && cy + hy >= B[3], 'la fenêtre ne couvre pas la case : ' + [cx - hx, cy - hy, cx + hx, cy + hy]);
+    // les textes de chaque thème, vues exclusives comprises : aucun ne touche la case (fonds et feuilles pleines exceptés)
+    const dir = path.join(__dirname, '..', 'apps', 'shaktheme', 'hud', 'layouts');
+    ['sport', 'm', 'mblade', 'navi'].forEach((name) => {
+        JSON.parse(fs.readFileSync(path.join(dir, name + '.json'), 'utf8')).widgets.forEach((w) => {
+            if (!['text', 'icon', 'emblem', 'badge'].includes(w.type) || w.w >= 1000) return;
+            assert(!(w.x < B[2] && w.x + w.w > B[0] && w.y < B[3] && w.y + w.h > B[1]), name + ' : ' + w.id + ' touche la case noire de BMW');
+        });
+    });
+});
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log('test_zones: ' + n + ' checks' + (process.exitCode ? ' (some failed)' : ' ok'));
