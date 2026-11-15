@@ -262,6 +262,19 @@ check('tyre pressure colours: yellow under the setting, red 0.4 bar under it, no
     const noItem = make(); noItem.ctx.settings.item = () => null; noItem._tyre = () => 1.0;
     assert.strictEqual(noItem._tyreRole('FL', 'fg'), 'fg', 'an app without the setting (the HUD)');
 });
+check('the redline marks (yellow dashes, then a solid red line) are on every cluster theme, the same yellow, and Navi gets its uniforms', () => {
+    const sh = fs.readFileSync(path.join(root, 'shared', 'shaders.js'), 'utf8');
+    const part = (a, b) => sh.slice(sh.indexOf('const ' + a + ' = `'), b ? sh.indexOf('const ' + b + ' = `') : undefined);
+    const yellow = /1\.0, 0\.85, 0\.1[,)]/;
+    ['MTACH', 'SDASH', 'MBLADE', 'NAVI'].forEach((n) => {
+        const src = part(n, { MTACH: 'FACETS', SDASH: 'MBLADE', MBLADE: 'NAVI', NAVI: 'ATEXT' }[n]);
+        assert(yellow.test(src) && /u_orange/.test(src) && /u_redFrom/.test(src), n + ': yellow dashes from u_orange, red from u_redFrom');
+    });
+    const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
+    const navi = hud.slice(hud.indexOf("w.type === 'navi'", hud.indexOf("w.type === 'navi'") + 20));
+    assert(/'u_redFrom', \[marks\[0\]\]/.test(navi) && /'u_orange', \[marks\[1\]\]/.test(navi), 'hud.js sends Navi the redline marks (none while the bar shows the hybrid power)');
+});
+
 // ---- the layouts and the fonts
 const lay = (id) => JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'hud', 'layouts', id + '.json'), 'utf8'));
 const font = (id) => JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'hud', 'fonts', id + '.json'), 'utf8'));

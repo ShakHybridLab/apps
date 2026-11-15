@@ -727,7 +727,7 @@ uniform vec3 u_geoB;      // slope above the bend, slope below it, bend roundnes
 uniform vec3 u_wid;       // blade width at 0 rpm, at max, extra at the bend
 uniform float u_ticks;    // max / 1000
 uniform float u_value;    // 0..1
-uniform float u_orange;   // 0..1, orange dashes from here
+uniform float u_orange;   // 0..1, yellow dashes from here
 uniform float u_redFrom;  // 0..1, red dashes from here (the redline)
 uniform float u_zone;     // 0 = white, 2 = the red zone, a fade between (no orange run-up): the lit glass and the marker take its colour
 uniform float u_peak;     // the held peak 0..1 (0 = none): a thin tick above the marker
@@ -772,11 +772,11 @@ void main() {
         c = over(vec4(0.93, 0.95, 0.98, cov(abs(d) - 1.6)), c);               // outer edge
         c = over(vec4(1.0, 1.0, 1.0, 0.3 * cov(abs(d - 4.0) - 0.6)), c);       // its bevel
         c = over(vec4(0.66, 0.7, 0.76, 0.75 * cov(abs(d - w) - 0.8)), c);      // inner edge
-        // BMW's marks: a solid red line from the redline, a few orange dashes in the run-up to it
+        // BMW's marks: a solid red line from the redline, a few yellow dashes in the run-up to it (the same on every theme)
         bool redM = t >= u_redFrom && d > 6.0 && d < 11.0;
         bool orM = t >= u_orange && t < u_redFrom - 0.01 && d > 6.0 && d < 11.0 && mod(p.y, 20.0) < 7.0;
         if (redM || orM) {
-            c = over(vec4(redM ? u_red : vec3(1.0, 0.6, 0.1), 0.95), c);
+            c = over(vec4(redM ? u_red : vec3(1.0, 0.85, 0.1), 0.95), c);
         }
     }
     // ticks every 1000 rpm: bright, from the outer edge 24 px into the glass, as the M8 draws them
@@ -1043,7 +1043,7 @@ uniform vec2 u_low;       // 1 while the fuel / the battery strip is in reserve:
 uniform vec3 u_oc;        // the oil strip's lit colour (blue cold, green warm, red in alert)
 uniform float u_ticks;    // marks: max rpm / 1000
 uniform float u_value;    // rpm 0..1
-uniform float u_orange;   // 0..1, orange dashes from here to the redline
+uniform float u_orange;   // 0..1, yellow dashes from here to the redline
 uniform float u_redFrom;  // 0..1
 uniform vec2 u_zone;      // the speed line's and the rev blade's zone: 0 = white, 2 = red, a fade between (no orange run-up)
 uniform float u_peak;     // the rev blade's held peak 0..1 (0 = none): a thin tick above the lit part
@@ -1208,7 +1208,7 @@ void main() {
     vec3 ecol = vec3(1.0, 0.2, 0.33);
     float tt = clamp(t, 0.0, 1.2);
     if (tt >= u_redFrom && tt <= 1.02) ecol = vec3(1.0, 0.1, 0.12);
-    else if (tt >= u_orange && tt < u_redFrom && mod(p.y, 20.0) < 8.0) ecol = vec3(1.0, 0.82, 0.45);
+    else if (tt >= u_orange && tt < u_redFrom && mod(p.y, 20.0) < 8.0) ecol = vec3(1.0, 0.85, 0.1);
     c = over(vec4(ecol, inE), c);
     c = over(vec4(1.0, 0.62, 0.7, 0.55 * cov(abs(drE - 1.5) - 0.9) * inE), c);
     // red ticks every 1000 rpm, just inside the right edge
@@ -1255,6 +1255,8 @@ uniform float u_speed;    // 0..1 along the scale
 uniform float u_rev;      // the rev counter, 0..1 along the same scale
 uniform vec4 u_hy;        // the hybrid rev counter: the lit colour while the battery drives or charges (a = 1), else a = 0
 uniform vec2 u_zone;      // the speed band's and the rev stripe's zone: 0 = white, 2 = red, a fade between (no orange run-up)
+uniform float u_redFrom;  // 0..1 (the redline; 2 = none): a solid red line along the rev stripe's edge from here
+uniform float u_orange;   // 0..1, yellow dashes from here to the redline
 uniform float u_peak;     // the rev stripe's held peak 0..1 (0 = none): a thin tick above the lit part
 uniform vec4 u_ln;        // the white line under the map: x of its start, y, x where it steps up, x where it is back level
 uniform vec3 u_ln2;       // y of the upper level, x where the upper level fades out, x where it ends
@@ -1337,6 +1339,10 @@ void main() {
         c = over(vec4(0.97, 0.98, 1.0, cov(abs(s - 5.0) * kk - 3.6) * down), c);
         c = over(vec4(0.92, 0.95, 1.0, 0.95 * cov(abs(s - sep) * kk - 0.9) * down), c);
         c = over(vec4(0.95, 0.82, 1.0, 0.9 * cov(abs(s - edge) * kk - 0.9) * step(u_top, p.y) * down), c);
+        // BMW's marks inside the pale edge: yellow dashes in the run-up to the redline, then a solid red line from it (the same on every theme)
+        float tm = (u_sc.y - p.y) / (u_sc.y - u_sc.x);
+        float rm = step(u_redFrom, tm) * step(tm, 1.02), om = step(u_orange, tm) * step(tm, u_redFrom - 0.01) * step(mod(p.y, 16.0), 7.0);
+        c = over(vec4(rm > 0.5 ? vec3(1.0, 0.2, 0.2) : vec3(1.0, 0.85, 0.1), max(rm, om) * 0.95 * cov((edge - 9.0 - s) * kk) * cov((s - edge + 3.0) * kk) * step(u_top, p.y) * down), c);
         // the marker across the blue stripe at the speed, the one across the purple stripe at the rpm, and a tick at each of the eight marks
         float mk = cov(abs(p.y - ym) - 2.2) * cov(-(s - 2.0) * kk) * cov((s - sep) * kk);
         c = over(vec4(1.0, 1.0, 1.0, 0.95 * mk * down), c);

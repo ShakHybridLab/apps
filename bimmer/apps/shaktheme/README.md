@@ -79,6 +79,7 @@ Neither theme has been tried on a car; they are checked on the bench against the
 - **Repère de pointe :** un fin trait blanc reste 1,5 s à la valeur la plus haute du régime puis redescend sur l'aiguille (Sport, M, M Blade, Navi, HUD) ; il n'apparaît pas en hybride électrique.
 - **Balayage au démarrage :** à l'allumage (voiture à l'arrêt), les barres montent au maximum puis redescendent en 1,6 s, une fois par thème affiché ; il s'arrête dès que la voiture roule. Réglage **Balayage des barres au démarrage** (activé).
 - **Liseré argent autour de la carte Waze** sur Sport, M Blade et Navi, comme sur le M.
+- **Repères de zone rouge identiques sur les quatre thèmes (0.16.1) :** de petits traits jaunes dans les 700 tr/min avant le Redline, puis un trait rouge plein à partir de lui, le long du bord de l'échelle du compte-tours (ils suivent le réglage Redline et ne bougent pas avec le régime). Navi les a maintenant comme Sport, M et M Blade ; le HUD n'en a pas, sa barre devient déjà orange puis rouge.
 - **Pneus (M) :** la pression passe au **jaune** sous le réglage **Pneus : pression en jaune sous** (2,0 bar par défaut ; 0 coupe) et au **rouge** 0,4 bar plus bas. Les températures gardent leur couleur.
 
 ## Off and drive modes

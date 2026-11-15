@@ -2212,6 +2212,8 @@ class HudApp {
             c.uniform(ref, 'u_rev', [0]);
             c.uniform(ref, 'u_zone', [0, 0]);
             c.uniform(ref, 'u_peak', [0]);
+            c.uniform(ref, 'u_redFrom', [2]);
+            c.uniform(ref, 'u_orange', [2]);
             c.uniform(ref, 'u_hy', [0, 0, 0, 0]);
             c.uniform(ref, 'u_ln', L);
             c.uniform(ref, 'u_ln2', L2);
@@ -2843,6 +2845,9 @@ class HudApp {
             x.c.uniform(x.ref, 'u_low', low);
             x.c.uniform(x.ref, 'u_speed', [vals[0]]);
             x.c.uniform(x.ref, 'u_rev', [vals[3]]);
+            const marks = bar ? [2, 2] : this._redMarks(w.rpmMax || 7000);
+            x.c.uniform(x.ref, 'u_redFrom', [marks[0]]);
+            x.c.uniform(x.ref, 'u_orange', [marks[1]]);
             x.c.uniform(x.ref, 'u_hy', bar === 1 ? [0.3, 0.75, 1.0, 1] : bar === 2 ? [0.2, 0.85, 0.5, 1] : [0, 0, 0, 0]);
             x.c.uniform(x.ref, 'u_barL', [w.barL[0], w.barL[1], w.barL[2], vals[1]]);
             x.c.uniform(x.ref, 'u_barR', [w.barR[0], w.barR[1], w.barR[2], vals[2]]);

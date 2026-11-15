@@ -2,6 +2,9 @@
 
 ## 15 novembre 2026
 
+### ShakTheme 0.16.1 (pas encore essayé sur la voiture ; vérifié sur le banc d'essai)
+- **Mêmes repères de zone rouge sur les quatre thèmes** : de petits traits jaunes dans les 700 tr/min avant le Redline, puis un trait rouge plein à partir de lui, le long du bord de l'échelle du compte-tours. Sport, M et M Blade les avaient déjà ; **Navi les a maintenant** (le long du bord clair de la bande violette, `u_redFrom` et `u_orange` envoyés par `shared/hud.js`, pas de repères pendant que la barre montre la puissance hybride). Le jaune des traits est le même partout (`vec3(1.0, 0.85, 0.1)`) : celui du M passe d'orange à jaune, celui de M Blade de jaune pâle à jaune. Le HUD ne change pas (sa barre devient déjà orange puis rouge). Test ajouté à `tools/test_zones.js` (26 vérifications) ; budget des shaders : Navi 4434 jetons, les autres inchangés.
+
 ### ShakTheme 0.16.0 et ShakHUD 0.4.0 (pas encore essayés sur la voiture ; tout est vérifié sur le banc d'essai)
 - **Chiffre du régime sous l'aiguille** : le chiffre que l'aiguille a **atteint** (à 140 km/h le « 120 », plus le « 150 » : c'était le plus proche, c'est maintenant le dernier atteint, parmi les chiffres que le thème a, donc sans trou sur le M qui n'a que 0 2 4 6) passe en rouge à partir de 1000 tr/min, grossit en douceur (×1,1 puis ×1,2 dans la zone) et s'éteint quand l'aiguille repasse dessous. **Sur le M il est jaune** ; les chiffres du milieu (rapport, vitesse) restent blancs (le rapport ne passe plus au rouge au point de passage sur le M) et la lame reste rouge.
 - **Hybride** : sur Sport, M Blade et Navi, le chiffre sous l'aiguille suit la puissance de la batterie, **bleu clair en électrique, vert en recharge**, comme la barre ; le moteur qui tourne le remet en rouge. Le M n'a pas de couleurs hybrides, par choix.
