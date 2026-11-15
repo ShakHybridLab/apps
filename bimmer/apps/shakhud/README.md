@@ -1,42 +1,28 @@
 # ShakHUD
 
-<img src="icon.png" width="72" align="left" alt="ShakHUD icon">
+<img src="icon.png" width="72" align="left" alt="icône ShakHUD">
 
-A HUD of its own for the iDrive 7 windshield, by shakzer. Its first layout, **M Style**, is a rev counter drawn as a bent bar: a rising
-slant, then a level run to 7, with the numbers under it. It is made to sit with **Waze's HUD map** (Waze on cluster): thin lines and
-small numbers only (the bar is 20 px thick), nothing that fills an area, clear of BMW's own speed (bottom left) and of the turn-signal arrows (top middle).
-Not tried on a car yet: the shader and the layout run on the bench.
+Un HUD pour le pare-brise de l'iDrive 7, par shakzer. Son premier thème, **M Style**, est un compte-tours en barre brisée : une montée en
+biais, puis un plat jusqu'à 7, avec les chiffres dessous. Pas encore essayé sur la voiture : le shader et la mise en page tournent sur le banc d'essai.
 
 ## M Style
 
-- **Engine running:** the bar fills in red with the rpm; the red zone starts at the redline setting (7000 by default; 6500 on the bar).
-  The numbers are thousands of rpm.
-- **Electric (engine off):** the bar becomes light blue and shows the battery's power, 10 kW a mark ("kW x 10" under the bar).
-- **Charging (engine off, power going back into the battery):** green, with "CHARGE" under the bar.
-- The two last need eDrive Live (or any app that shares the battery's power, `/dev/shm/cluster-info`) and the setting
-  **Hybrid rev counter** (on by default). Without a power reading the bar shows the engine's rpm alone.
-- **Shift light:** BMW's modern one, under the numbers: five slanted lights on each side of a red block, filling from the outer ends in as the rpm climbs from 3000, the block red from 4500 rpm, everything flashing red from 5500 (the settings **Shift light turns red at** and **flashes from**); the setting **Shift light** hides it.
-- **Bottom right (the setting Battery, ranges and temperatures):** the battery's charge in big numbers, the electric and the fuel range beside it,
-  a slanted battery bar under them (light blue; green while the battery charges; amber under 15 %) and the oil and coolant temperatures
-  (blue cold, green warm, flashing red over the limit, as in ShakTheme). Clear of BMW's own speed. The charge comes from the battery unit
-  or from eDrive Live.
-- **Waze:** while Waze on cluster shows its map, the whole HUD goes dark so nothing sits on the map (the setting **Hide the whole HUD while
-  Waze's map shows**).
-- The colours follow the HUD theme (Auto: the M colours by day, amber after sunset; the page's Colours tab).
+- **Moteur allumé :** la barre se remplit en rouge avec le régime ; la zone rouge commence au réglage « Zone rouge » (7000 par défaut). Les chiffres sont des milliers de tr/min.
+- **Électrique (moteur éteint) :** la barre devient bleu clair et montre la puissance de la batterie, 10 kW par graduation (« kW x 10 » sous la barre).
+- **Recharge (moteur éteint, puissance qui rentre dans la batterie) :** verte, avec « RECHARGE » sous la barre.
+- Les deux derniers demandent eDrive Live (ou une autre appli qui partage la puissance de la batterie, `/dev/shm/cluster-info`) et le réglage **Compte-tours hybride** (activé par défaut). Sans mesure de puissance, la barre montre seulement le régime.
+- **Shiftlight :** celui de BMW, sous les chiffres : cinq voyants inclinés de chaque côté d'un bloc rouge, qui se remplissent de l'extérieur vers le centre dès 3000 tr/min, bloc rouge à 4500, clignotement rouge à 5500 (réglages **Le shiftlight passe au rouge à** et **clignote à partir de**).
+- **En bas à droite :** la charge de la batterie en gros, l'autonomie électrique et l'autonomie essence à côté, une barre de batterie inclinée (bleu clair ; verte en recharge ; ambre sous 15 %) et les températures d'huile et d'eau (bleu à froid, vert à chaud, rouge clignotant au-dessus de la limite). Réglage **Batterie, autonomies et températures**. Le bloc reste à droite de la vitesse de BMW.
+- **Waze :** quand Waze on Cluster affiche sa carte, tout le HUD s'éteint pour ne rien mettre dessus (réglage **Cacher tout le HUD quand la carte Waze est affichée**).
+- Les couleurs suivent le thème du HUD (Auto : couleurs M de jour, ambre après le coucher du soleil ; onglet Couleurs).
+- Tout est en français, en km/h, °C et 24 h par défaut ; la page de l'écran central, les réglages et les textes du HUD (HUILE, EAU, RECHARGE, tr/min).
 
-## Sharing the HUD
+## Partage du HUD
 
-ShakHUD and HUD Widgets are both kit apps: when one is on (not "Off") and the other too, they share the HUD through the kit's
-`hud_claim` and one steps aside. Set the other app's layout to Off to be sure. ShakTheme (the cluster) is not affected.
-Waze's HUD map is another app's layer under ours.
+ShakHUD et HUD Widgets sont deux applis du kit : quand les deux sont actives, elles se partagent le HUD par `hud_claim` et l'une s'efface devant l'autre.
+Mets l'autre appli sur « Éteint » pour être sûr. ShakTheme (le cluster) n'est pas touché.
 
-## Settings
+## Réglages
 
-The page on the centre screen: **Layouts** (Off or M Style, also by drive mode), **Position** (move and scale the whole HUD),
-**Colours**, and **Settings** (units, clock, time zone, redline, shift point, Hybrid rev counter, demo data).
-
-## Files
-
-- `hud/layouts/mstyle.json` is made by `tools/gen_shakhud.py` (the bar's points and the numbers' places are at its top).
-- The effect is `mstyle` in `shared/shaders.js` and `shared/hud.js` (documented in the header of hud.js).
-- `tools/test_shakhud.js` checks the app, the layout's places and the shader's wiring.
+La page de l'écran central : **Thèmes** (éteint ou M Style, aussi selon le mode de conduite), **Position** (déplacer et agrandir tout le HUD),
+**Couleurs** et **Réglages** (unités, horloge, fuseau horaire, zone rouge, point de passage, compte-tours hybride, shiftlight, données de démonstration).

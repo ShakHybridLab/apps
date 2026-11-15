@@ -80,9 +80,9 @@ widgets += [
     {'id': 'batbar', 'type': 'slantbar', 'class': 'overlay', 'z': 10, 'toggle': 'showBattery', 'signal': 'hvSoc',
      'x': BX, 'y': 310, 'w': BW, 'h': 16, 'slant': 12, 'low': 15},
     {'id': 'oil', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'left', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
-     'tempBy': 'oil', 'x': BX, 'y': 334, 'w': 140, 'h': 29, 'text': 'OIL {{oil}}{{u:temp}}'},
+     'tempBy': 'oil', 'x': BX, 'y': 334, 'w': 160, 'h': 29, 'text': 'HUILE {{oil}}{{u:temp}}'},
     {'id': 'coolant', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'right', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
-     'tempBy': 'coolant', 'x': BX + BW - 150, 'y': 334, 'w': 150, 'h': 29, 'text': 'WATER {{coolant}}{{u:temp}}'},
+     'tempBy': 'coolant', 'x': BX + BW - 150, 'y': 334, 'w': 150, 'h': 29, 'text': 'EAU {{coolant}}{{u:temp}}'},
 ]
 doc = {
     'schemaVersion': 2, 'name': 'M Style',

@@ -1,8 +1,8 @@
 {
   "id": "ridetube_cluster",
   "title": "RideTube on cluster",
-  "description": "Shows the video RideTube plays in the cluster theme's window and on the HUD, only while the car is parked",
-  "version": "0.3.1",
+  "description": "Affiche la vidéo lue par RideTube dans la fenêtre du thème du cluster et sur le HUD, uniquement voiture à l'arrêt",
+  "version": "0.3.2",
   "vendor": "custom",
   "loggingId": "OAV1",
   "iconGlyph": "RT",
@@ -28,13 +28,13 @@
   "settings": [
     {
       "key": "videoCluster",
-      "label": "Video in the cluster theme's window (parked only)",
+      "label": "Vidéo dans la fenêtre du thème du cluster (à l'arrêt seulement)",
       "type": "bool",
       "default": true
     },
     {
       "key": "videoHud",
-      "label": "Video on the HUD (parked only)",
+      "label": "Vidéo sur le HUD (à l'arrêt seulement)",
       "type": "bool",
       "default": true
     }
@@ -42,6 +42,7 @@
   "config": {
     "socketPath": "/dev/shm/cluster-render/render.sock",
     "videoPath": "/dev/shm/mgu-video-ridetube",
-    "_comment": "The picture shows only while the car stands (speed known, fresh and zero for 2 s): shared/video_bridge.js, Standing. There is no setting for that. videoPath: the frame file RideTube's decoder writes; the stock RideTube keeps it private (0600), so this needs the RideTube build that shares it."
+    "_comment": "The picture shows only while the car stands (speed known, fresh and zero for 2 s): shared/video_bridge.js, Standing. There is no setting for that. videoPath: the frame file RideTube's decoder writes; the stock RideTube keeps it private (0600), so this needs the RideTube build that shares it.",
+    "lang": "fr"
   }
 }

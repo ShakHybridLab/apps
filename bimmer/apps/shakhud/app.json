@@ -1,7 +1,7 @@
 {
   "id": "shakhud",
   "title": "ShakHUD",
-  "description": "ShakHUD: a HUD of its own for the windshield, the M Style rev counter (a bent bar, red in the red zone, light blue while electric, green while charging), with the battery, the ranges and the temperatures at the bottom right; hides itself while Waze's HUD map shows",
+  "description": "ShakHUD : un HUD pour le pare-brise, le compte-tours M Style (une barre brisée, rouge dans la zone rouge, bleu clair en électrique, verte en recharge), avec la batterie, les autonomies et les températures en bas à droite ; il se cache tout seul quand la carte Waze du HUD est affichée",
   "version": "0.2.0",
   "vendor": "custom",
   "loggingId": "OAS1",
@@ -21,6 +21,7 @@
     "calibration.js",
     "visible.js",
     "page.js",
+    "fr.js",
     "previews.js",
     "sensors.js",
     "waze.js",
@@ -89,13 +90,13 @@
   "settings": [
     {
       "key": "hudLayout",
-      "label": "Layout (when not by drive mode)",
+      "label": "Thème (hors mode de conduite)",
       "type": "choice",
       "default": "mstyle",
       "options": [
         [
           "off",
-          "Off (BMW's own HUD)"
+          "Éteint (le HUD de BMW)"
         ],
         [
           "mstyle",
@@ -105,19 +106,19 @@
     },
     {
       "key": "byMode",
-      "label": "Change with the drive mode (Electric Eco Pro / Hybrid / Sport Plus)",
+      "label": "Changer avec le mode de conduite (Electric Eco Pro / Hybrid / Sport Plus)",
       "type": "bool",
       "default": false
     },
     {
       "key": "inHybrid",
-      "label": "In Hybrid (also Battery Control; Daily by default; BMW keeps its speed bottom-left)",
+      "label": "En Hybrid (et Battery Control ; BMW garde sa vitesse en bas à gauche)",
       "type": "choice",
       "default": "mstyle",
       "options": [
         [
           "off",
-          "Off (BMW's own HUD)"
+          "Éteint (le HUD de BMW)"
         ],
         [
           "mstyle",
@@ -127,13 +128,13 @@
     },
     {
       "key": "inSport",
-      "label": "In Sport Plus (also Sport, Sport Individual, Xtraboost; off by default: BMW's Sport HUD takes the middle)",
+      "label": "En Sport Plus (et Sport, Sport Individual, Xtraboost ; éteint par défaut : le HUD Sport de BMW prend le milieu)",
       "type": "choice",
       "default": "mstyle",
       "options": [
         [
           "off",
-          "Off (BMW's own HUD)"
+          "Éteint (le HUD de BMW)"
         ],
         [
           "mstyle",
@@ -143,13 +144,13 @@
     },
     {
       "key": "inEco",
-      "label": "In Electric Eco Pro (also Electric, Electric Individual; off by default: BMW's own HUD)",
+      "label": "En Electric Eco Pro (et Electric, Electric Individual ; éteint par défaut : le HUD de BMW)",
       "type": "choice",
       "default": "mstyle",
       "options": [
         [
           "off",
-          "Off (BMW's own HUD)"
+          "Éteint (le HUD de BMW)"
         ],
         [
           "mstyle",
@@ -159,17 +160,17 @@
     },
     {
       "key": "hudTheme",
-      "label": "Theme",
+      "label": "Couleurs",
       "type": "choice",
       "default": "auto",
       "options": [
         [
           "auto",
-          "Auto (Night after sunset)"
+          "Auto (Nuit après le coucher du soleil)"
         ],
         [
           "classic",
-          "Classic"
+          "Classique"
         ],
         [
           "m",
@@ -177,19 +178,19 @@
         ],
         [
           "night",
-          "Night"
+          "Nuit"
         ]
       ]
     },
     {
       "key": "dayTheme",
-      "label": "Daytime theme for Auto",
+      "label": "Couleurs de jour pour Auto",
       "type": "choice",
       "default": "m",
       "options": [
         [
           "classic",
-          "Classic"
+          "Classique"
         ],
         [
           "m",
@@ -199,7 +200,7 @@
     },
     {
       "key": "hudX",
-      "label": "HUD position, left / right",
+      "label": "Position du HUD, gauche / droite",
       "type": "number",
       "unit": "px",
       "default": 0,
@@ -250,7 +251,7 @@
     },
     {
       "key": "hudY",
-      "label": "HUD position, up / down",
+      "label": "Position du HUD, haut / bas",
       "type": "number",
       "unit": "px",
       "default": 0,
@@ -291,7 +292,7 @@
     },
     {
       "key": "hudScale",
-      "label": "HUD size",
+      "label": "Taille du HUD",
       "type": "number",
       "unit": "%",
       "default": 100,
@@ -310,39 +311,39 @@
     },
     {
       "key": "units",
-      "label": "Units",
+      "label": "Unités",
       "type": "choice",
-      "default": "us",
+      "default": "metric",
       "options": [
         [
           "us",
-          "mph, \u00b0F, psi"
+          "mph, °F, psi"
         ],
         [
           "metric",
-          "km/h, \u00b0C, bar"
+          "km/h, °C, bar"
         ]
       ]
     },
     {
       "key": "clock",
-      "label": "Clock",
+      "label": "Horloge",
       "type": "choice",
-      "default": "12h",
+      "default": "24h",
       "options": [
         [
           "12h",
-          "12-hour"
+          "12 heures"
         ],
         [
           "24h",
-          "24-hour"
+          "24 heures"
         ]
       ]
     },
     {
       "key": "timeZone",
-      "label": "Time zone (clock)",
+      "label": "Fuseau horaire (horloge)",
       "type": "number",
       "default": -9999,
       "steps": [
@@ -416,7 +417,7 @@
     },
     {
       "key": "tankLitres",
-      "label": "Fuel tank size",
+      "label": "Taille du réservoir",
       "type": "number",
       "unit": "L",
       "default": 50,
@@ -506,7 +507,7 @@
     },
     {
       "key": "evRangeFull",
-      "label": "Electric range when full (plug-in hybrids)",
+      "label": "Autonomie électrique à pleine charge (hybrides rechargeables)",
       "type": "number",
       "unit": "km",
       "default": 40,
@@ -576,7 +577,7 @@
     },
     {
       "key": "redline",
-      "label": "Redline (shift light)",
+      "label": "Zone rouge (shiftlight)",
       "type": "number",
       "unit": "rpm",
       "default": 7000,
@@ -590,7 +591,7 @@
     },
     {
       "key": "shiftBefore",
-      "label": "Shift point before redline",
+      "label": "Point de passage avant la zone rouge",
       "type": "number",
       "unit": "rpm",
       "default": 300,
@@ -606,39 +607,39 @@
     },
     {
       "key": "coldGuard",
-      "label": "Cold-engine rev guard (Redline)",
+      "label": "Garde de régime moteur froid (Redline)",
       "type": "bool",
       "default": true
     },
     {
       "key": "showClock",
-      "label": "Show clock",
+      "label": "Afficher l'horloge",
       "type": "bool",
       "default": true
     },
     {
       "key": "showOil",
-      "label": "Show readout 1 (the battery charge in the default layouts)",
+      "label": "Afficher la donnée 1 (la charge de la batterie dans les thèmes par défaut)",
       "type": "bool",
       "default": true
     },
     {
       "key": "showCoolant",
-      "label": "Show readout 2 (the electric range in the default layouts)",
+      "label": "Afficher la donnée 2 (l'autonomie électrique dans les thèmes par défaut)",
       "type": "bool",
       "default": true
     },
     {
       "key": "showBoost",
-      "label": "Show boost (Sport layout)",
+      "label": "Afficher la pression de suralimentation (thème Sport)",
       "type": "bool",
       "default": true
     },
     {
       "key": "warnOil",
-      "label": "Oil temperature warning",
+      "label": "Alerte température d'huile",
       "type": "number",
-      "unit": "\u00b0C",
+      "unit": "°C",
       "default": 130,
       "steps": [
         0,
@@ -655,9 +656,9 @@
     },
     {
       "key": "warnCoolant",
-      "label": "Coolant temperature warning",
+      "label": "Alerte température du liquide de refroidissement",
       "type": "number",
-      "unit": "\u00b0C",
+      "unit": "°C",
       "default": 115,
       "steps": [
         0,
@@ -671,7 +672,7 @@
     },
     {
       "key": "warnBoost",
-      "label": "Boost warning",
+      "label": "Alerte pression de suralimentation",
       "type": "number",
       "unit": "bar",
       "default": 0,
@@ -688,19 +689,19 @@
     },
     {
       "key": "gFlipLat",
-      "label": "G-meter: swap left / right",
+      "label": "Capteur G : inverser gauche / droite",
       "type": "bool",
       "default": false
     },
     {
       "key": "gFlipLong",
-      "label": "G-meter: brake on top",
+      "label": "Capteur G : freinage en haut",
       "type": "bool",
       "default": false
     },
     {
       "key": "gRange",
-      "label": "G-meter range",
+      "label": "Capteur G : échelle",
       "type": "choice",
       "default": 1.2,
       "options": [
@@ -728,13 +729,13 @@
     },
     {
       "key": "gTrail",
-      "label": "G-meter trail",
+      "label": "Capteur G : traînée",
       "type": "choice",
       "default": 2,
       "options": [
         [
           0,
-          "Off"
+          "Aucune"
         ],
         [
           1,
@@ -752,51 +753,51 @@
     },
     {
       "key": "demo",
-      "label": "Demo data",
+      "label": "Données de démonstration",
       "type": "choice",
       "default": "auto",
       "options": [
         [
           "auto",
-          "Auto (until the car sends data)"
+          "Auto (jusqu'à ce que la voiture envoie des données)"
         ],
         [
           "on",
-          "On"
+          "Activé"
         ],
         [
           "off",
-          "Off"
+          "Désactivé"
         ]
       ]
     },
     {
       "key": "hybridRev",
-      "label": "Hybrid rev counter (light blue while electric, green while charging)",
+      "label": "Compte-tours hybride (bleu clair en électrique, vert en recharge)",
       "type": "bool",
       "default": true
     },
     {
       "key": "shiftLights",
-      "label": "Shift light (BMW style: lights from the outside in, red block, flashing)",
+      "label": "Shiftlight (style BMW : de l'extérieur vers le centre, bloc rouge, clignotement)",
       "type": "bool",
       "default": true
     },
     {
       "key": "showBattery",
-      "label": "Battery, ranges and temperatures (bottom right)",
+      "label": "Batterie, autonomies et températures (en bas à droite)",
       "type": "bool",
       "default": true
     },
     {
       "key": "hideWithWaze",
-      "label": "Hide the whole HUD while Waze's map shows",
+      "label": "Cacher tout le HUD quand la carte Waze est affichée",
       "type": "bool",
       "default": true
     },
     {
       "key": "shiftLightRed",
-      "label": "Shift light turns red at",
+      "label": "Le shiftlight passe au rouge à",
       "type": "number",
       "unit": "rpm",
       "default": 4500,
@@ -810,7 +811,7 @@
     },
     {
       "key": "shiftLightFlash",
-      "label": "Shift light flashes from",
+      "label": "Le shiftlight clignote à partir de",
       "type": "number",
       "unit": "rpm",
       "default": 5500,
@@ -831,6 +832,7 @@
     "_comment": "socketPath: cluster-render's documented default. utcOffsetMinutes: leave null to use the head unit's own time zone.",
     "tankLitres": 50,
     "evRangeFull": 40,
-    "hideWithWaze": true
+    "hideWithWaze": true,
+    "lang": "fr"
   }
 }

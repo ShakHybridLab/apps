@@ -1,8 +1,8 @@
 {
   "id": "shaktheme",
   "title": "ShakTheme",
-  "description": "ShakTheme redraws the instrument cluster: Sport, M, M Blade and Navi themes with a shift light, a Waze map window, oil and coolant temperatures that change colour, the battery and electric range, and an energy flow",
-  "version": "0.14.11",
+  "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
+  "version": "0.14.12",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -21,6 +21,7 @@
     "calibration.js",
     "visible.js",
     "page.js",
+    "fr.js",
     "waze.js",
     "previews.js",
     "sensors.js",
@@ -29,7 +30,8 @@
     "cluster_info.js",
     "danger.js",
     "free_rect.js",
-    "map_window.js", "hybrid_tach.js",
+    "map_window.js",
+    "hybrid_tach.js",
     "runs.js",
     "tz.js",
     "shift_light.js"
@@ -102,13 +104,13 @@
   "settings": [
     {
       "key": "hudLayout",
-      "label": "Theme (when not by drive mode)",
+      "label": "Thème (hors mode de conduite)",
       "type": "choice",
       "default": "m",
       "options": [
         [
           "off",
-          "Off (BMW's own cluster)"
+          "Éteint (le cluster de BMW)"
         ],
         [
           "m",
@@ -128,29 +130,29 @@
         ],
         [
           "grid",
-          "Calibration grid"
+          "Grille de calibration"
         ],
         [
           "mapcal",
-          "Map calibration"
+          "Calibration de la carte"
         ]
       ]
     },
     {
       "key": "byMode",
-      "label": "Change with the drive mode (Electric Eco Pro / Hybrid / Sport Plus)",
+      "label": "Changer avec le mode de conduite (Electric Eco Pro / Hybrid / Sport Plus)",
       "type": "bool",
       "default": true
     },
     {
       "key": "inHybrid",
-      "label": "In Hybrid (also Battery Control; BMW's own cluster by default)",
+      "label": "En Hybrid (et Battery Control ; le cluster de BMW par défaut)",
       "type": "choice",
       "default": "off",
       "options": [
         [
           "off",
-          "Off (BMW's own cluster)"
+          "Éteint (le cluster de BMW)"
         ],
         [
           "m",
@@ -172,13 +174,13 @@
     },
     {
       "key": "inSport",
-      "label": "In Sport Plus (also Sport, Sport Individual, Xtraboost)",
+      "label": "En Sport Plus (et Sport, Sport Individual, Xtraboost)",
       "type": "choice",
       "default": "m",
       "options": [
         [
           "off",
-          "Off (BMW's own cluster)"
+          "Éteint (le cluster de BMW)"
         ],
         [
           "m",
@@ -200,13 +202,13 @@
     },
     {
       "key": "inEco",
-      "label": "In Electric Eco Pro (also Electric, Electric Individual)",
+      "label": "En Electric Eco Pro (et Electric, Electric Individual)",
       "type": "choice",
       "default": "sport",
       "options": [
         [
           "off",
-          "Off (BMW's own cluster)"
+          "Éteint (le cluster de BMW)"
         ],
         [
           "m",
@@ -228,27 +230,27 @@
     },
     {
       "key": "mapInTheme",
-      "label": "Show Waze map inside the theme",
+      "label": "Afficher la carte Waze dans le thème",
       "type": "bool",
       "default": false
     },
     {
       "key": "centreWindow",
-      "label": "Centre window for Cluster Centre / Cluster Info",
+      "label": "Fenêtre centrale pour Cluster Centre / Cluster Info",
       "type": "bool",
       "default": true
     },
     {
       "key": "dangerAlert",
-      "label": "Danger zone alert (M Blade and Navi)",
+      "label": "Alerte zone de danger (M Blade et Navi)",
       "type": "bool",
       "default": false
     },
     {
       "key": "units",
-      "label": "Units",
+      "label": "Unités",
       "type": "choice",
-      "default": "us",
+      "default": "metric",
       "options": [
         [
           "us",
@@ -262,23 +264,23 @@
     },
     {
       "key": "clock",
-      "label": "Clock",
+      "label": "Horloge",
       "type": "choice",
-      "default": "12h",
+      "default": "24h",
       "options": [
         [
           "12h",
-          "12-hour"
+          "12 heures"
         ],
         [
           "24h",
-          "24-hour"
+          "24 heures"
         ]
       ]
     },
     {
       "key": "timeZone",
-      "label": "Time zone (clock)",
+      "label": "Fuseau horaire (horloge)",
       "type": "number",
       "default": -9999,
       "steps": [
@@ -352,7 +354,7 @@
     },
     {
       "key": "tankLitres",
-      "label": "Fuel tank size",
+      "label": "Taille du réservoir",
       "type": "number",
       "unit": "L",
       "default": 50,
@@ -442,7 +444,7 @@
     },
     {
       "key": "evRangeFull",
-      "label": "Electric range when full (plug-in hybrids)",
+      "label": "Autonomie électrique à pleine charge (hybrides rechargeables)",
       "type": "number",
       "unit": "km",
       "default": 40,
@@ -512,7 +514,7 @@
     },
     {
       "key": "redline",
-      "label": "Redline (shift light)",
+      "label": "Zone rouge (shiftlight)",
       "type": "number",
       "unit": "rpm",
       "default": 7000,
@@ -526,7 +528,7 @@
     },
     {
       "key": "shiftBefore",
-      "label": "Shift point before redline",
+      "label": "Point de passage avant la zone rouge",
       "type": "number",
       "unit": "rpm",
       "default": 300,
@@ -542,13 +544,13 @@
     },
     {
       "key": "stockShiftLight",
-      "label": "Shift light, M and Sport (BMW style)",
+      "label": "Shiftlight M et Sport (style BMW)",
       "type": "bool",
       "default": true
     },
     {
       "key": "shiftLightRed",
-      "label": "Shift light turns red at",
+      "label": "Le shiftlight passe au rouge à",
       "type": "number",
       "unit": "rpm",
       "default": 4500,
@@ -562,7 +564,7 @@
     },
     {
       "key": "shiftLightFlash",
-      "label": "Shift light flashes from",
+      "label": "Le shiftlight clignote à partir de",
       "type": "number",
       "unit": "rpm",
       "default": 5500,
@@ -576,19 +578,19 @@
     },
     {
       "key": "coldGuard",
-      "label": "Cold-engine rev guard",
+      "label": "Garde de régime moteur froid",
       "type": "bool",
       "default": true
     },
     {
       "key": "showBoost",
-      "label": "Show boost",
+      "label": "Afficher la pression de suralimentation",
       "type": "bool",
       "default": true
     },
     {
       "key": "sportTint",
-      "label": "Blue background (Sport, M Blade, Navi)",
+      "label": "Fond bleu (Sport, M Blade, Navi)",
       "type": "number",
       "unit": "%",
       "default": 80,
@@ -603,13 +605,13 @@
     },
     {
       "key": "sportPower",
-      "label": "Sport theme: energy flow (kW) in place of the boost",
+      "label": "Thème Sport : flux d'énergie (kW) à la place de la pression de suralimentation",
       "type": "bool",
       "default": true
     },
     {
       "key": "sportFacets",
-      "label": "Backdrop facets (Sport, M Blade, Navi)",
+      "label": "Facettes du fond (Sport, M Blade, Navi)",
       "type": "number",
       "unit": "%",
       "default": 100,
@@ -623,19 +625,19 @@
     },
     {
       "key": "stripClear",
-      "label": "Leave BMW's bottom strip clear",
+      "label": "Laisser libre la bande du bas de BMW",
       "type": "bool",
       "default": false
     },
     {
       "key": "cameraNotch",
-      "label": "Leave room for the driver camera",
+      "label": "Laisser de la place pour la caméra du conducteur",
       "type": "bool",
       "default": false
     },
     {
       "key": "warnOil",
-      "label": "Oil temperature warning",
+      "label": "Alerte température d'huile",
       "type": "number",
       "unit": "°C",
       "default": 130,
@@ -654,7 +656,7 @@
     },
     {
       "key": "warnCoolant",
-      "label": "Coolant temperature warning",
+      "label": "Alerte température du liquide de refroidissement",
       "type": "number",
       "unit": "°C",
       "default": 115,
@@ -670,7 +672,7 @@
     },
     {
       "key": "oilCold",
-      "label": "Oil temperature: blue below",
+      "label": "Température d'huile : bleu en dessous de",
       "type": "number",
       "unit": "°C",
       "default": 75,
@@ -687,7 +689,7 @@
     },
     {
       "key": "coolantCold",
-      "label": "Coolant temperature: blue below",
+      "label": "Température du liquide : bleu en dessous de",
       "type": "number",
       "unit": "°C",
       "default": 70,
@@ -703,7 +705,7 @@
     },
     {
       "key": "warnBoost",
-      "label": "Boost warning",
+      "label": "Alerte pression de suralimentation",
       "type": "number",
       "unit": "bar",
       "default": 0,
@@ -720,17 +722,17 @@
     },
     {
       "key": "nightDim",
-      "label": "Night colours",
+      "label": "Couleurs de nuit",
       "type": "choice",
       "default": "auto",
       "options": [
         [
           "auto",
-          "Auto (dimmer after sunset)"
+          "Auto (plus sombres après le coucher du soleil)"
         ],
         [
           "off",
-          "Off"
+          "Désactivées"
         ]
       ]
     },
@@ -742,7 +744,7 @@
       "options": [
         [
           "none",
-          "None"
+          "Aucun"
         ],
         [
           "128ti",
@@ -980,13 +982,13 @@
     },
     {
       "key": "badgeBMW",
-      "label": "BMW lettering on the badge",
+      "label": "Lettrage BMW sur le badge",
       "type": "bool",
       "default": true
     },
     {
       "key": "emblem",
-      "label": "Sport, M Blade and Navi themes: lettering at the top",
+      "label": "Thèmes Sport, M Blade et Navi : lettrage en haut",
       "type": "choice",
       "default": "oo4b",
       "options": [
@@ -1050,21 +1052,21 @@
     },
     {
       "key": "demo",
-      "label": "Demo data",
+      "label": "Données de démonstration",
       "type": "choice",
       "default": "auto",
       "options": [
         [
           "auto",
-          "Auto (until the car sends data)"
+          "Auto (jusqu'à ce que la voiture envoie des données)"
         ],
         [
           "on",
-          "On"
+          "Activé"
         ],
         [
           "off",
-          "Off"
+          "Désactivé"
         ]
       ]
     }
@@ -1185,6 +1187,7 @@
     "engine": {
       "torqueNm": 300,
       "powerKw": 135
-    }
+    },
+    "lang": "fr"
   }
 }

@@ -231,9 +231,9 @@
       "tempBy": "oil",
       "x": 372,
       "y": 334,
-      "w": 140,
+      "w": 160,
       "h": 29,
-      "text": "OIL {{oil}}{{u:temp}}"
+      "text": "HUILE {{oil}}{{u:temp}}"
     },
     {
       "id": "coolant",
@@ -249,7 +249,7 @@
       "y": 334,
       "w": 150,
       "h": 29,
-      "text": "WATER {{coolant}}{{u:temp}}"
+      "text": "EAU {{coolant}}{{u:temp}}"
     }
   ]
 }

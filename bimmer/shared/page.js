@@ -25,6 +25,7 @@ const previews = require('./previews');
 const sensors = require('./sensors');
 const visible = require('./visible');
 const badges = require('./badges');
+const fr = require('./fr');
 const tz = require('./tz');
 
 const W = 1600, H = 520;
@@ -57,6 +58,7 @@ Object.assign(themes.THEMES.m_tricolour, { sel: C.blue, selText: '#ffffff', acce
 class Page {
     constructor(ctx, hud, cfg) {
         this.ctx = ctx; this.hud = hud; this.cfg = cfg;
+        this.fr = !!(ctx.spec && ctx.spec.config && ctx.spec.config.lang === 'fr');
         this.tab = cfg.tabs[0];
         this.picker = null;              // { key, title } while a list of choices is open over the page
         this.loop = null;
@@ -140,6 +142,11 @@ class Page {
     /* ---------- drawing ---------- */
     render() {
         const cv = this.ctx.canvas(W, H);
+        if (this.fr) {                                     // "lang": "fr": every text goes through shared/fr.js (accents: tools/bake_accents.py)
+            const text = cv.text.bind(cv), width = cv.textWidth.bind(cv);
+            cv.text = (str, ...a) => text(fr.tr(str), ...a);
+            cv.textWidth = (str, ...a) => width(fr.tr(str), ...a);
+        }
         const bottom = G.pageBottom(cv);
         const h = bottom + 8;
         cv.clear(C.bg);
