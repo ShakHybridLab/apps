@@ -20,6 +20,7 @@ const TYPES = {
     shiftbar: [],
     arc: ['signal', 'min', 'max'],
     revbar: ['barH'],
+    mstyle: ['pts', 'bar'],
     lights: [],
     shiftlight: [],
     badge: ['text', 'font', 'tone'],

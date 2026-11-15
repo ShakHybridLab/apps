@@ -135,6 +135,11 @@
  *             drawing, a layout's "flipX" / "flipY" swap again. g is averaged over 150 ms and a sample over 3 g is
  *             dropped (also for the tokens). The envelope and the bests (tokens, the page's G-meter tab) last until
  *             resetG(), the app's restart or the switch between demo and car data.
+ *   mstyle    effect layer (shaders.js mstyle): ShakHUD's M Style rev counter, a bent bar: "pts" [[x0, y0], [x1, y1], [x2, y2]] in target px (the
+ *             start, the bend, the end: a rising slant, then a level run), "bar" its width in px, "corner" (2000) the rpm at the bend, "rpmMax" (7000,
+ *             the scale's end, ticks every 1000); lit in the red from the engine's rpm, in light blue (power) while the battery alone drives
+ *             and in green while it charges ("hybridTach": true, the setting "hybridRev"; "chgOnBar": true shows the charge); the red zone
+ *             starts at the redline setting. The numbers are text widgets (tokens {{tachUnit}}, {{chargeNote}}).
  *   revarc    effect layer (shaders.js revarc): a segmented rev arc, the Rally theme's: centre "center" [x, y] (layer px, may
  *             sit below the layer), outer radius "r", "band" px (40), "start" / "sweep" degrees clockwise from 12 o'clock,
  *             "segments" (30); colours, flash and scale as the shiftbar.
@@ -1681,7 +1686,10 @@ class HudApp {
      * battery over hybrid_tach's CHARGE_KW. Without a shared power (or its last read held) nothing is hybrid: ev false, chg 0, so the rpm shows alone.
      */
     _hybridTach(w, rpm) {
-        const flow = w.hybridTach === true && this.target === 'panel' && this.ctx.settings.item('sportPower') && this.ctx.settings.get('sportPower') !== false;
+        // the cluster themes: the setting "sportPower"; the HUD (ShakHUD): the setting "hybridRev"
+        const on = this.target === 'panel' ? this.ctx.settings.item('sportPower') && this.ctx.settings.get('sportPower') !== false
+            : this.ctx.settings.item('hybridRev') && this.ctx.settings.get('hybridRev') !== false;
+        const flow = w.hybridTach === true && !!on;
         const pw = flow ? this.ci.sharedPower() : null;
         return hybridTach.state(pw && !pw.old ? pw.kw : null, rpm);
     }
@@ -2172,6 +2180,17 @@ class HudApp {
             c.uniform(ref, 'u_track', rgba(t.track));
             c.uniform(ref, 'u_tick', rgba(t.dim));
             c.uniform(ref, 'u_fg', rgba(t.fg));
+        } else if (w.type === 'mstyle') {
+            const P = w.pts.map((q) => [q[0] - w.x, q[1] - w.y]), max = w.rpmMax || 7000;
+            c.uniform(ref, 'u_size', [w.w, w.h]);
+            c.uniform(ref, 'u_A', [P[0][0], P[0][1], P[1][0], P[1][1]]);
+            c.uniform(ref, 'u_B', [P[2][0], P[2][1]]);
+            c.uniform(ref, 'u_g', [w.bar, Math.min(0.95, Math.max(0.05, (w.corner || 2000) / max)), max / 1000, this._redMarks(max)[0]]);
+            c.uniform(ref, 'u_v', [0, 0, 0, 0]);
+            c.uniform(ref, 'u_hy', [0, 0, 0, 0]);
+            c.uniform(ref, 'u_hot', rgb(t.hot));
+            c.uniform(ref, 'u_fg', rgba(t.fg));
+            c.uniform(ref, 'u_track', rgba(t.track));
         } else if (w.type === 'lights') {
             c.uniform(ref, 'u_size', [w.w, w.h]);
             // driver camera wings: half the lights (and the blue tail) on each side, filling in towards the camera
@@ -2576,6 +2595,16 @@ class HudApp {
             x.last = key;
             x.c.uniform(x.ref, 'u_value', [v]);
             x.c.uniform(x.ref, 'u_shiftNow', [sp.now ? 1 : 0]);
+        } else if (w.type === 'mstyle') {
+            const rpm = this._raw('rpm'), sp = this._shift(), max = w.rpmMax || 7000;
+            const hy = this._hybridTach(w, rpm), bar = hy.ev ? 1 : (w.chgOnBar === true && hy.engineOff && hy.chg > 0 ? 2 : 0);
+            this.hybridEv = bar > 0; this.hybridCharge = bar === 2;
+            const v = Math.round(Math.min(1, Math.max(0, bar ? Math.abs(hy.kw) * 100 / max : isNum(rpm) ? rpm / max : 0)) * 500) / 500;
+            const key = v + '|' + bar + '|' + (!bar && sp.now ? 1 : 0);
+            if (!force && key === x.last) return;
+            x.last = key;
+            x.c.uniform(x.ref, 'u_v', [v, !bar && sp.now ? 1 : 0, 0, 0]);
+            x.c.uniform(x.ref, 'u_hy', bar === 1 ? [0.3, 0.75, 1.0, 1] : bar === 2 ? [0.2, 0.85, 0.5, 1] : [0, 0, 0, 0]);
         } else if (w.type === 'segbar') {
             const v = this._raw(w.signal);
             const lit = isNum(v) ? Math.max(0, Math.min(w.max, Math.round(v))) : 0;

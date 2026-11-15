@@ -1726,4 +1726,79 @@ void main() {
 }
 `;
 
-module.exports = { shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, navi: NAVI, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES };
+const MSTYLE = `// M Style HUD rev counter for a cluster-render "effect" layer (GLSL ES 1.00): a bent bar, a rising slant then a level run, with
+// ticks under it. The rpm (0..1 of u_g.z thousand) fills the bar from its first end; the part from u_g.w on is the red zone.
+// Uniforms (px in the layer):
+//   u_size
+//   u_A    P0 (the bar's start) and P1 (the bend), x0 y0 x1 y1
+//   u_B    P2 (the bar's end)
+//   u_g    bar width, the share of the scale at the bend (0..1), ticks (thousands of rpm on the scale), where the red zone starts (0..1)
+//   u_v    value 0..1, 1 = at the shift point, spare, spare
+//   u_hy   rgb the lit colour while the battery drives or charges, a = 1 then (0 = the engine's rpm, lit in u_hot)
+//   u_hot rgb;  u_fg, u_track rgba (straight alpha)
+precision mediump float;
+varying vec2 v_uv;
+uniform vec2 u_size;
+uniform vec4 u_A;
+uniform vec2 u_B;
+uniform vec4 u_g;
+uniform vec4 u_v;
+uniform vec4 u_hy;
+uniform vec3 u_hot;
+uniform vec4 u_fg;
+uniform vec4 u_track;
+
+vec4 over(vec4 top, vec4 under) {
+    float a = top.a + under.a * (1.0 - top.a);
+    if (a <= 0.0) return vec4(0.0);
+    return vec4((top.rgb * top.a + under.rgb * under.a * (1.0 - top.a)) / a, a);
+}
+
+float seg(vec2 p, vec2 a, vec2 b, out float t) {
+    vec2 ab = b - a;
+    t = clamp(dot(p - a, ab) / dot(ab, ab), 0.0, 1.0);
+    return length(p - a - ab * t);
+}
+
+void main() {
+    vec2 p = v_uv * u_size;
+    vec2 a = u_A.xy, b = u_A.zw, c = u_B;
+    float t1, t2;
+    float d1 = seg(p, a, b, t1), d2 = seg(p, b, c, t2);
+    float l1 = length(b - a), l2 = length(c - b);
+    bool first = d1 < d2;
+    float d = first ? d1 : d2;
+    float f = first ? t1 * u_g.y : u_g.y + t2 * (1.0 - u_g.y);
+    float s = first ? t1 * l1 : l1 + t2 * l2;
+    float hw = u_g.x * 0.5;
+    vec3 lit = u_hy.a > 0.5 ? u_hy.rgb : (u_v.x > 0.0 && u_v.y > 0.5 ? vec3(1.0) : u_hot);
+    vec4 fill = f <= u_v.x ? vec4(lit, 1.0) : (f >= u_g.w ? vec4(u_hot, 0.45) : u_track);
+    vec4 col = vec4(fill.rgb, fill.a * clamp(hw + 0.5 - d, 0.0, 1.0));
+    // the outline, 1.5 px at the bar's edge
+    col = over(vec4(u_fg.rgb, clamp(1.5 - abs(d - hw + 0.75), 0.0, 1.0)), col);
+    // the needle: the bright edge of the fill, a little wider than the bar
+    float sv = u_v.x <= u_g.y ? u_v.x / u_g.y * l1 : l1 + (u_v.x - u_g.y) / (1.0 - u_g.y) * l2;
+    if (u_v.x > 0.01) col = over(vec4(1.0, 1.0, 1.0, clamp(2.5 - abs(s - sv), 0.0, 1.0) * clamp(hw + 3.5 - d, 0.0, 1.0)), col);
+    // ticks under the bar, longer on the even thousands
+    for (int i = 0; i < 9; i++) {
+        float fi = float(i);
+        if (fi <= u_g.z) {
+            float fr = fi / u_g.z;
+            bool in1 = fr <= u_g.y;
+            vec2 dir = abs(fr - u_g.y) < 0.001 ? normalize(normalize(b - a) + normalize(c - b)) : (in1 ? normalize(b - a) : normalize(c - b));
+            vec2 tp = in1 ? mix(a, b, fr / u_g.y) : mix(b, c, (fr - u_g.y) / (1.0 - u_g.y));
+            vec2 n = vec2(-dir.y, dir.x);
+            bool even = mod(fi, 2.0) < 0.5;
+            vec2 s0 = tp + n * (hw + 3.0), s1 = s0 + n * (even ? 10.0 : 5.0);
+            vec2 q = s1 - s0;
+            float u = clamp(dot(p - s0, q) / dot(q, q), 0.0, 1.0);
+            float dt = length(p - s0 - q * u);
+            vec3 tc = fr >= u_g.w - 0.001 ? u_hot : u_fg.rgb;
+            col = over(vec4(tc, clamp((even ? 1.9 : 1.3) - dt, 0.0, 1.0)), col);
+        }
+    }
+    gl_FragColor = col;
+}
+`;
+
+module.exports = { mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, navi: NAVI, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES };

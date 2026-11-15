@@ -55,7 +55,7 @@ Le dépôt contient aussi HUD Widgets (le HUD) et les apps Cluster Centre / Clus
 ## Installation (MGU Store)
 
 1. Ajouter la source `robertnisipeanu/idrive-apps`, installer **cluster-render** (et **Waze on cluster** si tu veux la carte Waze).
-2. Ajouter la source `shakzer/x3-hybride`, installer **ShakTheme**, **HUD Widgets**, **Cluster Centre**, **Cluster Info** selon l'envie.
+2. Ajouter la source `shakzer/x3-hybride`, installer **ShakTheme**, **ShakHUD**, **HUD Widgets**, **Cluster Centre**, **Cluster Info** selon l'envie.
 3. Ouvrir chaque app depuis le menu des apps pour choisir les thèmes par mode de conduite.
 4. Régler « Time zone (clock) » dans ShakTheme (l'horloge de l'unité est en UTC).
 

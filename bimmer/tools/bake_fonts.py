@@ -71,7 +71,7 @@ CLUSTER_FONTS = [
     ('s_unit', 'Barlow-Medium.ttf', 24, LOWER + UPPER + DIGITS + '°/-. %'),
     ('s_gl', 'Michroma-Regular.ttf', 21, DIGITS + '/', 1),
 ]
-FONTS = {'idrive_hud_widgets': HUD_FONTS, 'shaktheme': CLUSTER_FONTS}
+FONTS = {'idrive_hud_widgets': HUD_FONTS, 'shaktheme': CLUSTER_FONTS, 'shakhud': [('small', 'Barlow-Medium.ttf', 13, LOWER + UPPER + DIGITS + '/.:-°%>· ')]}
 PAD = 2
 ATLAS_W = 1024
 

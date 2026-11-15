@@ -1,0 +1,789 @@
+{
+  "id": "shakhud",
+  "title": "ShakHUD",
+  "description": "ShakHUD: a HUD of its own for the windshield, the M Style rev counter (a bent bar, red in the red zone, light blue while electric, green while charging), made to sit with Waze's HUD map",
+  "version": "0.1.0",
+  "vendor": "custom",
+  "loggingId": "OAS1",
+  "iconGlyph": "SH",
+  "shared": [
+    "hud.js",
+    "hud_text.js",
+    "hud_data.js",
+    "hud_themes.js",
+    "layouts.js",
+    "shaders.js",
+    "icons.js",
+    "emblems.js",
+    "shift_score.js",
+    "sun.js",
+    "cluster_render_client.js",
+    "calibration.js",
+    "visible.js",
+    "page.js",
+    "previews.js",
+    "sensors.js",
+    "waze.js",
+    "badges.js",
+    "screen.js",
+    "cluster_info.js",
+    "danger.js",
+    "free_rect.js",
+    "map_window.js",
+    "hybrid_tach.js",
+    "runs.js",
+    "tz.js",
+    "shift_light.js"
+  ],
+  "signals": {
+    "de.bmw.infotainment.vehicle.CDS": {
+      "statusEngineSpeed2": "rs",
+      "statusEngineTemperature": "rs"
+    },
+    "de.bmw.infotainment.vehicle.CDS2": {
+      "statusLongitudinalAccelerationMassCenter": "rs",
+      "statusLateralAccelerationMassCenter": "rs"
+    },
+    "de.bmw.infotainment.vehicle.Vehicle2": {
+      "statusCarSpeed2": "rs"
+    },
+    "de.bmw.infotainment.drivingexcitement.FES": {
+      "statusSwitchDriveDynamicSport2": "rs",
+      "statusActualValueTorque2": "rs",
+      "statusFESVehicleDynamicSwitchHMI": "rs"
+    },
+    "de.bmw.infrastructure.VehicleInformation": {
+      "statusGearboxDrive": "s",
+      "DataPowerTrain2": "s"
+    },
+    "com.harman.infotainment.systemfunctions.tasu.tasu.InternalTasu": {
+      "_instances": "SystemFunctionsInternalTasuInst1",
+      "_methods": [
+        "sendTasuRequest"
+      ],
+      "_broadcasts": [
+        "sendTasuResponse"
+      ]
+    },
+    "de.bmw.infotainment.KombiIF": {
+      "statusRangeTankStatus": "rs",
+      "displayRangeElectricVehicle": "rs"
+    },
+    "de.bmw.infrastructure.EnvironmentalInformation": {
+      "ExteriorTemperature": "s"
+    }
+  },
+  "screens": [
+    {
+      "name": "MAIN",
+      "kind": "canvas",
+      "title": "ShakHUD",
+      "buttons": [
+        [
+          "BTN_SETTINGS",
+          "All settings"
+        ]
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "key": "hudLayout",
+      "label": "Layout (when not by drive mode)",
+      "type": "choice",
+      "default": "mstyle",
+      "options": [
+        [
+          "off",
+          "Off (BMW's own HUD)"
+        ],
+        [
+          "mstyle",
+          "M Style"
+        ]
+      ]
+    },
+    {
+      "key": "byMode",
+      "label": "Change with the drive mode (Electric Eco Pro / Hybrid / Sport Plus)",
+      "type": "bool",
+      "default": false
+    },
+    {
+      "key": "inHybrid",
+      "label": "In Hybrid (also Battery Control; Daily by default; BMW keeps its speed bottom-left)",
+      "type": "choice",
+      "default": "mstyle",
+      "options": [
+        [
+          "off",
+          "Off (BMW's own HUD)"
+        ],
+        [
+          "mstyle",
+          "M Style"
+        ]
+      ]
+    },
+    {
+      "key": "inSport",
+      "label": "In Sport Plus (also Sport, Sport Individual, Xtraboost; off by default: BMW's Sport HUD takes the middle)",
+      "type": "choice",
+      "default": "mstyle",
+      "options": [
+        [
+          "off",
+          "Off (BMW's own HUD)"
+        ],
+        [
+          "mstyle",
+          "M Style"
+        ]
+      ]
+    },
+    {
+      "key": "inEco",
+      "label": "In Electric Eco Pro (also Electric, Electric Individual; off by default: BMW's own HUD)",
+      "type": "choice",
+      "default": "mstyle",
+      "options": [
+        [
+          "off",
+          "Off (BMW's own HUD)"
+        ],
+        [
+          "mstyle",
+          "M Style"
+        ]
+      ]
+    },
+    {
+      "key": "hudTheme",
+      "label": "Theme",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Auto (Night after sunset)"
+        ],
+        [
+          "classic",
+          "Classic"
+        ],
+        [
+          "m",
+          "M"
+        ],
+        [
+          "night",
+          "Night"
+        ]
+      ]
+    },
+    {
+      "key": "dayTheme",
+      "label": "Daytime theme for Auto",
+      "type": "choice",
+      "default": "classic",
+      "options": [
+        [
+          "classic",
+          "Classic"
+        ],
+        [
+          "m",
+          "M"
+        ]
+      ]
+    },
+    {
+      "key": "hudX",
+      "label": "HUD position, left / right",
+      "type": "number",
+      "unit": "px",
+      "default": 0,
+      "steps": [
+        -200,
+        -190,
+        -180,
+        -170,
+        -160,
+        -150,
+        -140,
+        -130,
+        -120,
+        -110,
+        -100,
+        -90,
+        -80,
+        -70,
+        -60,
+        -50,
+        -40,
+        -30,
+        -20,
+        -10,
+        0,
+        10,
+        20,
+        30,
+        40,
+        50,
+        60,
+        70,
+        80,
+        90,
+        100,
+        110,
+        120,
+        130,
+        140,
+        150,
+        160,
+        170,
+        180,
+        190,
+        200
+      ],
+      "hidden": true
+    },
+    {
+      "key": "hudY",
+      "label": "HUD position, up / down",
+      "type": "number",
+      "unit": "px",
+      "default": 0,
+      "steps": [
+        -150,
+        -140,
+        -130,
+        -120,
+        -110,
+        -100,
+        -90,
+        -80,
+        -70,
+        -60,
+        -50,
+        -40,
+        -30,
+        -20,
+        -10,
+        0,
+        10,
+        20,
+        30,
+        40,
+        50,
+        60,
+        70,
+        80,
+        90,
+        100,
+        110,
+        120,
+        130,
+        140,
+        150
+      ],
+      "hidden": true
+    },
+    {
+      "key": "hudScale",
+      "label": "HUD size",
+      "type": "number",
+      "unit": "%",
+      "default": 100,
+      "steps": [
+        80,
+        85,
+        90,
+        95,
+        100,
+        105,
+        110,
+        115,
+        120
+      ],
+      "hidden": true
+    },
+    {
+      "key": "units",
+      "label": "Units",
+      "type": "choice",
+      "default": "us",
+      "options": [
+        [
+          "us",
+          "mph, \u00b0F, psi"
+        ],
+        [
+          "metric",
+          "km/h, \u00b0C, bar"
+        ]
+      ]
+    },
+    {
+      "key": "clock",
+      "label": "Clock",
+      "type": "choice",
+      "default": "12h",
+      "options": [
+        [
+          "12h",
+          "12-hour"
+        ],
+        [
+          "24h",
+          "24-hour"
+        ]
+      ]
+    },
+    {
+      "key": "timeZone",
+      "label": "Time zone (clock)",
+      "type": "number",
+      "default": -9999,
+      "steps": [
+        -9999,
+        10001,
+        10002,
+        10003,
+        10004,
+        10005,
+        10006,
+        10007,
+        10008,
+        10009,
+        10011,
+        10012,
+        10013,
+        -720,
+        -690,
+        -660,
+        -630,
+        -600,
+        -570,
+        -540,
+        -510,
+        -480,
+        -450,
+        -420,
+        -390,
+        -360,
+        -330,
+        -300,
+        -270,
+        -240,
+        -210,
+        -180,
+        -150,
+        -120,
+        -90,
+        -60,
+        -30,
+        0,
+        30,
+        60,
+        90,
+        120,
+        150,
+        180,
+        210,
+        240,
+        270,
+        300,
+        330,
+        360,
+        390,
+        420,
+        450,
+        480,
+        510,
+        540,
+        570,
+        600,
+        630,
+        660,
+        690,
+        720,
+        750,
+        780,
+        810,
+        840
+      ]
+    },
+    {
+      "key": "tankLitres",
+      "label": "Fuel tank size",
+      "type": "number",
+      "unit": "L",
+      "default": 50,
+      "steps": [
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110
+      ]
+    },
+    {
+      "key": "evRangeFull",
+      "label": "Electric range when full (plug-in hybrids)",
+      "type": "number",
+      "unit": "km",
+      "default": 40,
+      "steps": [
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80
+      ]
+    },
+    {
+      "key": "redline",
+      "label": "Redline (shift light)",
+      "type": "number",
+      "unit": "rpm",
+      "default": 7000,
+      "steps": [
+        5500,
+        6000,
+        6500,
+        7000,
+        7500
+      ]
+    },
+    {
+      "key": "shiftBefore",
+      "label": "Shift point before redline",
+      "type": "number",
+      "unit": "rpm",
+      "default": 300,
+      "steps": [
+        0,
+        100,
+        200,
+        300,
+        500,
+        800,
+        1000
+      ]
+    },
+    {
+      "key": "coldGuard",
+      "label": "Cold-engine rev guard (Redline)",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "showClock",
+      "label": "Show clock",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "showOil",
+      "label": "Show readout 1 (the battery charge in the default layouts)",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "showCoolant",
+      "label": "Show readout 2 (the electric range in the default layouts)",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "showBoost",
+      "label": "Show boost (Sport layout)",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "warnOil",
+      "label": "Oil temperature warning",
+      "type": "number",
+      "unit": "\u00b0C",
+      "default": 130,
+      "steps": [
+        0,
+        110,
+        115,
+        120,
+        125,
+        130,
+        135,
+        140,
+        145,
+        150
+      ]
+    },
+    {
+      "key": "warnCoolant",
+      "label": "Coolant temperature warning",
+      "type": "number",
+      "unit": "\u00b0C",
+      "default": 115,
+      "steps": [
+        0,
+        100,
+        105,
+        110,
+        115,
+        120,
+        125
+      ]
+    },
+    {
+      "key": "warnBoost",
+      "label": "Boost warning",
+      "type": "number",
+      "unit": "bar",
+      "default": 0,
+      "steps": [
+        0,
+        0.8,
+        1.0,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2.0
+      ]
+    },
+    {
+      "key": "gFlipLat",
+      "label": "G-meter: swap left / right",
+      "type": "bool",
+      "default": false
+    },
+    {
+      "key": "gFlipLong",
+      "label": "G-meter: brake on top",
+      "type": "bool",
+      "default": false
+    },
+    {
+      "key": "gRange",
+      "label": "G-meter range",
+      "type": "choice",
+      "default": 1.2,
+      "options": [
+        [
+          0.8,
+          "0.8 g"
+        ],
+        [
+          1.0,
+          "1.0 g"
+        ],
+        [
+          1.2,
+          "1.2 g"
+        ],
+        [
+          1.5,
+          "1.5 g"
+        ],
+        [
+          2.0,
+          "2.0 g"
+        ]
+      ]
+    },
+    {
+      "key": "gTrail",
+      "label": "G-meter trail",
+      "type": "choice",
+      "default": 2,
+      "options": [
+        [
+          0,
+          "Off"
+        ],
+        [
+          1,
+          "1 s"
+        ],
+        [
+          2,
+          "2 s"
+        ],
+        [
+          4,
+          "4 s"
+        ]
+      ]
+    },
+    {
+      "key": "demo",
+      "label": "Demo data",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Auto (until the car sends data)"
+        ],
+        [
+          "on",
+          "On"
+        ],
+        [
+          "off",
+          "Off"
+        ]
+      ]
+    },
+    {
+      "key": "hybridRev",
+      "label": "Hybrid rev counter (light blue while electric, green while charging)",
+      "type": "bool",
+      "default": true
+    }
+  ],
+  "config": {
+    "target": "hud",
+    "statusName": "ShakHUD",
+    "socketPath": "/dev/shm/cluster-render/render.sock",
+    "utcOffsetMinutes": null,
+    "_comment": "socketPath: cluster-render's documented default. utcOffsetMinutes: leave null to use the head unit's own time zone.",
+    "tankLitres": 50,
+    "evRangeFull": 40
+  }
+}
