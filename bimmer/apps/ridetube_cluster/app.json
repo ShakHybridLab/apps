@@ -30,13 +30,13 @@
       "key": "videoCluster",
       "label": "Video in the cluster theme's window (parked only)",
       "type": "bool",
-      "default": false
+      "default": true
     },
     {
       "key": "videoHud",
       "label": "Video on the HUD (parked only)",
       "type": "bool",
-      "default": false
+      "default": true
     }
   ],
   "config": {
