@@ -20,7 +20,7 @@ theme its window back. There is no setting for this. The sound is RideTube's own
 - At most 15 frames a second and 640 px wide: the head unit is also decoding the video.
 - A paused or stopped video frees the window after 1.5 s.
 
-## Settings (both off by default)
+## Settings (both on by default)
 
 - **Video in the cluster theme's window (parked only)**
 - **Video on the HUD (parked only)**
