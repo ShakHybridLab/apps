@@ -165,7 +165,7 @@
       "key": "video_driving",
       "label": "Video while driving - at your own risk, only for a car coded for video in motion (passengers); takes effect once parked",
       "type": "bool",
-      "default": false
+      "default": true
     },
     {
       "key": "members",
