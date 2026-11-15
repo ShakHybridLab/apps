@@ -188,7 +188,7 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s0"
+      "sheet": "s1"
     },
     {
       "id": "spd4",
@@ -588,7 +588,8 @@
       "w": 40,
       "h": 36,
       "color": "dim",
-      "sheet": "s1"
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "speed",
@@ -603,7 +604,8 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s1"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "speed_unit",
@@ -618,7 +620,8 @@
       "color": "sblue",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s1"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "gear",
@@ -634,7 +637,7 @@
       "align": "center",
       "hotWhen": "now",
       "toggle": "!mapUp",
-      "sheet": "s6",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -650,7 +653,8 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
-      "sheet": "s1"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "mspeed_unit",
@@ -665,7 +669,8 @@
       "color": "sblue",
       "align": "center",
       "toggle": "mapUp",
-      "sheet": "s1"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "mgear",
@@ -681,7 +686,7 @@
       "align": "center",
       "hotWhen": "now",
       "toggle": "mapUp",
-      "sheet": "s6",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -830,7 +835,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "boostShown",
-      "sheet": "s7",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -846,7 +851,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "boostShown",
-      "sheet": "s7",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -862,7 +867,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "power",
-      "sheet": "s8",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -878,7 +883,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "power",
-      "sheet": "s8",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -892,7 +897,7 @@
       "w": 24,
       "h": 30,
       "color": "dim",
-      "sheet": "s7",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -908,7 +913,7 @@
       "font": "s_val",
       "color": "fg",
       "align": "right",
-      "sheet": "s8",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -923,7 +928,7 @@
       "font": "s_unit",
       "color": "dim",
       "align": "left",
-      "sheet": "s8",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -931,14 +936,14 @@
       "type": "text",
       "z": 5,
       "x": 150,
-      "y": 681,
+      "y": 669,
       "w": 150,
       "h": 26,
       "text": "{{time}}",
       "font": "s_val",
       "color": "fg",
       "align": "right",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -946,14 +951,14 @@
       "type": "text",
       "z": 5,
       "x": 306,
-      "y": 682,
+      "y": 670,
       "w": 50,
       "h": 29,
       "text": "{{ampmLc}}",
       "font": "s_unit",
       "color": "dim",
       "align": "left",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -963,11 +968,11 @@
       "icon": "fuelBolt",
       "z": 5,
       "x": 405,
-      "y": 680,
+      "y": 668,
       "w": 24,
       "h": 28,
       "color": "dim",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -976,14 +981,14 @@
       "type": "text",
       "z": 5,
       "x": 430,
-      "y": 681,
+      "y": 669,
       "w": 100,
       "h": 26,
       "text": "{{rangeTotal}}",
       "font": "s_val",
       "color": "fg",
       "align": "right",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -991,14 +996,14 @@
       "type": "text",
       "z": 5,
       "x": 536,
-      "y": 682,
+      "y": 670,
       "w": 50,
       "h": 29,
       "text": "{{u:distLc}}",
       "font": "s_unit",
       "color": "dim",
       "align": "left",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1007,12 +1012,12 @@
       "type": "icon",
       "z": 5,
       "x": 1458,
-      "y": 680,
+      "y": 668,
       "w": 24,
       "h": 30,
       "icon": "battBolt",
       "color": "dim",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1021,14 +1026,14 @@
       "type": "text",
       "z": 5,
       "x": 1484,
-      "y": 681,
+      "y": 669,
       "w": 70,
       "h": 26,
       "text": "{{evRange}}",
       "font": "s_val",
       "color": "fg",
       "align": "right",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1036,14 +1041,14 @@
       "type": "text",
       "z": 5,
       "x": 1560,
-      "y": 682,
+      "y": 670,
       "w": 50,
       "h": 29,
       "text": "{{u:distLc}}",
       "font": "s_unit",
       "color": "dim",
       "align": "left",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1051,7 +1056,7 @@
       "type": "text",
       "z": 5,
       "x": 1630,
-      "y": 681,
+      "y": 669,
       "w": 120,
       "h": 26,
       "text": "{{ambient}}",
@@ -1059,7 +1064,7 @@
       "color": "fg",
       "align": "right",
       "iceBy": true,
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1067,14 +1072,14 @@
       "type": "text",
       "z": 5,
       "x": 1756,
-      "y": 682,
+      "y": 670,
       "w": 50,
       "h": 29,
       "text": "{{u:temp}}",
       "font": "s_unit",
       "color": "dim",
       "align": "left",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1082,7 +1087,7 @@
       "type": "text",
       "z": 5,
       "x": 830,
-      "y": 680,
+      "y": 668,
       "w": 260,
       "h": 29,
       "text": "{{badge}}",
@@ -1090,7 +1095,7 @@
       "color": "dim",
       "align": "center",
       "readyHides": true,
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1098,7 +1103,7 @@
       "type": "text",
       "z": 5,
       "x": 1640,
-      "y": 643,
+      "y": 631,
       "w": 240,
       "h": 26,
       "text": "{{modeName}}",
@@ -1106,7 +1111,7 @@
       "color": "dim",
       "align": "right",
       "accentBy": true,
-      "sheet": "s8",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1118,7 +1123,7 @@
       "y": 148,
       "w": 360,
       "h": 96,
-      "sheet": "s10",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1133,7 +1138,8 @@
       "color": "dim",
       "limitBy": true,
       "toggle": "!mapUp",
-      "sheet": "s1"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "lim_num",
@@ -1149,7 +1155,7 @@
       "align": "center",
       "limitBy": true,
       "toggle": "!mapUp",
-      "sheet": "s6",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1164,7 +1170,7 @@
       "color": "dim",
       "launchBy": true,
       "toggle": "!mapUp",
-      "sheet": "s6",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1182,7 +1188,7 @@
       "launchBy": true,
       "toggle": "!mapUp",
       "rate": 100,
-      "sheet": "s6",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1198,7 +1204,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "!mapUp",
-      "sheet": "s6",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1207,7 +1213,7 @@
       "icon": "snow",
       "z": 5,
       "x": 1636,
-      "y": 679,
+      "y": 667,
       "w": 24,
       "h": 30,
       "color": "dim",
@@ -1221,7 +1227,7 @@
       "icon": "leaf",
       "z": 5,
       "x": 1130,
-      "y": 679,
+      "y": 667,
       "w": 26,
       "h": 30,
       "color": [
@@ -1231,7 +1237,7 @@
         255
       ],
       "evShareBy": true,
-      "sheet": "s11",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1239,14 +1245,14 @@
       "type": "text",
       "z": 5,
       "x": 1160,
-      "y": 681,
+      "y": 669,
       "w": 84,
       "h": 26,
       "text": "{{evShare}}",
       "font": "s_val",
       "color": "fg",
       "align": "right",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1254,14 +1260,14 @@
       "type": "text",
       "z": 5,
       "x": 1250,
-      "y": 682,
+      "y": 670,
       "w": 30,
       "h": 29,
       "text": "{{evShareUnit}}",
       "font": "s_unit",
       "color": "dim",
       "align": "left",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1270,7 +1276,7 @@
       "icon": "flag",
       "z": 5,
       "x": 838,
-      "y": 681,
+      "y": 669,
       "w": 28,
       "h": 28,
       "color": "fg",
@@ -1283,7 +1289,7 @@
       "type": "text",
       "z": 5,
       "x": 874,
-      "y": 683,
+      "y": 671,
       "w": 212,
       "h": 24,
       "text": "{{launchReady}}",

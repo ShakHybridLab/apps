@@ -569,6 +569,8 @@ check('Sport theme: each range sits under its own gauge (fuel left, battery righ
     assert(evStart >= visible.GEAR_P[2] && by('ev_range').x >= visible.GEAR_P[2], 'the electric range starts after BMW\'s gear letter (x ' + visible.GEAR_P[0] + '..' + visible.GEAR_P[2] + '), no longer mirroring the fuel range: the letter sits under the battery gauge');
     assert(by('drive_mode').y + by('drive_mode').h <= by('outside').y, 'the drive mode\'s name is on its own row above the outside temperature (it collided with it)');
     assert(by('ev_range_unit').x + by('ev_range_unit').w <= by('outside').x, 'the outside temperature starts after the electric range');
+    // the bottom row's middle is the middle of BMW's gear letter and belt light (y 663..708): one notch up from the panel's edge (0.20.5)
+    ['time', 'range', 'ev_range', 'outside'].forEach((i) => assert(Math.abs(by(i).y + by(i).h / 2 - 683) <= 5, 'Sport: ' + i + ' is not on the gear letter\'s line (middle y ' + (by(i).y + by(i).h / 2) + ')'));
     assert(by('ev_share_unit').x + by('ev_share_unit').w <= evStart, 'the electric share stops before the electric range');
     assert(by('ev_share_icon').x >= by('ready_text').x + by('ready_text').w, 'the electric share starts after the launch cue');
     assert(by('ice_icon').x + by('ice_icon').w <= by('outside').x + by('outside').w - 40, 'the snowflake sits left of the temperature digits');

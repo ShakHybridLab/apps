@@ -89,6 +89,7 @@ def danger_alert(x, y, h):
 # (x 534..1386, y 120..600, the same as Sport's), the blade on the left, a small hexagon with the speed on the right above BMW's
 # box, the strips and the temperatures below it, nothing under the map.
 DX = -30
+ROW = 668                            # the bottom row's text top: its middle (y 681) is the middle of BMW's belt light and gear letter (y 663..708)
 SLOPE = 0.5714                       # the labels' lean along the blade (x per y px)
 RPM_Y0, RPM_Y7 = 613, 160            # y of the 0 and of the 7 mark on the photo's blade
 SPD_Y = [613, 555, 497, 440, 380, 321, 266, 210, 153]    # y of the speed labels 0, 30 .. 150, 210, 270, 330
@@ -219,7 +220,7 @@ def mb_right_strip(pre, tog, G, name, hi, mid, lo, unit, icon_name, icon_w=26):
     return W
 
 
-def mb_bottom_right(pre='', tog=None, dx=0, y=684):
+def mb_bottom_right(pre='', tog=None, dx=0, y=ROW):
     """The right end of the bottom row, on the fuel range's line and in its lettering (m_mid): the coolant temperature, the oil
     temperature (under its strip) and the electric range (under the battery strip), then the outside temperature (added by the
     caller). The two temperatures are coloured by their value (tempBy: blue cold, green warm, red flashing over the limit). The same
@@ -261,10 +262,10 @@ def mblade():
     # flat bar under the window
     HB = 18                                       # the blade is this far right of the normal view (its "4" is the limit: BMW's black box)
     SX = 30                                       # the two strips (and the oil / electric range / outside under them)
-    WIN = [446, 128, 582, 458]                    # the window (x, y, w, h): inside Waze's slot, clear of the shift light above and the blade at the right
+    WIN = [446, 128, 582, 450]                    # the window (x, y, w, h): inside Waze's slot, clear of the shift light above and the blade at the right
     LX = 84                                       # the gear's box in the left column (the hood's limit is x 80 at y 167)
     INS = 10
-    FB = [462, 962, 606]                          # the flat fuel bar: left end x, right end x, top y (27 thick), under the window
+    FB = [462, 962, 598]                          # the flat fuel bar: left end x, right end x, top y (27 thick), under the window
     G1o = [G1[0] + SX, G1[1], G1[2], G1[3]]
     G2o = [G2[0] + SX, G2[1], G2[2], G2[3]]
     G0o = [FB[2], 1920 - FB[1], 1920 - FB[0], 0]  # the first strip, lying flat: in the frame the shader turns it into
@@ -309,24 +310,24 @@ def mblade():
     W.extend(mb_right_strip('o_', 'mapUp', G2o, 'b', '100', '50', '0', '%', 'battery'))
     W.extend(mb_fuel_flat('o_', 'mapUp', FB[0], FB[1], FB[2]))
     # bottom row, as the photo: the clock at the far left, the range with its pump, the outside temperature at the far right
-    W.append(text('time', 40, 684, 130, 29, '{{time}}', 'm_mid', 'fg', 'right'))
-    W.append(text('ampm', 176, 687, 53, 32, '{{ampmLc}}', 'm_tiny', 'dim'))
-    W.append(icon('range_icon', 'fuelBolt', 313, 681, 29, 34, 'fg', 1))
-    W.append(text('range', 348, 684, 112, 29, '{{rangeTotal}}', 'm_mid', 'fg', 'right', 1))
-    W.append(text('range_unit', 466, 687, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1))
-    W.extend(limit_and_timer(672, 318, 76, True, ring=(111, 590, 72)))   # the timer in the black void left of the gear letter; the ring small, bottom left above the clock (no clean place by the speed there)
-    W.extend(ev_share(632, 681, 26, 34, 662, 687, 52, 32, 'm_tiny', 718, 687, 26, 32, 'm_tiny'))   # between the belt light and the hexagon's tabs
+    W.append(text('time', 40, ROW, 130, 29, '{{time}}', 'm_mid', 'fg', 'right'))
+    W.append(text('ampm', 176, ROW + 3, 53, 32, '{{ampmLc}}', 'm_tiny', 'dim'))
+    W.append(icon('range_icon', 'fuelBolt', 313, ROW - 3, 29, 34, 'fg', 1))
+    W.append(text('range', 348, ROW, 112, 29, '{{rangeTotal}}', 'm_mid', 'fg', 'right', 1))
+    W.append(text('range_unit', 466, ROW + 3, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1))
+    W.extend(limit_and_timer(672, 318, 76, True, ring=(111, 574, 72)))   # the timer in the black void left of the gear letter; the ring small, bottom left above the clock (no clean place by the speed there)
+    W.extend(ev_share(632, ROW - 3, 26, 34, 662, ROW + 3, 52, 32, 'm_tiny', 718, ROW + 3, 26, 32, 'm_tiny'))   # between the belt light and the hexagon's tabs
     # the right end follows the strips: in the map view they are SX px further right, so the oil, the electric range and the outside
     # temperature move with them (the coolant stays)
     W.extend(mb_bottom_right('', '!mapUp', 0))
     W.extend(mb_bottom_right('o_', 'mapUp', SX))
-    W.append(text('outside', 1736, 684, 118, 29, '{{ambient}}', 'm_mid', 'fg', 'right', 1, toggle='!mapUp', iceBy=True))
-    W.append(icon('ice_icon', 'snow', 1848, 646, 24, 32, 'dim', toggle='!mapUp', iceBy=True))        # over the temperature (its box has no room beside it)
-    W.append(text('outside_unit', 1860, 687, 44, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, toggle='!mapUp'))
+    W.append(text('outside', 1736, ROW, 118, 29, '{{ambient}}', 'm_mid', 'fg', 'right', 1, toggle='!mapUp', iceBy=True))
+    W.append(icon('ice_icon', 'snow', 1848, ROW - 38, 24, 32, 'dim', toggle='!mapUp', iceBy=True))        # over the temperature (its box has no room beside it)
+    W.append(text('outside_unit', 1860, ROW + 3, 44, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, toggle='!mapUp'))
     OX = SX - 16          # (its value box holds '+104', so its left 30 px are empty for '+22': it needs less than the strips' shift)
-    W.append(text('o_outside', 1722 + OX, 684, 118, 29, '{{ambient}}', 'm_mid', 'fg', 'right', 1, toggle='mapUp', iceBy=True))
-    W.append(icon('o_ice_icon', 'snow', 1834 + OX, 646, 24, 32, 'dim', toggle='mapUp', iceBy=True))
-    W.append(text('o_outside_unit', 1846 + OX, 687, 44, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, toggle='mapUp'))
+    W.append(text('o_outside', 1722 + OX, ROW, 118, 29, '{{ambient}}', 'm_mid', 'fg', 'right', 1, toggle='mapUp', iceBy=True))
+    W.append(icon('o_ice_icon', 'snow', 1834 + OX, ROW - 38, 24, 32, 'dim', toggle='mapUp', iceBy=True))
+    W.append(text('o_outside_unit', 1846 + OX, ROW + 3, 44, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, toggle='mapUp'))
     W += danger_alert(1612, 340, 78)       # right of BMW's black box (x < 1597), above the strips (y 435)
     return {
         'schemaVersion': 2, 'name': 'M Blade', 'theme': 'mblade', 'runUp': False,

@@ -84,7 +84,7 @@ NAMES.forEach((n) => {
             assert(o.fuelH === true && !n.fuelH, 'the fuel bar must be flat with the map up only');
             const left = 1920 - o.g0[2], right = 1920 - o.g0[1];                 // the flat bar, back in panel px
             assert(left >= win[0] && right <= win[2], 'the fuel bar is wider than the window');
-            assert(o.g0[0] >= win[3] + 8 && o.g0[0] + 27 <= 684 - 20, 'the fuel bar is not right under the window, clear of the bottom row');
+            assert(o.g0[0] >= win[3] + 8 && o.g0[0] + 27 <= by('time').y - 20, 'the fuel bar is not right under the window, clear of the bottom row');
             assert(o.g1[0] > n.g1[0] && o.g2[0] > n.g2[0] && o.bl[2] > n.bl[2], 'not moved to the right');
             assert(win[2] + 10 <= 1050, 'the window runs into the blade, whose base starts near x 1050 (' + win[2] + ')');
             const f = ['o_f_lo', 'o_f_mid', 'o_f_hi', 'o_fuel_icon'].map(by);
@@ -99,8 +99,10 @@ NAMES.forEach((n) => {
             VIEWS.forEach(([pre]) => {
                 const ys = [by('time'), by('range'), by(pre + 'ev_range'), by(pre + 'oil'), by(pre + 'cool'), by(pre + 'outside')].map((w) => w.y);
                 assert(ys.every((y) => y === ys[0]), pre + ' y differ: ' + ys.join(', '));
-                ['range_icon', pre + 'ev_icon', pre + 'oil_icon', pre + 'cool_icon'].forEach((i) => assert(by(i).y === 681, i + ' is not on the line'));
-                ['range_unit', pre + 'ev_range_unit', pre + 'oil_unit', pre + 'cool_unit', pre + 'outside_unit'].forEach((i) => assert(by(i).y === 687, i + ' is not on the line'));
+                // the line's middle is the middle of BMW's seat-belt light and gear letter (y 663..708, middle 681-685): not lower, near the panel's edge
+                assert(Math.abs(ys[0] + 29 / 2 - 683) <= 5, pre + ' the line is not centred on the belt light and the gear letter: y ' + ys[0]);
+                ['range_icon', pre + 'ev_icon', pre + 'oil_icon', pre + 'cool_icon'].forEach((i) => assert(by(i).y === ys[0] - 3, i + ' is not on the line'));
+                ['range_unit', pre + 'ev_range_unit', pre + 'oil_unit', pre + 'cool_unit', pre + 'outside_unit'].forEach((i) => assert(by(i).y === ys[0] + 3, i + ' is not on the line'));
             });
         });
         check('mblade: the coolant, the oil and the electric range are on the bottom row in the range\'s lettering and height, the oil under its strip and the electric range under the battery strip, before the outside temperature, in both views', () => {

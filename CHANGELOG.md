@@ -2,6 +2,10 @@
 
 ## 15 novembre 2026 (soir)
 
+### ShakTheme 0.20.5 (pas encore essayé sur la voiture)
+- **Rangée du bas montée d'un cran sur Sport et M Blade** (heure, autonomie, autonomie électrique, températures, température extérieure) : son milieu est maintenant à y 682, le milieu de la lettre de rapport de BMW et de son voyant de ceinture (y 663 à 708), au lieu de y 694 à 698, près du bord bas du panneau. Sport : −12 px (les widgets du bas, le nom du mode et le panneau « prêt » suivent). M Blade : −16 px, le chiffre de limite de vitesse, la jauge d'essence plate (sous la carte, 8 px plus haut ; la fenêtre de la carte perd 8 px de hauteur, y 128 à 578) et le flocon de la température extérieure suivent. M l'avait déjà (rangée au-dessus de la lettre) et Navi est déjà à cette hauteur.
+- Tests : `test_mblade_navi.js` (rangée à la même hauteur que le milieu de la lettre, jauge plate à l'écart) et `test_zones.js` (Sport : milieu de la rangée sur la lettre).
+
 ### ShakTheme 0.20.4 et ShakHUD 0.6.5 (pas encore essayés sur la voiture)
 - **Onglet Carte : tout le fichier d'état de Waze on Cluster s'affiche** (`/run/waze-on-cluster/status.json`, sous la ligne d'état, en petits caractères : `state=… target=…` et toute autre clé, par exemple une position) et la liste de ses clés va au journal (`Waze on cluster status file: …`). ShakTheme ne lit que `state` et `target` ; si le fichier contient une latitude et une longitude, la liste des 3003 radars peut enfin servir. Sans terminal sur la voiture, il suffit de photographier l'onglet. Test : `tools/test_waze_raw.js`.
 
