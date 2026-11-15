@@ -152,15 +152,15 @@
     {
       "id": "ev_icon",
       "type": "icon",
-      "icon": "battery",
+      "icon": "battBolt",
       "color": "dim",
       "class": "content",
       "z": 10,
       "toggle": "showBattery",
-      "x": 552,
-      "y": 249,
-      "w": 20,
-      "h": 24
+      "x": 546,
+      "y": 247,
+      "w": 28,
+      "h": 28
     },
     {
       "id": "ev_range",
@@ -180,15 +180,15 @@
     {
       "id": "fuel_icon",
       "type": "icon",
-      "icon": "fuel",
+      "icon": "fuelPump",
       "color": "dim",
       "class": "content",
       "z": 10,
       "toggle": "showBattery",
-      "x": 552,
-      "y": 278,
-      "w": 20,
-      "h": 24
+      "x": 546,
+      "y": 277,
+      "w": 28,
+      "h": 28
     },
     {
       "id": "fuel_range",
@@ -222,15 +222,15 @@
     {
       "id": "oil_icon",
       "type": "icon",
-      "icon": "oilcan",
+      "icon": "oilDrop",
       "color": "fg",
       "class": "content",
       "z": 10,
       "toggle": "showBattery",
       "x": 372,
-      "y": 336,
-      "w": 28,
-      "h": 26
+      "y": 332,
+      "w": 30,
+      "h": 30
     },
     {
       "id": "oil",
@@ -242,38 +242,38 @@
       "z": 10,
       "toggle": "showBattery",
       "tempBy": "oil",
-      "x": 406,
-      "y": 334,
-      "w": 110,
+      "x": 408,
+      "y": 333,
+      "w": 84,
       "h": 29,
       "text": "{{oil}}{{u:temp}}"
     },
     {
       "id": "coolant_icon",
       "type": "icon",
-      "icon": "therm",
+      "icon": "tempWave",
       "color": "fg",
       "class": "content",
       "z": 10,
       "toggle": "showBattery",
-      "x": 532,
-      "y": 336,
-      "w": 28,
-      "h": 26
+      "x": 558,
+      "y": 332,
+      "w": 30,
+      "h": 30
     },
     {
       "id": "coolant",
       "type": "text",
       "font": "mid",
       "color": "fg",
-      "align": "right",
+      "align": "left",
       "class": "content",
       "z": 10,
       "toggle": "showBattery",
       "tempBy": "coolant",
-      "x": 566,
-      "y": 334,
-      "w": 110,
+      "x": 594,
+      "y": 333,
+      "w": 82,
       "h": 29,
       "text": "{{coolant}}{{u:temp}}"
     }

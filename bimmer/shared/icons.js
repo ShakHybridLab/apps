@@ -4,6 +4,7 @@
  * Each icon is a distance function in a 0..1 box; coverage is anti-aliased over one pixel.
  *   gauge (engine), shock (chassis), wheel (steering), cog (gearbox), stack (the gear's shift program
  *   lines), therm (coolant), oilcan (oil), fuel (pump), tyre (a wheel seen from the side: ring, hub, tread notches),
+ *   oilDrop, tempWave (ShakHUD's modern oil drop and thermometer),
  *   battery (a plug-in hybrid's high-voltage battery: the cell with a bolt in it, terminal on top).
  */
 function seg(px, py, ax, ay, bx, by) {
@@ -24,6 +25,14 @@ function arc(px, py, cx, cy, r, a0, a1) {          // clockwise from 12 o'clock,
     return Math.min(e(a0), e(a1));
 }
 
+// a cone that grows from a point to a round end (a drop): the signed distance to it
+function cone(px, py, ax, ay, ar, bx, by, br) {
+    const bax = bx - ax, bay = by - ay, t = Math.max(0, Math.min(1, ((px - ax) * bax + (py - ay) * bay) / (bax * bax + bay * bay)));
+    return Math.hypot(px - (ax + bax * t), py - (ay + bay * t)) - (ar + (br - ar) * t);
+}
+const drop = (px, py) => Math.min(cone(px, py, 0.5, 0.06, 0.0, 0.5, 0.62, 0.3), disc(px, py, 0.5, 0.62, 0.3));
+const tube = (px, py) => cone(px, py, 0.36, 0.2, 0.115, 0.36, 0.62, 0.115);
+
 /** Distance (in box units) from (x, y) to the icon's ink; < 0 or < stroke half-width = ink. */
 const ICONS = {
     gauge: (x, y) => Math.min(arc(x, y, 0.5, 0.55, 0.36, -0.75 * Math.PI, 0.75 * Math.PI) - 0.045, seg(x, y, 0.5, 0.55, 0.7, 0.36) - 0.045, disc(x, y, 0.5, 0.55, 0.07)),
@@ -35,6 +44,18 @@ const ICONS = {
         return d;
     },
     stack: (x, y) => Math.min(seg(x, y, 0.1, 0.22, 0.62, 0.22) - 0.055, seg(x, y, 0.1, 0.5, 0.78, 0.5) - 0.06, seg(x, y, 0.1, 0.8, 0.92, 0.8) - 0.075),
+    // ShakHUD's modern pair: an outlined oil drop, filled with oil from the middle down; a thermometer with two heat waves
+    oilDrop: (x, y) => Math.min(Math.abs(drop(x, y)) - 0.04, Math.max(drop(x, y) + 0.1, 0.58 - y)),
+    tempWave: (x, y) => {
+        let d = Math.min(Math.abs(tube(x, y)) - 0.04, disc(x, y, 0.36, 0.76, 0.19), seg(x, y, 0.36, 0.4, 0.36, 0.7) - 0.045);
+        [0.26, 0.5].forEach((yy) => { d = Math.min(d, seg(x, y, 0.62, yy, 0.7, yy - 0.07) - 0.035, seg(x, y, 0.7, yy - 0.07, 0.78, yy) - 0.035, seg(x, y, 0.78, yy, 0.86, yy - 0.07) - 0.035); });
+        return d;
+    },
+    // ShakHUD's modern battery (a rounded cell, its terminal, a bolt) and fuel pump (a rounded body with a window, the hose)
+    battBolt: (x, y) => Math.min(Math.abs(rect(x, y, 0.5, 0.58, 0.25, 0.33) - 0.06) - 0.04, rect(x, y, 0.5, 0.12, 0.1, 0.045) - 0.02,
+        seg(x, y, 0.57, 0.34, 0.42, 0.6) - 0.045, seg(x, y, 0.42, 0.6, 0.58, 0.6) - 0.045, seg(x, y, 0.58, 0.6, 0.43, 0.84) - 0.045),
+    fuelPump: (x, y) => Math.min(Math.abs(rect(x, y, 0.37, 0.55, 0.2, 0.34) - 0.05) - 0.04, rect(x, y, 0.37, 0.34, 0.12, 0.07) - 0.02,
+        rect(x, y, 0.37, 0.92, 0.3, 0.025) - 0.02, seg(x, y, 0.62, 0.3, 0.82, 0.45) - 0.04, seg(x, y, 0.82, 0.45, 0.82, 0.74) - 0.04, disc(x, y, 0.82, 0.78, 0.06)),
     therm: (x, y) => Math.min(seg(x, y, 0.42, 0.14, 0.42, 0.6) - 0.07, disc(x, y, 0.42, 0.74, 0.14), seg(x, y, 0.6, 0.24, 0.76, 0.24) - 0.035, seg(x, y, 0.6, 0.4, 0.76, 0.4) - 0.035),
     fuel: (x, y) => Math.min(Math.max(Math.abs(x - 0.38) - 0.18, Math.abs(y - 0.55) - 0.33, -Math.max(Math.abs(x - 0.38) - 0.1, Math.abs(y - 0.36) - 0.08)), seg(x, y, 0.12, 0.9, 0.64, 0.9) - 0.04, seg(x, y, 0.56, 0.36, 0.76, 0.48) - 0.04, seg(x, y, 0.76, 0.48, 0.76, 0.78) - 0.04, seg(x, y, 0.76, 0.78, 0.66, 0.84) - 0.04),
     tyre: (x, y) => {
