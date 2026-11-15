@@ -50,9 +50,10 @@ check('the top middle stays clear for the turn-signal arrows (Cluster Info draws
     }));
 });
 
-check('the shift lights: a lights widget behind the "shiftLights" setting, in the window, clear of the arrows, the numbers and BMW\'s speed', () => {
-    const w = L.widgets.find((x) => x.type === 'lights');
-    assert(w && w.toggle === 'shiftLights' && w.round === true && w.count === 12);
+check('the shift light: a shiftlight widget behind the "shiftLights" setting, in the window, clear of the arrows, the numbers and BMW\'s speed', () => {
+    const w = L.widgets.find((x) => x.type === 'shiftlight');
+    assert(w && w.toggle === 'shiftLights' && w.segments === 5);
+    ['shiftLightRed', 'shiftLightFlash'].forEach((k) => assert(app.settings.some((x) => x.key === k), k));
     const hit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
     [[349, 146, 30, 24], [421, 146, 30, 24]].forEach((r) => assert(!hit(w, { x: r[0], y: r[1], w: r[2], h: r[3] }), 'over an arrow'));
     L.widgets.filter((x) => x.type === 'text').forEach((t) => assert(!hit(w, t), 'over ' + t.id));

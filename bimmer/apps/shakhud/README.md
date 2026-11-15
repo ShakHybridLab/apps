@@ -15,7 +15,7 @@ Not tried on a car yet: the shader and the layout run on the bench.
 - **Charging (engine off, power going back into the battery):** green, with "CHARGE" under the bar.
 - The two last need eDrive Live (or any app that shares the battery's power, `/dev/shm/cluster-info`) and the setting
   **Hybrid rev counter** (on by default). Without a power reading the bar shows the engine's rpm alone.
-- **Shift lights:** a row of 12 round lights under the numbers, filling from 3000 rpm up to the shift point (green, yellow, red); the setting **Shift lights** hides them. The shift point is the Redline / Shift-before settings'.
+- **Shift light:** BMW's modern one, under the numbers: five slanted lights on each side of a red block, filling from the outer ends in as the rpm climbs from 3000, the block red from 4500 rpm, everything flashing red from 5500 (the settings **Shift light turns red at** and **flashes from**); the setting **Shift light** hides it.
 - The colours follow the HUD theme (Auto: day colours, amber after sunset; the page's Colours tab).
 
 ## Sharing the HUD
