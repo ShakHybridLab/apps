@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.21.9",
+  "version": "0.21.10",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -104,6 +104,10 @@
       "statusIDriveFAS": "rs",
       "statusIDriveFASExtended": "rs",
       "_optional": "the next limit the camera recognised (nextClassLimitSpeed, nextWithdrawalLimitSpeed) and the driver assistance's lane warnings and steering wheel light: only read, shown on the Signals tab, until a drive shows what they mean"
+    },
+    "de.bmw.infotainment.a4a.carplay.CarPlayManager": {
+      "projectedGuidanceActive": "rs",
+      "_optional": "whether a route is being guided on the phone through CarPlay (listed on the owner's car): the Waze map shows in the theme only while one is (setting mapOnlyWithRoute); when the car does not answer, the map shows as before"
     },
     "de.bmw.dass.driverassistanceapplications.DisplayDriverAssistanceLateralCoordinated": {
       "displaySteeringWheel": "s",
@@ -265,6 +269,12 @@
       "label": "Afficher la carte Waze dans le thème",
       "type": "bool",
       "default": false
+    },
+    {
+      "key": "mapOnlyWithRoute",
+      "label": "Carte Waze seulement avec un itinéraire",
+      "type": "bool",
+      "default": true
     },
     {
       "key": "centreWindow",

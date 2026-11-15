@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const { PROBES, Probes, rawOf, SHOWN, stateOf } = require('../shared/probes');
+const { PROBES, GUIDE, Probes, rawOf, guidanceOf, SHOWN, stateOf } = require('../shared/probes');
 const fr = require('../shared/fr');
 let failed = 0;
 function check(name, fn) { try { fn(); console.log('ok   ' + name); } catch (e) { failed++; console.log('FAIL ' + name + ': ' + (e && e.message || e)); } }
@@ -125,6 +125,75 @@ check('a silent probe says why: no subscription yet, refused, error, provider no
 check('signals.js keeps why a field was refused (failed / getFailed), for the Signals tab', () => {
     const src = fs.readFileSync(path.join(__dirname, '..', 'kit', 'runtime', 'signals.js'), 'utf8');
     assert(/failed: \{\}, getFailed: \{\}/.test(src) && /res\.failed\[f\] =/.test(src) && /res\.getFailed\[f\] =/.test(src), 'signals.js does not record the refusals');
+});
+
+// ---- the route: CarPlayManager.projectedGuidanceActive (the Waze map in the theme only with a route) ----
+check('the guidance signal is declared (optional, "rs") by ShakTheme only, and is not a line of the Signals tab (no room left)', () => {
+    assert(theme.signals[GUIDE.iface] && theme.signals[GUIDE.iface][GUIDE.field] === 'rs', 'ShakTheme does not declare ' + GUIDE.field);
+    assert(typeof theme.signals[GUIDE.iface]._optional === 'string' && theme.signals[GUIDE.iface]._optional.length > 20, 'a wrong name would block the installation: it must be optional');
+    assert(!(hud.signals && hud.signals[GUIDE.iface]), 'ShakHUD asks for a signal it does not use');
+    assert(PROBES.every((p) => p.id !== GUIDE.id), 'the guidance probe is in the Signals tab list');
+    assert(/^de\.bmw\.infotainment\.a4a\.carplay\.CarPlayManager$/.test(GUIDE.iface));
+});
+check('guidanceOf: a boolean, 0 / 1, a word or a struct holding one; nothing clear is null', () => {
+    assert.strictEqual(guidanceOf(true), true); assert.strictEqual(guidanceOf(false), false);
+    assert.strictEqual(guidanceOf(1), true); assert.strictEqual(guidanceOf(0), false); assert.strictEqual(guidanceOf(7), null);
+    assert.strictEqual(guidanceOf('ACTIVE'), true); assert.strictEqual(guidanceOf('inactive'), false); assert.strictEqual(guidanceOf('NOT_ACTIVE'), false);
+    assert.strictEqual(guidanceOf('true'), true); assert.strictEqual(guidanceOf('false'), false); assert.strictEqual(guidanceOf('NONE'), false);
+    assert.strictEqual(guidanceOf({ value: true }), true); assert.strictEqual(guidanceOf({ projectedGuidanceActive: false }), false);
+    assert.strictEqual(guidanceOf({ x: 1 }), true, 'a struct with one field');
+    assert.strictEqual(guidanceOf({ a: 1, b: 2 }), null); assert.strictEqual(guidanceOf([true]), null);
+    assert.strictEqual(guidanceOf(null), null); assert.strictEqual(guidanceOf(undefined), null); assert.strictEqual(guidanceOf(''), null); assert.strictEqual(guidanceOf('maybe'), null);
+});
+check('the map shows in the theme with a route, or when the car says nothing; not when it says there is none (setting mapOnlyWithRoute)', () => {
+    // hud.js needs the kit around it (it is only built into dist), so the three methods are cut out of its source and run on a stand-in
+    const hudSrc = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
+    const grab = (name) => { const m = hudSrc.match(new RegExp('\\n    ' + name + '\\([^)]*\\) \\{[\\s\\S]*?\\n    \\}\\n')); assert(m, 'hud.js has no ' + name); return m[0]; };
+    const Hud = { prototype: new Function('guidanceOf', 'return class {' + grab('_routeOk') + grab('_wazeMapOn') + grab('_guidance') + '}')(guidanceOf).prototype };
+    assert(/if \(key === 'mapUp'\) return !!\(this\._wazeMapOn\(\) \|\| this\.windowOpen === true\);/.test(hudSrc), "setting('mapUp') no longer goes through _wazeMapOn");
+    const mk = (opts) => {
+        const set = Object.assign({ mapInTheme: true, mapOnlyWithRoute: true }, opts.set || {});
+        const o = { routeActive: opts.route === undefined ? null : opts.route, windowOpen: !!opts.window, waze: { up: opts.up !== false },
+            ctx: { settings: { item: (k) => (set[k] !== undefined ? { key: k } : undefined), get: (k) => set[k] } }, mapShown: false, mapLayout: true, rebuilt: 0, statused: 0, logs: [],
+            log: { info: (m) => o.logs.push(m) }, _rebuild() { o.rebuilt++; }, _status() { o.statused++; } };
+        ['_routeOk', '_wazeMapOn', '_guidance'].forEach((m) => { o[m] = Hud.prototype[m]; });
+        o.setting = (k) => (k === 'mapUp' ? !!(o._wazeMapOn() || o.windowOpen === true) : set[k]);       // the line checked above
+        return o;
+    };
+    assert.strictEqual(mk({ route: true })._wazeMapOn(), true);
+    assert.strictEqual(mk({ route: null })._wazeMapOn(), true, 'nothing read yet: as before');
+    assert.strictEqual(mk({ route: false })._wazeMapOn(), false, 'no route: no map');
+    assert.strictEqual(mk({ route: false, set: { mapOnlyWithRoute: false } })._wazeMapOn(), true, 'setting off: as before');
+    assert.strictEqual(mk({ route: false, up: false })._wazeMapOn(), false, 'waze is not up');
+    assert.strictEqual(mk({ route: false, set: { mapOnlyWithRoute: undefined } })._wazeMapOn(), true, 'ShakHUD has no such setting');
+    assert.strictEqual(mk({ route: false })._routeOk(), false);
+    assert.strictEqual(mk({ route: false, window: true }).setting('mapUp'), true, 'the centre window for Cluster Centre still opens');
+    assert.strictEqual(mk({ route: false }).setting('mapUp'), false);
+    // a route starting or ending rebuilds the layout once; the same value again does nothing
+    const o = mk({ route: null });
+    o._guidance(false); assert.strictEqual(o.routeActive, false); assert.strictEqual(o.rebuilt, 0, 'map was not shown: nothing to rebuild'); assert.strictEqual(o.statused, 1);
+    o._guidance(false); assert.strictEqual(o.statused, 1, 'same value again');
+    o._guidance(true); assert.strictEqual(o.routeActive, true); assert.strictEqual(o.rebuilt, 1, 'the route starts, the layout was built closed: the map window opens');
+    o.mapShown = true; o._guidance(true); assert.strictEqual(o.rebuilt, 1, 'same value again');
+    o._guidance(false); assert.strictEqual(o.rebuilt, 2, 'the route ends, the layout was built open: the window closes');
+    o._guidance(undefined); o._guidance(null); assert.strictEqual(o.routeActive, false, 'no value keeps the last one');
+    assert(o.logs.some((l) => /CarPlay guidance active/.test(l)) && o.logs.some((l) => /inactive: no route/.test(l)));
+});
+check('hud.js wires the guidance probe (GUIDE joins the probes of the app) and the Map tab shows it', () => {
+    const hudJs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8'), pageJs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'page.js'), 'utf8');
+    assert(/PROBES\.concat\(\[GUIDE\]\)\.forEach/.test(hudJs) && /p\.id === 'guide'\) this\._guard\('guidance'/.test(hudJs), 'hud.js does not feed the guidance');
+    assert(/this\.ctx\.settings\.get\('mapOnlyWithRoute'\)/.test(hudJs));
+    assert(/'mapOnlyWithRoute'/.test(pageJs) && /probes\.GUIDE/.test(pageJs), 'the Map tab does not show the setting and the state');
+    const item = theme.settings.find((x) => x.key === 'mapOnlyWithRoute');
+    assert(item && item.type === 'bool' && item.default === true && /itinéraire/.test(item.label), 'the setting is missing or not in French');
+    assert(!hud.settings.some((x) => x.key === 'mapOnlyWithRoute'), 'ShakHUD has the setting');
+});
+check('the Map tab texts are in French', () => {
+    assert.strictEqual(fr.tr('Show the map only with a route'), 'Carte seulement avec un itinéraire');
+    assert.strictEqual(fr.tr('Route on · true'), 'Itinéraire en cours · true');
+    assert.strictEqual(fr.tr('No route · false'), "Pas d'itinéraire · false");
+    assert.strictEqual(fr.tr('Value not understood · x'), 'Valeur non comprise · x');
+    assert.strictEqual(fr.tr(GUIDE.name), 'Guidage CarPlay actif (itinéraire)');
 });
 console.log(failed ? failed + ' FAILED' : 'probes: all checks pass');
 process.exit(failed ? 1 : 0);

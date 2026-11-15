@@ -19,6 +19,7 @@ const EFF = 'de.bmw.infotainment.drivingexcitement.Efficiencytainment2';
 const SIGN = 'de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl';
 const CDS = 'de.bmw.infotainment.vehicle.CDS';
 const VEHICLE2 = 'de.bmw.infotainment.vehicle.Vehicle2';
+const CARPLAY = 'de.bmw.infotainment.a4a.carplay.CarPlayManager';
 
 const PROBES = [
     // the three the app itself draws from (kit/runtime/car.js): listed first, to see whether the car sends the rev counter's value at all and what it holds
@@ -37,6 +38,9 @@ const PROBES = [
     { id: 'cbs', iface: KOMBI2, field: 'cbsDataServiceList', name: 'Services due' },
     { id: 'ccrisk', iface: KOMBI2, field: 'ccListRiskClass', name: 'Check control risk class' },
 ];
+// the car's own word for "a route is being guided on the phone (CarPlay)": not a line of the Signals tab (it has no room left), the Map tab
+// shows it, and hud.js reads it (guidanceOf) to show Waze's map in the theme only while a route is on
+const GUIDE = { id: 'guide', iface: CARPLAY, field: 'projectedGuidanceActive', name: 'CarPlay guidance active (route)' };
 const SHOWN = PROBES.map((p) => p.id);
 const KEEP = 3;               // distinct values kept for each (the page shows the newest first)
 const LOG_FIRST = 12;         // distinct values of each that go to the log, then one a minute at most
@@ -51,6 +55,30 @@ function rawOf(v) {
     let t = '';
     try { t = JSON.stringify(v); } catch (e) { t = String(v); }
     return String(t === undefined ? '' : t).slice(0, CLIP);
+}
+
+/**
+ * Whether a route is on, from the value of CarPlayManager.projectedGuidanceActive: true / false, or null when it says nothing clear
+ * (nothing read yet, a value this does not know): the owner's car has not shown yet what this value looks like, so a boolean, 0 / 1, a
+ * word or a struct holding one of them are all taken.
+ */
+function guidanceOf(v, depth) {
+    if (v === null || v === undefined) return null;
+    if (typeof v === 'boolean') return v;
+    if (typeof v === 'number') return v === 0 ? false : v === 1 ? true : null;
+    if (typeof v === 'string') {
+        const t = v.trim().toLowerCase();
+        if (!t) return null;
+        if (/inactive|not[ _-]?active|false|^0$|^no$|^off$|none|idle|stop/.test(t)) return false;
+        if (/active|true|^1$|^yes$|^on$|guid/.test(t)) return true;
+        return null;
+    }
+    if (typeof v === 'object' && !Array.isArray(v) && (depth || 0) < 2) {
+        const keys = Object.keys(v);
+        const k = keys.length === 1 ? keys[0] : keys.find((x) => /^(value|active|projectedGuidanceActive)$/i.test(x));
+        return k === undefined ? null : guidanceOf(v[k], (depth || 0) + 1);
+    }
+    return null;
 }
 
 class Probes {
@@ -100,4 +128,4 @@ function stateOf(sub, field, iface, busy) {
     return 'Subscribed, nothing received';
 }
 
-module.exports = { PROBES, Probes, rawOf, SHOWN, stateOf };
+module.exports = { PROBES, GUIDE, Probes, rawOf, guidanceOf, SHOWN, stateOf };

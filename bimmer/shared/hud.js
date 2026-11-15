@@ -283,7 +283,7 @@ const { shiftLightState } = require('./shift_light');
 const badges = require('./badges');
 const Runs = require('./runs');
 const { SpeedLimit, decodeSign } = require('./speedlimit');
-const { Probes, PROBES } = require('./probes');
+const { Probes, PROBES, GUIDE, guidanceOf } = require('./probes');
 const bottomStrip = require('./bottom_strip');
 const gearWindow = require('./gear_window');
 const { hueOfMode, accentTheme, mapRole } = require('./accent');
@@ -597,6 +597,7 @@ class HudApp {
             if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuild(); else this._status();
         })) : null;
         this.mapShown = false;           // "mapUp" when the layout was built
+        this.routeActive = null;         // a route is guided on the phone (CarPlay), from GUIDE (probes.js); null until the car says
         // the centre window opened for Cluster Centre / Cluster Info (cluster_info.js): the same window the Waze map
         // shows in, see-through while one of them asks for it (setting centreWindow); windowRect is the active
         // layout's, on the panel
@@ -783,8 +784,8 @@ class HudApp {
     /** A setting's value, or its default when the saved value isn't one the schema allows. */
     setting(key) {
         // "mapUp": not saved, the centre window is open now: the Waze map shows inside the theme (the setting on, waze.js
-        // says so), or Cluster Centre / Cluster Info asked for the window (centreWindow)
-        if (key === 'mapUp') return !!((this.waze && this.waze.up && this.ctx.settings.get('mapInTheme') === true) || this.windowOpen === true);
+        // says so, and a route is on when the setting "mapOnlyWithRoute" asks for it), or Cluster Centre / Cluster Info asked for the window (centreWindow)
+        if (key === 'mapUp') return !!(this._wazeMapOn() || this.windowOpen === true);
         // "danger": not saved, a danger zone is ahead (danger.js) and the alert is turned on; "dangerLimit" / "dangerNoLimit": and its speed limit is / isn't known
         if (key === 'danger' || key === 'dangerLimit' || key === 'dangerNoLimit') {
             const d = this.target === 'panel' && this.ctx.settings.get('dangerAlert') === true ? this.danger.state() : null;
@@ -895,13 +896,14 @@ class HudApp {
         // and the car's own reading of the road signs (its camera), which also feeds the speed limit ring: only an app that declares them (ShakTheme) asks for them
         this.probes = new Probes(this.log);
         const decl = (this.ctx.spec && this.ctx.spec.signals) || {};
-        PROBES.forEach((p) => {
+        PROBES.concat([GUIDE]).forEach((p) => {
             if (!decl[p.iface] || !decl[p.iface][p.field]) return;
             const group = (extra[p.iface] = extra[p.iface] || {}), prev = group[p.field];
             group[p.field] = (v) => {
                 if (prev) prev(v);
                 this.probes.feed(p.id, v);
                 if (p.id === 'sign' || p.id === 'next') this._carSign(p.id, v);
+                if (p.id === 'guide') this._guard('guidance', () => this._guidance(v));
             };
         });
         this.car = new Car(this.ctx, ['rpm', 'speed', 'temps', 'accel', 'gear', 'torque'], extra);
@@ -1030,6 +1032,32 @@ class HudApp {
     }
 
     /**
+     * Whether the map may show in the theme as far as the route goes: always, unless the setting "mapOnlyWithRoute" is on and the car says
+     * no route is guided (CarPlayManager.projectedGuidanceActive). Not read yet or not understood (routeActive null): as before, the map shows.
+     * With no route the map stays on the panel (no moving it back and forth), behind the theme, which is closed then.
+     */
+    _routeOk() {
+        const it = this.ctx.settings.item('mapOnlyWithRoute');
+        return !(it && this.ctx.settings.get('mapOnlyWithRoute') !== false && this.routeActive === false);
+    }
+
+    /** The Waze map shows in the theme's window now (it is up on the panel, the setting is on, and a route is on if that is asked). */
+    _wazeMapOn() {
+        return !!this.waze && this.waze.up === true && this.ctx.settings.get('mapInTheme') === true && this._routeOk();
+    }
+
+    /** A new value of CarPlayManager.projectedGuidanceActive: a route started or ended, the theme opens or closes its map window. */
+    _guidance(v) {
+        if (v === null || v === undefined) return;
+        const on = guidanceOf(v);
+        if (on !== this.routeActive) {
+            this.log.info('CarPlay guidance ' + (on === null ? 'not understood' : on ? 'active: a route is on' : 'inactive: no route'));
+            this.routeActive = on;
+            if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuild(); else this._status();
+        }
+    }
+
+    /**
      * Twice a second: hand the charge this app read itself to Cluster Info / Cluster Centre (never one it took from
      * another app), and say on the panel when a theme covers it (Cluster Centre waits then).
      */
@@ -1050,10 +1078,10 @@ class HudApp {
             if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuild(); else this._status();
         }
         this.ci.markTheme(shows, { window: shows ? this.windowRect : null, open: this.setting('mapUp') === true && this.mapShown === true,
-            map: !!this.waze && this.waze.up === true && this.ctx.settings.get('mapInTheme') === true });
+            map: this._wazeMapOn() });
         // a layout with "mapPlace": while its map shows, Waze on cluster draws the map right in the window (the file is kept fresh)
         const place = shows && this.mapPlace && !!this.windowRect && this.mapShown === true && this.setting('mapUp') === true
-            && !!this.waze && this.waze.up === true && this.ctx.settings.get('mapInTheme') === true;
+            && this._wazeMapOn();
         this.mapWin.set(place ? this.windowRect : null);
         // on the HUD: where the layout shown leaves room for Cluster Info's panel (it would sit on the readouts otherwise)
         if (this.target === 'hud') this.ci.markLayout(this.started && !!this.activeName && this.activeName !== 'off' && !this.claimBy, this._panelRoom());

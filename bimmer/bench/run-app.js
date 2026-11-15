@@ -89,6 +89,8 @@ setInterval(() => {
     const v = manual, num = (k, d) => (typeof v[k] === 'number' && isFinite(v[k]) ? v[k] : d);
     const g = Math.round(num('gear', 0));
     hu.feed('de.bmw.infotainment.vehicle.CDS', 'statusEngineSpeed2', { actualValueRPMEngineCrankshaft: raw('rpm', num('rpm', 0)) });
+    // a route guided on the phone (CarPlay): `route` true / false in the manual signals; left out, the car says nothing (the app then shows the map as before)
+    if (typeof v.route === 'boolean') hu.feed('de.bmw.infotainment.a4a.carplay.CarPlayManager', 'projectedGuidanceActive', v.route);
     hu.feed('de.bmw.infotainment.vehicle.Vehicle2', 'statusCarSpeed2', { speedVehicleCentreOfGravity: raw('speed', num('speed', 0)) });
     hu.feed('de.bmw.infotainment.vehicle.CDS2', 'statusLongitudinalAccelerationMassCenter', { longitudinalAccelerationCentreOfGravity: raw('accel', num('gLong', 0) * 9.80665) });
     hu.feed('de.bmw.infotainment.vehicle.CDS2', 'statusLateralAccelerationMassCenter', { lateralAccelerationCentreOfGravity: raw('accel', num('gLat', 0) * 9.80665) });

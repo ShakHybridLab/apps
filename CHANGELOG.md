@@ -1,5 +1,14 @@
 # Modifications par rapport aux projets d'origine
 
+## 16 novembre 2026
+
+### ShakTheme 0.21.10 (pas encore essayé sur la voiture)
+- **La carte Waze n'apparaît plus dans le thème quand il n'y a pas d'itinéraire.** Demande du propriétaire : la fenêtre de la carte restait ouverte en permanence, avec une carte plate sans trajet. La voiture donne l'information : `CarPlayManager.projectedGuidanceActive` (« guidage CarPlay actif », vu dans les photos de Cluster Centre). Sans itinéraire, la fenêtre se ferme et le thème est complet ; quand un itinéraire démarre, elle s'ouvre (le thème se redessine une fois à chaque changement).
+- **Nouveau réglage « Carte Waze seulement avec un itinéraire »** (onglet Carte, activé par défaut). À côté de la case, l'état lu par la voiture (« Itinéraire en cours », « Pas d'itinéraire », ou pourquoi rien n'arrive) et la valeur brute : le format exact de cette valeur n'est pas connu, l'appli accepte un booléen, 0 / 1, un mot ou une structure qui en contient un. **Si la voiture ne répond pas ou si la valeur n'est pas comprise, la carte s'affiche comme avant** (jamais de carte perdue à cause du signal). Désactiver le réglage rend le comportement d'avant.
+- Le signal est déclaré **optionnel** dans `app.json` (un nom faux ne peut pas bloquer l'installation) ; ShakHUD ne le demande pas. Il n'est pas une ligne de l'onglet Signaux (plus de place) : il est dans l'onglet Carte. La fenêtre ouverte par Cluster Centre / Cluster Info n'est pas concernée.
+- Pour le panneau de vitesse, rien de nouveau : `displaySpeedLimitAndNoPassingRestriction` et `statusNextSpeedLimitRecognition` étaient déjà lus, mais jamais reçus à cause du bug de la 0.21.9 (liste `signals` absente du build).
+- Banc : nouvelle valeur manuelle `route` (true / false) pour simuler le guidage. Tests : `test_probes.js` (lecture de la valeur, réglage, redessin une seule fois par changement), `test_map_window.js` adapté.
+
 ## 15 novembre 2026 (soir)
 
 ### ShakTheme 0.21.9, ShakHUD 0.6.15 (pas encore essayé sur la voiture)

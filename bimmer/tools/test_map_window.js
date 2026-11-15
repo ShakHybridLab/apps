@@ -52,7 +52,8 @@ check('a window that is not one lets go; letting go twice is harmless; an unwrit
 check('hud.js holds the window only while the layout asks for it and its map shows, and gives it back when it stops', () => {
     const hud = fs.readFileSync(path.join(ROOT, 'shared/hud.js'), 'utf8');
     ['require(\'./map_window\')', 'this.mapWin.set(place ? this.windowRect : null)', 'w.mapPlace === true', 'this.mapWin.release()'].forEach((s) => assert(hud.includes(s), 'hud.js: ' + s));
-    assert(/const place = shows && this\.mapPlace[\s\S]{0,300}this\.waze\.up === true/.test(hud), 'must wait for Waze to be up in the theme');
+    assert(/const place = shows && this\.mapPlace[\s\S]{0,300}this\._wazeMapOn\(\)/.test(hud), 'must wait for the map to show in the theme');
+    assert(/_wazeMapOn\(\) \{\s*return !!this\.waze && this\.waze\.up === true/.test(hud), 'must wait for Waze to be up in the theme');
 });
 check('both apps that bundle hud.js list map_window.js (or the bundle would crash on the require)', () => {
     ['apps/shaktheme/app.json', 'apps/idrive_hud_widgets/app.json'].forEach((f) => {
