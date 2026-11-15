@@ -729,7 +729,8 @@ uniform float u_ticks;    // max / 1000
 uniform float u_value;    // 0..1
 uniform float u_orange;   // 0..1, orange dashes from here
 uniform float u_redFrom;  // 0..1, red dashes from here (the redline)
-uniform float u_zone;     // 0 = white, 1 = the run-up to the redline (orange), 2 = the red zone: the lit glass and the marker take its colour
+uniform float u_zone;     // 0 = white, 2 = the red zone, a fade between (no orange run-up): the lit glass and the marker take its colour
+uniform float u_peak;     // the held peak 0..1 (0 = none): a thin tick above the marker
 uniform vec3 u_red;
 
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
@@ -757,8 +758,8 @@ void main() {
         float across = clamp(d / w, 0.0, 1.0);
         float yn = y0 - u_value * (y0 - y8);
         vec4 g = vec4(0.62, 0.67, 0.74, mix(0.42, 0.06, across));          // empty glass (bright at the outer edge, as the M8's)
-        vec3 zc = u_zone > 1.5 ? u_red : (u_zone > 0.5 ? vec3(1.0, 0.68, 0.1) : vec3(1.0));       // the colour of the zone: white, orange, red
-        if (p.y > yn) g = u_zone > 0.5 ? vec4(zc * 0.85, 0.6) : vec4(mix(vec3(0.86, 0.88, 0.92), vec3(0.6, 0.63, 0.68), across), mix(0.34, 0.22, across));
+        vec3 zc = mix(vec3(1.0), u_red, clamp(u_zone * 0.5, 0.0, 1.0));       // the colour of the zone: white to red, eased (no orange run-up here)
+        if (p.y > yn) g = mix(vec4(mix(vec3(0.86, 0.88, 0.92), vec3(0.6, 0.63, 0.68), across), mix(0.34, 0.22, across)), vec4(zc * 0.85, 0.6), clamp(u_zone * 0.5, 0.0, 1.0));
         // the foot: the bottom 20 px as an outlined grey block, as the M8 draws it
         if (p.y > y0 - 20.0) g = over(vec4(0.7, 0.72, 0.78, 0.22), g);
         g = over(vec4(0.9, 0.92, 0.95, 0.7 * cov(min(abs(p.y - (y0 - 19.0)), abs(p.y - (y0 - 1.5))) - 0.8)), g);
@@ -766,6 +767,7 @@ void main() {
         float dm = abs(p.y - yn);
         g = over(vec4(zc, 0.5 * exp(-dm / 26.0)), g);
         g = over(vec4(mix(zc, vec3(1.0), 0.35 * cov(dm - 5.0)), cov(dm - 14.0)), g);
+        if (u_peak > u_value + 0.02) g = over(vec4(1.0, 1.0, 1.0, 0.75 * cov(abs(p.y - y0 + u_peak * (y0 - y8)) - 0.9)), g);       // the held peak: a thin tick
         c = vec4(g.rgb, g.a * inBand);
         c = over(vec4(0.93, 0.95, 0.98, cov(abs(d) - 1.6)), c);               // outer edge
         c = over(vec4(1.0, 1.0, 1.0, 0.3 * cov(abs(d - 4.0) - 0.6)), c);       // its bevel
@@ -850,7 +852,8 @@ uniform vec2 u_low;       // 1 while the fuel bar / the right bar (the battery, 
 uniform float u_fuel;     // 0..1
 uniform float u_oil;      // 0..1
 uniform vec4 u_hy;        // the hybrid rev counter: the colour (rgb) that fills the rev bracket in place of the engine's colours, a = 1 (0 = the engine's rpm)
-uniform vec2 u_zone;      // the speed bracket's and the rev bracket's zone: 0 = white fill, 1 = orange (the run-up), 2 = red
+uniform vec2 u_zone;      // the speed bracket's and the rev bracket's zone: 0 = white fill, 2 = red, a fade between (the layout has no orange run-up)
+uniform float u_peak;     // the rev bracket's held peak 0..1 (0 = none): a thin tick above the lit part
 uniform vec4 u_fuelSeg;   // full end x, y, empty end x, y
 uniform vec4 u_oilSeg;
 uniform vec4 u_hole;      // map window x, y, w, h, already inset (w 0 = none)
@@ -868,9 +871,8 @@ const vec3 RED_LINE = vec3(0.95, 0.12, 0.16);
 const vec3 RED_BAND = vec3(0.33, 0.06, 0.1);
 const vec3 RED_LIT = vec3(0.93, 0.1, 0.15);
 const vec3 RED_IN = vec3(0.86, 0.08, 0.13);
-const vec3 ZONE_AMBER = vec3(1.0, 0.68, 0.1);
 const vec3 ZONE_WHITE = vec3(0.97, 0.98, 1.0);
-vec3 zoneLit(float z) { return z > 1.5 ? RED_LIT : (z > 0.5 ? ZONE_AMBER : ZONE_WHITE); }
+vec3 zoneLit(float z) { return mix(ZONE_WHITE, RED_LIT, clamp(z * 0.5, 0.0, 1.0)); }       // white to red, eased: Sport has no orange run-up
 
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
 vec4 over(vec4 top, vec4 under) {           // straight-alpha "top over under"
@@ -894,7 +896,7 @@ float outerSlope(float y) {
 float dIn(vec2 q) { return (q.x - outerX(q.y)) / sqrt(1.0 + outerSlope(q.y) * outerSlope(q.y)); }
 
 // one bracket in the left frame (q mirrored for the right one)
-vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, vec3 line, vec3 band, vec3 lit, vec3 inner, vec4 c) {
+vec4 bracket(vec2 q, float val, float pk, float redFrom, float orange, float ticks, vec3 line, vec3 band, vec3 lit, vec3 inner, vec4 c) {
     float d = dIn(q);
     float yTopI = u_geo.x + 8.0;                              // the inner line's top run
     float t = (u_scale.x - q.y) / (u_scale.x - u_scale.y);    // 0 at the scale's 0
@@ -908,6 +910,7 @@ vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, vec3 l
         c = over(vec4(col, a * inB), c);
         float yv = u_scale.x - val * (u_scale.x - u_scale.y);
         if (val > 0.002) c = over(vec4(1.0, 1.0, 1.0, inB * cov(abs(q.y - yv) - 2.0)), c);
+        if (pk > val + 0.02) c = over(vec4(1.0, 1.0, 1.0, 0.8 * inB * cov(abs(q.y - u_scale.x + pk * (u_scale.x - u_scale.y)) - 1.1)), c);       // the held peak: a thin tick
         // marks at every label, on the band's outer half
         float kk = floor(t * ticks + 0.5);
         float yk = u_scale.x - kk / ticks * (u_scale.x - u_scale.y);
@@ -973,14 +976,15 @@ void main() {
     }
 
     // the fills are white, orange in the run-up to a zone and red in it; the hybrid's electric power and charge keep their blue and green
-    c = bracket(p, u_speed, 2.0, 2.0, u_ticks.x, BLUE_LINE, BLUE_BAND, zoneLit(u_zone.x), BLUE_IN, c);
-    c = bracket(pm, u_rpm, u_redFrom, u_orange, u_ticks.y, RED_LINE, mix(RED_BAND, u_hy.rgb * 0.25, u_hy.a), mix(zoneLit(u_zone.y), u_hy.rgb, u_hy.a), RED_IN, c);
+    c = bracket(p, u_speed, 0.0, 2.0, 2.0, u_ticks.x, BLUE_LINE, BLUE_BAND, zoneLit(u_zone.x), BLUE_IN, c);
+    c = bracket(pm, u_rpm, u_peak, u_redFrom, u_orange, u_ticks.y, RED_LINE, mix(RED_BAND, u_hy.rgb * 0.25, u_hy.a), mix(zoneLit(u_zone.y), u_hy.rgb, u_hy.a), RED_IN, c);
     // the map window: a rounded hole cut out of the backdrop and brackets, so the map shows clean; the fuel and
     // oil bars come off while it is open (they ran across the map, car photos Nov 7 2026), the bottom strip stays
     if (u_hole.z > 0.0) {
         vec2 hs = u_hole.zw * 0.5;
         vec2 q = abs(p - (u_hole.xy + hs)) - (hs - vec2(u_holeR));
         float hd = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_holeR;
+        c = over(vec4(0.74, 0.78, 0.86, 0.85 * cov(abs(hd - 2.2) - 0.9)), c);       // a silver hairline just outside the window, as the M theme's
         c.a *= clamp(hd + 0.5, 0.0, 1.0);
     } else {
         c = bar(p, u_fuelSeg, u_fuel, 0.0, u_low.x, c);
@@ -1041,7 +1045,8 @@ uniform float u_ticks;    // marks: max rpm / 1000
 uniform float u_value;    // rpm 0..1
 uniform float u_orange;   // 0..1, orange dashes from here to the redline
 uniform float u_redFrom;  // 0..1
-uniform vec2 u_zone;      // the speed line's and the rev blade's zone: 0 = white, 1 = orange (the run-up), 2 = red
+uniform vec2 u_zone;      // the speed line's and the rev blade's zone: 0 = white, 2 = red, a fade between (no orange run-up)
+uniform float u_peak;     // the rev blade's held peak 0..1 (0 = none): a thin tick above the lit part
 uniform vec4 u_red;       // the lit blade's colour (white, orange, red on the rpm; blue on the electric power), then the charge 0..1 filling the foot green
 uniform float u_deco;     // 1 = the tabs and the swoosh under the hexagon
 uniform vec4 u_hole;      // map window x, y, w, h, already inset (w 0 = none)
@@ -1049,7 +1054,7 @@ uniform float u_holeR;
 uniform float u_tint;     // the backdrop's strength 0..1.4 (0 = pure black)
 uniform float u_facets;   // the faint hexagon outlines' strength 0..1
 
-const vec3 RED_Z = vec3(1.0, 0.2, 0.22), AMBER_Z = vec3(1.0, 0.68, 0.1), WHITE_Z = vec3(0.96, 0.98, 1.0), STRIP_W = vec3(0.94, 0.96, 1.0);
+const vec3 RED_Z = vec3(1.0, 0.2, 0.22), WHITE_Z = vec3(0.96, 0.98, 1.0), STRIP_W = vec3(0.94, 0.96, 1.0);
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
 vec4 over(vec4 t, vec4 u) {
     float k = u.a * (1.0 - t.a), a = t.a + k;
@@ -1148,7 +1153,9 @@ void main() {
     if (u_hole.z > 0.0) {
         vec2 hs = u_hole.zw * 0.5;
         vec2 qq = abs(p - (u_hole.xy + hs)) - (hs - vec2(u_holeR));
-        c.a *= clamp(length(max(qq, 0.0)) + min(max(qq.x, qq.y), 0.0) - u_holeR + 0.5, 0.0, 1.0);
+        float hd = length(max(qq, 0.0)) + min(max(qq.x, qq.y), 0.0) - u_holeR;
+        c = over(vec4(0.74, 0.78, 0.86, 0.85 * cov(abs(hd - 2.2) - 0.9)), c);       // a silver hairline just outside the window, as the M theme's
+        c.a *= clamp(hd + 0.5, 0.0, 1.0);
     }
 
     // ---- the speed scale: a cyan line (cap, a long slant up to the knee, a long slant down), a tick at each label, a marker ----
@@ -1156,7 +1163,7 @@ void main() {
         vec2 a = u_sp.xy, k = u_sp.zw, b = u_sq.xy;
         float d = min(segD(p, a, a + vec2(u_sq.z, 0.0)), min(segD(p, a, k), segD(p, k, b)));
         // the line is white, orange in the run-up to the speed zone, red in it
-        vec3 sz = u_zone.x > 1.5 ? RED_Z : (u_zone.x > 0.5 ? AMBER_Z : WHITE_Z);
+        vec3 sz = mix(WHITE_Z, RED_Z, clamp(u_zone.x * 0.5, 0.0, 1.0));
         c = over(vec4(sz, 0.2 * exp(-d * 0.2)), c);
         c = over(vec4(sz, cov(d - 1.9)), c);
         float tl = clamp(floor((u_sy.x - p.y) / (u_sy.x - u_sy.y) * 5.0 + 0.5), 0.0, 5.0);
@@ -1190,6 +1197,7 @@ void main() {
         vec3 lit = mix(u_red.rgb, u_red.rgb * 0.78, clamp((p.y - yn) / 220.0, 0.0, 1.0));
         c = over(vec4(p.y > yn ? lit : dark, inM), c);
         if (u_value > 0.003) c = over(vec4(1.0, 0.96, 0.97, 0.85 * cov(abs(p.y - yn) - 1.2 * s) * inM), c);
+        if (u_peak > u_value + 0.02) c = over(vec4(1.0, 0.96, 0.97, 0.7 * cov(abs(p.y - u_sc.y + u_peak * (u_sc.y - u_sc.x)) - s) * inM), c);
     }
     // the left edge (thin, pink), the top line with its overhang, the thick bright right edge
     float dlE = (p.x - xl) * cl;
@@ -1246,7 +1254,8 @@ uniform vec2 u_sc;        // y of the scale's top mark and of its 0
 uniform float u_speed;    // 0..1 along the scale
 uniform float u_rev;      // the rev counter, 0..1 along the same scale
 uniform vec4 u_hy;        // the hybrid rev counter: the lit colour while the battery drives or charges (a = 1), else a = 0
-uniform vec2 u_zone;      // the speed band's and the rev stripe's zone: 0 = white, 1 = orange (the run-up), 2 = red
+uniform vec2 u_zone;      // the speed band's and the rev stripe's zone: 0 = white, 2 = red, a fade between (no orange run-up)
+uniform float u_peak;     // the rev stripe's held peak 0..1 (0 = none): a thin tick above the lit part
 uniform vec4 u_ln;        // the white line under the map: x of its start, y, x where it steps up, x where it is back level
 uniform vec3 u_ln2;       // y of the upper level, x where the upper level fades out, x where it ends
 uniform vec4 u_barL;      // left bar: x, y, width, level 0..1
@@ -1289,7 +1298,7 @@ void main() {
         vec2 q = abs(p - (u_hole.xy + hs)) - (hs - vec2(u_holeR));
         float hd = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_holeR;
         c.a *= clamp(hd + 0.5, 0.0, 1.0);
-        c = over(vec4(0.6, 0.72, 0.95, 0.22 * cov(abs(hd - 2.0) - 0.7)), c);
+        c = over(vec4(0.74, 0.78, 0.86, 0.85 * cov(abs(hd - 2.2) - 0.9)), c);       // a silver hairline just outside the window, as the M theme's
     }
     // the line under the map
     float lw = 1.7;
@@ -1312,7 +1321,7 @@ void main() {
         float tex = 0.9 + 0.1 * sin((p.x + p.y) * 0.45) * sin((p.x - p.y) * 0.3);
         // the speed: the stripe is lit white from the bottom up to the marker (orange in the run-up to the speed zone, red in it), blue above
         float ym = u_sc.y - u_speed * (u_sc.y - u_sc.x);
-        vec3 sz = u_zone.x > 1.5 ? vec3(0.95, 0.12, 0.18) : (u_zone.x > 0.5 ? vec3(1.0, 0.62, 0.08) : vec3(0.93, 0.95, 1.0));
+        vec3 sz = mix(vec3(0.93, 0.95, 1.0), vec3(0.95, 0.12, 0.18), clamp(u_zone.x * 0.5, 0.0, 1.0));
         vec3 sc = mix(vec3(0.1, 0.18, 0.84), sz * (0.82 + 0.18 * smoothstep(ym, u_sc.y, p.y)), step(ym, p.y) * step(0.003, u_speed));
         c = over(vec4(sc * tex, 0.96 * bl * down), c);
         // the purple stripe: black at its left, then violet, brightest at the pale edge and low down
@@ -1321,7 +1330,7 @@ void main() {
         pc *= 0.35 + 0.65 * smoothstep(u_top, u_top + 260.0, p.y);
         float yr = u_sc.y - u_rev * (u_sc.y - u_sc.x);
         // the rev counter is lit white (orange in the run-up to the redline, red in the zone); the hybrid's power and charge keep blue and green
-        vec3 rz = u_zone.y > 1.5 ? vec3(1.0, 0.18, 0.24) : (u_zone.y > 0.5 ? vec3(1.0, 0.66, 0.1) : vec3(0.97, 0.97, 1.0));
+        vec3 rz = mix(vec3(0.97, 0.97, 1.0), vec3(1.0, 0.18, 0.24), clamp(u_zone.y * 0.5, 0.0, 1.0));
         pc = mix(pc * 0.2, mix(rz * (0.5 + 0.5 * pu), u_hy.rgb * (0.45 + 0.55 * pu), u_hy.a), step(yr, p.y));
         c = over(vec4(pc, cov(-(s - sep - 5.0) * kk) * cov((s - edge) * kk) * step(u_top, p.y) * down), c);
         // the outer white line, the divider, the pale edge
@@ -1332,9 +1341,10 @@ void main() {
         float mk = cov(abs(p.y - ym) - 2.2) * cov(-(s - 2.0) * kk) * cov((s - sep) * kk);
         c = over(vec4(1.0, 1.0, 1.0, 0.95 * mk * down), c);
         float mr = cov(abs(p.y - yr) - 1.6) * cov(-(s - sep - 5.0) * kk) * cov((s - edge) * kk);
+        float mp = u_peak > u_rev + 0.02 ? cov(abs(p.y - u_sc.y + u_peak * (u_sc.y - u_sc.x)) - 1.2) * cov(-(s - sep - 5.0) * kk) * cov((s - edge) * kk) : 0.0;
         float k7 = clamp(floor((u_sc.y - p.y) / (u_sc.y - u_sc.x) * 7.0 + 0.5), 0.0, 7.0);
         float tk = cov(abs(p.y - u_sc.y + k7 * (u_sc.y - u_sc.x) / 7.0) - 0.9) * cov(-(s - edge + 14.0) * kk) * cov((s - edge) * kk);
-        c = over(vec4(1.0, 1.0, 1.0, (0.9 * mr + 0.7 * tk) * step(u_top, p.y) * down), c);
+        c = over(vec4(1.0, 1.0, 1.0, (0.9 * mr + 0.7 * tk + 0.6 * mp) * step(u_top, p.y) * down), c);
     }
     // the bars along the bottom
     c = bar(p, u_barL, vec3(0.15, 0.3, 1.0), vec3(0.15, 0.3, 1.0), u_low.x, c);
@@ -1786,7 +1796,7 @@ const MSTYLE = `// M Style HUD rev counter for a cluster-render "effect" layer (
 //   u_A    P0 (the bar's start) and P1 (the bend), x0 y0 x1 y1
 //   u_B    P2 (the bar's end)
 //   u_g    bar width, the share of the scale at the bend (0..1), ticks (thousands of rpm on the scale), where the red zone starts (0..1)
-//   u_v    value 0..1, spare, the zone (0 = the bar is white, 1 = orange in the run-up to the redline, 2 = red), spare
+//   u_v    value 0..1, the held peak 0..1 (0 = none), the zone (0 = the bar is white, 1 = orange in the run-up to the redline, 2 = red), spare
 //   u_hy   rgb the lit colour while the battery drives or charges, a = 1 then (0 = the engine's rpm, lit white, orange, u_hot by the zone)
 //   u_hot rgb;  u_fg, u_track rgba (straight alpha)
 precision mediump float;
@@ -1823,7 +1833,7 @@ void main() {
     float f = first ? t1 * u_g.y : u_g.y + t2 * (1.0 - u_g.y);
     float s = first ? t1 * l1 : l1 + t2 * l2;
     float hw = u_g.x * 0.5;
-    vec3 lit = u_hy.a > 0.5 ? u_hy.rgb : (u_v.z > 1.5 ? u_hot : (u_v.z > 0.5 ? vec3(1.0, 0.68, 0.1) : vec3(1.0)));
+    vec3 lit = u_hy.a > 0.5 ? u_hy.rgb : mix(mix(vec3(1.0), vec3(1.0, 0.68, 0.1), clamp(u_v.z, 0.0, 1.0)), u_hot, clamp(u_v.z - 1.0, 0.0, 1.0));
     vec4 fill = f <= u_v.x ? vec4(lit, 1.0) : (f >= u_g.w ? vec4(u_hot, 0.45) : u_track);
     vec4 col = vec4(fill.rgb, fill.a * clamp(hw + 0.5 - d, 0.0, 1.0));
     // the outline, 2 px at the bar's edge
@@ -1831,6 +1841,9 @@ void main() {
     // the needle: the bright edge of the fill, a little wider than the bar
     float sv = u_v.x <= u_g.y ? u_v.x / u_g.y * l1 : l1 + (u_v.x - u_g.y) / (1.0 - u_g.y) * l2;
     if (u_v.x > 0.01) col = over(vec4(1.0, 1.0, 1.0, clamp(2.5 - abs(s - sv), 0.0, 1.0) * clamp(hw + 3.5 - d, 0.0, 1.0)), col);
+    // the held peak (u_v.y, 0 = none): a thin tick across the bar above the lit part
+    float sq = u_v.y <= u_g.y ? u_v.y / u_g.y * l1 : l1 + (u_v.y - u_g.y) / (1.0 - u_g.y) * l2;
+    if (u_v.y > u_v.x + 0.02) col = over(vec4(1.0, 1.0, 1.0, 0.8 * clamp(1.8 - abs(s - sq), 0.0, 1.0) * clamp(hw + 3.5 - d, 0.0, 1.0)), col);
     // ticks under the bar, longer on the even thousands
     for (int i = 0; i < 9; i++) {
         float fi = float(i);

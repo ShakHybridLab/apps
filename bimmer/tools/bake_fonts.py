@@ -51,12 +51,14 @@ CLUSTER_FONTS = [
     ('badge', 'BarlowCondensed-SemiBold.ttf', 30, UPPER + LOWER + DIGITS + ' -'),   # the model badge (shared/badges.js)
     # M: the wide squared numbers (Michroma, SIL OFL) and Barlow for the small print
     ('m_num', 'Orbitron[wght].ttf', 36, DIGITS, 0, 'Black', {'0': 'O'}),
+    ('m_num_m', 'Orbitron[wght].ttf', 40, DIGITS, 0, 'Black', {'0': 'O'}),   # 1.1 times: the middle step of the zone zoom
     ('m_num_z', 'Orbitron[wght].ttf', 43, DIGITS, 0, 'Black', {'0': 'O'}),   # the same, 1.2 times larger (zone zoom of the scale number)
     ('m_gear', 'Orbitron[wght].ttf', 125, 'PRNDSM-' + DIGITS, 3, 'Black', {'0': 'O'}),
     ('m_speed', 'Orbitron[wght].ttf', 78, DIGITS + '-', 3, 'Black', {'0': 'O'}),
     ('m_gear_p', 'Orbitron[wght].ttf', 68, 'PRNDSM-' + DIGITS, 3, 'Black', {'0': 'O'}),   # the gear in the M theme's plate under the Waze map
     ('m_speed_p', 'Orbitron[wght].ttf', 68, DIGITS + '-', 3, 'Black', {'0': 'O'}),   # and the speed beside it
     ('m_gl', 'Orbitron[wght].ttf', 25, DIGITS + '/.-', 0, 'Black', {'0': 'O'}),
+    ('m_gl_m', 'Orbitron[wght].ttf', 28, DIGITS, 0, 'Black', {'0': 'O'}),   # 1.1 times: the middle step of the zone zoom
     ('m_gl_z', 'Orbitron[wght].ttf', 30, DIGITS, 0, 'Black', {'0': 'O'}),   # the same, 1.2 times larger (zone zoom of the rev number)
     ('m_big', 'Orbitron[wght].ttf', 100, DIGITS + '-', 3, 'Black', {'0': 'O'}),   # M Blade's speed in the void: three digits (110 km/h and up) fit it, 264 px
     ('m_spd', 'Orbitron[wght].ttf', 50, DIGITS + '-', 0, 'Black', {'0': 'O'}),     # M Blade's small speed under the gear, as the photo has it
@@ -69,6 +71,7 @@ CLUSTER_FONTS = [
     ('mode', 'Barlow-Medium.ttf', 22, UPPER + LOWER + DIGITS + ' -'),   # the drive mode, small, bottom right of every theme ({{modeName}})
     # Sport: BMW Live Cockpit style, the wide numbers in Michroma like BMW's own
     ('s_scale', 'Michroma-Regular.ttf', 27, DIGITS, 1),
+    ('s_scale_m', 'Michroma-Regular.ttf', 30, DIGITS, 1),   # 1.1 times: the middle step of the zone zoom
     ('s_scale_z', 'Michroma-Regular.ttf', 32, DIGITS, 1),   # the scale number at the marker, 1.2 times larger, while its bar is in its zone
     ('s_speed', 'Michroma-Regular.ttf', 74, DIGITS + '-', 3),
     ('s_gear', 'Michroma-Regular.ttf', 70, DIGITS + 'PRNDSM-', 3),

@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -1103,6 +1103,23 @@
       ]
     },
     {
+      "key": "tyreLow",
+      "label": "Pneus : pression en jaune sous (rouge 0,4 bar plus bas)",
+      "type": "number",
+      "unit": "bar",
+      "default": 2.0,
+      "steps": [
+        0,
+        1.8,
+        1.9,
+        2.0,
+        2.1,
+        2.2,
+        2.3,
+        2.4
+      ]
+    },
+    {
       "key": "speedZone",
       "label": "Zone de vitesse : barre orange puis rouge à partir de",
       "type": "number",
@@ -1117,6 +1134,12 @@
         180,
         200
       ]
+    },
+    {
+      "key": "startupSweep",
+      "label": "Balayage des barres au démarrage",
+      "type": "bool",
+      "default": true
     }
   ],
   "config": {

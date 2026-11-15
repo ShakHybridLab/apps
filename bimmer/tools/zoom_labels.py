@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The zoom of the scale numbers (ShakTheme): the number nearest a bar's marker is drawn larger (1.2 times, a bigger bake of the same
 font) and in the zone's colour while the bar is in its zone. The larger digits may need more room than a label's box has, so this
-tags the scale labels of a layout with "near", "nearFont" (the bigger bake), "rpmMax" (the rev scale's top) and, where needed, "grow":
+tags the scale labels of a layout with "near", "nearFont" (the bigger bake), "nearMid" (the middle step), "rpmMax" (the rev scale's top) and, where needed, "grow":
 
     python3 tools/zoom_labels.py m sport      # these layouts, in place (idempotent)
 
@@ -17,6 +17,7 @@ import json, os, re, subprocess, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 APP = os.path.join(HERE, '..', 'apps', 'shaktheme', 'hud')
 ZOOM = {'s_scale': 's_scale_z', 'm_num': 'm_num_z', 'm_gl': 'm_gl_z'}
+MID = {'s_scale': 's_scale_m', 'm_num': 'm_num_m', 'm_gl': 'm_gl_m'}      # 1.1 times: the middle step of the number's growth (a soft rise, not a jump)
 RPM_MAX = {'sport': 7000, 'm': 7000, 'mblade': 7000, 'navi': 7000}       # the rev scale's top of each layout (the bars' _redMarks)
 BLACK_BOX = (1406, 342, 1597, 419)
 BELT = (587, 663, 626, 700)
@@ -81,7 +82,10 @@ def zoomify(layout, widgets):
     n = 0
     for w in widgets:
         k = kind(layout, w)
-        if not k or 'nearFont' in w:
+        if not k:
+            continue
+        if 'nearFont' in w:
+            w.setdefault('nearMid', MID[w['font']])
             continue
         f, z = w['font'], ZOOM[w['font']]
         digits = '0' * (max(len(str(v[k[1]])) for v in SCALES[k[0]]) if k[0] in SCALES else 1)
@@ -98,6 +102,7 @@ def zoomify(layout, widgets):
         l, t, r, b = pick
         w['near'] = [k[0], k[1]]
         w['nearFont'] = z
+        w['nearMid'] = MID[f]
         if k[0] == 'rpm':
             w['rpmMax'] = RPM_MAX[layout]
             if layout == 'navi':
