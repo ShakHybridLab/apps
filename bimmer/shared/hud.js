@@ -701,8 +701,15 @@ class HudApp {
         this.placed.forEach((l) => {
             if (l.fixed) { l.c.set(l.ref, { x: l.x, y: l.y }); return; }       // the black band: never moved, never squeezed
             const o = { x: l.x + off.x, y: l.y + off.y };
-            if (st !== 1) { o.sx = 1; o.sy = st; o.px = 0; o.py = -l.y; l.scaled = true; }      // about the panel's top, y 0
-            else if (sc !== 1 || l.scaled) { o.sx = sc; o.sy = sc; o.px = cx - l.x; o.py = cy - l.y; l.scaled = sc !== 1; }
+            if (st !== 1) {
+                // "Leave BMW's bottom strip clear": the layer's own rectangle is made shorter (y and h times st), no scale: the KOMBI leaves its black
+                // boxes while a layer's rectangle reaches its strip, and eroobeeroo's Cluster Layouts, which cuts its rectangles at the line, got none
+                // on this car while ours (full-height rectangles squeezed with sy: the bottom of every rectangle was still at 720) kept them
+                // (photos of Nov 15 2026). The shaders read v_uv * u_size and an image is resampled, so a shorter rectangle squeezes the picture the same way.
+                if (l.scaled) { o.sx = 1; o.sy = 1; o.px = 0; o.py = 0; l.scaled = false; }
+                o.y = Math.round((l.y + off.y) * st); o.h = Math.max(1, Math.round(l.h * st)); l.squeezed = true;
+            } else if (sc !== 1 || l.scaled) { o.sx = sc; o.sy = sc; o.px = cx - l.x; o.py = cy - l.y; l.scaled = sc !== 1; }
+            if (st === 1 && l.squeezed) { o.h = l.h; l.squeezed = false; }
             l.c.set(l.ref, o);
         });
     }
@@ -736,7 +743,7 @@ class HudApp {
     _stripOn() {
         return this.target === 'panel' && !!this.ctx.settings.item('stripClear') && this.setting('stripClear') === true;
     }
-    /** The cluster's squeeze for "Leave BMW's bottom strip clear": 646 / 720 while it's on, else 1. */
+    /** The cluster's squeeze for "Leave BMW's bottom strip clear": 646 / 720 while it's on, else 1 (applied to every layer's rectangle in _place). */
     _stripSy() { return this._stripOn() ? STRIP_TOP / TARGET_SIZES.panel[1] : 1; }
     _scale() {
         if (!this.ctx.settings.item('hudScale')) return 1;

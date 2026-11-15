@@ -26,6 +26,26 @@ check('la limite est y 646 et la compression 646 / 720 (662 laissait les cases n
     assert.strictEqual(HudApp.prototype._stripOn.call(fake(true, 'hud')), false, 'le HUD n\'a pas de bande');
 });
 
+check('la compression raccourcit le RECTANGLE de chaque couche (y et h), sans échelle sy : le KOMBI garde ses cases noires tant qu\'un rectangle atteint sa bande (eroobeeroo coupe les siens à la ligne)', () => {
+    const sets = [];
+    const c = { set: (ref, o) => sets.push([ref, o]) };
+    const mk = (st) => ({ placed: [{ c, ref: 1, x: 0, y: 0, w: 1920, h: 720 }, { c, ref: 2, x: 830, y: 630, w: 450, h: 69 }, { c, ref: 3, x: 0, y: 646, w: 1196, h: 16, fixed: true }],
+        _offset: () => ({ x: 0, y: 0 }), _scale: () => 1, _stripSy: () => st, _placedBox: HudApp.prototype._placedBox });
+    const on = mk(646 / 720);
+    HudApp.prototype._place.call(on);
+    const by = {}; sets.forEach(([r, o]) => { by[r] = o; });
+    assert.deepStrictEqual([by[1].y, by[1].h], [0, 646], 'le fond plein panneau finit à 646');
+    assert.deepStrictEqual([by[2].y, by[2].h], [565, 62], 'une couche du bas est raccourcie et remontée');
+    assert.deepStrictEqual(by[3], { x: 0, y: 646 }, 'la bande noire ne bouge pas');
+    sets.forEach(([r, o]) => { assert(o.sy === undefined && o.sx === undefined, 'la couche ' + r + ' est mise à l\'échelle (sy) au lieu d\'avoir un rectangle plus court'); });
+    sets.forEach(([r, o]) => { if (r !== 3) assert(o.y + o.h <= 646, 'la couche ' + r + ' dépasse 646 : ' + (o.y + o.h)); });
+    // l'option éteinte : les rectangles reviennent à leur taille
+    sets.length = 0; on._stripSy = () => 1;
+    HudApp.prototype._place.call(on);
+    const back = {}; sets.forEach(([r, o]) => { back[r] = o; });
+    assert.deepStrictEqual([back[1].y, back[1].h, back[2].y, back[2].h], [0, 720, 630, 69], 'les rectangles ne reviennent pas');
+});
+
 check('la bande noire : trois couches pleines de y 646 à 662, 658 devant le mode de conduite et le rapport (x 1196..1424)', () => {
     const b = bs.band();
     assert.strictEqual(b.length, 3);
