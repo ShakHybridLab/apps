@@ -285,6 +285,7 @@ const Runs = require('./runs');
 const { SpeedLimit, decodeSign } = require('./speedlimit');
 const { Probes, PROBES } = require('./probes');
 const bottomStrip = require('./bottom_strip');
+const gearWindow = require('./gear_window');
 const { hueOfMode, accentTheme, mapRole } = require('./accent');
 const ACCENT_BRIGHT = [92, 158, 255, 255];   // the Sport theme's brightest blue (0.36, 0.62, 1.0), whose hue the drive mode's name takes
 const tz = require('./tz');
@@ -297,6 +298,7 @@ const CLAIM_MS = 1000;
 
 const BOOST_SCALE = { factor: 0.01, offset: 0, invalid: 255 }; // see header comment
 // the widget types drawn as pixels (image layers, packed into sheets unless "own": true); the rest are shaders
+const BACKDROP_TYPES = { sdash: true, mdash: true, mblade: true, navi: true };   // the shaders that read u_rect / u_org (a piece of the picture)
 const IMAGE_TYPES = { text: true, scale: true, stripe: true, badge: true, gridlabels: true, icon: true, emblem: true, swatchimg: true };
 const STATUS_ASK_MS = 2000;      // after a rebuild: ask cluster-render for its own status text
 // an image layer is "stalled" until its first pixels reach cluster-render, which after a rebuild takes a second or two
@@ -539,6 +541,7 @@ class HudApp {
         this.size = TARGET_SIZES[this.target];
         this.label = this.config.statusName || 'HUD';
         this.layoutTheme = null;         // the active layout's own theme, if it has one
+        this.gearWin = null; this._avoid = null;   // the hole over BMW's gear letter (shared/gear_window.js), set at each rebuild
         this.sweepAt = null; this.sweptName = null;   // the start-up sweep: when it starts (Date.now()), and the layout it last ran for
         this.runUp = true;               // the orange run-up before a zone (the layout's "runUp": false leaves it out: white, then red)
         this.zoneRed = true;             // the zoom numbers end in red (the layout's "zoneRed": false: yellow, the M theme; the bars stay red)
@@ -741,8 +744,19 @@ class HudApp {
 
     /** "Leave BMW's bottom strip clear" is on (the cluster panel only). */
     _stripOn() {
-        return this.target === 'panel' && !!this.ctx.settings.item('stripClear') && this.setting('stripClear') === true;
+        return this.target === 'panel' && !this.gearWin && !!this.ctx.settings.item('stripClear') && this.setting('stripClear') === true;
     }
+    /**
+     * The hole over BMW's gear letter for this layout ({ id, x, y, w, h }, shared/gear_window.js) or null: the cluster panel only,
+     * one of the four themes, setting "gearWindow" not "off". While it is on, no layer rectangle touches the hole (BMW draws its
+     * black box only while a layer covers its gear letter).
+     */
+    _gearWindow(name) {
+        if (this.target !== 'panel' || !this.ctx.settings.item('gearWindow')) return null;
+        return gearWindow.pick(this.setting('gearWindow'), name);
+    }
+    /** u_slotOff of the backdrops: 1 while no black box is expected (bottom strip clear, or the gear letter's hole open): no pocket in the backdrop. */
+    _slotOff() { return this._stripOn() || this.gearWin ? 1 : 0; }
     /** The cluster's squeeze for "Leave BMW's bottom strip clear": 646 / 720 while it's on, else 1 (applied to every layer's rectangle in _place). */
     _stripSy() { return this._stripOn() ? STRIP_TOP / TARGET_SIZES.panel[1] : 1; }
     _scale() {
@@ -2148,10 +2162,18 @@ class HudApp {
         this.nightOn = this._nightDim();
         if (this.nightOn) this.theme = dimTheme(this.theme, NIGHT_DIM);
         this.log.info('layout "' + layout.name + '", theme ' + this.theme.name + (this.layoutTheme ? '' : ' (' + this.setting('hudTheme') + ')'));
+        this.gearWin = this._gearWindow(name);   // the hole over BMW's gear letter (before _stripOn: it wins over the strip option)
+        this._avoid = this.gearWin;              // _plan keeps every sheet off it
         const stripOn = this._stripOn();         // BMW's bottom strip left clear: no row it already shows, a black band under the theme
-        const shown = layout.widgets.filter((w) => !(w.toggle && !this._toggleOn(w.toggle)) && !(w.themes && w.themes.indexOf(this.themeName) < 0)
+        let shown = layout.widgets.filter((w) => !(w.toggle && !this._toggleOn(w.toggle)) && !(w.themes && w.themes.indexOf(this.themeName) < 0)
             && !(stripOn && bottomStrip.duplicates(w.id)));
         if (stripOn) bottomStrip.band().forEach((b) => shown.push(b));
+        if (this.gearWin) {
+            const g = gearWindow.apply(shown, this.gearWin, (t) => !!IMAGE_TYPES[t]);
+            shown = g.widgets;
+            this.log.info('gear window ' + this.gearWin.id + ' (x ' + this.gearWin.x + '..' + (this.gearWin.x + this.gearWin.w) + ', y ' + this.gearWin.y + '..' + (this.gearWin.y + this.gearWin.h) + '): ' +
+                g.cropped.length + ' backdrop(s) cut at y ' + this.gearWin.y + (g.pieces.length ? ', ' + g.pieces.length + ' bottom pieces' : '') + (g.dropped.length ? ', left out: ' + g.dropped.join(' ') : '') + (g.nudged.length ? ', moved: ' + g.nudged.join(' ') : ''));
+        }
         this.shown = shown;              // for a scale to find its rev bar (driver camera wings)
         this.hybridEv = false; this.hybridCharge = false; this.hybridPow = null;   // the bar of this layout says again
         this.nearLabels = {};            // the scale labels this layout has, per kind ("near"): the needle lights the last one it has reached
@@ -2167,12 +2189,23 @@ class HudApp {
         // that many times its members' own area, so far-apart readouts don't share one mostly empty sheet (pixel
         // memory); relaxed along with the size limit when the layer budget needs it. Without it: the size limit only.
         let waste = isNum(layout.packWaste) ? layout.packWaste : Infinity;
+        if (this.gearWin) {
+            // the two pieces of the backdrop under the theme (or the two black bands) go on the least used connections (each connection holds 8 layers)
+            const covers = shown.filter((w) => w.follow || /^gw_cover/.test(w.id));
+            const used = this._connCounts(this._plan(shown.filter((w) => covers.indexOf(w) < 0), Math.floor(area / SHEET_AREA_FRAC), waste));
+            covers.forEach((w) => {
+                let ci = 0;
+                for (let i = 1; i < MAX_CONN; i++) if ((used[i] || 0) < (used[ci] || 0)) ci = i;
+                w.conn = ci; used[ci] = (used[ci] || 0) + 1;
+            });
+        }
         let maxPx = Math.floor(area / SHEET_AREA_FRAC), plan = this._plan(shown, maxPx, waste);
         while (over(plan) && (maxPx !== Infinity || waste !== Infinity)) {
             maxPx = maxPx * 2 >= area ? Infinity : maxPx * 2;
             waste = waste * 2 > 64 ? Infinity : waste * 2;
             plan = this._plan(shown, maxPx, waste);
         }
+        if (this.gearWin) this._balance(plan);
         let effects = 0, own = 0, sheets = 0, bytes = 0, px = 0;
         plan.forEach((e) => {
             if (e.kind === 'sheet') {
@@ -2201,6 +2234,27 @@ class HudApp {
         });
         if (px > PIXEL_BYTES) this.log.warn('layout "' + layout.name + '" needs ' + mib(px) + ' of pixel memory; cluster-render has 16 MiB for every app together (each image counts twice)');
         this.statusAskT = setTimeout(() => { this.statusAskT = null; this._guard('status request', () => this.client.status()); }, STATUS_ASK_MS);
+    }
+
+    /**
+     * The gear window splits sheets (a sheet's box must not cover the hole), which can push a connection over its LAYER_BUDGET layers: whole
+     * image sheets move to the least used connection until none is over (nothing moves when every connection is full: the warning stays).
+     * Image sheets only: an effect layer keeps the connection its widget asks for.
+     */
+    _balance(plan) {
+        for (let guard = 0; guard < 64; guard++) {
+            const counts = this._connCounts(plan);
+            while (counts.length < MAX_CONN) counts.push(0);
+            const from = counts.findIndex((k) => k > LAYER_BUDGET);
+            if (from < 0) return;
+            let to = 0;
+            counts.forEach((k, i) => { if (k < counts[to]) to = i; });
+            if (counts[to] >= LAYER_BUDGET) return;
+            const moved = plan.filter((e) => e.kind === 'sheet' && e.conn === from).sort((a, b) => a.w * a.h - b.w * b.h)[0];
+            if (!moved) return;
+            moved.conn = to;
+            this.log.info('  sheet ' + moved.members[0].id + ' moved from connection ' + (from + 1) + ' to ' + (to + 1) + ' (the gear window split sheets: ' + counts[from] + ' layers there, at most ' + LAYER_BUDGET + ')');
+        }
     }
 
     /**
@@ -2236,6 +2290,7 @@ class HudApp {
                 const s = plan[i];
                 if (s.kind !== 'sheet' || s.klass !== klass || s.z !== z || s.conn !== conn || (s.key || null) !== key) continue;
                 const u = union(s, w);
+                if (this._avoid && hit(u, this._avoid)) continue;      // a sheet's box must not cover the gear letter's hole
                 const own = s.members.reduce((a, m) => a + m.w * m.h, 0) + w.w * w.h;
                 if (key || (u.w * u.h <= maxPx && u.w * u.h <= waste * own)) { sheet = s; box = u; }
             }
@@ -2321,11 +2376,14 @@ class HudApp {
         if (sheet) { ref = sheet.ref; c = sheet.c; }
         else {
             c = this._clientAt(this._connOf(w));
-            const base = { target: this.target, klass: w.class || 'content', z: w.z || 0, x: w.x, y: w.y, w: w.w, h: w.h };
+            // "rect": the layer shows only that part of the widget (the gear window cuts a backdrop into pieces, shared/gear_window.js); the widget keeps its
+            // own x, y, w, h for every uniform, and the four backdrop shaders read u_rect / u_org to know which part of the picture the layer holds
+            const r = w.rect || w;
+            const base = { target: this.target, klass: w.class || 'content', z: w.z || 0, x: r.x, y: r.y, w: r.w, h: r.h };
             if (IMAGE_TYPES[w.type]) ref = c.image(Object.assign({ iw: w.w, ih: w.h }, base));
             else ref = c.effect(Object.assign({ fs: w.type === 'swatch' ? calibration.SWATCH : shaders.accented(w.type, this.accentHue) }, base));
             if (!ref) { this.log.warn('widget "' + w.id + '": layer refused'); return; }
-            this.placed.push({ c, ref, x: w.x, y: w.y, w: w.w, h: w.h, fixed: !!w.fixed });
+            this.placed.push({ c, ref, x: r.x, y: r.y, w: r.w, h: r.h, fixed: !!w.fixed });
         }
         const x = { w, ref, c, ci: sheet ? sheet.ci : this._connOf(w), sheet: sheet || null, last: null, lastPaint: 0, px: null };
         this.widgets.set(w.id, x);
@@ -2373,7 +2431,7 @@ class HudApp {
             c.uniform(ref, 'u_topEnd', [w.topEnd]);
             c.uniform(ref, 'u_tint', [this._tint()]);
             c.uniform(ref, 'u_facets', [this._facets()]);
-            c.uniform(ref, 'u_slotOff', [this._stripOn() ? 1 : 0]);
+            c.uniform(ref, 'u_slotOff', [this._slotOff()]);
         } else if (w.type === 'mblade') {
             // the M Blade theme (shaders.js mblade): geometry in panel px from the layout, see the widget notes in the header
             const [redFrom, orange] = this._redMarks(w.rpmMax || 7000);
@@ -2428,7 +2486,7 @@ class HudApp {
             c.uniform(ref, 'u_holeR', [this._holeRadius(w)]);
             c.uniform(ref, 'u_tint', [this._tint()]);
             c.uniform(ref, 'u_facets', [this._facets()]);
-            c.uniform(ref, 'u_slotOff', [this._stripOn() ? 1 : 0]);
+            c.uniform(ref, 'u_slotOff', [this._slotOff()]);
         } else if (w.type === 'mdash') {
             const ty = w.tyres || [0, 0, 0], L = w.gaugeL || {}, R = w.gaugeR || {}, b = w.blade || {};
             const bars = Array.isArray(w.segbars) ? w.segbars.slice(0, 4) : [];
@@ -2689,7 +2747,36 @@ class HudApp {
             c.uniform(ref, 'u_c3', rgb(color(t, zc[2] || zc[1] || zc[0])));
             c.uniform(ref, 'u_at', w.at || [0.6, 0.85]);
         }
+        if (BACKDROP_TYPES[w.type]) {
+            const r = w.rect || w;
+            c.uniform(ref, 'u_rect', [r.w, r.h]);
+            c.uniform(ref, 'u_org', [r.x - w.x, r.y - w.y]);
+        }
+        if (w.follow) { this._follow(x); return; }
         this._update(x, Date.now(), true);
+    }
+
+    /**
+     * A follower (the gear window's bottom pieces of a backdrop, "follow": the leader's id) is a second layer of the same shader: it never
+     * updates on its own, every uniform its leader sends goes to it too (the leader's client is wrapped once), so the pieces always draw
+     * the same picture. The leader sends everything again at once, which brings a new follower up to date.
+     */
+    _follow(x) {
+        x.follower = true;
+        const lead = this.widgets.get(x.w.follow);
+        if (!lead) return;
+        if (!lead.followers) {
+            const real = lead.c, list = lead.followers = [];
+            lead.c = new Proxy(real, {
+                get(t, k) {
+                    if (k === 'uniform') return (ref, name, values, opts) => { t.uniform(ref, name, values, opts); list.forEach((f) => f.c.uniform(f.ref, name, values, opts)); };
+                    const v = t[k];
+                    return typeof v === 'function' ? v.bind(t) : v;
+                },
+            });
+        }
+        lead.followers.push({ c: x.c, ref: x.ref });
+        this._update(lead, Date.now(), true);
     }
 
     /** A tiles widget's tiles in use: [{ x, y, w, h, slot, bar }], the ones with a valid rect, toggles on, TILE_MAX at most. */
@@ -2771,6 +2858,7 @@ class HudApp {
     }
 
     _update(x, now, force) {
+        if (x.follower) return;          // a gear window piece: its leader sends its uniforms (_follow)
         const w = x.w;
         if (w.type === 'atext') {
             if (!force && now - x.lastPaint < (w.rate || TEXT_MS)) return;

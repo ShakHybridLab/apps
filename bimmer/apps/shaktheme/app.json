@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.21.7",
+  "version": "0.21.8",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -38,7 +38,8 @@
     "tz.js",
     "shift_light.js",
     "probes.js",
-    "bottom_strip.js"
+    "bottom_strip.js",
+    "gear_window.js"
   ],
   "signals": {
     "de.bmw.infotainment.vehicle.CDS": {
@@ -652,6 +653,38 @@
         50,
         75,
         100
+      ]
+    },
+    {
+      "key": "gearWindow",
+      "label": "Trou autour de la lettre de rapport de BMW (la case noire)",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "Essai : une taille par thème (Sport 1, M 2, M Blade 3, Navi 4)"
+        ],
+        [
+          "1",
+          "1 : petit trou, 80 px (Bimmer Lab 0.17.8)"
+        ],
+        [
+          "2",
+          "2 : trou de 200 px"
+        ],
+        [
+          "3",
+          "3 : trou de 320 px (Bimmer Lab 0.17.6)"
+        ],
+        [
+          "4",
+          "4 : toute la bande du bas à BMW (comme eroobeeroo)"
+        ],
+        [
+          "off",
+          "Aucun (BMW dessine sa case noire)"
+        ]
       ]
     },
     {

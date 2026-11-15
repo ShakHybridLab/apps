@@ -486,6 +486,8 @@ precision mediump float;
 #endif
 varying vec2 v_uv;
 uniform vec2 u_size;
+uniform vec2 u_rect;   // this layer's size in px (hud.js sets it: u_size for the whole picture, less when the layer holds one rectangle of it: the gear window, shared/gear_window.js)
+uniform vec2 u_org;    // that rectangle's top-left in the picture, px
 uniform vec4 u_card;      // left card: outer edge x, bottom y, bottom-outer corner radius, top-outer corner rounding (the right card is its mirror)
 uniform vec3 u_cardCutR;  // the right card's lower outer corner, cut back on a circle (mirrored frame: cx, cy, r; r 0 = none): the M8's
                           // right card is cut further than its left one, so the oil dial's numbers sit on black
@@ -658,7 +660,7 @@ vec4 gauge(vec2 p, vec4 g, float zones, float low, vec4 c) {
 }
 
 void main() {
-    vec2 p = v_uv * u_size;
+    vec2 p = v_uv * u_rect + u_org;
     vec2 pm = vec2(u_size.x - p.x, p.y);        // the right half, mirrored into the left frame
     vec4 c = vec4(0.0, 0.0, 0.0, 1.0);           // black, as the M8
 
@@ -867,6 +869,8 @@ precision mediump float;
 #endif
 varying vec2 v_uv;
 uniform vec2 u_size;
+uniform vec2 u_rect;   // this layer's size in px (hud.js sets it: u_size for the whole picture, less when the layer holds one rectangle of it: the gear window, shared/gear_window.js)
+uniform vec2 u_org;    // that rectangle's top-left in the picture, px
 uniform vec4 u_geo;       // outer line: y at the top, y at the bend, y at the bottom, x at the bend (left side)
 uniform vec3 u_k;         // x per y px above the bend, below it, bend roundness px
 uniform float u_w;        // band width
@@ -987,7 +991,7 @@ vec4 bar(vec2 p, vec4 s, float val, float zones, float low, vec4 c) {
 
 ${BEZEL}
 void main() {
-    vec2 p = v_uv * u_size;
+    vec2 p = v_uv * u_rect + u_org;
     vec2 pm = vec2(u_size.x - p.x, p.y);
     vec4 c = vec4(0.0, 0.0, 0.0, 1.0);
     if (u_tint > 0.0) {
@@ -1057,6 +1061,8 @@ precision mediump float;
 #endif
 varying vec2 v_uv;
 uniform vec2 u_size;
+uniform vec2 u_rect;   // this layer's size in px (hud.js sets it: u_size for the whole picture, less when the layer holds one rectangle of it: the gear window, shared/gear_window.js)
+uniform vec2 u_org;    // that rectangle's top-left in the picture, px
 uniform vec4 u_hex;       // the hexagon: where its design point (612, 167) lands on the panel x, y; the scale (0 = none); the share it is narrower than the photo's (0 = as is)
 uniform vec4 u_sp;        // speed line: x, y of the top cap's left end, x, y of the knee
 uniform vec4 u_sq;        // speed line: x, y of the bottom end, the top cap's length (0 = no speed line)
@@ -1140,7 +1146,7 @@ vec4 strip(vec2 p, vec4 g, float lvl, vec3 lit, float low, vec4 c) {
 
 ${BEZEL}
 void main() {
-    vec2 p = v_uv * u_size;
+    vec2 p = v_uv * u_rect + u_org;
     // the near black navy, with the photo's faint hexagon outlines
     vec4 c = vec4(vec3(0.016, 0.026, 0.078) * u_tint, 1.0);
     if (u_tint > 0.0) c = over(vec4(0.45, 0.6, 1.0, 0.045 * u_facets * cov(abs(honey(p, 150.0)) - 0.7)), c);
@@ -1281,6 +1287,8 @@ precision mediump float;
 #endif
 varying vec2 v_uv;
 uniform vec2 u_size;
+uniform vec2 u_rect;   // this layer's size in px (hud.js sets it: u_size for the whole picture, less when the layer holds one rectangle of it: the gear window, shared/gear_window.js)
+uniform vec2 u_org;    // that rectangle's top-left in the picture, px
 uniform vec4 u_L;         // the band's outer-left line: x of the tip, y of the tip, dy per dx, y of the bottom line
 uniform vec4 u_W;         // divider offset (px right of the outer line) at y 300 and its change per y px, edge offset at y 300 and its change
 uniform float u_top;      // y where the purple stripe begins
@@ -1327,7 +1335,7 @@ vec4 bar(vec2 p, vec4 b, vec3 glowA, vec3 glowB, float low, vec4 c) {
 
 ${BEZEL}
 void main() {
-    vec2 p = v_uv * u_size;
+    vec2 p = v_uv * u_rect + u_org;
     vec4 c = vec4(u_tint > 0.0 ? navyFacets(p, u_size, u_facets) * u_tint : vec3(0.0), 1.0);
     // the map window: cut out of the backdrop, with a thin pale outline just outside it
     if (u_hole.z > 0.0) {
