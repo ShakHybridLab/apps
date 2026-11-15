@@ -543,7 +543,7 @@ check('limit ring: small, beside the speed digits (Sport, M, Navi) or in the bot
         assert.strictEqual(n.font, 'm_tiny', id + ': the digits in the alert ring\'s font');
         assert.strictEqual(r.color, 'dim', id + ': the ring is the quiet colour (red when over the limit)');
         if (id === 'mblade') {
-            assert(r.y >= 560 && r.y + r.h <= 700 && r.x + r.w <= 300, id + ': bottom left corner, 20 px off the bottom edge');
+            assert(r.y >= 530 && r.y + r.h <= by('time').y - 4 && r.x + r.w <= 320, id + ': bottom left, just above the clock\'s row (which sits above the gear letter since 0.20.6)');
         } else {
             // beside the speed digits: level with them, 16 px off the widest speed (three digits), on the side the layout leaves free
             const sp = by('speed'), f = font(sp.font), g = f.glyphs['0'], adv = typeof g === 'object' ? g.advance : g;
@@ -554,7 +554,7 @@ check('limit ring: small, beside the speed digits (Sport, M, Navi) or in the bot
         }
         const box = [r.x, r.y, r.x + r.w, r.y + r.h], hit = (w) => w.x < box[2] && w.x + w.w > box[0] && w.y < box[3] && w.y + w.h > box[1];
         L.widgets.forEach((w) => {
-            if (w === r || w === n || SHADERS.indexOf(w.type) >= 0 || w.toggle === 'mapUp' || w.id === 'lim_num' || w.id === 'speed') return;   // the speed's wide box is centred text: the digits' own clearance is checked above
+            if (w === r || w === n || SHADERS.indexOf(w.type) >= 0 || w.toggle === 'mapUp' || w.toggle === 'powerOpen' || w.id === 'lim_num' || w.id === 'speed') return;   // the speed's wide box is centred text: the digits' own clearance is checked above
             assert(!hit(w), id + ': the ring overlaps ' + w.id);
         });
         assert(box[2] <= visible.BLACK_BOX[0] || box[0] >= visible.BLACK_BOX[2] || box[3] <= visible.BLACK_BOX[1] || box[1] >= visible.BLACK_BOX[3], id + ': clear of BMW\'s gear box');

@@ -89,7 +89,7 @@ def danger_alert(x, y, h):
 # (x 534..1386, y 120..600, the same as Sport's), the blade on the left, a small hexagon with the speed on the right above BMW's
 # box, the strips and the temperatures below it, nothing under the map.
 DX = -30
-ROW = 668                            # the bottom row's text top: its middle (y 681) is the middle of BMW's belt light and gear letter (y 663..708)
+ROW = 624                            # the bottom row's text top: the whole row sits above BMW's gear letter and its black box (y 662..708), as on the M theme; units end at y 659
 SLOPE = 0.5714                       # the labels' lean along the blade (x per y px)
 RPM_Y0, RPM_Y7 = 613, 160            # y of the 0 and of the 7 mark on the photo's blade
 SPD_Y = [613, 555, 497, 440, 380, 321, 266, 210, 153]    # y of the speed labels 0, 30 .. 150, 210, 270, 330
@@ -228,13 +228,13 @@ def mb_bottom_right(pre='', tog=None, dx=0, y=ROW):
     302 F)."""
     k = {'toggle': tog} if tog else {}
     W = []
-    for x, name, icon_name, tok, sig in ((1205, 'cool', 'therm', '{{coolant}}', 'coolant'), (1458, 'oil', 'oilcan', '{{oil}}', 'oil')):
+    for x, name, icon_name, tok, sig in ((1262, 'cool', 'therm', '{{coolant}}', 'coolant'), (1450, 'oil', 'oilcan', '{{oil}}', 'oil')):
         # the coolant is not under a strip: it keeps its place, ending before BMW's gear letter and its black box (x 1386..1454: shared/visible.js
         # GEAR_P, drawn over the panel at the bottom); the oil starts right after them, then the electric range, then the outside temperature
         # (box x 1736), in both views, with tight boxes (the widest value: 302 = 87 px, an electric range 99 = 58, a unit 26 to 34)
         W.append(icon(pre + name + '_icon', icon_name, x, y - 3, 26, 34, 'fg', 1, tempBy=sig, **k))
-        W.append(text(pre + name, 1485 if name == 'oil' else x + 32, y, 87, 29, tok, 'm_mid', 'fg', 'right', 1, tempBy=sig, **k))
-        W.append(text(pre + name + '_unit', 1573 if name == 'oil' else x + 123, y + 3, 28 if name == 'oil' else 36, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, **k))
+        W.append(text(pre + name, 1477 if name == 'oil' else x + 32, y, 87, 29, tok, 'm_mid', 'fg', 'right', 1, tempBy=sig, **k))
+        W.append(text(pre + name + '_unit', 1565 if name == 'oil' else x + 123, y + 3, 28 if name == 'oil' else 36, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, **k))
     W += [icon(pre + 'ev_icon', 'battery', 1606, y - 3, 26, 34, 'fg', 1, **k),
           text(pre + 'ev_range', 1637, y, 58, 29, '{{evRange}}', 'm_mid', 'fg', 'right', 1, **k),
           text(pre + 'ev_range_unit', 1696, y + 3, 36, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1, **k)]
@@ -262,10 +262,10 @@ def mblade():
     # flat bar under the window
     HB = 18                                       # the blade is this far right of the normal view (its "4" is the limit: BMW's black box)
     SX = 30                                       # the two strips (and the oil / electric range / outside under them)
-    WIN = [446, 128, 582, 450]                    # the window (x, y, w, h): inside Waze's slot, clear of the shift light above and the blade at the right
+    WIN = [446, 120, 582, 418]                    # the window (x, y, w, h): inside Waze's slot, clear of the shift light above and the blade at the right
     LX = 84                                       # the gear's box in the left column (the hood's limit is x 80 at y 167)
     INS = 10
-    FB = [462, 962, 598]                          # the flat fuel bar: left end x, right end x, top y (27 thick), under the window
+    FB = [462, 962, 558]                          # the flat fuel bar: left end x, right end x, top y (27 thick), under the window
     G1o = [G1[0] + SX, G1[1], G1[2], G1[3]]
     G2o = [G2[0] + SX, G2[1], G2[2], G2[3]]
     G0o = [FB[2], 1920 - FB[1], 1920 - FB[0], 0]  # the first strip, lying flat: in the frame the shader turns it into
@@ -302,6 +302,10 @@ def mblade():
     W.extend(tab_cue(960, 'o_', 'mapUp', PLAIN))
     W.extend(mb_blade('', '!mapUp', lambda x, y: (x + DX, y), 1.0))
     W.extend(mb_blade('o_', 'mapUp', lambda x, y: (x + DX + HB, y), 1.0))
+    # (CHARGE, left of the blade's foot, drops under the fuel bar's scale: the scale's 1 ends at x 972, the note starts near x 918 at the foot's height)
+    for w in W:
+        if w.get('id') == 'o_charge_note':
+            w['y'] = ROW - 2
     # the strips' numbers: fuel on the left; on the right the oil temperature (50 / 100 / 150) and the battery (0 / 50 / 100 %)
     W.extend(mb_fuel('', '!mapUp', G0))
     W.extend(mb_right_strip('', '!mapUp', G1, 'o', '{{tc:150}}', '{{tc:100}}', '{{tc:50}}', '{{u:temp}}', 'oilcan', 30))
@@ -315,8 +319,8 @@ def mblade():
     W.append(icon('range_icon', 'fuelBolt', 313, ROW - 3, 29, 34, 'fg', 1))
     W.append(text('range', 348, ROW, 112, 29, '{{rangeTotal}}', 'm_mid', 'fg', 'right', 1))
     W.append(text('range_unit', 466, ROW + 3, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1))
-    W.extend(limit_and_timer(672, 318, 76, True, ring=(111, 574, 72)))   # the timer in the black void left of the gear letter; the ring small, bottom left above the clock (no clean place by the speed there)
-    W.extend(ev_share(632, ROW - 3, 26, 34, 662, ROW + 3, 52, 32, 'm_tiny', 718, ROW + 3, 26, 32, 'm_tiny'))   # between the belt light and the hexagon's tabs
+    W.extend(limit_and_timer(672, 318, 76, True, ring=(234, 540, 72)))   # the timer in the black void left of the gear letter; the ring small, bottom left above the clock (no clean place by the speed there)
+    W.extend(ev_share(662, ROW - 3, 26, 34, 692, ROW + 3, 52, 32, 'm_tiny', 748, ROW + 3, 26, 32, 'm_tiny'))   # between the belt light and the hexagon's tabs
     # the right end follows the strips: in the map view they are SX px further right, so the oil, the electric range and the outside
     # temperature move with them (the coolant stays)
     W.extend(mb_bottom_right('', '!mapUp', 0))

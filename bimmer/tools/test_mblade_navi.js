@@ -99,8 +99,8 @@ NAMES.forEach((n) => {
             VIEWS.forEach(([pre]) => {
                 const ys = [by('time'), by('range'), by(pre + 'ev_range'), by(pre + 'oil'), by(pre + 'cool'), by(pre + 'outside')].map((w) => w.y);
                 assert(ys.every((y) => y === ys[0]), pre + ' y differ: ' + ys.join(', '));
-                // the line's middle is the middle of BMW's seat-belt light and gear letter (y 663..708, middle 681-685): not lower, near the panel's edge
-                assert(Math.abs(ys[0] + 29 / 2 - 683) <= 5, pre + ' the line is not centred on the belt light and the gear letter: y ' + ys[0]);
+                // the whole line sits above BMW's gear letter and its black box (visible.GEAR_P, y 662..708): the units, the lowest boxes, end above it
+                assert(ys[0] + 3 + 32 <= visible.GEAR_P[1], pre + ' the line runs into the gear letter\'s box: y ' + ys[0]);
                 ['range_icon', pre + 'ev_icon', pre + 'oil_icon', pre + 'cool_icon'].forEach((i) => assert(by(i).y === ys[0] - 3, i + ' is not on the line'));
                 ['range_unit', pre + 'ev_range_unit', pre + 'oil_unit', pre + 'cool_unit', pre + 'outside_unit'].forEach((i) => assert(by(i).y === ys[0] + 3, i + ' is not on the line'));
             });

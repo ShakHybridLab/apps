@@ -2,6 +2,11 @@
 
 ## 15 novembre 2026 (soir)
 
+### ShakTheme 0.20.6 (pas encore essayé sur la voiture)
+- **M Blade : toute la rangée du bas passe au-dessus de la case de BMW (lettre de rapport et petit rectangle noir)**, comme sur le thème M : texte à y 624, unités finissant à y 659, case à partir de y 662. Plus rien n'est serré à droite de la case : température du liquide de refroidissement x 1262, huile x 1450 (3 chiffres possibles), autonomie électrique x 1606, température extérieure x 1736 ; à gauche l'heure et l'autonomie ne bougent pas en x, la part électrique (feuille et pourcentage) passe de x 632 à x 662 (elle touchait le « 0 » de l'échelle de vitesse).
+- Pour que la rangée haute ne touche rien avec la carte de Waze : la fenêtre de la carte passe de 582 × 458 à **582 × 418** (x 446, y 120, toujours dans la zone de Waze on Cluster), la jauge d'essence plate de y 598 à y 558, la note « CHARGE » du pied de la lame descend sous l'échelle de la jauge (elle ne s'affiche que pendant la charge), le rond de limite de vitesse passe en x 234, y 540 (au-dessus de l'heure, en vue normale seulement).
+- Tests : `test_mblade_navi.js` (rangée entière au-dessus de la case de BMW, jauge plate à l'écart) et `test_zones.js` (rond de limite au-dessus de la rangée).
+
 ### ShakTheme 0.20.5 (pas encore essayé sur la voiture)
 - **Rangée du bas montée d'un cran sur Sport et M Blade** (heure, autonomie, autonomie électrique, températures, température extérieure) : son milieu est maintenant à y 682, le milieu de la lettre de rapport de BMW et de son voyant de ceinture (y 663 à 708), au lieu de y 694 à 698, près du bord bas du panneau. Sport : −12 px (les widgets du bas, le nom du mode et le panneau « prêt » suivent). M Blade : −16 px, le chiffre de limite de vitesse, la jauge d'essence plate (sous la carte, 8 px plus haut ; la fenêtre de la carte perd 8 px de hauteur, y 128 à 578) et le flocon de la température extérieure suivent. M l'avait déjà (rangée au-dessus de la lettre) et Navi est déjà à cette hauteur.
 - Tests : `test_mblade_navi.js` (rangée à la même hauteur que le milieu de la lettre, jauge plate à l'écart) et `test_zones.js` (Sport : milieu de la rangée sur la lettre).
