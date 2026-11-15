@@ -2,7 +2,7 @@
   "id": "shakhud",
   "title": "ShakHUD",
   "description": "ShakHUD : un HUD pour le pare-brise, le compte-tours M Style (une barre brisée, rouge dans la zone rouge, bleu clair en électrique, verte en recharge), avec la batterie, les autonomies et les températures en bas à droite ; il se cache tout seul quand la carte Waze du HUD est affichée",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "vendor": "custom",
   "loggingId": "OAS1",
   "iconGlyph": "SH",
@@ -29,6 +29,7 @@
     "screen.js",
     "cluster_info.js",
     "danger.js",
+    "speedlimit.js",
     "free_rect.js",
     "map_window.js",
     "hybrid_tach.js",
@@ -72,6 +73,15 @@
     },
     "de.bmw.infrastructure.EnvironmentalInformation": {
       "ExteriorTemperature": "s"
+    },
+    "de.bmw.infotainment.vehicle.Vehicle": {
+      "statusNewCurrentUnitsStatusExt": "rs",
+      "_optional": "the car's pressure and temperature units, for the tyre pressure warning"
+    },
+    "de.bmw.infotainment.vehicle.TPMS": {
+      "statusTyrePressure": "rs",
+      "statusTyreTemperature": "rs",
+      "_optional": "the tyre pressure warning on the HUD"
     }
   },
   "screens": [
@@ -886,6 +896,23 @@
         15,
         20,
         25
+      ]
+    },
+    {
+      "key": "tyreLow",
+      "label": "Pneus : avertissement sous (rouge 0,4 bar plus bas)",
+      "type": "number",
+      "unit": "bar",
+      "default": 2.0,
+      "steps": [
+        0,
+        1.8,
+        1.9,
+        2.0,
+        2.1,
+        2.2,
+        2.3,
+        2.4
       ]
     },
     {

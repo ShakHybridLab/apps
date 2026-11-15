@@ -82,6 +82,15 @@ Neither theme has been tried on a car; they are checked on the bench against the
 - **Repères de zone rouge identiques sur les quatre thèmes (0.16.1) :** de petits traits jaunes dans les 700 tr/min avant le Redline, puis un trait rouge plein à partir de lui, le long du bord de l'échelle du compte-tours (ils suivent le réglage Redline et ne bougent pas avec le régime). Navi les a maintenant comme Sport, M et M Blade ; le HUD n'en a pas, sa barre devient déjà orange puis rouge.
 - **Pneus (M) :** la pression passe au **jaune** sous le réglage **Pneus : pression en jaune sous** (2,0 bar par défaut ; 0 coupe) et au **rouge** 0,4 bar plus bas. Les températures gardent leur couleur.
 
+## Détails de finition (0.17.0)
+
+- **Autonomie totale :** le chiffre d'autonomie du bas est maintenant **carburant + électrique** (essence seule sur une voiture sans batterie), avec une icône qui le dit : la pompe avec l'éclair de la batterie dedans. Rouge quand le carburant est en réserve.
+- **Roues du M :** chaque roue de la petite voiture vue de dessus est **verte**, **jaune** ou **rouge** selon sa pression, comme son chiffre (mêmes réglages que les pneus du 0.16.0).
+- **Moteur chaud :** quand l'huile passe de froid à chaud pendant que l'appli tourne, l'icône et le chiffre clignotent trois fois en blanc, puis restent verts. Rien si le moteur était déjà chaud.
+- **Chrono 0-100 km/h (0-60 mph en unités US) :** voiture à l'arrêt une demi-seconde, puis on accélère : un chronomètre (icône) compte en direct, puis le temps final reste **12 s** (vert si c'est un record, gardé dans `runs.json`). Il se met au centre, sous la vitesse (à gauche de la lettre du rapport sur M Blade), à la place de la bague de limitation. Réglage **Chrono 0-100 km/h (0-60 mph)**.
+- **Bague de limitation de vitesse :** une bague blanche avec la limite, **rouge** (chiffre compris) dès que la vitesse affichée la dépasse. **L'appli ne peut pas trouver la limite seule** (ni position ni carte) : il faut une autre appli qui l'écrit dans `/dev/shm/cluster-themes/speedlimit-<appli>.json` avec `{ "t": <ms depuis 1970, maintenant>, "app": "<nom>", "limit": <km/h> }`, réécrit environ chaque seconde (un fichier de plus de 6 s est ignoré ; si plusieurs applis écrivent, le plus récent gagne ; la limite va de 5 à 200 km/h, toujours en km/h : le thème convertit en mph, arrondi à 5). Rien n'écrit ce fichier pour l'instant, donc la bague ne s'affiche pas tant qu'aucune appli ne le fait. Réglage **Bague de limitation de vitesse**. Ni la bague ni le chrono ne s'affichent quand la carte Waze est ouverte dans le thème (Waze montre déjà la limite).
+- Pas de consommation instantanée (choix fait).
+
 ## Off and drive modes
 
 - **Off (BMW's own cluster):** pick it as the theme and the app draws nothing, so BMW's cluster comes back.

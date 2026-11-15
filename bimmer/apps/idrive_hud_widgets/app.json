@@ -28,6 +28,7 @@
     "screen.js",
     "cluster_info.js",
     "danger.js",
+    "speedlimit.js",
     "free_rect.js",
     "map_window.js", "hybrid_tach.js",
     "runs.js",

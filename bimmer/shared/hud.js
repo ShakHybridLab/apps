@@ -209,7 +209,7 @@
  *
  * Text tokens: {{speed}} {{u:speed}} {{oil}} {{coolant}} {{boost}} {{u:boost}} {{rpm}}
  * {{gear}} (P / R / N, D3 / S3 / M3 by the shifter programme, or just 3 when the selector position is unknown), {{gearnum}} (3, or P / R / N)
- * {{spd:<i>}} (speed scale label i of SPEED_SCALE: 0..200 mph, 0..320 km/h) {{range}} {{u:distLc}} (mi, km) {{u:dist}} (MI, KM) {{ambient}} (outside, signed: +75) {{u:speedLc}} (mph, km/h) {{ampmLc}} (am, pm) {{torque}} {{u:torque}} (lb-ft, Nm) {{torquePct}} {{powerPct}} (% of config.engine's peak) {{boostHi}} {{boostMid}}
+ * {{spd:<i>}} (speed scale label i of SPEED_SCALE: 0..200 mph, 0..320 km/h) {{range}} {{rangeTotal}} (fuel + electric range) {{u:distLc}} (mi, km) {{u:dist}} (MI, KM) {{ambient}} (outside, signed: +75) {{u:speedLc}} (mph, km/h) {{ampmLc}} (am, pm) {{torque}} {{u:torque}} (lb-ft, Nm) {{torquePct}} {{powerPct}} (% of config.engine's peak) {{boostHi}} {{boostMid}}
  * (gauge labels for 1.4 / 0.7 bar in the display unit) {{stage}} (P R N, D / S / M by the shifter programme) {{gearInD}} (gear number while in D) {{mode}} (COMFORT, SPORT, SPORT PLUS, SPORT INDIVIDUAL, ECO PRO, ...) {{modeName}} (the same in mixed case for the small drive-mode text: Hybrid, Electric Eco Pro, Sport Plus)
  * {{temp:<deg C>}} (that temperature in the display unit, °F rounded to 10, for gauge labels) {{setup:engine|chassis|steering|gearbox}} (what that part is set to in the drive mode now)
  * {{time}} {{ampm}} {{u:temp}} (°F / °C) {{gLat}} {{gLong}} (g, 2 decimals) {{gSide}} ("0.42 L", "0.42 R")
@@ -224,8 +224,13 @@
  * Warnings: a text showing oil, coolant or boost (a {{oil}} / {{coolant}} / {{boost}} token, or a readout slot with that
  * sensor) flashes in the shift red while the value is over "warnOil" / "warnCoolant" (C) / "warnBoost" (bar); 0 = off.
  * Text "tyreBy": "FL" | "FR" | "RL" | "RR" (with {{tyreP:..}}): yellow while that tyre's pressure is under "tyreLow" (bar, 0 = never; 2.0), red 0.4 bar under it.
+ * The speed limit ring (cluster only; speedlimit.js, the setting "limitRing"): {{limit}} is the limit in the unit shown ('' without one, or while
+ * the 0-100 timer is up) and "limitBy": true on its text, or on the "ring" icon, makes them red while the speed is over it; the icon is
+ * blank without a limit. The 0-100 km/h timer (0-60 mph; the setting "launchTimer"): {{launch}} is its time (0.1 s live, 0.01 s held 12 s once
+ * it has finished), {{launchUnit}} an "s" while it shows, "launchBy": true on a text or on the "stopwatch" icon (blank otherwise; green for a new best time).
  * Text "tempBy": "oil" | "coolant" (with the same token): blue while the reading is under "oilCold" / "coolantCold" (C; 0 = never
- * blue), green once it is warm, and over the warning limit it flashes between the shift red and a dark red.
+ * blue), green once it is warm (three white flashes when it gets there while the app runs), and over the warning limit it flashes between the
+ * shift red and a dark red.
  * Shift-light test (testShift(), the page's Alerts tab): for about 4 s the rpm every widget sees climbs from 1500 to just
  * past the shift point and holds there; only while the car stands. Shift scoring keeps the car's own rpm.
  * Night colours (ShakTheme "nightDim" on Auto): after sunset (sun.js, at _sunPlace(): the time zone's middle) a layout's own theme is
@@ -266,6 +271,7 @@ const { freeRect } = require('./free_rect');
 const { shiftLightState } = require('./shift_light');
 const badges = require('./badges');
 const Runs = require('./runs');
+const { SpeedLimit } = require('./speedlimit');
 const tz = require('./tz');
 // sharing the HUD with other kit apps (Redline, issue #4): kit/runtime/hud_claim.js, from cauliflowermossgrape's kit
 // (MIT). HUD Widgets is a "standing" app, like Cluster functions: it gives way while another app holds a fresh
@@ -316,6 +322,7 @@ const G_SECTORS = 48, G_SPREAD = 3, G_TRAIL = 16;
 const WARN = { oil: 'warnOil', coolant: 'warnCoolant', boost: 'warnBoost' };
 // a temperature text with "tempBy" is blue below this setting (C), green above it, and flashes red over its warning limit
 const COLD_BELOW = { oil: 'oilCold', coolant: 'coolantCold' };
+const WARM_PULSE_MS = 2400, WARM_FLASH_MS = 400;   // a temperature that reaches its warm value flashes white three times in this long, this fast
 const TYRE_RED_BAR = 0.4;               // a tyre pressure this far under the setting "tyreLow" is red (yellow from the setting)
 const WARN_DIM = [120, 16, 22, 255];   // the dark red a temperature flashes from, up to the shift red, while over its warning limit
 const WARN_FLASH_MS = 300;
@@ -590,6 +597,8 @@ class HudApp {
         // the "danger zone" alert (danger.js): a file another app writes while a zone is ahead; the layout is rebuilt when it comes
         // or goes (widgets with toggle "danger"), the distance and limit are the tokens {{dangerDist}} {{dangerUnit}} {{dangerLimit}}
         this.danger = new Danger({}, this.log, () => this._guard('danger', () => this._dangerChanged()));
+        // the speed limit (speedlimit.js): a file another app writes; the ring and its number read it every frame (no rebuild)
+        this.speedLimit = new SpeedLimit({}, this.log);
         this.dangerLayout = false;       // the active layout has an alert widget (toggle "danger" / "dangerLimit" / "dangerNoLimit")
         this.dangerShown = '';           // which of the alert's states the layout was built for
         this.claimBy = null;             // the id of another kit app holding the HUD now (hud_claim), we step aside
@@ -642,8 +651,8 @@ class HudApp {
         const j = JSON.stringify(shown) + ' ' + ids.join(' ');
         this.needsBoost = /boost/.test(j);
         this.needsIntake = /intake/.test(j);
-        this.needsHv = /hvSoc|evRange/.test(j);
-        this.needsFuel = /fuel/i.test(j);
+        this.needsHv = /hvSoc|evRange|rangeTotal/.test(j);
+        this.needsFuel = /fuel|rangeTotal/i.test(j);
     }
     /** A sensor's value now, as its slot shows it ('--' without one). */
     sensorValue(sn) { return sn ? this._token(sn.tok) : '--'; }
@@ -933,7 +942,7 @@ class HudApp {
         if (this.waze) { this.waze.start(); this._wazeWant(); }
         this.screen.start();
         this.ci.start();
-        if (this.target === 'panel') this.danger.start();
+        if (this.target === 'panel') { this.danger.start(); this.speedLimit.start(); }
         this.ciTimer = setInterval(() => this._guard('cluster info', () => this._shareWithClusterInfo()), 500);
     }
 
@@ -1082,6 +1091,7 @@ class HudApp {
         clearInterval(this.dmeTimer);
         clearInterval(this.ciTimer);
         this.danger.stop();
+        this.speedLimit.stop();
         try { this.ci.markTheme(false); this.ci.markLayout(false); this.ci.stop(); } catch (e) { /* exiting anyway */ }
         try { this.mapWin.release(); } catch (e) { /* exiting anyway */ }
         clearInterval(this.claimTimer);
@@ -1362,10 +1372,53 @@ class HudApp {
      * it, `role` when it is fine or unknown. Compared as shown (to 0.1 bar).
      */
     _tyreRole(corner, role) {
+        const lv = this._tyreLevel(corner);
+        return lv === 2 ? 'hot' : lv === 1 ? VERDICT.EARLY : role;
+    }
+
+    /** 0 fine (or unknown, or the setting is 0), 1 under "tyreLow", 2 TYRE_RED_BAR under it, for a corner FL FR RL RR or 'any' (the worst of the four). */
+    _tyreLevel(corner) {
+        if (corner === 'any') return Math.max.apply(null, TYRE_CORNERS.map((k) => this._tyreLevel(k)));
         const lim = this.ctx.settings.item('tyreLow') ? this.setting('tyreLow') : 0, v = this._tyre('p', corner);
-        if (!isNum(lim) || !(lim > 0) || !isNum(v)) return role;
+        if (!isNum(lim) || !(lim > 0) || !isNum(v)) return 0;
         const b = Math.round(v * 10) / 10;
-        return b < Math.round((lim - TYRE_RED_BAR) * 10) / 10 ? 'hot' : b < lim ? VERDICT.EARLY : role;
+        return b < Math.round((lim - TYRE_RED_BAR) * 10) / 10 ? 2 : b < lim ? 1 : 0;
+    }
+
+    /** The lowest tyre pressure in bar, or null. */
+    _tyreMin() {
+        const all = TYRE_CORNERS.map((k) => this._tyre('p', k)).filter(isNum);
+        return all.length ? Math.min.apply(null, all) : null;
+    }
+
+    /**
+     * The warm-up cue: true during the few flashes after the oil or coolant ("oil" | "coolant") goes from under its cold limit ("oilCold" /
+     * "coolantCold") to over it, while the app runs. An engine that was already warm when the app started does not flash. The text and the icon
+     * ask each frame; the first one to see the crossing starts it for both.
+     */
+    _warmPulse(id, now) {
+        const all = this.warm || (this.warm = {}), s = all[id] || (all[id] = { cold: false, at: 0 });
+        const v = this._raw(id), lim = this.setting(COLD_BELOW[id]);
+        if (isNum(v) && isNum(lim) && lim > 0) {
+            if (v < lim) s.cold = true;
+            else if (s.cold) { s.cold = false; s.at = now; }
+        }
+        return s.at > 0 && now - s.at < WARM_PULSE_MS && Math.floor((now - s.at) / WARM_FLASH_MS) % 2 === 0;
+    }
+
+    /** The 0-100 timer's time now (s), or null: it shows on the cluster only, while the setting "launchTimer" is on. */
+    _launchTime(now) {
+        if (this.target !== 'panel' || this.setting('launchTimer') === false) return null;
+        return this.runs.shownHeld(now);
+    }
+
+    /** The speed limit ring now: { text (the number shown), over (the speed shown is over it) }, or null when there is none to show. */
+    _limitNow(now) {
+        if (this.target !== 'panel' || this.setting('limitRing') === false) return null;
+        const kmh = this.speedLimit.limit();
+        if (!isNum(kmh) || isNum(this._launchTime(now))) return null;
+        const us = this.setting('units') === 'us', text = formatLimit(kmh, us), v = this._raw('speed');
+        return { text, over: isNum(v) && Math.round(us ? v * 0.621371 : v) > Number(text) };
     }
 
     /** `id` (oil / coolant / boost) if that reading is over its warning limit now, else null. */
@@ -1734,6 +1787,13 @@ class HudApp {
             case 'u:dist': return us ? 'MI' : 'KM';
             case 'avgSpeed': { const v = this._avgSpeed(); return fix(isNum(v) ? (us ? v * 0.621371 : v) : v, 0); }
             case 'range': { const v = this._raw('range'); return fix(isNum(v) ? (us ? v * 0.621371 : v) : v, 0); }
+            // the lowest tyre pressure while one is under the setting "tyreLow" (the HUD's warning), else nothing
+            case 'tyreMin': { const v = this._tyreMin(); return this._tyreLevel('any') > 0 && isNum(v) ? (us ? fix(v * 14.5038, 0) : fix(v, 1)) : ''; }
+            // the total range: the fuel's and the battery's together (the fuel's alone on a car without a plug-in battery; '--' with neither)
+            case 'rangeTotal': {
+                const f = this._raw('range'), e = this._raw('evRange'), v = isNum(f) ? f + (isNum(e) ? e : 0) : isNum(e) ? e : null;
+                return fix(isNum(v) ? (us ? v * 0.621371 : v) : v, 0);
+            }
             case 'ambient': {
                 const v = this._raw('ambient');
                 if (!isNum(v)) return '--';
@@ -1756,6 +1816,11 @@ class HudApp {
             case 'dangerDist': return formatDistance(this.danger.state().distM, us).n;
             case 'dangerUnit': return formatDistance(this.danger.state().distM, us).unit;
             case 'dangerLimit': return formatLimit(this.danger.state().limit, us);
+            // the speed limit ring's number (blank when no limit is known, the ring is off, or the 0-100 timer takes its place)
+            case 'limit': { const l = this._limitNow(Date.now()); return l ? l.text : ''; }
+            // the 0-100 km/h timer (0-60 mph): the running clock, then the finished run held a few seconds; blank otherwise
+            case 'launch': { const v = this._launchTime(Date.now()); return isNum(v) ? v.toFixed(this.runs.state === 'run' || v >= 10 ? 1 : 2) : ''; }
+            case 'launchUnit': return isNum(this._launchTime(Date.now())) ? 's' : '';
             case 'hvSoc': { const v = this._raw('hvSoc'); return isNum(v) ? String(Math.round(v)) : '--'; }
             case 'evRange': { const v = this._raw('evRange'); return isNum(v) ? String(Math.round(us ? v * 0.621371 : v)) : '--'; }
             case 'fuelPct': { const v = this._raw('fuel'); return isNum(v) ? String(Math.round(v * 100)) : '--'; }
@@ -2235,6 +2300,7 @@ class HudApp {
             c.uniform(ref, 'u_bladeB', [b.round || 40, isNum(w.bladeGap) ? w.bladeGap : 14]);
             c.uniform(ref, 'u_line', w.line || [0, -99, 0, 1]);
             c.uniform(ref, 'u_tyre', [ty[0] - w.x, ty[1] - w.y, ty[2] || 0]);
+            c.uniform(ref, 'u_tyreLv', [0, 0, 0, 0]);
             c.uniform(ref, 'u_mark', w.mark && !this._cameraOn() ? w.mark : [0, 0, 0]);   // no M stripes where the driver camera sits
             c.uniform(ref, 'u_red', rgb(t.hot));
             [0, 1, 2, 3].forEach((i) => {
@@ -2577,8 +2643,11 @@ class HudApp {
                 const tv = this._raw(w.tempBy), cold = this.setting(COLD_BELOW[w.tempBy]);
                 if (isNum(tv)) role = isNum(cold) && cold > 0 && tv < cold ? VERDICT.COLD : VERDICT['SPOT ON'];
                 if (this._warning(w)) role = WARN_DIM;
+                else if (this._warmPulse(w.tempBy, now)) role = 'fg';       // just warm: a few white flashes
             }
             if (w.tyreBy) role = this._tyreRole(w.tyreBy, role);               // a low tyre pressure: yellow, then red
+            if (w.limitBy) { const l = this._limitNow(now); if (l && l.over) role = 'hot'; }                         // over the speed limit: the shift red
+            if (w.launchBy && this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];            // a new best time: green
             if (w.lowWhen && this._lowNow(w.lowWhen)) role = 'hot';             // in reserve: the shift red, steady
             // over its warning limit: the value flashes in the shift red
             // ("warnFlash": false: not on a tile that turns red itself, the Dyno theme's)
@@ -2633,7 +2702,7 @@ class HudApp {
                 glow: w.glow ? this.theme.glow : 0,
             });
             this._blitDiff(x, buf);
-        } else if (w.type === 'icon' && ((w.tempBy && COLD_BELOW[w.tempBy]) || w.lowWhen)) {
+        } else if (w.type === 'icon' && ((w.tempBy && COLD_BELOW[w.tempBy]) || w.lowWhen || w.tyreBy || w.limitBy || w.launchBy)) {
             // an oil or coolant icon in the colour of its number (blue while cold, green once warm, flashing red over the limit);
             // a fuel or battery icon in the shift red while that is in reserve ("lowWhen")
             let role = w.color || 'fg';
@@ -2641,12 +2710,22 @@ class HudApp {
                 const tv = this._raw(w.tempBy), cold = this.setting(COLD_BELOW[w.tempBy]);
                 if (isNum(tv)) role = isNum(cold) && cold > 0 && tv < cold ? VERDICT.COLD : VERDICT['SPOT ON'];
                 if (this._overLimit(w.tempBy)) role = Math.floor(now / WARN_FLASH_MS) % 2 === 0 ? 'hot' : WARN_DIM;
+                else if (this._warmPulse(w.tempBy, now)) role = 'fg';
             }
             if (w.lowWhen && this._lowNow(w.lowWhen)) role = 'hot';
-            const key = JSON.stringify(role);
+            // a tyre pressure warning icon: yellow, then red, and nothing at all while the tyres are fine ("tyreOnly")
+            let hide = false;
+            if (w.tyreBy) { role = this._tyreRole(w.tyreBy, role); hide = w.tyreOnly === true && this._tyreLevel(w.tyreBy) === 0; }
+            // the speed limit ring (white, red while over) shows only with a limit; the stopwatch only while the 0-100 timer shows
+            if (w.limitBy) { const l = this._limitNow(now); hide = !l; if (l && l.over) role = 'hot'; }
+            if (w.launchBy) {
+                hide = !isNum(this._launchTime(now));
+                if (this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];
+            }
+            const key = JSON.stringify(role) + hide;
             if (!force && key === x.last) return;
             x.last = key;
-            this._blitDiff(x, paintIcon(w.icon, w.w, w.h, color(this.theme, role)));
+            this._blitDiff(x, hide ? Buffer.alloc(w.w * w.h * 4) : paintIcon(w.icon, w.w, w.h, color(this.theme, role)));
         } else if (w.type === 'badge') {
             if (!force && now - x.lastPaint < TEXT_MS) return;
             const s = this._resolve(w.text);
@@ -2862,9 +2941,11 @@ class HudApp {
                 return s && isNum(v) ? Math.max(0, Math.min(s.max || 1, Math.round(v))) : 0;
             });
             const low = this._lows();
-            const key = vals.map((v) => v[2]).join('|') + '|' + lit.join('|') + '|' + low.join('');
+            const tl = TYRE_CORNERS.map((k) => this._tyreLevel(k));         // the wheels of the tyre block's car: green, yellow, red
+            const key = vals.map((v) => v[2]).join('|') + '|' + lit.join('|') + '|' + low.join('') + '|' + tl.join('');
             if (!force && key === x.last) return;
             x.last = key;
+            x.c.uniform(x.ref, 'u_tyreLv', tl);
             x.c.uniform(x.ref, 'u_low', low);
             vals.forEach(([u, G, v]) => x.c.uniform(x.ref, u, [G.cx || 0, G.cy || 0, G.r || 0, v]));
             x.c.uniform(x.ref, 'u_segLit', lit);

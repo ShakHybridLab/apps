@@ -18,6 +18,7 @@ const STILL_KMH = 1;            // under this the car is standing
 const ARM_MS = 500;             // standing this long arms the timer
 const MAX_MS = 30000;           // a run that takes longer is dropped
 const TARGET = { us: 96.5606, metric: 100 };   // 60 mph, 100 km/h, in km/h
+const HOLD_MS = 12000;          // a finished run stays on the timer this long (shownHeld)
 
 class Runs {
     constructor(dataDir, log) {
@@ -29,6 +30,8 @@ class Runs {
         this.stillSince = null;
         this.t0 = 0;
         this.last = null;           // the last finished run, s
+        this.doneAt = 0;            // when it finished (ms)
+        this.record = false;        // the last finished run beat the best time
         this.prev = null;           // the sample before this one: [t, kmh]
         this.onStart = null;        // called when a run starts (the Drag theme's peak boost resets)
     }
@@ -52,7 +55,8 @@ class Runs {
                     let t = now;
                     if (this.prev && kmh > this.prev[1]) t = this.prev[0] + (now - this.prev[0]) * (target - this.prev[1]) / (kmh - this.prev[1]);
                     const s = Math.max(0, (t - this.t0) / 1000);
-                    this.last = s; this.state = 'done';
+                    this.last = s; this.state = 'done'; this.doneAt = now;
+                    this.record = !(this.best[unit] > 0) || s < this.best[unit];
                     this.log.info('0-' + (unit === 'metric' ? '100 km/h' : '60 mph') + ': ' + s.toFixed(2) + ' s');
                     if (!(this.best[unit] > 0) || s < this.best[unit]) {
                         this.best[unit] = s;
@@ -68,6 +72,12 @@ class Runs {
     shown(now) {
         if (this.state === 'run') return (now - this.t0) / 1000;
         return this.last;
+    }
+
+    /** The time of the 0-100 timer on the cluster: the running clock, then the finished run for HOLD_MS, else null. */
+    shownHeld(now) {
+        if (this.state === 'run') return (now - this.t0) / 1000;
+        return this.last !== null && now - this.doneAt < HOLD_MS ? this.last : null;
     }
 
     /** READY (armed), GO (timing), DONE, or '' */

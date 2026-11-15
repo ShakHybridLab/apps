@@ -6,6 +6,8 @@
  *   lines), therm (coolant), oilcan (oil), fuel (pump), tyre (a wheel seen from the side: ring, hub, tread notches),
  *   oilPour, tempWave, tempOut (ShakHUD's modern oil can, the thermometer with heat waves for the coolant, a plain one for the outside),
  *   battery (a plug-in hybrid's high-voltage battery: the cell with a bolt in it, terminal on top).
+ *   fuelBolt (the total range, fuel and electric: the pump's body with the battery's bolt in it).
+ *   ring (the speed limit sign's ring, also the danger alert's), stopwatch (the 0-100 timer).
  */
 function seg(px, py, ax, ay, bx, by) {
     const pax = px - ax, pay = py - ay, bax = bx - ax, bay = by - ay;
@@ -62,6 +64,10 @@ const ICONS = {
         seg(x, y, 0.57, 0.34, 0.42, 0.6) - 0.045, seg(x, y, 0.42, 0.6, 0.58, 0.6) - 0.045, seg(x, y, 0.58, 0.6, 0.43, 0.84) - 0.045),
     fuelPump: (x, y) => Math.min(Math.abs(rect(x, y, 0.37, 0.55, 0.2, 0.34) - 0.05) - 0.04, rect(x, y, 0.37, 0.34, 0.12, 0.07) - 0.02,
         rect(x, y, 0.37, 0.92, 0.3, 0.025) - 0.02, seg(x, y, 0.62, 0.3, 0.82, 0.45) - 0.04, seg(x, y, 0.82, 0.45, 0.82, 0.74) - 0.04, disc(x, y, 0.82, 0.78, 0.06)),
+    // the combined range (fuel and electric): the pump's body with the battery's bolt in it
+    fuelBolt: (x, y) => Math.min(Math.abs(rect(x, y, 0.37, 0.55, 0.23, 0.34) - 0.05) - 0.04, rect(x, y, 0.37, 0.92, 0.33, 0.025) - 0.02,
+        seg(x, y, 0.65, 0.3, 0.85, 0.45) - 0.04, seg(x, y, 0.85, 0.45, 0.85, 0.74) - 0.04, disc(x, y, 0.85, 0.78, 0.06),
+        seg(x, y, 0.44, 0.36, 0.32, 0.58) - 0.032, seg(x, y, 0.32, 0.58, 0.44, 0.58) - 0.032, seg(x, y, 0.44, 0.58, 0.32, 0.8) - 0.032),
     therm: (x, y) => Math.min(seg(x, y, 0.42, 0.14, 0.42, 0.6) - 0.07, disc(x, y, 0.42, 0.74, 0.14), seg(x, y, 0.6, 0.24, 0.76, 0.24) - 0.035, seg(x, y, 0.6, 0.4, 0.76, 0.4) - 0.035),
     fuel: (x, y) => Math.min(Math.max(Math.abs(x - 0.38) - 0.18, Math.abs(y - 0.55) - 0.33, -Math.max(Math.abs(x - 0.38) - 0.1, Math.abs(y - 0.36) - 0.08)), seg(x, y, 0.12, 0.9, 0.64, 0.9) - 0.04, seg(x, y, 0.56, 0.36, 0.76, 0.48) - 0.04, seg(x, y, 0.76, 0.48, 0.76, 0.78) - 0.04, seg(x, y, 0.76, 0.78, 0.66, 0.84) - 0.04),
     tyre: (x, y) => {
@@ -74,6 +80,9 @@ const ICONS = {
     cam: (x, y) => Math.min(Math.abs(rect(x, y, 0.44, 0.36, 0.34, 0.2)) - 0.045, ring(x, y, 0.34, 0.36, 0.1) - 0.04, disc(x, y, 0.34, 0.36, 0.04), seg(x, y, 0.7, 0.3, 0.74, 0.3) - 0.03, seg(x, y, 0.5, 0.56, 0.5, 0.92) - 0.055, seg(x, y, 0.3, 0.93, 0.7, 0.93) - 0.045),
     // the round outline of a speed-limit sign (the number sits inside it as text)
     ring: (x, y) => ring(x, y, 0.5, 0.5, 0.435) - 0.065,
+    // the 0-100 timer: a stopwatch, its crown on top and its hand
+    stopwatch: (x, y) => Math.min(ring(x, y, 0.5, 0.58, 0.34) - 0.05, seg(x, y, 0.5, 0.16, 0.5, 0.24) - 0.05, seg(x, y, 0.4, 0.1, 0.6, 0.1) - 0.04,
+        seg(x, y, 0.5, 0.58, 0.63, 0.4) - 0.045, disc(x, y, 0.5, 0.58, 0.06), seg(x, y, 0.8, 0.28, 0.86, 0.22) - 0.04),
     oilcan: (x, y) => Math.min(seg(x, y, 0.2, 0.62, 0.6, 0.62) - 0.12, seg(x, y, 0.6, 0.58, 0.9, 0.44) - 0.04, disc(x, y, 0.92, 0.66, 0.05), seg(x, y, 0.3, 0.46, 0.3, 0.34) - 0.035, seg(x, y, 0.22, 0.34, 0.38, 0.34) - 0.04),
 };
 

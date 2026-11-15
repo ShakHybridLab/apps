@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.16.1",
+  "version": "0.17.0",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -29,6 +29,7 @@
     "screen.js",
     "cluster_info.js",
     "danger.js",
+    "speedlimit.js",
     "free_rect.js",
     "map_window.js",
     "hybrid_tach.js",
@@ -1138,6 +1139,18 @@
     {
       "key": "startupSweep",
       "label": "Balayage des barres au démarrage",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "limitRing",
+      "label": "Bague de limitation de vitesse (si une appli donne la limite)",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "launchTimer",
+      "label": "Chrono 0-100 km/h (0-60 mph)",
       "type": "bool",
       "default": true
     }

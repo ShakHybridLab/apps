@@ -27,8 +27,8 @@ def text(id, x, y, w, h, t, font, color='fg', align=None, conn=0, **kw):
 
 
 # the modern icons (shared/icons.js): the oil can with its drop, the thermometer with heat waves, the cell with a bolt, the pump
-LOW_ICON = {'fuelPump': 'fuel', 'battBolt': 'battery'}          # the reserve: the fuel range at 90 km, the charge at 10 %
-LOW_TEXT = {'{{range}}': 'fuel', '{{evRange}}': 'battery', '{{hvSoc}}': 'battery'}
+LOW_ICON = {'fuelPump': 'fuel', 'fuelBolt': 'fuel', 'battBolt': 'battery'}          # the reserve: the fuel range at 90 km, the charge at 10 %
+LOW_TEXT = {'{{range}}': 'fuel', '{{rangeTotal}}': 'fuel', '{{evRange}}': 'battery', '{{hvSoc}}': 'battery'}
 MODERN = {'oilcan': 'oilPour', 'therm': 'tempWave', 'battery': 'battBolt', 'fuel': 'fuelPump'}
 
 
@@ -91,6 +91,23 @@ DX = -30
 SLOPE = 0.5714                       # the labels' lean along the blade (x per y px)
 RPM_Y0, RPM_Y7 = 613, 160            # y of the 0 and of the 7 mark on the photo's blade
 SPD_Y = [613, 555, 497, 440, 380, 321, 266, 210, 153]    # y of the speed labels 0, 30 .. 150, 210, 270, 330
+
+
+def limit_and_timer(cx, top, R, compact=False):
+    """The speed limit ring (a ring with the limit in it, white, red while the car is over it) and the 0-100 timer (a stopwatch, the time, an s):
+    both are blank until they have something to show, the timer takes the ring's place while it shows, and neither is drawn while the Waze map is
+    up (Waze shows the limit itself). `compact`: the timer stacked (the stopwatch over the time) to fit the narrow place the ring has."""
+    out = [icon('lim_ring', 'ring', cx - R // 2, top, R, R, 'fg', toggle='!mapUp', limitBy=True),
+           text('lim_num', cx - R // 2, top + (R - 37) // 2, R, 37, '{{limit}}', 'unit', 'fg', 'center', toggle='!mapUp', limitBy=True)]
+    if compact:
+        out += [icon('run_icon', 'stopwatch', cx - 13, top - 4, 26, 30, 'dim', toggle='!mapUp', launchBy=True),
+                text('run_time', cx - 50, top + 30, 100, 34, '{{launch}}', 'm_mid', 'fg', 'center', toggle='!mapUp', launchBy=True, rate=100)]
+    else:
+        T = top + 29
+        out += [icon('run_icon', 'stopwatch', cx - 98, T - 1, 32, 36, 'dim', toggle='!mapUp', launchBy=True),
+                text('run_time', cx - 58, T, 120, 34, '{{launch}}', 'm_mid', 'fg', 'right', toggle='!mapUp', launchBy=True, rate=100),
+                text('run_unit', cx + 68, T + 6, 30, 29, '{{launchUnit}}', 'm_tiny', 'dim', toggle='!mapUp')]
+    return out
 
 
 def spd_line_x(y, sp, sq):
@@ -257,9 +274,10 @@ def mblade():
     # bottom row, as the photo: the clock at the far left, the range with its pump, the outside temperature at the far right
     W.append(text('time', 40, 684, 130, 29, '{{time}}', 'm_mid', 'fg', 'right'))
     W.append(text('ampm', 176, 687, 53, 32, '{{ampmLc}}', 'm_tiny', 'dim'))
-    W.append(icon('range_icon', 'fuel', 313, 681, 29, 34, 'fg', 1))
-    W.append(text('range', 348, 684, 112, 29, '{{range}}', 'm_mid', 'fg', 'right', 1))
+    W.append(icon('range_icon', 'fuelBolt', 313, 681, 29, 34, 'fg', 1))
+    W.append(text('range', 348, 684, 112, 29, '{{rangeTotal}}', 'm_mid', 'fg', 'right', 1))
     W.append(text('range_unit', 466, 687, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1))
+    W.extend(limit_and_timer(672, 318, 76, True))                  # in the black void left of the gear letter
     # the right end follows the strips: in the map view they are SX px further right, so the oil, the electric range and the outside
     # temperature move with them (the coolant stays)
     W.extend(mb_bottom_right('', '!mapUp', 0))
@@ -346,8 +364,10 @@ def navi():
     # the two bars along the bottom, each with its remaining range above its right end: the fuel on the left, the hybrid
     # battery on the right (its charge above its left end); the clock between them stops before BMW's belt light (x 587)
     W.append(icon('fuel_icon', 'fuel', 112, 662, 29, 34))
-    W.append(text('range', 226, 630, 114, 34, '{{range}}', 'm_mid', 'fg', 'right'))
+    W.append(icon('range_icon', 'fuelBolt', 214, 632, 29, 34))                # the total range: fuel and electric
+    W.append(text('range', 226, 630, 114, 34, '{{rangeTotal}}', 'm_mid', 'fg', 'right'))
     W.append(text('range_unit', 346, 636, 48, 29, '{{u:distLc}}', 'm_tiny', 'dim'))
+    W.extend(limit_and_timer(960, 420, 92))                        # under the speed
     W.append(text('time', 395, 664, 140, 34, '{{time}}', 'm_mid', 'fg', 'right'))
     W.append(text('ampm', 541, 670, 44, 29, '{{ampmLc}}', 'm_tiny', 'dim'))
     W.append(icon('batt_icon', 'battery', 1230, 662, 26, 34, 'dim', 1))

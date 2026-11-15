@@ -37,7 +37,7 @@ NAMES.forEach((n) => {
     check(n + ': the battery is where the photo has the oil gauge, the oil temperature is its own readout', () => {
         const toks = L.widgets.filter((w) => w.type === 'text').map((w) => w.text);
         // Navi has the battery as a bar of its own (its % shows); M Blade draws it as the strip beside the oil's (no number: the scale 0 / 50 / 100 %)
-        (n === 'navi' ? ['{{hvSoc}}', '{{evRange}}', '{{oil}}', '{{range}}'] : ['{{evRange}}', '{{oil}}', '{{coolant}}', '{{range}}', '{{tc:50}}', '{{tc:100}}', '{{tc:150}}']).forEach((t) => assert(toks.includes(t), 'no ' + t));
+        (n === 'navi' ? ['{{hvSoc}}', '{{evRange}}', '{{oil}}', '{{rangeTotal}}'] : ['{{evRange}}', '{{oil}}', '{{coolant}}', '{{rangeTotal}}', '{{tc:50}}', '{{tc:100}}', '{{tc:150}}']).forEach((t) => assert(toks.includes(t), 'no ' + t));
         assert(L.widgets.some((w) => w.type === n), 'no ' + n + ' shader widget');
     });
     if (n === 'mblade') {
@@ -117,7 +117,13 @@ NAMES.forEach((n) => {
         });
         check('mblade: nothing shown together overlaps anything else (text and icon boxes), in either view', () => {
             const g = (w) => (w.toggle === 'powerShut' ? '!mapUp' : w.toggle === 'powerOpen' ? 'mapUp' : w.toggle) || '';
-            const ws = L.widgets.filter((w) => /^(text|icon)$/.test(w.type) && w.id.indexOf('al_') !== 0);
+            // the danger alert (al_), the limit ring (lim_) and the 0-100 timer (run_) share their places by design: the ring and the timer take turns
+            const own = (w) => /^(al_|lim_|run_)/.test(w.id);
+            const ws = L.widgets.filter((w) => /^(text|icon)$/.test(w.type) && !own(w));
+            L.widgets.filter((w) => /^(lim_|run_)/.test(w.id)).forEach((a) => ws.forEach((b) => {
+                if ((g(a) === 'mapUp' && g(b) === '!mapUp') || (g(a) === '!mapUp' && g(b) === 'mapUp')) return;
+                assert(!(a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y), a.id + ' overlaps ' + b.id);
+            }));
             ws.forEach((a, i) => ws.slice(i + 1).forEach((b) => {
                 if ((g(a) === 'mapUp' && g(b) === '!mapUp') || (g(a) === '!mapUp' && g(b) === 'mapUp')) return;
                 assert(!(a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y), a.id + ' overlaps ' + b.id);
@@ -138,7 +144,7 @@ NAMES.forEach((n) => {
             return s.split('').reduce((a, ch) => { const g = fonts[font][ch]; assert(g, font + ' has no glyph for ' + JSON.stringify(ch) + ' in "' + s + '"'); return a + g.advance; }, 0);
         };
         // the longest thing each token can print
-        const WORST = { '{{ms:': '330', '{{tc:': '302', '{{speed}}': '330', '{{oil}}': '302', '{{coolant}}': '302', '{{evRange}}': '99', '{{range}}': '999',
+        const WORST = { '{{ms:': '330', '{{tc:': '302', '{{speed}}': '330', '{{oil}}': '302', '{{coolant}}': '302', '{{evRange}}': '99', '{{range}}': '999', '{{rangeTotal}}': '999',
             '{{ambient}}': '+104', '{{time}}': '12:59', '{{ampmLc}}': 'pm', '{{stage}}': 'M', '{{tachUnit}}': '1/min x 1000', '{{chargeNote}}': 'CHARGE', '{{powerKw}}': '-150', '{{modeName}}': 'COMFORT', '{{hvSoc}}': '100',
             '{{u:speedLc}}': 'km/h', '{{u:distLc}}': 'km', '{{u:temp}}': '\u00b0F' };
         const cut = [];

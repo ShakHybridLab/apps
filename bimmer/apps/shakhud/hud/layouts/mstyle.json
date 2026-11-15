@@ -135,6 +135,35 @@
       "text": "{{chargeNote}}"
     },
     {
+      "id": "tyre_icon",
+      "type": "icon",
+      "icon": "tyre",
+      "color": "dim",
+      "tyreBy": "any",
+      "tyreOnly": true,
+      "class": "content",
+      "z": 10,
+      "x": 124,
+      "y": 102,
+      "w": 28,
+      "h": 28
+    },
+    {
+      "id": "tyre_warn",
+      "type": "text",
+      "font": "mid",
+      "color": "fg",
+      "align": "left",
+      "tyreBy": "any",
+      "class": "content",
+      "z": 10,
+      "x": 156,
+      "y": 102,
+      "w": 70,
+      "h": 29,
+      "text": "{{tyreMin}}"
+    },
+    {
       "id": "soc",
       "lowWhen": "battery",
       "type": "text",
@@ -184,7 +213,7 @@
       "id": "fuel_icon",
       "lowWhen": "fuel",
       "type": "icon",
-      "icon": "fuelPump",
+      "icon": "fuelBolt",
       "color": "dim",
       "class": "content",
       "z": 10,
@@ -208,7 +237,7 @@
       "y": 276,
       "w": 100,
       "h": 29,
-      "text": "{{range}} {{u:distLc}}"
+      "text": "{{rangeTotal}} {{u:distLc}}"
     },
     {
       "id": "batbar",

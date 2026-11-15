@@ -61,6 +61,11 @@ widgets += [
      'x': 574, 'y': 142, 'w': 104, 'h': 18, 'text': '{{tachUnit}}'},
     {'id': 'rev_charge', 'type': 'text', 'font': 'small', 'color': 'fg', 'align': 'left', 'class': 'content', 'z': 10,
      'x': 574, 'y': 161, 'w': 104, 'h': 18, 'text': '{{chargeNote}}'},
+    # the tyre pressure warning, top left above the bar: nothing while the tyres are fine, the lowest pressure in yellow (red much lower) otherwise
+    {'id': 'tyre_icon', 'type': 'icon', 'icon': 'tyre', 'color': 'dim', 'tyreBy': 'any', 'tyreOnly': True, 'class': 'content', 'z': 10,
+     'x': 124, 'y': 102, 'w': 28, 'h': 28},
+    {'id': 'tyre_warn', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'left', 'tyreBy': 'any', 'class': 'content', 'z': 10,
+     'x': 156, 'y': 102, 'w': 70, 'h': 29, 'text': '{{tyreMin}}'},
 ]
 # The bottom right block, what the windshield shows to the right of BMW's own speed (x 120..350): the battery's charge big, the electric and
 # the fuel range beside it, a slanted battery bar (light blue, green while charging, red in reserve: 10 %, as the numbers and the ranges: 90 km of fuel), the oil and coolant
@@ -73,10 +78,10 @@ widgets += [
      'x': 546, 'y': 247, 'w': 28, 'h': 28},
     {'id': 'ev_range', 'lowWhen': 'battery', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'right', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'x': 576, 'y': 247, 'w': 100, 'h': 29, 'text': '{{evRange}} {{u:distLc}}'},
-    {'id': 'fuel_icon', 'lowWhen': 'fuel', 'type': 'icon', 'icon': 'fuelPump', 'color': 'dim', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+    {'id': 'fuel_icon', 'lowWhen': 'fuel', 'type': 'icon', 'icon': 'fuelBolt', 'color': 'dim', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'x': 546, 'y': 277, 'w': 28, 'h': 28},
     {'id': 'fuel_range', 'lowWhen': 'fuel', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'right', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
-     'x': 576, 'y': 276, 'w': 100, 'h': 29, 'text': '{{range}} {{u:distLc}}'},
+     'x': 576, 'y': 276, 'w': 100, 'h': 29, 'text': '{{rangeTotal}} {{u:distLc}}'},
     {'id': 'batbar', 'lowWhen': 'battery', 'type': 'slantbar', 'class': 'overlay', 'z': 10, 'toggle': 'showBattery', 'signal': 'hvSoc',
      'x': BX, 'y': 310, 'w': BW, 'h': 16, 'slant': 12, 'low': 15},
     {'id': 'oil_icon', 'type': 'icon', 'icon': 'oilPour', 'tempBy': 'oil', 'color': 'fg', 'class': 'content', 'z': 10, 'toggle': 'showBattery',

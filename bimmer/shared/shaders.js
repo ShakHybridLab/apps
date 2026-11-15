@@ -494,6 +494,7 @@ uniform vec4 u_blade;     // the left rev blade's outer edge: x at the bend, y o
 uniform vec2 u_bladeB;    // the bend's roundness px, the card's gap from the blade px
 uniform vec4 u_line;      // centre line x0, y, x1, cap length
 uniform vec3 u_tyre;      // the tyre block's car glyph: centre x, y, scale (0 = none)
+uniform vec4 u_tyreLv;    // its wheels FL, FR, RL, RR: 0 green, 1 yellow (low pressure), 2 red (very low)
 uniform vec4 u_gaugeL;    // left gauge centre x, y, radius, value 0..1
 uniform vec4 u_gaugeR;    // right gauge
 uniform vec3 u_mark;      // tricolour mark x, y, scale (0 = none)
@@ -578,7 +579,8 @@ vec4 tyreBlock(vec2 p, vec4 c) {
     float hl = min(segD(q, vec2(-68.0, 0.0), vec2(-28.0, 0.0)), segD(q, vec2(28.0, 0.0), vec2(68.0, 0.0))) - 0.9;
     float vt = min(segD(q, vec2(0.0, -62.0), vec2(0.0, -42.0)), segD(q, vec2(0.0, 42.0), vec2(0.0, 62.0))) - 0.9;
     c = over(vec4(0.72, 0.76, 0.82, cov(min(body, min(hl, vt)) * u_tyre.z)), c);
-    c = over(vec4(0.36, 0.78, 0.42, cov(wheel * u_tyre.z)), c);
+    float lv = q.y < 0.0 ? (q.x < 0.0 ? u_tyreLv.x : u_tyreLv.y) : (q.x < 0.0 ? u_tyreLv.z : u_tyreLv.w);
+    c = over(vec4(mix(mix(vec3(0.36, 0.78, 0.42), vec3(1.0, 0.76, 0.1), clamp(lv, 0.0, 1.0)), vec3(1.0, 0.2, 0.24), clamp(lv - 1.0, 0.0, 1.0)), cov(wheel * u_tyre.z)), c);
     return c;
 }
 // a setup level bar: s.y segments slanted, number lit (1-based) red, the rest grey
