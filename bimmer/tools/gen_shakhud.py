@@ -64,7 +64,7 @@ widgets += [
 ]
 # The bottom right block, what the windshield shows to the right of BMW's own speed (x 120..350): the battery's charge big, the electric and
 # the fuel range beside it, a slanted battery bar (light blue, green while charging, amber when nearly empty), the oil and coolant
-# temperatures under it. Hidden with the setting "showBattery". All inside x 372..676, y 246..361.
+# temperatures under it (an oil can and a thermometer, no words). Hidden with the setting "showBattery". All inside x 372..676, y 246..361.
 BX, BW = 372, 304
 widgets += [
     {'id': 'soc', 'type': 'text', 'font': 'big', 'color': 'fg', 'align': 'left', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
@@ -79,10 +79,14 @@ widgets += [
      'x': 576, 'y': 276, 'w': 100, 'h': 29, 'text': '{{range}} {{u:distLc}}'},
     {'id': 'batbar', 'type': 'slantbar', 'class': 'overlay', 'z': 10, 'toggle': 'showBattery', 'signal': 'hvSoc',
      'x': BX, 'y': 310, 'w': BW, 'h': 16, 'slant': 12, 'low': 15},
+    {'id': 'oil_icon', 'type': 'icon', 'icon': 'oilcan', 'color': 'fg', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+     'x': BX, 'y': 336, 'w': 28, 'h': 26},
     {'id': 'oil', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'left', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
-     'tempBy': 'oil', 'x': BX, 'y': 334, 'w': 160, 'h': 29, 'text': 'HUILE {{oil}}{{u:temp}}'},
+     'tempBy': 'oil', 'x': BX + 34, 'y': 334, 'w': 110, 'h': 29, 'text': '{{oil}}{{u:temp}}'},
+    {'id': 'coolant_icon', 'type': 'icon', 'icon': 'therm', 'color': 'fg', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+     'x': BX + BW - 144, 'y': 336, 'w': 28, 'h': 26},
     {'id': 'coolant', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'right', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
-     'tempBy': 'coolant', 'x': BX + BW - 150, 'y': 334, 'w': 150, 'h': 29, 'text': 'EAU {{coolant}}{{u:temp}}'},
+     'tempBy': 'coolant', 'x': BX + BW - 110, 'y': 334, 'w': 110, 'h': 29, 'text': '{{coolant}}{{u:temp}}'},
 ]
 doc = {
     'schemaVersion': 2, 'name': 'M Style',

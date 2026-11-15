@@ -220,6 +220,19 @@
       "low": 15
     },
     {
+      "id": "oil_icon",
+      "type": "icon",
+      "icon": "oilcan",
+      "color": "fg",
+      "class": "content",
+      "z": 10,
+      "toggle": "showBattery",
+      "x": 372,
+      "y": 336,
+      "w": 28,
+      "h": 26
+    },
+    {
       "id": "oil",
       "type": "text",
       "font": "mid",
@@ -229,11 +242,24 @@
       "z": 10,
       "toggle": "showBattery",
       "tempBy": "oil",
-      "x": 372,
+      "x": 406,
       "y": 334,
-      "w": 160,
+      "w": 110,
       "h": 29,
-      "text": "HUILE {{oil}}{{u:temp}}"
+      "text": "{{oil}}{{u:temp}}"
+    },
+    {
+      "id": "coolant_icon",
+      "type": "icon",
+      "icon": "therm",
+      "color": "fg",
+      "class": "content",
+      "z": 10,
+      "toggle": "showBattery",
+      "x": 532,
+      "y": 336,
+      "w": 28,
+      "h": 26
     },
     {
       "id": "coolant",
@@ -245,11 +271,11 @@
       "z": 10,
       "toggle": "showBattery",
       "tempBy": "coolant",
-      "x": 526,
+      "x": 566,
       "y": 334,
-      "w": 150,
+      "w": 110,
       "h": 29,
-      "text": "EAU {{coolant}}{{u:temp}}"
+      "text": "{{coolant}}{{u:temp}}"
     }
   ]
 }

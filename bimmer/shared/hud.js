@@ -1592,7 +1592,7 @@ class HudApp {
                 return String(Math.round(us ? kw * 1.341 : kw));
             }
             case 'tachUnit': return this.hybridEv ? 'kW x 10' : (this.config.lang === 'fr' ? 'tr/min x 1000' : '1/min x 1000');     // the hybrid rev counter's marks: kW x 10 while it shows the power
-            case 'chargeNote': return this.hybridCharge ? (this.config.lang === 'fr' ? 'RECHARGE' : 'CHARGE') : '';
+            case 'chargeNote': return this.hybridCharge ? 'CHARGE' : '';
             case 'powerKw': {        // the battery's power in kW, - while charging (recuperation); -- when no app shares it
                 const p = this.ci.sharedPower();
                 return p ? String(Math.round(p.kw)) : '--';
