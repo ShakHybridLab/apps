@@ -266,7 +266,8 @@
       "x": 372,
       "y": 332,
       "w": 30,
-      "h": 30
+      "h": 30,
+      "readyHides": true
     },
     {
       "id": "oil",
@@ -282,7 +283,8 @@
       "y": 333,
       "w": 84,
       "h": 29,
-      "text": "{{oil}}{{u:temp}}"
+      "text": "{{oil}}{{u:temp}}",
+      "readyHides": true
     },
     {
       "id": "coolant_icon",
@@ -296,7 +298,8 @@
       "x": 558,
       "y": 332,
       "w": 30,
-      "h": 30
+      "h": 30,
+      "readyHides": true
     },
     {
       "id": "coolant",
@@ -312,15 +315,16 @@
       "y": 333,
       "w": 82,
       "h": 29,
-      "text": "{{coolant}}{{u:temp}}"
+      "text": "{{coolant}}{{u:temp}}",
+      "readyHides": true
     },
     {
       "id": "ready_flag",
       "type": "icon",
       "icon": "flag",
       "z": 5,
-      "x": 278,
-      "y": 396,
+      "x": 372,
+      "y": 332,
       "w": 30,
       "h": 30,
       "color": "fg",
@@ -330,9 +334,9 @@
       "id": "ready_text",
       "type": "text",
       "z": 5,
-      "x": 316,
-      "y": 397,
-      "w": 214,
+      "x": 410,
+      "y": 333,
+      "w": 266,
       "h": 29,
       "text": "{{launchReady}}",
       "font": "mid",

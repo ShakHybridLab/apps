@@ -442,7 +442,7 @@ check('speed limit file (speedlimit.js): fresh, newest wins, stale / out of rang
     assert.deepStrictEqual(seen, [50, 80, 50, null, 70, null], 'onChange on every change only');
     fs.rmSync(dir, { recursive: true, force: true });
 });
-check('speed limit ring: the number in the unit shown, red only while over it, blank without a limit or while the timer shows', () => {
+check('speed limit ring: the number in the unit shown, red only while over it, blank without a limit; it stays while the timer shows', () => {
     const h = make({ settings: { units: 'metric', limitRing: true, launchTimer: true } });
     h.target = 'panel';
     let lim = 50, sp = 45;
@@ -463,7 +463,7 @@ check('speed limit ring: the number in the unit shown, red only while over it, b
     h.S.limitRing = false; assert.strictEqual(h._limitNow(0), null, 'the setting off');
     h.S.limitRing = true;
     h.runs = { shownHeld: () => 6.4, state: 'run', record: false };
-    assert.strictEqual(h._limitNow(0), null, 'the 0-100 timer takes its place');
+    assert.deepStrictEqual(h._limitNow(0), { text: '90', over: false }, 'the ring sits in a corner now: the 0-100 timer does not hide it');
     h.runs = { shownHeld: () => null, state: 'idle', record: false };
     h.target = 'hud'; assert.strictEqual(h._limitNow(0), null, 'not on the HUD');
 });
@@ -531,6 +531,49 @@ check('limit ring and timer: in the four layouts, blank-safe, clear of the map a
     const set = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'app.json'), 'utf8')).settings.map((s) => s.key);
     assert(set.indexOf('limitRing') >= 0 && set.indexOf('launchTimer') >= 0);
     assert(typeof require(path.join(tmp, 'shared', 'icons.js')).ICONS.stopwatch === 'function');
+});
+check('limit ring: small, beside the speed digits (Sport, M, Navi) or in the bottom left corner (M Blade), clear of every other widget and of BMW\'s gear box and belt light; the timer keeps the middle', () => {
+    const visible = require(path.join(tmp, 'shared', 'visible.js'));
+    const SHADERS = ['sdash', 'mdash', 'mblade', 'navi', 'shiftlight', 'emblem'];
+    ['sport', 'm', 'mblade', 'navi'].forEach((id) => {
+        const L = lay(id), by = (i) => L.widgets.find((w) => w.id === i), r = by('lim_ring'), n = by('lim_num');
+        assert.strictEqual(r.w, 72, id + ': ring size'); assert.strictEqual(r.h, 72);
+        assert(n.x >= r.x && n.x + n.w <= r.x + r.w && n.y >= r.y && n.y + n.h <= r.y + r.h, id + ': the number sits inside the ring');
+        assert(Math.abs((n.y + n.h / 2) - (r.y + r.h / 2)) <= 3, id + ': the number is centred in the ring');
+        assert.strictEqual(n.font, 'm_tiny', id + ': the digits in the alert ring\'s font');
+        assert.strictEqual(r.color, 'dim', id + ': the ring is the quiet colour (red when over the limit)');
+        if (id === 'mblade') {
+            assert(r.y >= 560 && r.y + r.h <= 700 && r.x + r.w <= 300, id + ': bottom left corner, 20 px off the bottom edge');
+        } else {
+            // beside the speed digits: level with them, 16 px off the widest speed (three digits), on the side the layout leaves free
+            const sp = by('speed'), f = font(sp.font), g = f.glyphs['0'], adv = typeof g === 'object' ? g.advance : g;
+            const mid = sp.x + sp.w / 2, half = 1.5 * adv;
+            assert(Math.abs((r.y + r.h / 2) - (sp.y + sp.h / 2)) <= 14, id + ': the ring is level with the speed');
+            assert(r.x + r.w <= mid - half - 16 || r.x >= mid + half + 16, id + ': the ring clears three speed digits');
+            assert(Math.abs(r.x + r.w / 2 - mid) < 330, id + ': and stays next to them');
+        }
+        const box = [r.x, r.y, r.x + r.w, r.y + r.h], hit = (w) => w.x < box[2] && w.x + w.w > box[0] && w.y < box[3] && w.y + w.h > box[1];
+        L.widgets.forEach((w) => {
+            if (w === r || w === n || SHADERS.indexOf(w.type) >= 0 || w.toggle === 'mapUp' || w.id === 'lim_num' || w.id === 'speed') return;   // the speed's wide box is centred text: the digits' own clearance is checked above
+            assert(!hit(w), id + ': the ring overlaps ' + w.id);
+        });
+        assert(box[2] <= visible.BLACK_BOX[0] || box[0] >= visible.BLACK_BOX[2] || box[3] <= visible.BLACK_BOX[1] || box[1] >= visible.BLACK_BOX[3], id + ': clear of BMW\'s gear box');
+        assert(box[2] <= visible.BELT[0] || box[0] >= visible.BELT[2] || box[3] <= visible.BELT[1] || box[1] >= visible.BELT[3], id + ': clear of BMW\'s belt light');
+        const t = by('run_time'); assert(t.x > 500 && t.x < 1400, id + ': the timer is still in the middle');
+    });
+});
+check('Sport theme: each range sits under its own gauge (fuel left, battery right, mirrored), clear of BMW\'s belt light and of the readouts beside them', () => {
+    const L = lay('sport'), by = (i) => L.widgets.find((w) => w.id === i), visible = require(path.join(tmp, 'shared', 'visible.js'));
+    const fuelEnd = by('range_unit').x + by('range_unit').w, evStart = by('ev_icon').x;
+    assert(by('range_icon').x >= 380 && fuelEnd <= visible.BELT[0], 'the fuel range ends before the belt light (x ' + fuelEnd + ')');
+    assert(Math.abs(by('range_icon').x + by('ev_range_unit').x + by('ev_range_unit').w - 1920) <= 40 && Math.abs(fuelEnd + evStart - 1920) <= 40, 'the two ranges mirror each other about the middle');
+    assert(by('ev_range_unit').x + by('ev_range_unit').w <= by('outside').x, 'the outside temperature starts after the electric range');
+    assert(by('ev_share_unit').x + by('ev_share_unit').w <= evStart, 'the electric share stops before the electric range');
+    assert(by('ev_share_icon').x >= by('ready_text').x + by('ready_text').w, 'the electric share starts after the launch cue');
+    assert(by('ice_icon').x + by('ice_icon').w <= by('outside').x + by('outside').w - 40, 'the snowflake sits left of the temperature digits');
+    const navi = lay('navi'), nb = (i) => navi.widgets.find((w) => w.id === i);
+    assert.strictEqual(nb('ev_pct').align, 'right', 'Navi: the charge digits end next to their % like the range ones');
+    assert(nb('drive_mode').y + nb('drive_mode').h <= 700, 'Navi: the drive mode is not on the bottom edge');
 });
 check('ice alert: on at or under the setting, off 1 degree above it (no flicker), the snowflake flashes 8 s then stays lit; 0 = never; unknown = off', () => {
     const h = make({ settings: { iceBelow: 3 } });
@@ -721,7 +764,8 @@ check('launch cue: armed in the Sport drive mode with nothing to show, a chequer
     const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
     assert((hud.match(/readyBy[^\n]*SPOT ON/g) || []).length === 2, 'the flag and the words are green');
     assert(/if \(w\.readyBy\) \{ hide = !this\._launchReady\(now\)/.test(hud), 'the flag is hidden unless ready');
-    assert(/w\.evShareBy \|\| w\.readyBy\)\) \{/.test(hud), 'the flag icon takes the live path (else it would always show)');
+    assert(/w\.evShareBy \|\| w\.readyBy \|\| w\.readyHides\)\) \{/.test(hud), 'the flag icon takes the live path (else it would always show)');
+    assert(/if \(w\.readyHides && this\._launchReady\(now\)\) hide = true;/.test(hud), 'an icon can give way to the cue');
     const set = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'app.json'), 'utf8')).settings.find((x) => x.key === 'launchReady');
     assert(set && set.type === 'bool' && set.default === true);
     const rs = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'app.json'), 'utf8')).settings.find((x) => x.key === 'launchRpm');
@@ -743,7 +787,9 @@ check('launch cue: armed in the Sport drive mode with nothing to show, a chequer
         const wd = 'Launch Control Ready'.split('').reduce((a, c) => a + adv(c), 0); assert(wd <= tx.w, 'the words are ' + wd + ' px in ' + tx.w);
         assert(tx.x + tx.w <= 800 && tx.y + tx.h <= 480 && fl.x >= 0, 'inside the 800x480 HUD');
         const box = (w) => [w.x, w.y, w.x + w.w, w.y + w.h], hit = (A, B) => A[0] < B[2] && B[0] < A[2] && A[1] < B[3] && B[1] < A[3];
-        hl.widgets.forEach((o) => { if (o === fl || o === tx) return; [fl, tx].forEach((b) => assert(!hit(box(b), box(o)), 'HUD: ' + b.id + ' overlaps ' + o.id)); });
+        hl.widgets.forEach((o) => { if (o === fl || o === tx) return; [fl, tx].forEach((b) => assert(!hit(box(b), box(o)) || o.readyHides === true, 'HUD: ' + b.id + ' overlaps ' + o.id + ' (only a widget the cue hides may sit under it)')); });
+        assert(by('oil').readyHides && by('oil_icon').readyHides && by('coolant').readyHides && by('coolant_icon').readyHides, 'the oil and coolant row gives way to the cue');
+        assert(fl.y + fl.h <= 380 && tx.y + tx.h <= 380, 'the cue is inside the visible HUD window (down to y 380)');
         const hs = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shakhud', 'app.json'), 'utf8')).settings.map((x) => x.key);
         assert(hs.indexOf('launchReady') >= 0 && hs.indexOf('launchRpm') >= 0, 'the HUD app has the two settings');
         assert(/'launchReady', 'launchRpm'/.test(fs.readFileSync(path.join(root, 'apps', 'shakhud', 'main.js'), 'utf8')));

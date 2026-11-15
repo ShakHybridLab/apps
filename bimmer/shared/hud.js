@@ -231,13 +231,12 @@
  * Colour by drive mode (cluster only, the setting "accentByMode"): Sport, M Blade and Navi take blue in Electric Eco Pro, green in Hybrid, red in Sport
  * "accentBy": true on a text (the drive mode's name) takes the mode's colour as well, the Sport theme's bright blue in its hue.
  * (accent.js: the shaders' listed blues and the theme's "sblue" role are rewritten when the layout is built; the layout is rebuilt when the mode changes).
- * The speed limit ring (cluster only; speedlimit.js, the setting "limitRing"): {{limit}} is the limit in the unit shown ('' without one, or while
- * the 0-100 timer is up) and "limitBy": true on its text, or on the "ring" icon, makes them red while the speed is over it; the icon is
+ * The speed limit ring (cluster only; speedlimit.js, the setting "limitRing"): {{limit}} is the limit in the unit shown ('' without one) and "limitBy": true on its text, or on the "ring" icon, makes them red while the speed is over it; the icon is
  * blank without a limit. The 0-100 km/h timer (0-60 mph; the setting "launchTimer"): {{launch}} is its time (0.1 s live, 0.01 s held 12 s once
  * it has finished), {{launchUnit}} an "s" while it shows, "launchBy": true on a text or on the "stopwatch" icon (blank otherwise; green for a new best time).
  * The launch cue (cluster and HUD; the settings "launchReady" and "launchRpm"): in the Sport drive mode, once the car has stood still with the engine at the speed set, a chequered flag ("readyBy": true on the "flag" icon)
- * and {{launchReady}} ("Launch Control Ready", or {{launchReady1}} / {{launchReady2}} in two lines; "readyBy": true makes a text green, "plain" keeps its own colour; "readyHides": true on a text blanks it while the cue is up) wait in green,
- * at the bottom centre (over the drive mode's name on M Blade; the speed limit ring keeps its place; the car's own launch control can't be
+ * and {{launchReady}} ("Launch Control Ready", or {{launchReady1}} / {{launchReady2}} in two lines; "readyBy": true makes a text green, "plain" keeps its own colour; "readyHides": true on a text or an icon blanks it while the cue is up) wait in green,
+ * at the bottom centre (over the drive mode's name on M Blade; the car's own launch control can't be
  * read: it is the timer that is ready). Only the layouts with a
  * "readyBy" widget have it (the four cluster themes and the HUD).
  * Text "tempBy": "oil" | "coolant" (with the same token): blue while the reading is under "oilCold" / "coolantCold" (C; 0 = never
@@ -673,7 +672,7 @@ class HudApp {
         this.needsBoost = /boost/.test(j);
         this.needsIntake = /intake/.test(j);
         this.needsHv = /hvSoc|evRange|rangeTotal|evShare/.test(j);
-        this.hasReady = /"readyBy"/.test(j);        // the launch cue is on this layout: else the speed limit ring keeps its place
+        this.hasReady = /"readyBy"/.test(j);        // the launch cue is on this layout
         this.needsFuel = /fuel|rangeTotal/i.test(j);
     }
     /** A sensor's value now, as its slot shows it ('--' without one). */
@@ -1475,7 +1474,7 @@ class HudApp {
     _limitNow(now) {
         if (this.target !== 'panel' || this.setting('limitRing') === false) return null;
         const kmh = this.speedLimit.limit();
-        if (!isNum(kmh) || isNum(this._launchTime(now))) return null;
+        if (!isNum(kmh)) return null;
         const us = this.setting('units') === 'us', text = formatLimit(kmh, us), v = this._raw('speed');
         return { text, over: isNum(v) && Math.round(us ? v * 0.621371 : v) > Number(text) };
     }
@@ -1875,7 +1874,7 @@ class HudApp {
             case 'dangerDist': return formatDistance(this.danger.state().distM, us).n;
             case 'dangerUnit': return formatDistance(this.danger.state().distM, us).unit;
             case 'dangerLimit': return formatLimit(this.danger.state().limit, us);
-            // the speed limit ring's number (blank when no limit is known, the ring is off, or the 0-100 timer takes its place)
+            // the speed limit ring's number (blank when no limit is known or the ring is off)
             case 'limit': { const l = this._limitNow(Date.now()); return l ? l.text : ''; }
             // the 0-100 km/h timer (0-60 mph): the running clock, then the finished run held a few seconds; blank otherwise
             case 'launch': { const v = this._launchTime(Date.now()); return isNum(v) ? v.toFixed(this.runs.state === 'run' || v >= 10 ? 1 : 2) : ''; }
@@ -2786,7 +2785,7 @@ class HudApp {
                 glow: w.glow ? this.theme.glow : 0,
             });
             this._blitDiff(x, buf);
-        } else if (w.type === 'icon' && ((w.tempBy && COLD_BELOW[w.tempBy]) || w.lowWhen || w.tyreBy || w.limitBy || w.launchBy || w.iceBy || w.evShareBy || w.readyBy)) {
+        } else if (w.type === 'icon' && ((w.tempBy && COLD_BELOW[w.tempBy]) || w.lowWhen || w.tyreBy || w.limitBy || w.launchBy || w.iceBy || w.evShareBy || w.readyBy || w.readyHides)) {
             // an oil or coolant icon in the colour of its number (blue while cold, green once warm, flashing red over the limit);
             // a fuel or battery icon in the shift red while that is in reserve ("lowWhen")
             let role = w.color || 'fg';
@@ -2809,6 +2808,7 @@ class HudApp {
                 if (this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];
             }
             if (w.readyBy) { hide = !this._launchReady(now); if (w.readyBy === true) role = VERDICT['SPOT ON']; }       // the chequered flag, only while ready
+            if (w.readyHides && this._launchReady(now)) hide = true;                                                  // an icon the cue takes the place of (the HUD's oil and coolant row)
             const key = JSON.stringify(role) + hide;
             if (!force && key === x.last) return;
             x.last = key;
@@ -2958,6 +2958,7 @@ class HudApp {
             x.c.uniform(x.ref, 'u_rpm', [vals[1]]);
             x.c.uniform(x.ref, 'u_fuel', [vals[2]]);
             x.c.uniform(x.ref, 'u_oil', [vals[3]]);
+            x.c.uniform(x.ref, 'u_ozone', [w.oilSignal === 'hvSoc' ? 2.0 : 1.0]);   // the battery bar has no red top (full is not an alarm)
         } else if (w.type === 'mblade') {
             // rpm on the blade, the speed on the scale line (the M_SCALE labels); the strips are the fuel, the oil temperature (50..150 C,
             // lit blue while cold, green once warm, flashing red over its warning limit) and the hybrid battery (0..100 %)

@@ -865,6 +865,7 @@ uniform float u_orange;   // 0..1, yellow marks from here to the redline
 uniform vec2 u_low;       // 1 while the fuel bar / the right bar (the battery, when it shows it) is in reserve: red
 uniform float u_fuel;     // 0..1
 uniform float u_oil;      // 0..1
+uniform float u_ozone;    // 1: the oil bar (red at its top, blue at its foot); 2: the battery (blue foot only, a full battery is not an alarm)
 uniform vec4 u_hy;        // the hybrid rev counter: the colour (rgb) that fills the rev bracket in place of the engine's colours, a = 1 (0 = the engine's rpm)
 uniform vec2 u_zone;      // the speed bracket's and the rev bracket's zone: 0 = white fill, 2 = red, a fade between (the layout has no orange run-up)
 uniform float u_peak;     // the rev bracket's held peak 0..1 (0 = none): a thin tick above the lit part
@@ -960,7 +961,7 @@ vec4 bar(vec2 p, vec4 s, float val, float zones, float low, vec4 c) {
     if (along > 26.0) return c;
     float body = cov(abs(side) - 7.0) * cov(segD(p, a, b) - 7.5);
     vec3 col = vec3(0.92, 0.94, 0.97);
-    if (zones > 0.5 && h > 0.88) col = vec3(1.0, 0.2, 0.22);
+    if (zones > 0.5 && zones < 1.5 && h > 0.88) col = vec3(1.0, 0.2, 0.22);
     if (zones > 0.5 && h < 0.1) col = vec3(0.25, 0.5, 1.0);
     col = mix(col, vec3(1.0, 0.2, 0.22), low);                    // in reserve: all of it red
     c = over(vec4(0.36, 0.38, 0.44, 0.9 * body), c);
@@ -1004,7 +1005,7 @@ void main() {
         c = glass(hd, c);
     } else {
         c = bar(p, u_fuelSeg, u_fuel, 0.0, u_low.x, c);
-        c = bar(p, u_oilSeg, u_oil, 1.0, u_low.y, c);
+        c = bar(p, u_oilSeg, u_oil, u_ozone, u_low.y, c);
     }
     // the bottom line between the brackets
     if (abs(p.y - u_geo.z) < 3.0 && abs(p.x - u_size.x * 0.5) < u_size.x * 0.5 - outerX(u_geo.z))

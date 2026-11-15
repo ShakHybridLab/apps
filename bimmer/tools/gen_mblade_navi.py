@@ -122,12 +122,19 @@ def tab_cue(cx, pre, toggle, plain):
             text(pre + 'ready_text', x0 + 36, 668, 212, 24, '{{launchReady}}', 'mode', 'fg', 'left', 1, toggle=toggle, readyBy=mark)]
 
 
-def limit_and_timer(cx, top, R, compact=False):
+def limit_and_timer(cx, top, R, compact=False, ring=None):
     """The speed limit ring (a ring with the limit in it, white, red while the car is over it) and the 0-100 timer (a stopwatch, the time, an s):
-    both are blank until they have something to show, the timer takes the ring's place while it shows, and neither is drawn while the Waze map is
-    up (Waze shows the limit itself). `compact`: the timer stacked (the stopwatch over the time) to fit the narrow place the ring has."""
-    out = [icon('lim_ring', 'ring', cx - R // 2, top, R, R, 'fg', toggle='!mapUp', limitBy=True),
-           text('lim_num', cx - R // 2, top + (R - 37) // 2, R, 37, '{{limit}}', 'unit', 'fg', 'center', toggle='!mapUp', limitBy=True)]
+    both are blank until they have something to show, and neither is drawn while the Waze map is up (Waze shows the limit itself).
+    The timer takes the place cx, top, R in the middle; `compact`: the timer stacked (the stopwatch over the time) to fit the narrow place it has.
+    `ring` = (x, y, size): the ring itself sits in a bottom corner, small, out of the way (the digits in the alert ring's font); it is
+    not drawn in the middle, so the timer has it to itself."""
+    if ring:
+        rx, ry, rs = ring
+        out = [icon('lim_ring', 'ring', rx, ry, rs, rs, 'dim', toggle='!mapUp', limitBy=True),
+               text('lim_num', rx, ry + (rs - 29) // 2 + 1, rs, 29, '{{limit}}', 'm_tiny', 'fg', 'center', toggle='!mapUp', limitBy=True)]
+    else:
+        out = [icon('lim_ring', 'ring', cx - R // 2, top, R, R, 'fg', toggle='!mapUp', limitBy=True),
+               text('lim_num', cx - R // 2, top + (R - 37) // 2, R, 37, '{{limit}}', 'unit', 'fg', 'center', toggle='!mapUp', limitBy=True)]
     if compact:
         out += [icon('run_icon', 'stopwatch', cx - 13, top - 4, 26, 30, 'dim', toggle='!mapUp', launchBy=True),
                 text('run_time', cx - 50, top + 30, 100, 34, '{{launch}}', 'm_mid', 'fg', 'center', toggle='!mapUp', launchBy=True, rate=100)]
@@ -309,7 +316,7 @@ def mblade():
     W.append(icon('range_icon', 'fuelBolt', 313, 681, 29, 34, 'fg', 1))
     W.append(text('range', 348, 684, 112, 29, '{{rangeTotal}}', 'm_mid', 'fg', 'right', 1))
     W.append(text('range_unit', 466, 687, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1))
-    W.extend(limit_and_timer(672, 318, 76, True))                  # in the black void left of the gear letter
+    W.extend(limit_and_timer(672, 318, 76, True, ring=(111, 590, 72)))   # the timer in the black void left of the gear letter; the ring small, bottom left above the clock (no clean place by the speed there)
     W.extend(ev_share(632, 681, 26, 34, 662, 687, 52, 32, 'm_tiny', 718, 687, 26, 32, 'm_tiny'))   # between the belt light and the hexagon's tabs
     # the right end follows the strips: in the map view they are SX px further right, so the oil, the electric range and the outside
     # temperature move with them (the coolant stays)
@@ -402,13 +409,13 @@ def navi():
     W.append(icon('range_icon', 'fuelBolt', 214, 632, 29, 34))                # the total range: fuel and electric
     W.append(text('range', 226, 630, 114, 34, '{{rangeTotal}}', 'm_mid', 'fg', 'right'))
     W.append(text('range_unit', 346, 636, 48, 29, '{{u:distLc}}', 'm_tiny', 'dim'))
-    W.extend(limit_and_timer(960, 420, 92))                        # under the speed
+    W.extend(limit_and_timer(960, 420, 92, ring=(703, 236, 72)))   # the timer under the speed; the ring small, left of the speed digits
     W.extend(bottom_cue(661))                                      # the bottom centre, between the clock and the battery bar
     W.extend(ev_share(632, 664, 29, 34, 664, 664, 90, 34, 'm_mid', 758, 670, 36, 29, 'm_tiny'))   # bottom row, between the clock and the battery bar
     W.append(text('time', 395, 664, 140, 34, '{{time}}', 'm_mid', 'fg', 'right'))
     W.append(text('ampm', 541, 670, 44, 29, '{{ampmLc}}', 'm_tiny', 'dim'))
     W.append(icon('batt_icon', 'battery', 1230, 662, 26, 34, 'dim', 1))
-    W.append(text('ev_pct', 1270, 630, 90, 34, '{{hvSoc}}', 'm_mid', 'fg', 'left', 1))
+    W.append(text('ev_pct', 1270, 630, 90, 34, '{{hvSoc}}', 'm_mid', 'fg', 'right', 1))
     W.append(text('ev_pct_unit', 1366, 636, 30, 29, '%', 'm_tiny', 'dim', conn=1))
     W.append(text('ev_range', 1400, 630, 60, 34, '{{evRange}}', 'm_mid', 'fg', 'right', 1))
     W.append(text('ev_range_unit', 1466, 636, 44, 29, '{{u:distLc}}', 'm_tiny', 'dim', conn=1))
@@ -421,7 +428,7 @@ def navi():
     W.append(icon('ice_icon', 'snow', 1610, 506, 26, 34, 'dim', iceBy=True))
     W.append(text('outside_unit', 1786, 513, 44, 29, '{{u:temp}}', 'm_tiny', 'dim', conn=1))
     W += danger_alert(1196, 38, 76)         # in the top strip right of the shift light: clear of the map window (y 120) and of the hood
-    W.append(text('drive_mode', 1664, 698, 216, 22, '{{modeName}}', 'mode', 'dim', 'right', 1, accentBy=True))
+    W.append(text('drive_mode', 1664, 668, 216, 22, '{{modeName}}', 'mode', 'dim', 'right', 1, accentBy=True))
     return {
         'schemaVersion': 2, 'name': 'Navi', 'theme': 'navi', 'runUp': False,
         '_about': "Navi, after a photo of a BMW map view (Nov 14 2026), generated by tools/gen_mblade_navi.py (edit that and regenerate): "
