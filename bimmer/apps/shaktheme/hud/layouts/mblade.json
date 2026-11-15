@@ -501,7 +501,38 @@
       "color": "fg",
       "align": "center",
       "conn": 1,
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "readyHides": true
+    },
+    {
+      "id": "ready_flag",
+      "type": "icon",
+      "icon": "flag",
+      "z": 5,
+      "x": 829,
+      "y": 666,
+      "w": 28,
+      "h": 28,
+      "color": "fg",
+      "conn": 1,
+      "toggle": "!mapUp",
+      "readyBy": "plain"
+    },
+    {
+      "id": "ready_text",
+      "type": "text",
+      "z": 5,
+      "x": 865,
+      "y": 668,
+      "w": 212,
+      "h": 24,
+      "text": "{{launchReady}}",
+      "font": "mode",
+      "color": "fg",
+      "align": "left",
+      "conn": 1,
+      "toggle": "!mapUp",
+      "readyBy": "plain"
     },
     {
       "id": "o_gear",
@@ -588,7 +619,38 @@
       "color": "fg",
       "align": "center",
       "conn": 1,
-      "toggle": "mapUp"
+      "toggle": "mapUp",
+      "readyHides": true
+    },
+    {
+      "id": "o_ready_flag",
+      "type": "icon",
+      "icon": "flag",
+      "z": 5,
+      "x": 876,
+      "y": 666,
+      "w": 28,
+      "h": 28,
+      "color": "fg",
+      "conn": 1,
+      "toggle": "mapUp",
+      "readyBy": "plain"
+    },
+    {
+      "id": "o_ready_text",
+      "type": "text",
+      "z": 5,
+      "x": 912,
+      "y": 668,
+      "w": 212,
+      "h": 24,
+      "text": "{{launchReady}}",
+      "font": "mode",
+      "color": "fg",
+      "align": "left",
+      "conn": 1,
+      "toggle": "mapUp",
+      "readyBy": "plain"
     },
     {
       "id": "n0",
@@ -1634,36 +1696,6 @@
       "toggle": "!mapUp",
       "launchBy": true,
       "rate": 100
-    },
-    {
-      "id": "ready_flag",
-      "type": "icon",
-      "icon": "flag",
-      "z": 5,
-      "x": 757,
-      "y": 112,
-      "w": 36,
-      "h": 36,
-      "color": "fg",
-      "conn": 1,
-      "toggle": "!mapUp",
-      "readyBy": true
-    },
-    {
-      "id": "ready_text",
-      "type": "text",
-      "z": 5,
-      "x": 801,
-      "y": 113,
-      "w": 232,
-      "h": 34,
-      "text": "{{launchReady}}",
-      "font": "badge",
-      "color": "fg",
-      "align": "left",
-      "conn": 1,
-      "toggle": "!mapUp",
-      "readyBy": true
     },
     {
       "id": "ev_share_icon",

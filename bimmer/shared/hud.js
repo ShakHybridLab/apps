@@ -236,8 +236,9 @@
  * blank without a limit. The 0-100 km/h timer (0-60 mph; the setting "launchTimer"): {{launch}} is its time (0.1 s live, 0.01 s held 12 s once
  * it has finished), {{launchUnit}} an "s" while it shows, "launchBy": true on a text or on the "stopwatch" icon (blank otherwise; green for a new best time).
  * The launch cue (cluster and HUD; the settings "launchReady" and "launchRpm"): in the Sport drive mode, once the car has stood still with the engine at the speed set, a chequered flag ("readyBy": true on the "flag" icon)
- * and {{launchReady}} ("Launch Control Ready", or {{launchReady1}} / {{launchReady2}} in two lines; "readyBy": true makes a text green) wait in green,
- * in the place of the speed limit ring (the car's own launch control can't be read: it is the timer that is ready). Only the layouts with a
+ * and {{launchReady}} ("Launch Control Ready", or {{launchReady1}} / {{launchReady2}} in two lines; "readyBy": true makes a text green, "plain" keeps its own colour; "readyHides": true on a text blanks it while the cue is up) wait in green,
+ * at the bottom centre (over the drive mode's name on M Blade; the speed limit ring keeps its place; the car's own launch control can't be
+ * read: it is the timer that is ready). Only the layouts with a
  * "readyBy" widget have it (the four cluster themes and the HUD).
  * Text "tempBy": "oil" | "coolant" (with the same token): blue while the reading is under "oilCold" / "coolantCold" (C; 0 = never
  * blue), green once it is warm (three white flashes when it gets there while the app runs), and over the warning limit it flashes between the
@@ -1456,7 +1457,7 @@ class HudApp {
     /**
      * The launch cue: the timer is armed (the car has stood still half a second, runs.js), the drive mode is Sport, the engine speed is at the
      * setting "launchRpm" (2000 tr/min; the foot is on the throttle, not at a red light) and there is no time to show yet; a chequered flag and "Launch Control Ready" then wait in green (the setting "launchReady"; the car's own launch control can't be
-     * read, it is the timer that is ready). They take the place of the speed limit ring.  Only on the layouts that have "readyBy" widgets.
+     * read, it is the timer that is ready). They sit at the bottom centre. Only on the layouts that have "readyBy" widgets.
      */
     _launchReady(now) {
         const ok = this.hasReady === true && this.setting('launchTimer') !== false && this.setting('launchReady') !== false
@@ -1474,7 +1475,7 @@ class HudApp {
     _limitNow(now) {
         if (this.target !== 'panel' || this.setting('limitRing') === false) return null;
         const kmh = this.speedLimit.limit();
-        if (!isNum(kmh) || isNum(this._launchTime(now)) || this._launchReady(now)) return null;
+        if (!isNum(kmh) || isNum(this._launchTime(now))) return null;
         const us = this.setting('units') === 'us', text = formatLimit(kmh, us), v = this._raw('speed');
         return { text, over: isNum(v) && Math.round(us ? v * 0.621371 : v) > Number(text) };
     }
@@ -2706,7 +2707,7 @@ class HudApp {
             x.c.uniform(x.ref, 'u_text', this._atlasCodes(x, s), { type: 'vec4' });
         } else if (w.type === 'text') {
             if (!force && now - x.lastPaint < (w.nearFont ? ZOOM_MS : (w.rate || TEXT_MS))) return;
-            const s = this._resolve(w.text);
+            const s = w.readyHides && this._launchReady(now) ? '' : this._resolve(w.text);                              // (M Blade: the cue takes the drive mode's name's place)
             let role = w.color || 'fg';
             if (w.colorBy === 'verdict' && this.score.last) role = VERDICT[this.score.last.verdict] || role;
             const here = !!(w.near && this._nearMark(w.near[0]) === w.near[1]);
@@ -2730,7 +2731,7 @@ class HudApp {
             if (w.accentBy) role = this._accentColor() || role;                                                       // the drive mode's own text: in the mode's colour
             if (w.iceBy && this._ice(now).on) role = VERDICT.COLD;                                                    // ice: the outside temperature in the cold blue
             if (w.launchBy && this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];            // a new best time: green
-            if (w.readyBy) role = VERDICT['SPOT ON'];                                                                 // the launch cue: green
+            if (w.readyBy === true) role = VERDICT['SPOT ON'];                                                        // the launch cue: green ("plain": the widget's own colour)
             if (w.lowWhen && this._lowNow(w.lowWhen)) role = 'hot';             // in reserve: the shift red, steady
             // over its warning limit: the value flashes in the shift red
             // ("warnFlash": false: not on a tile that turns red itself, the Dyno theme's)
@@ -2807,7 +2808,7 @@ class HudApp {
                 hide = !isNum(this._launchTime(now));
                 if (this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];
             }
-            if (w.readyBy) { hide = !this._launchReady(now); role = VERDICT['SPOT ON']; }                              // the chequered flag, only while ready
+            if (w.readyBy) { hide = !this._launchReady(now); if (w.readyBy === true) role = VERDICT['SPOT ON']; }       // the chequered flag, only while ready
             const key = JSON.stringify(role) + hide;
             if (!force && key === x.last) return;
             x.last = key;

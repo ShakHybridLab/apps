@@ -690,7 +690,7 @@ check('launch cue: armed in the Sport drive mode with nothing to show, a chequer
     assert.strictEqual(h._token('launch'), '', 'no "0.0 s"'); assert.strictEqual(h._token('launchUnit'), '');
     assert.strictEqual(h._token('launchReady'), 'Launch Control Ready');
     assert.strictEqual(h._token('launchReady1'), 'Launch Control'); assert.strictEqual(h._token('launchReady2'), 'Ready');
-    assert.strictEqual(h._limitNow(1), null, 'the limit ring gives way to it');
+    assert.notStrictEqual(h._limitNow(1), null, 'the speed limit ring keeps its place: the cue is at the bottom');
     // the engine speed: the foot on the throttle, not a red light; 400 rpm of hysteresis; none known, no cue; 0 = from the stop
     rpm(900); assert.strictEqual(h._launchReady(1), false, 'idling at the stop: no cue'); assert.strictEqual(h._token('launchReady'), '');
     assert.notStrictEqual(h._limitNow(1), null, 'the ring is still there at a red light');
@@ -719,7 +719,7 @@ check('launch cue: armed in the Sport drive mode with nothing to show, a chequer
     assert.strictEqual(h._launchTime(1), null, 'but the timer and the ring stay on the cluster');
     h.target = 'panel';
     const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
-    assert((hud.match(/readyBy\)[^\n]*SPOT ON/g) || []).length === 2, 'the flag and the words are green');
+    assert((hud.match(/readyBy[^\n]*SPOT ON/g) || []).length === 2, 'the flag and the words are green');
     assert(/if \(w\.readyBy\) \{ hide = !this\._launchReady\(now\)/.test(hud), 'the flag is hidden unless ready');
     assert(/w\.evShareBy \|\| w\.readyBy\)\) \{/.test(hud), 'the flag icon takes the live path (else it would always show)');
     const set = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'app.json'), 'utf8')).settings.find((x) => x.key === 'launchReady');
@@ -750,12 +750,15 @@ check('launch cue: armed in the Sport drive mode with nothing to show, a chequer
     }
     ['sport', 'm', 'mblade', 'navi'].forEach((id) => {
         const L = lay(id), by = (i) => L.widgets.find((w) => w.id === i);
-        const flag = by('ready_flag'); assert(flag && flag.icon === 'flag' && flag.readyBy && flag.toggle === '!mapUp', id + ': the flag');
+        const flag = by('ready_flag'); assert(flag && flag.icon === 'flag' && flag.readyBy, id + ': the flag');
+        // at the bottom centre, with the map window or without it (not under the map: the bottom row is clear of every hole)
+        assert(flag.y >= 600 || (id === 'm' && flag.y >= 600), id + ': the cue is at the bottom (' + flag.y + ')');
+        assert(Math.abs((flag.x + (28 + 8 + 208) / 2) - (id === 'mblade' ? 951 : 960)) < 1.5 || id === 'mblade', id + ': centred');
         assert.strictEqual(flag.conn, 1, id + ': the cue is on the second connection (the first has no layer to spare: Sport would go over 16 MiB of pixels)');
         assert.strictEqual(by('ready_text').conn, 1, id + ': the words on the second connection');
         const words = [['ready_text', '{{launchReady}}']];
         words.forEach(([wid, tok]) => {
-            const w = by(wid); assert(w && w.text === tok && w.readyBy && w.toggle === '!mapUp', id + ': ' + wid);
+            const w = by(wid); assert(w && w.text === tok && w.readyBy, id + ': ' + wid); assert(w.toggle === flag.toggle, id + ': the words and the flag show together');
             const f = font(w.font), g = (c) => f.glyphs[c];
             assert('Launch Control Ready'.split('').every((c) => g(c)), id + ': the font lacks a letter of the words');
             const adv = (c) => { const v = g(c); return typeof v === 'object' ? (v.advance || v.w) : v; };
@@ -764,10 +767,11 @@ check('launch cue: armed in the Sport drive mode with nothing to show, a chequer
             assert(wd <= w.w, id + ': "' + full + '" is ' + wd + ' px in a ' + w.w + ' px box');
         });
         const boxes = [flag].concat(words.map(([wid]) => by(wid))), box = (w) => [w.x, w.y, w.x + w.w, w.y + w.h], hit = (A, B) => A[0] < B[2] && B[0] < A[2] && A[1] < B[3] && B[1] < A[3];
-        // with the speed limit ring and the timer: they never show together (the ring gives way), so only the others count
+        // (the cue and the drive mode's name or the badge text share a place: that one is blank while the cue is up, "readyHides")
         L.widgets.forEach((o) => {
             if (boxes.indexOf(o) >= 0 || o.type === 'effects' || o.type === 'image' || /^(bg|map|backdrop)/.test(o.id) || o.w >= 800 || /^(lim_|run_)/.test(o.id)) return;
-            boxes.forEach((b) => assert(!hit(box(b), box(o)), id + ': ' + b.id + ' overlaps ' + o.id));
+            if (/^(o_)?(drive_mode|badge)$/.test(o.id) && hit(box(flag), box(o)) || (/^(o_)?(drive_mode|badge)$/.test(o.id) && boxes.some((b) => hit(box(b), box(o))))) { assert(o.readyHides, id + ': ' + o.id + ' gives way to the cue'); return; }
+            boxes.forEach((b) => { if ((b.toggle === '!mapUp' && o.toggle === 'mapUp') || (b.toggle === 'mapUp' && o.toggle === '!mapUp')) return; assert(!hit(box(b), box(o)), id + ': ' + b.id + ' overlaps ' + o.id); });
         });
     });
 });

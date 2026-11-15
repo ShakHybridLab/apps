@@ -93,6 +93,7 @@ RPM_Y0, RPM_Y7 = 613, 160            # y of the 0 and of the 7 mark on the photo
 SPD_Y = [613, 555, 497, 440, 380, 321, 266, 210, 153]    # y of the speed labels 0, 30 .. 150, 210, 270, 330
 
 
+PLAIN = True                  # M Blade's launch cue: green (True: white)
 HYB_BLUE = [77, 191, 255, 255]
 
 
@@ -103,12 +104,22 @@ def ev_share(ix, iy, iw, ih, nx, ny, nw, nh, num_font, ux, uy, uw, uh, unit_font
             text('ev_share_unit', ux, uy, uw, uh, '{{evShareUnit}}', unit_font, 'dim')]
 
 
-def launch_cue(top, cx=960):
-    """The launch cue (Sport drive mode, standing still, the engine at the throttle speed): a chequered flag and "Launch Control Ready" in green, one row
-    centred on `cx` (a 36 px row at `top`), where the speed limit ring would be. On the second connection: the first has no layer to spare."""
-    x0 = cx - 138
-    return [icon('ready_flag', 'flag', x0, top, 36, 36, 'fg', 1, toggle='!mapUp', readyBy=True),
-            text('ready_text', x0 + 44, top + 1, 232, 34, '{{launchReady}}', 'badge', 'fg', 'left', 1, toggle='!mapUp', readyBy=True)]
+def bottom_cue(y, cx=960):
+    """The launch cue (Sport drive mode, standing still, the engine at the throttle speed) at the bottom centre, one row: a chequered flag in green and
+    "Launch Control Ready" in the same small font as the drive mode's name, centred on `cx` (the row is 244 px wide). On the second connection:
+    the first has no layer to spare."""
+    x0 = cx - 122
+    return [icon('ready_flag', 'flag', x0, y, 28, 28, 'fg', 1, readyBy=True),
+            text('ready_text', x0 + 36, y + 2, 212, 24, '{{launchReady}}', 'mode', 'fg', 'left', 1, readyBy=True)]
+
+
+def tab_cue(cx, pre, toggle, plain):
+    """M Blade's launch cue: where the drive mode's name is written, on the hexagon's tab (the name gives way while it is up). One row centred on `cx`:
+    the flag, then the words in the name's font. `plain`: in the widgets' own white (the tab already has the mode's colour) rather than green."""
+    x0 = cx - 122
+    mark = 'plain' if plain else True
+    return [icon(pre + 'ready_flag', 'flag', x0, 666, 28, 28, 'fg', 1, toggle=toggle, readyBy=mark),
+            text(pre + 'ready_text', x0 + 36, 668, 212, 24, '{{launchReady}}', 'mode', 'fg', 'left', 1, toggle=toggle, readyBy=mark)]
 
 
 def limit_and_timer(cx, top, R, compact=False):
@@ -274,13 +285,15 @@ def mblade():
     W.append(text('power', 740, 528, 120, 29, '{{powerKw}}', 'm_mid', 'fg', 'right', 1, toggle='powerShut'))
     W.append(text('power_unit', 866, 528, 50, 36, 'kW', 'm_unit', 'dim', 'left', 1, toggle='powerShut'))
     # (its name stays white: it sits on the hexagon's tab, which already takes the mode's colour)
-    W.append(text('drive_mode', 851, 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='!mapUp'))
+    W.append(text('drive_mode', 851, 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='!mapUp', readyHides=True))
+    W.extend(tab_cue(851 + 100, '', '!mapUp', PLAIN))
     W.append(text('o_gear', hexx(725, 283), 291, 280, 101, '{{stage}}', 'm_gear', align='center', toggle='mapUp'))
     W.append(text('o_speed', hexx(735, 283), 449, 170, 40, '{{speed}}', 'm_spd', 'fg', 'right', toggle='mapUp'))
     W.append(text('o_speed_unit', hexx(915, 283), 461, 80, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'left', toggle='mapUp'))
     W.append(text('o_power', hexx(740, 283), 528, 120, 29, '{{powerKw}}', 'm_mid', 'fg', 'right', 1, toggle='powerOpen'))
     W.append(text('o_power_unit', hexx(866, 283), 528, 50, 36, 'kW', 'm_unit', 'dim', 'left', 1, toggle='powerOpen'))
-    W.append(text('o_drive_mode', hexx(851, 369), 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='mapUp'))
+    W.append(text('o_drive_mode', hexx(851, 369), 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='mapUp', readyHides=True))
+    W.extend(tab_cue(hexx(851, 369) + 100, 'o_', 'mapUp', PLAIN))
     W.extend(mb_blade('', '!mapUp', lambda x, y: (x + DX, y), 1.0))
     W.extend(mb_blade('o_', 'mapUp', lambda x, y: (x + DX + HB, y), 1.0))
     # the strips' numbers: fuel on the left; on the right the oil temperature (50 / 100 / 150) and the battery (0 / 50 / 100 %)
@@ -297,7 +310,6 @@ def mblade():
     W.append(text('range', 348, 684, 112, 29, '{{rangeTotal}}', 'm_mid', 'fg', 'right', 1))
     W.append(text('range_unit', 466, 687, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1))
     W.extend(limit_and_timer(672, 318, 76, True))                  # in the black void left of the gear letter
-    W.extend(launch_cue(112, 895))                                 # one row above the hexagon, centred on its top face (the black band is too narrow)
     W.extend(ev_share(632, 681, 26, 34, 662, 687, 52, 32, 'm_tiny', 718, 687, 26, 32, 'm_tiny'))   # between the belt light and the hexagon's tabs
     # the right end follows the strips: in the map view they are SX px further right, so the oil, the electric range and the outside
     # temperature move with them (the coolant stays)
@@ -391,8 +403,8 @@ def navi():
     W.append(text('range', 226, 630, 114, 34, '{{rangeTotal}}', 'm_mid', 'fg', 'right'))
     W.append(text('range_unit', 346, 636, 48, 29, '{{u:distLc}}', 'm_tiny', 'dim'))
     W.extend(limit_and_timer(960, 420, 92))                        # under the speed
-    W.extend(launch_cue(447))
-    W.extend(ev_share(696, 664, 29, 34, 728, 664, 90, 34, 'm_mid', 822, 670, 36, 29, 'm_tiny'))   # bottom row, between the clock and the battery bar
+    W.extend(bottom_cue(661))                                      # the bottom centre, between the clock and the battery bar
+    W.extend(ev_share(632, 664, 29, 34, 664, 664, 90, 34, 'm_mid', 758, 670, 36, 29, 'm_tiny'))   # bottom row, between the clock and the battery bar
     W.append(text('time', 395, 664, 140, 34, '{{time}}', 'm_mid', 'fg', 'right'))
     W.append(text('ampm', 541, 670, 44, 29, '{{ampmLc}}', 'm_tiny', 'dim'))
     W.append(icon('batt_icon', 'battery', 1230, 662, 26, 34, 'dim', 1))

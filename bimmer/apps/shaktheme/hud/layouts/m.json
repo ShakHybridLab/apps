@@ -1073,7 +1073,8 @@
       "text": "{{badge}}",
       "font": "m_badge",
       "color": "dim",
-      "align": "center"
+      "align": "center",
+      "readyHides": true
     },
     {
       "id": "drive_mode",
@@ -1220,30 +1221,28 @@
       "type": "icon",
       "icon": "flag",
       "z": 5,
-      "x": 822,
-      "y": 527,
-      "w": 36,
-      "h": 36,
+      "x": 838,
+      "y": 672,
+      "w": 28,
+      "h": 28,
       "color": "fg",
-      "readyBy": true,
-      "toggle": "!mapUp",
-      "conn": 1
+      "conn": 1,
+      "readyBy": true
     },
     {
       "id": "ready_text",
       "type": "text",
       "z": 5,
-      "x": 866,
-      "y": 528,
-      "w": 232,
-      "h": 34,
+      "x": 874,
+      "y": 674,
+      "w": 212,
+      "h": 24,
       "text": "{{launchReady}}",
-      "font": "badge",
+      "font": "mode",
       "color": "fg",
       "align": "left",
-      "readyBy": true,
-      "toggle": "!mapUp",
-      "conn": 1
+      "conn": 1,
+      "readyBy": true
     }
   ]
 }
