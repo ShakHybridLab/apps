@@ -126,7 +126,7 @@ def tab_cue(cx, pre, toggle, plain):
             text(pre + 'ready_text', x0 + 36, 668, 212, 24, '{{launchReady}}', 'mode', 'fg', 'left', 1, toggle=toggle, readyBy=mark)]
 
 
-def limit_and_timer(cx, top, R, compact=False, ring=None):
+def limit_and_timer(cx, top, R, compact=False, ring=None, next_at=None):
     """The speed limit ring (a ring with the limit in it, white, red while the car is over it) and the 0-100 timer (a stopwatch, the time, an s):
     both are blank until they have something to show, and neither is drawn while the Waze map is up (Waze shows the limit itself).
     The timer takes the place cx, top, R in the middle; `compact`: the timer stacked (the stopwatch over the time) to fit the narrow place it has.
@@ -136,6 +136,13 @@ def limit_and_timer(cx, top, R, compact=False, ring=None):
         rx, ry, rs = ring
         out = [icon('lim_ring', 'ring', rx, ry, rs, rs, 'dim', toggle='!mapUp', limitBy=True),
                text('lim_num', rx, ry + (rs - 29) // 2 + 1, rs, 29, '{{limit}}', 'm_tiny', 'fg', 'center', toggle='!mapUp', limitBy=True)]
+        # the next limit the camera recognised: a smaller ring under it (blank until there is one), and the car's check control message: a warning
+        # triangle above it (yellow, only with the setting "carAlert"); the same two in the Sport and M themes (hud/layouts/*.json)
+        nx = 64
+        dx, dy = next_at or ((rs - nx) // 2, rs + 4)          # the next limit's ring sits under the ring, or where `next_at` = (dx, dy) says (BMW's black box takes the bottom)
+        out += [icon('lim_nxt_ring', 'ring', rx + dx, ry + dy, nx, nx, 'dim', toggle='!mapUp', nextBy=True),
+                text('lim_nxt_num', rx + dx, ry + dy + (nx - 29) // 2 + 1, nx, 29, '{{nextLimit}}', 'm_tiny', 'dim', 'center', toggle='!mapUp', nextBy=True),
+                icon('lim_alert', 'warn', rx + (rs - 56) // 2, ry - 60, 56, 56, 'dim', toggle='!mapUp', alertBy=True)]
     else:
         out = [icon('lim_ring', 'ring', cx - R // 2, top, R, R, 'fg', toggle='!mapUp', limitBy=True),
                text('lim_num', cx - R // 2, top + (R - 37) // 2, R, 37, '{{limit}}', 'unit', 'fg', 'center', toggle='!mapUp', limitBy=True)]
@@ -321,7 +328,7 @@ def mblade():
         W.append(icon(pre + 'range_icon', 'fuelBolt', 313, y - 3, 29, 34, 'fg', 1, toggle=tog))
         W.append(text(pre + 'range', 348, y, 112, 29, '{{rangeTotal}}', 'm_mid', 'fg', 'right', 1, toggle=tog))
         W.append(text(pre + 'range_unit', 466, y + 3, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1, toggle=tog))
-    W.extend(limit_and_timer(672, 318, 76, True, ring=(234, 540, 72)))   # the timer in the black void left of the gear letter; the ring small, bottom left above the clock (no clean place by the speed there)
+    W.extend(limit_and_timer(672, 318, 76, True, ring=(234, 540, 72), next_at=(-68, 4)))   # the timer in the black void left of the gear letter; the ring small, bottom left above the clock (no clean place by the speed there)
     W.extend(ev_share(662, ROW - 3, 26, 34, 692, ROW + 3, 52, 32, 'm_tiny', 748, ROW + 3, 26, 32, 'm_tiny', '', '!mapUp'))   # the normal view: right of the speed scale's 0
     W.extend(ev_share(632, ROW_O - 3, 26, 34, 662, ROW_O + 3, 52, 32, 'm_tiny', 718, ROW_O + 3, 26, 32, 'm_tiny', 'o_', 'mapUp'))   # the map view: between the belt light and the fuel scale's 1/2
     # the right end follows the strips: in the map view they are SX px further right, so the oil, the electric range and the outside

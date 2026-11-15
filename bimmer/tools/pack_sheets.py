@@ -219,6 +219,8 @@ def pack(widgets, k, verbose=False):
     img = [w for w in widgets if w['type'] in IMG and not w.get('own')]
     # la pastille « Launch Control Ready » reste sur la 2e connexion (la 1re n'a pas de couche à lui laisser, test_zones)
     pin = {id(w): 1 for w in img if w.get('readyBy')}
+    # un widget avec "pinConn": N reste sur la connexion N (une feuille qui le porte y va aussi) : pour libérer une connexion pleine
+    pin.update({id(w): int(w['pinConn']) for w in img if w.get('pinConn')})
     for w in img:
         w.pop('sheet', None)
         if id(w) not in pin:

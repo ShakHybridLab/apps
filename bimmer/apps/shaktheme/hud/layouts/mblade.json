@@ -350,7 +350,8 @@
         0,
         4
       ],
-      "sheet": "s2"
+      "sheet": "s1",
+      "conn": 1
     },
     {
       "id": "spd7",
@@ -377,7 +378,8 @@
         0,
         4
       ],
-      "sheet": "s2"
+      "sheet": "s1",
+      "conn": 1
     },
     {
       "id": "spd8",
@@ -434,8 +436,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s1",
-      "conn": 1
+      "sheet": "s3"
     },
     {
       "id": "speed",
@@ -1812,6 +1813,53 @@
       "conn": 1
     },
     {
+      "id": "lim_nxt_ring",
+      "type": "icon",
+      "icon": "ring",
+      "z": 5,
+      "x": 166,
+      "y": 544,
+      "w": 64,
+      "h": 64,
+      "color": "dim",
+      "toggle": "!mapUp",
+      "nextBy": true,
+      "sheet": "s7",
+      "conn": 1
+    },
+    {
+      "id": "lim_nxt_num",
+      "type": "text",
+      "z": 5,
+      "x": 166,
+      "y": 562,
+      "w": 64,
+      "h": 29,
+      "text": "{{nextLimit}}",
+      "font": "m_tiny",
+      "color": "dim",
+      "align": "center",
+      "toggle": "!mapUp",
+      "nextBy": true,
+      "sheet": "s10",
+      "conn": 1
+    },
+    {
+      "id": "lim_alert",
+      "type": "icon",
+      "icon": "warn",
+      "z": 5,
+      "x": 242,
+      "y": 480,
+      "w": 56,
+      "h": 56,
+      "color": "dim",
+      "toggle": "!mapUp",
+      "alertBy": true,
+      "sheet": "s10",
+      "conn": 1
+    },
+    {
       "id": "run_icon",
       "type": "icon",
       "icon": "stopwatch",
@@ -1823,8 +1871,7 @@
       "color": "dim",
       "toggle": "!mapUp",
       "launchBy": true,
-      "sheet": "s1",
-      "conn": 1
+      "sheet": "s3"
     },
     {
       "id": "run_time",
@@ -1841,8 +1888,7 @@
       "toggle": "!mapUp",
       "launchBy": true,
       "rate": 100,
-      "sheet": "s1",
-      "conn": 1
+      "sheet": "s3"
     },
     {
       "id": "ev_share_icon",
@@ -2289,7 +2335,7 @@
       "align": "right",
       "toggle": "mapUp",
       "iceBy": true,
-      "sheet": "s1",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -2304,7 +2350,7 @@
       "color": "dim",
       "toggle": "mapUp",
       "iceBy": true,
-      "sheet": "s1",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -2319,7 +2365,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "mapUp",
-      "sheet": "s7",
+      "sheet": "s10",
       "conn": 1
     },
     {

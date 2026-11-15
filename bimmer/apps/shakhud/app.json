@@ -2,7 +2,7 @@
   "id": "shakhud",
   "title": "ShakHUD",
   "description": "ShakHUD : un HUD pour le pare-brise, le compte-tours M Style (une barre brisée, rouge dans la zone rouge, bleu clair en électrique, verte en recharge), avec la batterie, les autonomies et les températures en bas à droite ; il se cache tout seul quand la carte Waze du HUD est affichée",
-  "version": "0.6.15",
+  "version": "0.6.16",
   "vendor": "custom",
   "loggingId": "OAS1",
   "iconGlyph": "SH",
@@ -38,6 +38,7 @@
     "tz.js",
     "shift_light.js",
     "probes.js",
+    "car_extras.js",
     "bottom_strip.js",
     "gear_window.js"
   ],
@@ -86,6 +87,11 @@
       "statusTyrePressure": "rs",
       "statusTyreTemperature": "rs",
       "_optional": "the tyre pressure warning on the HUD"
+    },
+    "de.bmw.infotainment.drivingexcitement.Efficiencytainment2": {
+      "displayPowerDrive": "s",
+      "displayPowerDrive2": "s",
+      "_optional": "the cluster's own power meter (quotaImmediateElectricEngineDriveRecuperation): the electric motor's share of its power, for the hybrid rev counter when eDrive Live is not there (setting carPower, off by default)"
     }
   },
   "screens": [
@@ -784,6 +790,12 @@
           "Désactivé"
         ]
       ]
+    },
+    {
+      "key": "carPower",
+      "label": "Puissance du moteur électrique lue dans la voiture, sans eDrive Live (essai)",
+      "type": "bool",
+      "default": false
     },
     {
       "key": "hybridRev",

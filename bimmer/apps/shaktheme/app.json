@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.21.10",
+  "version": "0.21.11",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -38,6 +38,7 @@
     "tz.js",
     "shift_light.js",
     "probes.js",
+    "car_extras.js",
     "bottom_strip.js",
     "gear_window.js"
   ],
@@ -1220,6 +1221,24 @@
       "label": "Bague de limitation de vitesse (lue par la caméra de la voiture ou donnée par une appli)",
       "type": "bool",
       "default": true
+    },
+    {
+      "key": "nextLimit",
+      "label": "Prochaine limite lue par la caméra, sous l'anneau de limite",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "carAlert",
+      "label": "Triangle jaune quand la voiture affiche un message d'alerte (essai)",
+      "type": "bool",
+      "default": false
+    },
+    {
+      "key": "carPower",
+      "label": "Puissance du moteur électrique lue dans la voiture, sans eDrive Live (essai)",
+      "type": "bool",
+      "default": false
     },
     {
       "key": "launchTimer",

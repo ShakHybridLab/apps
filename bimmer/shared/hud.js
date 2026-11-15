@@ -239,6 +239,9 @@
  * at the bottom centre (over the drive mode's name on M Blade; the car's own launch control can't be
  * read: it is the timer that is ready). Only the layouts with a
  * "readyBy" widget have it (the four cluster themes and the HUD).
+ * The next speed limit (the car's camera; the setting "nextLimit"): {{nextLimit}} is the limit coming up in the unit shown ('' without one, or when it is the present limit),
+ * "nextBy": true on the small ring icon blanks it likewise. The car's own warning (check control message, the setting "carAlert", off by default): "alertBy": true on the "warn" icon
+ * (blank without a message, yellow with one).
  * Text "tempBy": "oil" | "coolant" (with the same token): blue while the reading is under "oilCold" / "coolantCold" (C; 0 = never
  * blue), green once it is warm (three white flashes when it gets there while the app runs), and over the warning limit it flashes between the
  * shift red and a dark red.
@@ -284,6 +287,7 @@ const badges = require('./badges');
 const Runs = require('./runs');
 const { SpeedLimit, decodeSign } = require('./speedlimit');
 const { Probes, PROBES, GUIDE, guidanceOf } = require('./probes');
+const extras = require('./car_extras');
 const bottomStrip = require('./bottom_strip');
 const gearWindow = require('./gear_window');
 const { hueOfMode, accentTheme, mapRole } = require('./accent');
@@ -598,6 +602,9 @@ class HudApp {
         })) : null;
         this.mapShown = false;           // "mapUp" when the layout was built
         this.routeActive = null;         // a route is guided on the phone (CarPlay), from GUIDE (probes.js); null until the car says
+        // what the car's own signals say (car_extras.js; the values were not seen yet, so each is read tolerantly): the next limit the camera
+        // recognised { kmh, at }, a check control message showing (true / false / null), the electric motor's share { q, at }
+        this.nextLim = null; this.carAlert = null; this.carQuota = null;
         // the centre window opened for Cluster Centre / Cluster Info (cluster_info.js): the same window the Waze map
         // shows in, see-through while one of them asks for it (setting centreWindow); windowRect is the active
         // layout's, on the panel
@@ -904,6 +911,9 @@ class HudApp {
                 this.probes.feed(p.id, v);
                 if (p.id === 'sign' || p.id === 'next') this._carSign(p.id, v);
                 if (p.id === 'guide') this._guard('guidance', () => this._guidance(v));
+                if (p.id === 'next') this._guard('nextLimit', () => this._carNext(v));
+                if (p.id === 'cc') this._guard('carAlert', () => this._carAlertSet(v));
+                if (p.id === 'pdrive' || p.id === 'pdrive2') this._guard('carPower', () => this._carPowerSet(v));
             };
         });
         this.car = new Car(this.ctx, ['rpm', 'speed', 'temps', 'accel', 'gear', 'torque'], extra);
@@ -1044,6 +1054,52 @@ class HudApp {
     /** The Waze map shows in the theme's window now (it is up on the panel, the setting is on, and a route is on if that is asked). */
     _wazeMapOn() {
         return !!this.waze && this.waze.up === true && this.ctx.settings.get('mapInTheme') === true && this._routeOk();
+    }
+
+    /** The next speed limit the camera recognised (FASuS.statusNextSpeedLimitRecognition): kept for NEXT_TTL_MS (the car tells it once). */
+    _carNext(v) {
+        const k = extras.nextLimitOf(v);
+        if (k === null) { this.nextLim = null; return; }
+        if (!this.nextLim || this.nextLim.kmh !== k) this.log.info('next limit ' + k + ' km/h');
+        this.nextLim = { kmh: k, at: Date.now() };
+    }
+
+    /** The next limit to show under the ring: { text } while it is fresh and not the present limit; null otherwise (the setting "nextLimit"). */
+    _nextLimitNow(now) {
+        if (this.target !== 'panel' || this.setting('limitRing') === false || this.setting('nextLimit') === false) return null;
+        const n = this.nextLim;
+        if (!n || now - n.at > extras.NEXT_TTL_MS) return null;
+        const cur = this.speedLimit.limit();
+        if (isNum(cur) && Math.round(cur) === n.kmh) return null;
+        return { text: formatLimit(n.kmh, this.setting('units') === 'us') };
+    }
+
+    /** A check control message of the car is showing (KombiIF.statusActiveCCMessage); the icon asks for it with the setting "carAlert". */
+    _carAlertSet(v) {
+        const on = extras.alertOf(v);
+        if (on === null) return;
+        if (on !== this.carAlert) this.log.info('car alert ' + (on ? 'showing' : 'gone'));
+        this.carAlert = on;
+    }
+
+    _alertNow() {
+        return this.target === 'panel' && this.ctx.settings.item('carAlert') && this.ctx.settings.get('carAlert') === true && this.carAlert === true;
+    }
+
+    /** The electric motor's share of its power (Efficiencytainment2.displayPowerDrive[2]), -100..100. */
+    _carPowerSet(v) {
+        const q = extras.powerQuotaOf(v);
+        if (q === null) return;
+        if (!this.carQuota || this.carQuota.q !== q) this.carQuotaLogs = (this.carQuotaLogs || 0) + 1;
+        if (this.carQuotaLogs <= 20 && (!this.carQuota || this.carQuota.q !== q)) this.log.info('motor power share ' + q + ' %');
+        this.carQuota = { q, at: Date.now() };
+    }
+
+    /** The motor's power as { kw, old } from the car's own share, only while the setting "carPower" is on and the share is fresh; else null. */
+    _carPower() {
+        if (!this.ctx.settings.item('carPower') || this.ctx.settings.get('carPower') !== true) return null;
+        const c = this.carQuota;
+        return c && Date.now() - c.at < extras.POWER_TTL_MS ? { kw: extras.powerKw(c.q), old: false } : null;
     }
 
     /** A new value of CarPlayManager.projectedGuidanceActive: a route started or ended, the theme opens or closes its map window. */
@@ -1978,6 +2034,8 @@ class HudApp {
             case 'dangerLimit': return formatLimit(this.danger.state().limit, us);
             // the speed limit ring's number (blank when no limit is known or the ring is off)
             case 'limit': { const l = this._limitNow(Date.now()); return l ? l.text : ''; }
+            // the next limit the camera recognised, under the ring (blank when there is none, or it is the present one)
+            case 'nextLimit': { const l = this._nextLimitNow(Date.now()); return l ? l.text : ''; }
             // the 0-100 km/h timer (0-60 mph): the running clock, then the finished run held a few seconds; blank otherwise
             case 'launch': { const v = this._launchTime(Date.now()); return isNum(v) ? v.toFixed(this.runs.state === 'run' || v >= 10 ? 1 : 2) : ''; }
             // the launch cue's words, whole or in two lines (blank unless the cue is up)
@@ -2083,8 +2141,10 @@ class HudApp {
         const on = this.target === 'panel' ? this.ctx.settings.item('sportPower') && this.ctx.settings.get('sportPower') !== false
             : this.ctx.settings.item('hybridRev') && this.ctx.settings.get('hybridRev') !== false;
         const flow = w.hybridTach === true && !!on;
-        const pw = flow ? this.ci.sharedPower() : null;
-        return hybridTach.state(pw && !pw.old ? pw.kw : null, rpm);
+        // the power eDrive Live shares, else (the setting "carPower") the car's own share of the motor: with that one, an rpm the car does not send
+        // counts as 0 (the engine at rest: the car sends no engine speed then, as far as the owner's photos show), so the blue power shows
+        const shared = flow ? this.ci.sharedPower() : null, own = flow && !shared ? this._carPower() : null, pw = shared || own;
+        return hybridTach.state(pw && !pw.old ? pw.kw : null, own && !isNum(rpm) ? 0 : rpm);
     }
 
     /** The fuel tank's size in litres: the "tankLitres" setting, else config.tankLitres (the car sends litres only). */
@@ -2975,7 +3035,7 @@ class HudApp {
                 glow: w.glow ? this.theme.glow : 0,
             });
             this._blitDiff(x, buf);
-        } else if (w.type === 'icon' && ((w.tempBy && COLD_BELOW[w.tempBy]) || w.lowWhen || w.tyreBy || w.limitBy || w.launchBy || w.iceBy || w.evShareBy || w.readyBy || w.readyHides)) {
+        } else if (w.type === 'icon' && ((w.tempBy && COLD_BELOW[w.tempBy]) || w.lowWhen || w.tyreBy || w.limitBy || w.launchBy || w.iceBy || w.evShareBy || w.nextBy || w.alertBy || w.readyBy || w.readyHides)) {
             // an oil or coolant icon in the colour of its number (blue while cold, green once warm, flashing red over the limit);
             // a fuel or battery icon in the shift red while that is in reserve ("lowWhen")
             let role = w.color || 'fg';
@@ -2991,6 +3051,8 @@ class HudApp {
             if (w.tyreBy) { role = this._tyreRole(w.tyreBy, role); hide = w.tyreOnly === true && this._tyreLevel(w.tyreBy) === 0; }
             // the speed limit ring (white, red while over) shows only with a limit; the stopwatch only while the 0-100 timer shows
             if (w.limitBy) { const l = this._limitNow(now); hide = !l; if (l && l.over) role = 'hot'; }
+            if (w.nextBy) hide = !this._nextLimitNow(now);                                                            // the small ring of the next limit
+            if (w.alertBy) { hide = !this._alertNow(); role = VERDICT.EARLY; }                                         // the car's check control message: the warning triangle in yellow
             if (w.iceBy) { const ic = this._ice(now); hide = !ic.on || ic.blink; role = VERDICT.COLD; }              // the snowflake: flashing, then lit
             if (w.evShareBy) hide = !isNum(this._evShare());                                                          // the leaf only with a share to show
             if (w.launchBy) {

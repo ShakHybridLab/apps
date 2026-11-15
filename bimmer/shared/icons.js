@@ -7,7 +7,7 @@
  *   oilPour, tempWave, tempOut (ShakHUD's modern oil can, the thermometer with heat waves for the coolant, a plain one for the outside),
  *   battery (a plug-in hybrid's high-voltage battery: the cell with a bolt in it, terminal on top).
  *   fuelBolt (the total range, fuel and electric: the pump's body with the battery's bolt in it).
- *   ring (the speed limit sign's ring, also the danger alert's), stopwatch (the 0-100 timer), snow (the ice alert), leaf (the trip's electric share), flag (the launch cue: a chequered flag).
+ *   warn (the car's check control message: a warning triangle), ring (the speed limit sign's ring, also the danger alert's), stopwatch (the 0-100 timer), snow (the ice alert), leaf (the trip's electric share), flag (the launch cue: a chequered flag).
  */
 function seg(px, py, ax, ay, bx, by) {
     const pax = px - ax, pay = py - ay, bax = bx - ax, bay = by - ay;
@@ -93,6 +93,10 @@ const ICONS = {
         }
         return d;
     },
+    // a check control message of the car showing: the warning triangle with its exclamation mark
+    warn: (x, y) => Math.min(
+        seg(x, y, 0.5, 0.1, 0.07, 0.86) - 0.05, seg(x, y, 0.5, 0.1, 0.93, 0.86) - 0.05, seg(x, y, 0.07, 0.86, 0.93, 0.86) - 0.05,
+        seg(x, y, 0.5, 0.38, 0.5, 0.6) - 0.045, disc(x, y, 0.5, 0.73, 0.055)),
     // the share of the trip driven on electricity: a leaf (an outline lens with its vein and stem)
     leaf: (x, y) => Math.min(Math.abs(Math.max(disc(x, y, 0.288, 0.288, 0.59), disc(x, y, 0.712, 0.712, 0.59))) - 0.04,
         seg(x, y, 0.2, 0.8, 0.62, 0.38) - 0.03, seg(x, y, 0.14, 0.86, 0.06, 0.94) - 0.04),

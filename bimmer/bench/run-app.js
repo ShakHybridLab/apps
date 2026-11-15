@@ -90,6 +90,11 @@ setInterval(() => {
     const g = Math.round(num('gear', 0));
     hu.feed('de.bmw.infotainment.vehicle.CDS', 'statusEngineSpeed2', { actualValueRPMEngineCrankshaft: raw('rpm', num('rpm', 0)) });
     // a route guided on the phone (CarPlay): `route` true / false in the manual signals; left out, the car says nothing (the app then shows the map as before)
+    // the camera's road sign (`limit`, km/h) and the next limit (`nextLimit`), a check control message (`alert`: true / false), the electric motor's share of its power (`quota`, -100..100)
+    if (typeof v.limit === 'number') hu.feed('de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl', 'displaySpeedLimitAndNoPassingRestriction', { invalidFlag: false, displaySpeedLimit: v.limit });
+    if (typeof v.nextLimit === 'number') hu.feed('de.bmw.infotainment.fasus.FASuS', 'statusNextSpeedLimitRecognition', { nextWithdrawalLimitSpeed: v.nextLimit, nextClassLimitSpeed: 255 });
+    if (typeof v.alert === 'boolean') hu.feed('de.bmw.infotainment.KombiIF', 'statusActiveCCMessage', { numberDisplayControlCheckControlMessage: v.alert ? 12 : 0 });
+    if (typeof v.quota === 'number') hu.feed('de.bmw.infotainment.drivingexcitement.Efficiencytainment2', 'displayPowerDrive', { quotaImmediateElectricEngineDriveRecuperation: v.quota });
     if (typeof v.route === 'boolean') hu.feed('de.bmw.infotainment.a4a.carplay.CarPlayManager', 'projectedGuidanceActive', v.route);
     hu.feed('de.bmw.infotainment.vehicle.Vehicle2', 'statusCarSpeed2', { speedVehicleCentreOfGravity: raw('speed', num('speed', 0)) });
     hu.feed('de.bmw.infotainment.vehicle.CDS2', 'statusLongitudinalAccelerationMassCenter', { longitudinalAccelerationCentreOfGravity: raw('accel', num('gLong', 0) * 9.80665) });

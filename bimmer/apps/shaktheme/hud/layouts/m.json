@@ -450,7 +450,7 @@
       "color": "dim",
       "toggle": "!mapUp",
       "sheet": "s4",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "mgear",
@@ -495,7 +495,7 @@
       "color": "dim",
       "toggle": "mapUp",
       "sheet": "s4",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "tyre_unit_p",
@@ -676,7 +676,7 @@
       "color": "fg",
       "align": "center",
       "sheet": "s6",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "b_mid",
@@ -690,7 +690,7 @@
       "font": "m_gl",
       "color": "fg",
       "sheet": "s6",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "b_lo",
@@ -704,7 +704,7 @@
       "font": "m_gl",
       "color": "fg",
       "sheet": "s6",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "fuel_icon",
@@ -718,7 +718,7 @@
       "h": 29,
       "color": "dim",
       "sheet": "s6",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "range_icon",
@@ -732,7 +732,7 @@
       "h": 34,
       "color": "dim",
       "sheet": "s6",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "range",
@@ -748,7 +748,7 @@
       "color": "fg",
       "align": "right",
       "sheet": "s6",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "range_unit",
@@ -762,7 +762,7 @@
       "font": "m_tiny",
       "color": "dim",
       "sheet": "s6",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "time",
@@ -858,7 +858,7 @@
       "h": 29,
       "color": "fg",
       "sheet": "s9",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "setup_steering",
@@ -872,7 +872,7 @@
       "font": "m_label",
       "color": "fg",
       "sheet": "s9",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "ico_gearbox",
@@ -885,7 +885,7 @@
       "h": 29,
       "color": "fg",
       "sheet": "s9",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "setup_gearbox",
@@ -899,7 +899,7 @@
       "font": "m_label",
       "color": "fg",
       "sheet": "s9",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "o_hi",
@@ -914,7 +914,7 @@
       "color": "fg",
       "align": "right",
       "sheet": "s9",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "o_mid",
@@ -929,7 +929,7 @@
       "color": "fg",
       "align": "right",
       "sheet": "s9",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "o_lo",
@@ -943,8 +943,8 @@
       "font": "m_gl",
       "color": "fg",
       "align": "right",
-      "sheet": "s10",
-      "conn": 1
+      "sheet": "s9",
+      "conn": 2
     },
     {
       "id": "o_unit",
@@ -958,7 +958,7 @@
       "font": "m_tiny",
       "color": "dim",
       "sheet": "s9",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "batt_icon",
@@ -1001,7 +1001,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s10",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1181,7 +1181,7 @@
       "limitBy": true,
       "toggle": "!mapUp",
       "sheet": "s4",
-      "conn": 1
+      "conn": 2
     },
     {
       "id": "lim_num",
@@ -1197,8 +1197,58 @@
       "align": "center",
       "limitBy": true,
       "toggle": "!mapUp",
-      "sheet": "s11",
-      "conn": 1
+      "sheet": "s6",
+      "conn": 2
+    },
+    {
+      "id": "lim_nxt_ring",
+      "type": "icon",
+      "icon": "ring",
+      "z": 5,
+      "x": 765,
+      "y": 485,
+      "w": 64,
+      "h": 64,
+      "color": "dim",
+      "nextBy": true,
+      "toggle": "!mapUp",
+      "conn": 2,
+      "pinConn": 2,
+      "sheet": "s6"
+    },
+    {
+      "id": "lim_nxt_num",
+      "type": "text",
+      "z": 5,
+      "x": 765,
+      "y": 503,
+      "w": 64,
+      "h": 29,
+      "text": "{{nextLimit}}",
+      "font": "m_tiny",
+      "color": "dim",
+      "align": "center",
+      "nextBy": true,
+      "toggle": "!mapUp",
+      "conn": 2,
+      "pinConn": 2,
+      "sheet": "s9"
+    },
+    {
+      "id": "lim_alert",
+      "type": "icon",
+      "icon": "warn",
+      "z": 5,
+      "x": 704,
+      "y": 405,
+      "w": 56,
+      "h": 56,
+      "color": "dim",
+      "alertBy": true,
+      "toggle": "!mapUp",
+      "conn": 2,
+      "pinConn": 2,
+      "sheet": "s4"
     },
     {
       "id": "run_icon",
@@ -1212,8 +1262,8 @@
       "color": "dim",
       "launchBy": true,
       "toggle": "!mapUp",
-      "sheet": "s11",
-      "conn": 1
+      "sheet": "s9",
+      "conn": 2
     },
     {
       "id": "run_time",
@@ -1230,8 +1280,8 @@
       "launchBy": true,
       "toggle": "!mapUp",
       "rate": 100,
-      "sheet": "s11",
-      "conn": 1
+      "sheet": "s9",
+      "conn": 2
     },
     {
       "id": "run_unit",
@@ -1246,8 +1296,8 @@
       "color": "dim",
       "align": "left",
       "toggle": "!mapUp",
-      "sheet": "s11",
-      "conn": 1
+      "sheet": "s9",
+      "conn": 2
     },
     {
       "id": "ice_icon",

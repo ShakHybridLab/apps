@@ -24,10 +24,12 @@ check('every probe is declared in ShakTheme\'s app.json with the flags the catal
 });
 // the three the app draws from itself (régime, températures, vitesse): ShakHUD declares them too, since its rev counter needs them
 const OWN = ['rpm', 'engt', 'speed'];
-check('ShakHUD declares only the three the app draws from (it asks for no signal it does not use)', () => {
+// and the cluster's power meter (the electric motor's share, for the hybrid rev counter without eDrive Live: setting carPower, car_extras.js)
+const HUD_ASKS = OWN.concat(['pdrive', 'pdrive2']);
+check('ShakHUD declares only what the app draws from (it asks for no signal it does not use)', () => {
     PROBES.forEach((p) => {
         const has = !!(hud.signals && hud.signals[p.iface] && hud.signals[p.iface][p.field]);
-        assert.strictEqual(has, OWN.indexOf(p.id) >= 0, p.id + (has ? ' is declared by ShakHUD' : ' is missing from ShakHUD'));
+        assert.strictEqual(has, HUD_ASKS.indexOf(p.id) >= 0, p.id + (has ? ' is declared by ShakHUD' : ' is missing from ShakHUD'));
         if (has) assert.strictEqual(hud.signals[p.iface][p.field], FLAGS[p.id], p.id + ': flags in ShakHUD');
     });
 });
