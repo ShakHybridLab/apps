@@ -44,5 +44,38 @@
         ]
       }
     }
+  ],
+  "components": [
+    {
+      "id": "jap_ridetube",
+      "kind": "app",
+      "path": "ridetube/apps/jap_ridetube",
+      "build": {
+        "python": "ridetube/kit/tools/build.py",
+        "args": [
+          "{id}"
+        ],
+        "sdk": "ridetube/oap-sdk",
+        "output": "ridetube/dist/{id}@{version}.tgz"
+      },
+      "requires": {
+        "jap-ridetube-d": "0.3.9",
+        "mgu-render": "0.6.11",
+        "mgu-inputgate": "1.0.0"
+      },
+      "uninstallable": true,
+      "mguHmi": [
+        "ID7"
+      ]
+    },
+    {
+      "id": "jap-ridetube-d",
+      "kind": "tool",
+      "path": "ridetube/service",
+      "uninstallable": true,
+      "mguHmi": [
+        "ID7"
+      ]
+    }
   ]
 }

@@ -10,5 +10,3 @@ __pycache__/
 bench/.data/
 secret/
 
-# the RideTube service package of ridetube-fork/ is a published artifact (its catalog.json points at it)
-!ridetube-fork/*.tgz

@@ -71,13 +71,7 @@ CLUSTER_FONTS = [
     ('s_unit', 'Barlow-Medium.ttf', 24, LOWER + UPPER + DIGITS + '°/-. %'),
     ('s_gl', 'Michroma-Regular.ttf', 21, DIGITS + '/', 1),
 ]
-# RideTube on cluster: the "now playing" card (a video's title and channel can hold anything: what the font lacks is replaced, video_now.js)
-NP_CHARS = ''.join(chr(c) for c in range(32, 127)) + '°·…–—’«»' + 'ÀÂÄÇÉÈÊËÎÏÔÖÙÛÜŸàâäçéèêëîïôöùûüÿñÑßáíóúÁÍÓÚ'
-VIDEO_FONTS = [
-    ('np', 'Barlow-Medium.ttf', 30, NP_CHARS),
-    ('np_s', 'Barlow-Medium.ttf', 22, NP_CHARS),
-]
-FONTS = {'idrive_hud_widgets': HUD_FONTS, 'shaktheme': CLUSTER_FONTS, 'ridetube_cluster': VIDEO_FONTS}
+FONTS = {'idrive_hud_widgets': HUD_FONTS, 'shaktheme': CLUSTER_FONTS}
 PAD = 2
 ATLAS_W = 1024
 

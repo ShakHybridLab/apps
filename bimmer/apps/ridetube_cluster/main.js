@@ -1,14 +1,12 @@
 'use strict';
 /**
  * RideTube on cluster: the video RideTube plays, in a cluster theme's centre window and on the HUD, ONLY WHILE THE CAR STANDS
- * (shared/video_app.js; the gate is shared/video_bridge.js Standing and has no switch), and where no picture shows, the "now
- * playing" card: title, channel and progress in words (shared/video_now.js). The centre screen shows the four settings.
+ * (shared/video_app.js; the gate is shared/video_bridge.js Standing and has no switch). The centre screen shows the settings.
  * Stays up in the background like every OAP app.
  */
 const mgu = require('./kit/mgu');
 const { VideoApp } = require('./video_app');
 const { ClusterRender } = require('./cluster_render_client');
-const text = require('./hud_text');
 
 mgu.run({
     start(ctx) {
@@ -20,8 +18,6 @@ mgu.run({
                 setting: (k) => ctx.settings.get(k),
                 makeRender: (target) => new ClusterRender(ctx.spec.id + '_' + target, cfg.socketPath),
                 videoPath: process.env.RIDETUBE_VIDEO || cfg.videoPath,
-                nowPath: process.env.RIDETUBE_NOW || cfg.nowPath,
-                text,
             });
             // the speed, re-read every second: a standing car may not notify a speed that doesn't change, and the gate wants
             // fresh readings. 65535 = the car's "invalid": passed on as unknown, which shuts the gate.

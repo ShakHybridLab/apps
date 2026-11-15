@@ -10,9 +10,7 @@
  * theme up, nothing is drawn on BMW's own cluster. On the HUD it uses the room HUD Widgets publishes (hud-layout.json), else a
  * fixed corner clear of BMW's own HUD items (visible.js).
  *
- * Where no picture shows (the car drives, or the picture's setting is off) it can show the "now playing" card instead: words only
- * (video_now.js: title, channel, progress), from what the RideTube service of ridetube-fork/ says it plays. On the cluster the card
- * also sits in the theme's window, and stays away while Waze's map or another app's page is in it.
+ * In the theme's window it stays away while Waze's map or another app's page (Cluster Centre, Cluster Info) is in it.
  *
  * Everything outside (the clock, files, cluster-render, the speed) comes in through `deps`, so tools/test_video_app.js drives it
  * without a car. Node 8. MIT.
@@ -20,7 +18,6 @@
 const fs = require('fs');
 const path = require('path');
 const vb = require('./video_bridge');
-const vn = require('./video_now');
 const visible = require('./visible');
 
 const VIDEO_PATH = process.env.RIDETUBE_VIDEO || '/dev/shm/mgu-video-ridetube';
@@ -37,7 +34,7 @@ const HUD_FALLBACK = { x: visible.HUD_BMW[2] + 10, y: visible.HUD_WINDOW.y, w: v
 class VideoApp {
     /**
      * deps: { id, log, now(), setting(key), makeRender(target) -> a ClusterRender-like { video, set, drop, frame, connect, close,
-     * ready, image, pixels }, videoPath, themesDir, nowPath, text (shared/hud_text.js; without it no card) }. Speed readings come in
+     * ready, image, pixels }, videoPath, themesDir }. Speed readings come in
      * through speed(kmh).
      */
     constructor(deps) {
@@ -46,8 +43,6 @@ class VideoApp {
         this.now = deps.now || Date.now;
         this.videoPath = deps.videoPath || VIDEO_PATH;
         this.themesDir = deps.themesDir || THEMES_DIR;
-        this.nowPath = deps.nowPath || vn.NOW_PATH;
-        this.np = null; this.npAt = 0;
         this.gate = new vb.Standing();
         this.fd = null; this.fdAt = 0;
         this.seq = null; this.seqAt = 0; this.head = null;
@@ -55,10 +50,10 @@ class VideoApp {
         this.targets = { panel: this._target('panel'), hud: this._target('hud') };
         this.askAt = 0; this.asking = false;
         this.timer = null;
-        this.state = { standing: false, playing: false, panel: 'off', hud: 'off', cardPanel: 'off', cardHud: 'off' };
+        this.state = { standing: false, playing: false, panel: 'off', hud: 'off' };
     }
 
-    _target(name) { return { name, cr: null, ref: 0, rect: null, atlas: null, sentAt: 0, shown: false, cref: 0, crect: null, ckey: '', cshown: false }; }
+    _target(name) { return { name, cr: null, ref: 0, rect: null, atlas: null, sentAt: 0, shown: false }; }
 
     /** A speed reading in km/h (null = the car gave none). */
     speed(kmh) { this.gate.feed(kmh, this.now()); }
@@ -127,12 +122,7 @@ class VideoApp {
         t.shown = false;
     }
 
-    _hideCard(t) {
-        if (t.cshown && t.cr && t.cref) { try { t.cr.set(t.cref, { visible: false }); } catch (e) { /* gone */ } }
-        t.cshown = false;
-    }
-
-    /** Every picture off (not the window: the card may still want it). */
+    /** Every picture off. */
     _hideVideos() {
         Object.keys(this.targets).forEach((k) => this._hide(this.targets[k]));
         this.state.panel = this.state.hud = 'off';
@@ -140,12 +130,10 @@ class VideoApp {
 
     _hideAll() {
         this._hideVideos();
-        Object.keys(this.targets).forEach((k) => this._hideCard(this.targets[k]));
         this._ask(false);
-        this.state.cardPanel = this.state.cardHud = 'off';
     }
 
-    /** Waze's map, or another app's page (Cluster Centre, Cluster Info), is in the theme's window: the card stays away. */
+    /** Waze's map, or another app's page (Cluster Centre, Cluster Info), is in the theme's window: the picture stays away. */
     _windowBusy() {
         const th = this._json('themes.json');
         if (th && th.map === true) return true;
@@ -156,29 +144,6 @@ class VideoApp {
             if (!/^window-[\w.-]+\.json$/.test(n) || n === 'window-' + this.id + '.json') return false;
             try { const j = JSON.parse(fs.readFileSync(path.join(this.themesDir, n), 'utf8')); return !!j && typeof j.t === 'number' && Math.abs(now - j.t) < FRESH_MS; } catch (e) { return false; }
         });
-    }
-
-    /** The "now playing" card (words only) on target t. */
-    _card(t, np) {
-        const raw = this._room(t.name);
-        const room = raw ? { x: raw.x + INSET, y: raw.y + INSET, w: raw.w - 2 * INSET, h: raw.h - 2 * INSET } : null;
-        const size = vn.cardSize(room);
-        if (!size) { this._hideCard(t); return 'no room'; }
-        const rect = { x: Math.floor((room.x + (room.w - size.w) / 2) / 2) * 2, y: Math.floor((room.y + (room.h - size.h) / 2) / 2) * 2, w: size.w, h: size.h };
-        if (!t.cr) { t.cr = this.d.makeRender(t.name); t.cr.connect(); }
-        if (!t.crect || ['x', 'y', 'w', 'h'].some((k) => t.crect[k] !== rect[k])) {
-            if (t.cref) { try { t.cr.drop(t.cref); } catch (e) { /* gone */ } }
-            t.cref = t.cr.image({ target: t.name, klass: 'overlay', z: 2, x: rect.x, y: rect.y, w: rect.w, h: rect.h, iw: rect.w, ih: rect.h, visible: false });
-            t.crect = rect; t.ckey = ''; t.cshown = false;
-        }
-        if (!t.cref) return 'refused';
-        const key = [np.state, np.title, np.channel, Math.floor(np.elapsed / 1000), Math.floor(np.total / 1000)].join('|');
-        if (key !== t.ckey) {
-            if (t.cr.pixels(t.cref, null, vn.card(rect.w, rect.h, np, this.d.text)) === false) return 'waiting';
-            t.ckey = key;
-        }
-        if (!t.cshown) { t.cr.set(t.cref, { visible: true }); t.cshown = true; }
-        return 'shown';
     }
 
     _room(name) {
@@ -225,7 +190,7 @@ class VideoApp {
         const frame = this._read();
         const playing = this.seq !== null && this.seqAt > 0 && now - this.seqAt < PLAYING_MS;
         this.state.playing = playing;
-        const onPanel = playing && this.d.setting('videoCluster') === true;
+        const onPanel = playing && this.d.setting('videoCluster') === true && !this._windowBusy();
         const onHud = playing && this.d.setting('videoHud') === true;
         if (onPanel) { this._ask(true); this.state.panel = this._draw(this.targets.panel, frame, false); } else { this._hide(this.targets.panel); this.state.panel = 'off'; }
         if (onHud) this.state.hud = this._draw(this.targets.hud, frame, false); else { this._hide(this.targets.hud); this.state.hud = 'off'; }
@@ -233,19 +198,8 @@ class VideoApp {
     }
 
     tick() {
-        const now = this.now();
-        const v = this._videos(now);
-        // the "now playing" card, words only: where no picture shows
-        const wantP = !v.panel && this.d.setting('nowCluster') === true, wantH = !v.hud && this.d.setting('nowHud') === true;
-        let np = null;
-        if ((wantP || wantH) && this.d.text) {
-            if (now - this.npAt >= 500 || now < this.npAt) { this.npAt = now; this.np = vn.readNow(this.nowPath, now); }
-            np = this.np;
-        }
-        const cardP = !!np && wantP && !this._windowBusy();
-        if (!v.panel) this._ask(cardP);
-        if (cardP) this.state.cardPanel = this._card(this.targets.panel, np); else { this._hideCard(this.targets.panel); this.state.cardPanel = 'off'; }
-        if (np && wantH) this.state.cardHud = this._card(this.targets.hud, np); else { this._hideCard(this.targets.hud); this.state.cardHud = 'off'; }
+        const v = this._videos(this.now());
+        if (!v.panel) this._ask(false);
     }
 }
 

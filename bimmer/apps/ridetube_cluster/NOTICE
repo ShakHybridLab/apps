@@ -10,8 +10,5 @@ It is not RideTube and is not affiliated with it, with Google or with YouTube. I
 2. cluster_render_client.js: MPL-2.0, Copyright (C) 2026 Robert Nisipeanu.
    https://github.com/robertnisipeanu/idrive-apps (native/cluster-render), unmodified.
 
-3. The Barlow font (the baked glyphs in hud/fonts): Copyright 2017 The Barlow Project Authors, SIL Open Font License 1.1
-   (bimmer/tools/fonts-src/OFL.txt in the repository).
-
 It reads, and does not include, the frame file written by RideTube's decoder (JustAnotherPU/ridetube, GPL-3.0-or-later):
 only the file's layout (64-byte header, I420 frames) is used, as documented in that project's native/ytdec/src/mgvf.h.
