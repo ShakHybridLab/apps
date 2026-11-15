@@ -267,7 +267,7 @@
         0,
         4
       ],
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "spd4",
@@ -294,7 +294,7 @@
         0,
         4
       ],
-      "sheet": "s2",
+      "sheet": "s1",
       "conn": 1
     },
     {
@@ -322,7 +322,7 @@
         0,
         4
       ],
-      "sheet": "s2",
+      "sheet": "s1",
       "conn": 1
     },
     {
@@ -350,7 +350,8 @@
         0,
         4
       ],
-      "sheet": "s3"
+      "sheet": "s1",
+      "conn": 1
     },
     {
       "id": "spd7",
@@ -377,7 +378,8 @@
         0,
         4
       ],
-      "sheet": "s3"
+      "sheet": "s1",
+      "conn": 1
     },
     {
       "id": "spd8",
@@ -404,7 +406,7 @@
         0,
         4
       ],
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "spd_unit",
@@ -419,7 +421,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "gear",
@@ -434,7 +436,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "speed",
@@ -449,7 +451,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "speed_unit",
@@ -464,7 +466,7 @@
       "color": "fg",
       "align": "left",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "power",
@@ -479,7 +481,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "powerShut",
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "power_unit",
@@ -494,7 +496,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "powerShut",
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "drive_mode",
@@ -510,7 +512,7 @@
       "align": "center",
       "toggle": "!mapUp",
       "readyHides": true,
-      "sheet": "s4"
+      "sheet": "s5"
     },
     {
       "id": "ready_flag",
@@ -542,7 +544,7 @@
       "conn": 1,
       "toggle": "!mapUp",
       "readyBy": "plain",
-      "sheet": "s7"
+      "sheet": "s6"
     },
     {
       "id": "o_gear",
@@ -557,7 +559,8 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "o_speed",
@@ -572,7 +575,8 @@
       "color": "fg",
       "align": "right",
       "toggle": "mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "o_speed_unit",
@@ -587,7 +591,8 @@
       "color": "fg",
       "align": "left",
       "toggle": "mapUp",
-      "sheet": "s0"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "o_power",
@@ -602,7 +607,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "powerOpen",
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "o_power_unit",
@@ -617,7 +622,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "powerOpen",
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "o_drive_mode",
@@ -633,7 +638,7 @@
       "align": "center",
       "toggle": "mapUp",
       "readyHides": true,
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "o_ready_flag",
@@ -648,7 +653,7 @@
       "conn": 1,
       "toggle": "mapUp",
       "readyBy": "plain",
-      "sheet": "s2"
+      "sheet": "s1"
     },
     {
       "id": "o_ready_text",
@@ -665,7 +670,7 @@
       "conn": 1,
       "toggle": "mapUp",
       "readyBy": "plain",
-      "sheet": "s2"
+      "sheet": "s1"
     },
     {
       "id": "n0",
@@ -693,7 +698,7 @@
         1,
         4
       ],
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -722,8 +727,7 @@
         1,
         4
       ],
-      "sheet": "s8",
-      "conn": 1
+      "sheet": "s4"
     },
     {
       "id": "n2",
@@ -928,7 +932,8 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "o_n0",
@@ -956,7 +961,7 @@
         1,
         4
       ],
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_n1",
@@ -984,7 +989,7 @@
         1,
         4
       ],
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_n2",
@@ -1012,7 +1017,7 @@
         1,
         4
       ],
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_n3",
@@ -1040,7 +1045,7 @@
         1,
         4
       ],
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_n4",
@@ -1068,7 +1073,7 @@
         1,
         4
       ],
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_n5",
@@ -1096,7 +1101,7 @@
         1,
         4
       ],
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_n6",
@@ -1124,7 +1129,7 @@
         1,
         4
       ],
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_n7",
@@ -1152,7 +1157,7 @@
         1,
         4
       ],
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_rpm_unit",
@@ -1167,8 +1172,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
-      "sheet": "s6",
-      "conn": 1
+      "sheet": "s5"
     },
     {
       "id": "o_charge_note",
@@ -1183,8 +1187,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "s0"
     },
     {
       "id": "f_hi",
@@ -1199,7 +1202,7 @@
       "color": "fg",
       "align": "left",
       "toggle": "!mapUp",
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "f_mid",
@@ -1214,7 +1217,7 @@
       "color": "fg",
       "align": "left",
       "toggle": "!mapUp",
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "f_lo",
@@ -1229,7 +1232,7 @@
       "color": "fg",
       "align": "left",
       "toggle": "!mapUp",
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "fuel_icon",
@@ -1243,7 +1246,7 @@
       "color": "fg",
       "toggle": "!mapUp",
       "lowWhen": "fuel",
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "o_hi",
@@ -1558,7 +1561,7 @@
       "color": "fg",
       "toggle": "mapUp",
       "lowWhen": "battery",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_fuel_icon",
@@ -1572,7 +1575,7 @@
       "color": "fg",
       "toggle": "mapUp",
       "lowWhen": "fuel",
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "o_f_lo",
@@ -1587,7 +1590,7 @@
       "color": "fg",
       "align": "left",
       "toggle": "mapUp",
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "o_f_mid",
@@ -1602,7 +1605,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "o_f_hi",
@@ -1617,7 +1620,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "mapUp",
-      "sheet": "s1"
+      "sheet": "s0"
     },
     {
       "id": "time",
@@ -1631,7 +1634,7 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1645,7 +1648,7 @@
       "text": "{{ampmLc}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1659,7 +1662,7 @@
       "h": 34,
       "color": "fg",
       "lowWhen": "fuel",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1675,7 +1678,7 @@
       "color": "fg",
       "align": "right",
       "lowWhen": "fuel",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1689,7 +1692,7 @@
       "text": "{{u:distLc}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1736,7 +1739,7 @@
       "color": "dim",
       "toggle": "!mapUp",
       "launchBy": true,
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "run_time",
@@ -1753,7 +1756,7 @@
       "toggle": "!mapUp",
       "launchBy": true,
       "rate": 100,
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "ev_share_icon",
@@ -1771,7 +1774,7 @@
         255
       ],
       "evShareBy": true,
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1786,7 +1789,7 @@
       "font": "m_tiny",
       "color": "fg",
       "align": "right",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1800,7 +1803,7 @@
       "text": "{{evShareUnit}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1815,7 +1818,7 @@
       "color": "fg",
       "tempBy": "coolant",
       "toggle": "!mapUp",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1832,7 +1835,7 @@
       "align": "right",
       "tempBy": "coolant",
       "toggle": "!mapUp",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1847,7 +1850,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1855,21 +1858,21 @@
       "type": "icon",
       "icon": "oilPour",
       "z": 5,
-      "x": 1383,
+      "x": 1440,
       "y": 681,
       "w": 26,
       "h": 34,
       "color": "fg",
       "tempBy": "oil",
       "toggle": "!mapUp",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
       "id": "oil",
       "type": "text",
       "z": 5,
-      "x": 1415,
+      "x": 1467,
       "y": 684,
       "w": 87,
       "h": 29,
@@ -1879,14 +1882,14 @@
       "align": "right",
       "tempBy": "oil",
       "toggle": "!mapUp",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
       "id": "oil_unit",
       "type": "text",
       "z": 5,
-      "x": 1506,
+      "x": 1555,
       "y": 687,
       "w": 36,
       "h": 32,
@@ -1894,7 +1897,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1902,21 +1905,21 @@
       "type": "icon",
       "icon": "battBolt",
       "z": 5,
-      "x": 1562,
+      "x": 1592,
       "y": 681,
       "w": 26,
       "h": 34,
       "color": "fg",
       "toggle": "!mapUp",
       "lowWhen": "battery",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
       "id": "ev_range",
       "type": "text",
       "z": 5,
-      "x": 1594,
+      "x": 1624,
       "y": 684,
       "w": 62,
       "h": 29,
@@ -1926,14 +1929,14 @@
       "align": "right",
       "lowWhen": "battery",
       "toggle": "!mapUp",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
       "id": "ev_range_unit",
       "type": "text",
       "z": 5,
-      "x": 1660,
+      "x": 1690,
       "y": 687,
       "w": 44,
       "h": 32,
@@ -1941,7 +1944,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1996,7 +1999,7 @@
       "type": "icon",
       "icon": "oilPour",
       "z": 5,
-      "x": 1413,
+      "x": 1440,
       "y": 681,
       "w": 26,
       "h": 34,
@@ -2010,7 +2013,7 @@
       "id": "o_oil",
       "type": "text",
       "z": 5,
-      "x": 1445,
+      "x": 1467,
       "y": 684,
       "w": 87,
       "h": 29,
@@ -2027,7 +2030,7 @@
       "id": "o_oil_unit",
       "type": "text",
       "z": 5,
-      "x": 1536,
+      "x": 1555,
       "y": 687,
       "w": 36,
       "h": 32,
@@ -2089,7 +2092,7 @@
       "id": "outside",
       "type": "text",
       "z": 5,
-      "x": 1722,
+      "x": 1736,
       "y": 684,
       "w": 118,
       "h": 29,
@@ -2099,7 +2102,7 @@
       "align": "right",
       "toggle": "!mapUp",
       "iceBy": true,
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -2107,21 +2110,21 @@
       "type": "icon",
       "icon": "snow",
       "z": 5,
-      "x": 1834,
+      "x": 1848,
       "y": 646,
       "w": 24,
       "h": 32,
       "color": "dim",
       "toggle": "!mapUp",
       "iceBy": true,
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
       "id": "outside_unit",
       "type": "text",
       "z": 5,
-      "x": 1846,
+      "x": 1860,
       "y": 687,
       "w": 44,
       "h": 32,
@@ -2129,7 +2132,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {

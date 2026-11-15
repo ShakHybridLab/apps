@@ -282,7 +282,7 @@ const { freeRect } = require('./free_rect');
 const { shiftLightState } = require('./shift_light');
 const badges = require('./badges');
 const Runs = require('./runs');
-const { SpeedLimit } = require('./speedlimit');
+const { SpeedLimit, decodeSign } = require('./speedlimit');
 const { hueOfMode, accentTheme, mapRole } = require('./accent');
 const ACCENT_BRIGHT = [92, 158, 255, 255];   // the Sport theme's brightest blue (0.36, 0.62, 1.0), whose hue the drive mode's name takes
 const tz = require('./tz');
@@ -863,6 +863,14 @@ class HudApp {
                 },
             },
         };
+        // the car's own reading of the road signs (its camera), for the speed limit ring: only an app that declares the signals (ShakTheme) asks for them
+        const decl = (this.ctx.spec && this.ctx.spec.signals) || {};
+        if (decl['de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl']) {
+            extra['de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl'] = { displaySpeedLimitAndNoPassingRestriction: (v) => this._carSign('sign', v) };
+        }
+        if (decl['de.bmw.infotainment.fasus.FASuS']) {
+            extra['de.bmw.infotainment.fasus.FASuS'] = { statusNextSpeedLimitRecognition: (v) => this._carSign('next', v) };
+        }
         this.car = new Car(this.ctx, ['rpm', 'speed', 'temps', 'accel', 'gear', 'torque'], extra);
         this.car.setRedline(this.setting('redline'));
         this.gBuf = [];                  // [t, lat, long] of the last G_AVG_MS
@@ -1479,6 +1487,31 @@ class HudApp {
     }
 
     /** The speed limit ring now: { text (the number shown), over (the speed shown is over it) }, or null when there is none to show. */
+    /**
+     * What the car says about the road signs: 'sign' (the sign the cluster shows: TrafficSignDisplayControl) feeds the limit ring, 'next' (FASuS,
+     * the next limit the camera has recognised) is only logged until a drive's log shows what it means. The raw value of each goes to the log
+     * (every new one, 40 lines in all), since the field list of the sign signal is cut on the owner's photo.
+     */
+    _carSign(src, v) {
+        let raw = '';
+        try { raw = JSON.stringify(v); } catch (e) { raw = String(v); }
+        raw = String(raw).slice(0, 300);
+        this.signRaw = this.signRaw || {};
+        if (this.signRaw[src] !== raw) {
+            this.signRaw[src] = raw;
+            this.signLogs = (this.signLogs || 0) + 1;
+            if (this.signLogs <= 40) this.log.info('road sign ' + src + ': ' + raw);
+        }
+        if (src !== 'sign') return;
+        const d = decodeSign(v);
+        if (!d.found) {
+            if (!this.signNoField) { this.signNoField = true; this.log.warn('road sign: no speed field in ' + Object.keys(v || {}).join(', ')); }
+            return;
+        }
+        if (d.invalid) return;
+        this.speedLimit.feed(d.limit, 'car');
+    }
+
     _limitNow(now) {
         if (this.target !== 'panel' || this.setting('limitRing') === false) return null;
         const kmh = this.speedLimit.limit();

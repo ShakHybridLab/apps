@@ -108,6 +108,48 @@ def pins(g, pin):
     return {pin[id(w)] for w in g if pin.get(id(w))}
 
 
+def totals(g):
+    """les pixels de toutes les feuilles dans chaque état de la carte"""
+    t = [0, 0]
+    for x in g:
+        a = areas(x)
+        t[0] += a[0]; t[1] += a[1]
+    return t
+
+
+def score(g):
+    """le pire des deux états d'abord (c'est lui qui remplit la mémoire), la somme ensuite"""
+    t = totals(g)
+    return (max(t), sum(t))
+
+
+def improve(g, order, layers, pin, passes=8):
+    """Après la fusion gloutonne : déplace un widget à la fois vers la feuille où le pire état coûte le moins de pixels (jamais plus de
+    feuilles, toujours un rangement valide) tant que cela fait baisser le total."""
+    for _ in range(passes):
+        moved = False
+        base = score(g)
+        for i in range(len(g)):
+            for w in list(g[i]):
+                best = None
+                for j in range(len(g)):
+                    if j == i or len(pins(g[j] + [w], pin)) > 1:
+                        continue
+                    new = [list(x) for x in g]
+                    new[i].remove(w); new[j].append(w)
+                    new = [x for x in new if x]
+                    sc = score(new)
+                    if sc < (base[0] - 1, base[1] + 10 ** 9) and (best is None or sc < best[0]):
+                        if valid(new, order, layers):
+                            best = (sc, new)
+                if best is not None:
+                    g = best[1]; base = best[0]; moved = True
+                    break
+        if not moved:
+            break
+    return g
+
+
 def groups_of(widgets, k, order, layers, pin=None):
     pin = pin or {}
     g = [[w] for w in widgets]
@@ -126,8 +168,8 @@ def groups_of(widgets, k, order, layers, pin=None):
                 g = merged; c = [cost(x) for x in g]
                 break
         else:
-            return g          # plus aucune fusion possible : plus de feuilles que demandé
-    return g
+            return improve(g, order, layers, pin)          # plus aucune fusion possible : plus de feuilles que demandé
+    return improve(g, order, layers, pin)
 
 
 def plan(widgets, mapup):

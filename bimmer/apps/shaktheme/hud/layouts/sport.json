@@ -399,7 +399,7 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "rpm3",
@@ -548,7 +548,7 @@
       "font": "s_unit",
       "color": "sblue",
       "align": "center",
-      "sheet": "s1"
+      "sheet": "s4"
     },
     {
       "id": "rpm_cap",
@@ -1006,7 +1006,7 @@
       "lowWhen": "battery",
       "type": "icon",
       "z": 5,
-      "x": 1349,
+      "x": 1442,
       "y": 680,
       "w": 24,
       "h": 30,
@@ -1020,9 +1020,9 @@
       "lowWhen": "battery",
       "type": "text",
       "z": 5,
-      "x": 1375,
+      "x": 1470,
       "y": 681,
-      "w": 100,
+      "w": 70,
       "h": 26,
       "text": "{{evRange}}",
       "font": "s_val",
@@ -1035,7 +1035,7 @@
       "id": "ev_range_unit",
       "type": "text",
       "z": 5,
-      "x": 1481,
+      "x": 1546,
       "y": 682,
       "w": 50,
       "h": 29,
@@ -1050,7 +1050,7 @@
       "id": "outside",
       "type": "text",
       "z": 5,
-      "x": 1580,
+      "x": 1630,
       "y": 681,
       "w": 120,
       "h": 26,
@@ -1066,7 +1066,7 @@
       "id": "outside_unit",
       "type": "text",
       "z": 5,
-      "x": 1706,
+      "x": 1756,
       "y": 682,
       "w": 50,
       "h": 29,
@@ -1098,7 +1098,7 @@
       "type": "text",
       "z": 5,
       "x": 1640,
-      "y": 681,
+      "y": 643,
       "w": 240,
       "h": 26,
       "text": "{{modeName}}",
@@ -1106,7 +1106,7 @@
       "color": "dim",
       "align": "right",
       "accentBy": true,
-      "sheet": "s10",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1118,7 +1118,7 @@
       "y": 148,
       "w": 360,
       "h": 96,
-      "sheet": "s11",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1206,13 +1206,13 @@
       "type": "icon",
       "icon": "snow",
       "z": 5,
-      "x": 1586,
+      "x": 1636,
       "y": 679,
       "w": 24,
       "h": 30,
       "color": "dim",
       "iceBy": true,
-      "sheet": "s10",
+      "sheet": "s11",
       "conn": 1
     },
     {
@@ -1231,7 +1231,7 @@
         255
       ],
       "evShareBy": true,
-      "sheet": "s9",
+      "sheet": "s11",
       "conn": 1
     },
     {
@@ -1276,7 +1276,7 @@
       "color": "fg",
       "conn": 1,
       "readyBy": true,
-      "sheet": "s10"
+      "sheet": "s11"
     },
     {
       "id": "ready_text",
@@ -1292,7 +1292,7 @@
       "align": "left",
       "conn": 1,
       "readyBy": true,
-      "sheet": "s10"
+      "sheet": "s11"
     }
   ]
 }

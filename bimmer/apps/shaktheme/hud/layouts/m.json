@@ -857,7 +857,7 @@
       "w": 31,
       "h": 29,
       "color": "fg",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -884,7 +884,7 @@
       "w": 31,
       "h": 29,
       "color": "fg",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -943,7 +943,7 @@
       "font": "m_gl",
       "color": "fg",
       "align": "right",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1001,7 +1001,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s7",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1103,7 +1103,7 @@
       "h": 34,
       "icon": "battBolt",
       "color": "dim",
-      "sheet": "s7",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1119,7 +1119,7 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "sheet": "s7",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1133,7 +1133,7 @@
       "text": "{{u:distLc}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s7",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1212,7 +1212,8 @@
       "color": "dim",
       "launchBy": true,
       "toggle": "!mapUp",
-      "sheet": "s0"
+      "sheet": "s11",
+      "conn": 1
     },
     {
       "id": "run_time",
@@ -1229,7 +1230,8 @@
       "launchBy": true,
       "toggle": "!mapUp",
       "rate": 100,
-      "sheet": "s0"
+      "sheet": "s11",
+      "conn": 1
     },
     {
       "id": "run_unit",
@@ -1244,7 +1246,8 @@
       "color": "dim",
       "align": "left",
       "toggle": "!mapUp",
-      "sheet": "s0"
+      "sheet": "s11",
+      "conn": 1
     },
     {
       "id": "ice_icon",

@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.20.1",
+  "version": "0.20.2",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -88,6 +88,14 @@
     },
     "de.bmw.infrastructure.EnvironmentalInformation": {
       "ExteriorTemperature": "s"
+    },
+    "de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl": {
+      "displaySpeedLimitAndNoPassingRestriction": "s",
+      "_optional": "the speed limit the car's camera has read, the one BMW's own cluster shows (a notifier without getter, listed on the owner's car); feeds the limit ring"
+    },
+    "de.bmw.infotainment.fasus.FASuS": {
+      "statusNextSpeedLimitRecognition": "rs",
+      "_optional": "the next limit the camera recognised (nextClassLimitSpeed, nextWithdrawalLimitSpeed): logged only, until a drive's log shows what it means"
     }
   },
   "screens": [
@@ -1145,7 +1153,7 @@
     },
     {
       "key": "limitRing",
-      "label": "Bague de limitation de vitesse (si une appli donne la limite)",
+      "label": "Bague de limitation de vitesse (lue par la caméra de la voiture ou donnée par une appli)",
       "type": "bool",
       "default": true
     },

@@ -566,7 +566,8 @@ check('Sport theme: each range sits under its own gauge (fuel left, battery righ
     const L = lay('sport'), by = (i) => L.widgets.find((w) => w.id === i), visible = require(path.join(tmp, 'shared', 'visible.js'));
     const fuelEnd = by('range_unit').x + by('range_unit').w, evStart = by('ev_icon').x;
     assert(by('range_icon').x >= 380 && fuelEnd <= visible.BELT[0], 'the fuel range ends before the belt light (x ' + fuelEnd + ')');
-    assert(Math.abs(by('range_icon').x + by('ev_range_unit').x + by('ev_range_unit').w - 1920) <= 40 && Math.abs(fuelEnd + evStart - 1920) <= 40, 'the two ranges mirror each other about the middle');
+    assert(evStart >= visible.GEAR_P[2] && by('ev_range').x >= visible.GEAR_P[2], 'the electric range starts after BMW\'s gear letter (x ' + visible.GEAR_P[0] + '..' + visible.GEAR_P[2] + '), no longer mirroring the fuel range: the letter sits under the battery gauge');
+    assert(by('drive_mode').y + by('drive_mode').h <= by('outside').y, 'the drive mode\'s name is on its own row above the outside temperature (it collided with it)');
     assert(by('ev_range_unit').x + by('ev_range_unit').w <= by('outside').x, 'the outside temperature starts after the electric range');
     assert(by('ev_share_unit').x + by('ev_share_unit').w <= evStart, 'the electric share stops before the electric range');
     assert(by('ev_share_icon').x >= by('ready_text').x + by('ready_text').w, 'the electric share starts after the launch cue');

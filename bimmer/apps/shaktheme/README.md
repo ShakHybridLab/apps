@@ -96,6 +96,11 @@ Neither theme has been tried on a car; they are checked on the bench against the
 - **Nom du mode de conduite en couleur :** Electric, Hybrid et Sport s'écrivent en bleu, vert et rouge sur Sport, M et Navi (sur le M, seul ce nom change ; sur M Blade il reste blanc, car il est posé sur l'onglet de l'hexagone, qui a déjà la couleur du mode).
 - **Launch Control Ready (0.19.1, condition de régime au 0.19.2) :** voiture immobile en mode Sport, **moteur à 2 000 tr/min ou plus** (le pied sur l'accélérateur ; pas au feu rouge), un **drapeau à damier** et « Launch Control Ready » s'affichent **en bas au centre** (avec ou sans la carte Waze ; en blanc sur l'onglet de l'hexagone de M Blade, à la place du nom du mode) ; le chrono compte dès que la voiture démarre. Réglages **Drapeau « Launch Control Ready » (mode Sport, à l'arrêt)** et **Launch Control Ready : à partir de** (0 = dès l'arrêt). L'appli ne lit ni le launch control de la voiture ni le frein : c'est le chrono qui est prêt.
 
+## Détails de finition (0.20.2)
+
+- **Bague de limitation de vitesse : la voiture la donne.** ShakTheme lit le panneau que la caméra de la voiture a reconnu (le signal que le cluster de BMW affiche lui-même) ; la bague reste jusqu'au panneau suivant ou jusqu'à « pas de panneau ». Les autres applis peuvent toujours écrire `speedlimit-<appli>.json` (le plus récent gagne). Pas encore essayé sur la voiture : le journal garde la valeur brute des premiers panneaux (`road sign …`).
+- **Lettre de rapport de BMW en bas à droite :** les autonomies et températures de Sport, M Blade et Navi se placent autour d'elle ; le nom du mode de Sport monte d'une rangée (plus de chevauchement avec la température extérieure).
+
 ## Détails de finition (0.20.1)
 
 - **Mémoire de pixels réduite de moitié :** sur la voiture, il ne reste qu'environ 10 Mio de pixels pour nous sur les 16 de cluster-render, et les thèmes en voulaient 9 à 13 : les derniers widgets étaient refusés. Chaque texte et icône est rangé dans une feuille serrée (`"sheet"`, outil `tools/pack_sheets.py`, contrôlé par `tools/test_pixel_memory.js`) : de 3 à 6 Mio selon le thème.
