@@ -1726,6 +1726,36 @@ void main() {
 }
 `;
 
+const SLANTBAR = `// A slanted level bar for a cluster-render "effect" layer (GLSL ES 1.00): ShakHUD's battery bar. A parallelogram (the top edge
+// shifted right by u_slant px, as the M Style rev bar leans), a 2 px outline in the colour u_on, lit from the left up to u_value
+// (0..1), the rest see-through u_track, cut by three thin slanted gaps (quarters). v_uv (0,0) is the top-left.
+//   u_size px, u_slant px, u_value 0..1, u_on rgba (outline and fill), u_track rgba (the unlit part)
+precision mediump float;
+varying vec2 v_uv;
+uniform vec2 u_size;
+uniform float u_slant;
+uniform float u_value;
+uniform vec4 u_on;
+uniform vec4 u_track;
+
+void main() {
+    vec2 p = v_uv * u_size;
+    float x = p.x - u_slant * (1.0 - v_uv.y);
+    float w = u_size.x - u_slant;
+    float e = min(min(x, w - x), min(p.y, u_size.y - p.y));
+    float inside = clamp(e + 0.5, 0.0, 1.0);
+    if (inside <= 0.0) { gl_FragColor = vec4(0.0); return; }
+    float ring = 1.0 - clamp(e - 1.5, 0.0, 1.0);
+    float lit = clamp(w * u_value - x + 0.5, 0.0, 1.0);
+    float gap = 1.0 - clamp(abs(x - w * 0.25) - 1.0, 0.0, 1.0);
+    gap = max(gap, 1.0 - clamp(abs(x - w * 0.5) - 1.0, 0.0, 1.0));
+    gap = max(gap, 1.0 - clamp(abs(x - w * 0.75) - 1.0, 0.0, 1.0));
+    float ba = mix(u_track.a, u_on.a, lit) * (1.0 - gap);
+    float a = max(ring * u_on.a, (1.0 - ring) * ba) * inside;
+    gl_FragColor = vec4(mix(u_track.rgb, u_on.rgb, max(lit, ring)), a);
+}
+`;
+
 const MSTYLE = `// M Style HUD rev counter for a cluster-render "effect" layer (GLSL ES 1.00): a bent bar, a rising slant then a level run, with
 // ticks under it. The rpm (0..1 of u_g.z thousand) fills the bar from its first end; the part from u_g.w on is the red zone.
 // Uniforms (px in the layer):
@@ -1801,4 +1831,4 @@ void main() {
 }
 `;
 
-module.exports = { mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, navi: NAVI, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES };
+module.exports = { slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, navi: NAVI, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES };

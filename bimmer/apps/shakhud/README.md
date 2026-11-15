@@ -16,7 +16,13 @@ Not tried on a car yet: the shader and the layout run on the bench.
 - The two last need eDrive Live (or any app that shares the battery's power, `/dev/shm/cluster-info`) and the setting
   **Hybrid rev counter** (on by default). Without a power reading the bar shows the engine's rpm alone.
 - **Shift light:** BMW's modern one, under the numbers: five slanted lights on each side of a red block, filling from the outer ends in as the rpm climbs from 3000, the block red from 4500 rpm, everything flashing red from 5500 (the settings **Shift light turns red at** and **flashes from**); the setting **Shift light** hides it.
-- The colours follow the HUD theme (Auto: day colours, amber after sunset; the page's Colours tab).
+- **Bottom right (the setting Battery, ranges and temperatures):** the battery's charge in big numbers, the electric and the fuel range beside it,
+  a slanted battery bar under them (light blue; green while the battery charges; amber under 15 %) and the oil and coolant temperatures
+  (blue cold, green warm, flashing red over the limit, as in ShakTheme). Clear of BMW's own speed. The charge comes from the battery unit
+  or from eDrive Live.
+- **Waze:** while Waze on cluster shows its map, the whole HUD goes dark so nothing sits on the map (the setting **Hide the whole HUD while
+  Waze's map shows**).
+- The colours follow the HUD theme (Auto: the M colours by day, amber after sunset; the page's Colours tab).
 
 ## Sharing the HUD
 

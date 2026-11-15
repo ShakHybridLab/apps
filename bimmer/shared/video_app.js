@@ -186,7 +186,7 @@ class VideoApp {
         // THE GATE FIRST: not standing = no picture anywhere, whatever else is true
         // two independent checks, both must say "parked": this app's own (Standing) and RideTube's original (kit/parked.js, strict);
         // with no second check wired, the car counts as moving
-        const standing = this.gate.ok(now) && typeof this.d.moving === 'function' && this.d.moving() === true;
+        const standing = this.gate.ok(now) && typeof this.d.moving === 'function' && this.d.moving() === false;
         this.state.standing = standing;
         if (!standing) { this._hideVideos(); this.state.playing = false; return { panel: false, hud: false }; }
         const frame = this._read();

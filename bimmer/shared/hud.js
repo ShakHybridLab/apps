@@ -54,6 +54,9 @@
  *   revbar    effect layer; shaders.js revbar, the G20-style slanted rev bar (Redline layout):
  *             "barH" bar height, "top" room for the marks above it, "slant" px, "over" rpm past the
  *             redline's thousand the scale runs to (1000: a 7000 redline gives 0..8)
+ *   slantbar  effect layer (shaders.js slantbar): ShakHUD's battery bar, a slanted parallelogram with an outline and quarter gaps, lit from the
+ *             left by "signal" (hvSoc) between "min" (0) and "max" (100); "slant" px (10); light blue, green while the battery charges
+ *             (hybrid_tach.js), amber under "low" % (15)
  *   lights    effect layer; shaders.js lights, shift lights filling from "from" rpm (3000) up to the shift point
  *   badge     image layer; a rounded tag with text: "tone" verdict (the last shift's grade colour) or cold
  *   fill      effect layer; a solid colour (role "color", default "bg") over the whole widget, with an
@@ -2167,6 +2170,12 @@ class HudApp {
             c.uniform(ref, 'u_track', rgba(color(t, w.trackColor || 'track')));
             c.uniform(ref, 'u_peak', [-1]);
             c.uniform(ref, 'u_peakC', rgb(color(t, w.peakColor || 'fg')));
+        } else if (w.type === 'slantbar') {
+            c.uniform(ref, 'u_size', [w.w, w.h]);
+            c.uniform(ref, 'u_slant', [isNum(w.slant) ? w.slant : 10]);
+            c.uniform(ref, 'u_value', [0]);
+            c.uniform(ref, 'u_on', [0.3, 0.75, 1.0, 1]);
+            c.uniform(ref, 'u_track', rgba(color(t, w.trackColor || 'track')));
         } else if (w.type === 'arc') {
             c.uniform(ref, 'u_size', [w.w, w.h]);
             c.uniform(ref, 'u_peak', [-1]);
@@ -2621,6 +2630,18 @@ class HudApp {
             x.last = key;
             x.c.uniform(x.ref, 'u_v', [v, !bar && sp.now ? 1 : 0, 0, 0]);
             x.c.uniform(x.ref, 'u_hy', bar === 1 ? [0.3, 0.75, 1.0, 1] : bar === 2 ? [0.2, 0.85, 0.5, 1] : [0, 0, 0, 0]);
+        } else if (w.type === 'slantbar') {
+            const raw = this._raw(w.signal || 'hvSoc'), mn = isNum(w.min) ? w.min : 0, mx = isNum(w.max) ? w.max : 100;
+            const v = isNum(raw) && mx !== mn ? Math.min(1, Math.max(0, (raw - mn) / (mx - mn))) : 0, q = Math.round(v * 200) / 200;
+            // light blue; green while the battery charges (recuperation, the plug); amber when nearly empty
+            const chg = this._hybridTach({ hybridTach: true }, this._raw('rpm')).chg > 0;
+            const low = isNum(raw) && raw < (isNum(w.low) ? w.low : 15);
+            const tone = chg ? 2 : low ? 3 : 1;
+            const key = q + '|' + tone;
+            if (!force && key === x.last) return;
+            x.last = key;
+            x.c.uniform(x.ref, 'u_value', [q]);
+            x.c.uniform(x.ref, 'u_on', tone === 2 ? [0.2, 0.85, 0.5, 1] : tone === 3 ? [1.0, 0.6, 0.1, 1] : [0.3, 0.75, 1.0, 1]);
         } else if (w.type === 'segbar') {
             const v = this._raw(w.signal);
             const lit = isNum(v) ? Math.max(0, Math.min(w.max, Math.round(v))) : 0;

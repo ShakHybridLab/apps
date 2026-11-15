@@ -1,8 +1,8 @@
 {
   "id": "shakhud",
   "title": "ShakHUD",
-  "description": "ShakHUD: a HUD of its own for the windshield, the M Style rev counter (a bent bar, red in the red zone, light blue while electric, green while charging), made to sit with Waze's HUD map",
-  "version": "0.1.1",
+  "description": "ShakHUD: a HUD of its own for the windshield, the M Style rev counter (a bent bar, red in the red zone, light blue while electric, green while charging), with the battery, the ranges and the temperatures at the bottom right; hides itself while Waze's HUD map shows",
+  "version": "0.2.0",
   "vendor": "custom",
   "loggingId": "OAS1",
   "iconGlyph": "SH",
@@ -185,7 +185,7 @@
       "key": "dayTheme",
       "label": "Daytime theme for Auto",
       "type": "choice",
-      "default": "classic",
+      "default": "m",
       "options": [
         [
           "classic",
@@ -779,6 +779,12 @@
     {
       "key": "shiftLights",
       "label": "Shift light (BMW style: lights from the outside in, red block, flashing)",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "showBattery",
+      "label": "Battery, ranges and temperatures (bottom right)",
       "type": "bool",
       "default": true
     },

@@ -25,7 +25,7 @@ const MAGIC = 0x4656474d;       // "MGVF"
 const HEAD = 64;
 const STALE_MS = 5000;          // a speed reading older than this counts as driving
 const STILL_MS = 2000;          // the car must have stood this long before the picture shows
-const STILL_KMH = 200;          // at or under this the car stands (the signal's noise floor)
+const STILL_KMH = 0.5;          // at or under this the car stands (the signal's noise floor)
 
 /** The MGVF header in `buf` (at least 64 bytes), or null when it is not one. */
 function parseHead(buf) {
