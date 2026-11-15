@@ -61,12 +61,14 @@ check('both apps that bundle hud.js list map_window.js (or the bundle would cras
         assert(list.includes('"map_window.js"'), f + ' lacks map_window.js');
     });
 });
-check('M Blade asks for it, with a narrow window like the photo\'s and clear of the hood; Sport and M keep the central window untouched', () => {
+check('M Blade asks for it, with a window in the middle of Waze on cluster\'s own slot (x 416..1504, y 120..600) and clear of the hood; Sport and M keep the central window untouched', () => {
     const L = (n) => JSON.parse(fs.readFileSync(path.join(ROOT, 'apps/shaktheme/hud/layouts/' + n + '.json'), 'utf8'));
     const b = L('mblade').widgets.find((w) => w.hole);
     assert(b.mapPlace === true && b.holeWhen === 'mapUp');
     const w = { x: b.hole[0] + b.holeInset, y: b.hole[1] + b.holeInset, w: b.hole[2] - 2 * b.holeInset, h: b.hole[3] - 2 * b.holeInset };
-    assert(w.w >= 440 && w.w <= 620 && w.h >= 380 && w.h <= 460, 'window ' + w.w + 'x' + w.h + ' is not a narrow map window (about 480-560 x 422)');
+    assert(w.w >= 480 && w.w <= 680 && w.h >= 380 && w.h <= 480, 'window ' + w.w + 'x' + w.h + ' is not a map window (about 480-680 x 380-480)');
+    assert(w.x >= 416 && w.y >= 120 && w.x + w.w <= 1504 && w.y + w.h <= 600, 'the window leaves the slot where Waze on cluster draws its map by default: a Waze that ignores our window would show a sliver of its map');
+    assert(w.x > 90, 'the window must clear the hood\'s limit at the left');
     ['sport', 'm'].forEach((n) => {
         const p = path.join(ROOT, 'apps/shaktheme/hud/layouts/' + n + '.json');
         if (!fs.existsSync(p)) return;

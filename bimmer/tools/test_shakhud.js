@@ -89,4 +89,16 @@ check('the hybrid rev counter on the HUD follows the "hybridRev" setting, the cl
     assert(/settings\.item\('hybridRev'\)/.test(hud) && /settings\.item\('sportPower'\)/.test(hud));
 });
 
+check('a tap on the layout picked, while Waze\'s map hides the HUD, is never silent: the page says why and offers to show it anyway', () => {
+    const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8'), page = fs.readFileSync(path.join(root, 'shared', 'page.js'), 'utf8');
+    // one place decides what hides the layout (the engine's _layoutName and the page both ask it)
+    assert(/hiddenBy\(\) \{/.test(hud) && /_layoutName\(\) \{\s*if \(this\.hiddenBy\(\)\)/.test(hud));
+    assert(/hiddenBy\(\) === 'waze' && this\.hud\._chosenName\(\) === v/.test(page) && /this\.set\('hideWithWaze', false\)/.test(page));
+    const fr = require('../shared/fr');
+    ['Waze map is showing', 'Show the HUD', 'Hidden \u00b7 another app has the HUD', 'Hidden \u00b7 Waze map is showing \u00b7 tap the layout to show the HUD anyway', 'Show M Style on the HUD anyway?']
+        .forEach((t) => assert.notStrictEqual(fr.tr(t), t, 'not in French: ' + t));
+    const hs = app.settings.find((x) => x.key === 'hideWithWaze');
+    assert(hs && hs.type === 'bool' && app.config.hideWithWaze === true);
+});
+
 console.log('shakhud: ' + n + ' checks passed');

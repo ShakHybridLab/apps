@@ -76,18 +76,21 @@ NAMES.forEach((n) => {
                 assert(Math.abs(b.g2[0] - b.g1[0]) >= 120 && Math.abs(b.g2[0] - b.g1[0]) <= 140, id + ': oil and battery strips are not 130 px apart');
             });
         });
-        check('mblade: with the map up the hexagon clears the window, the fuel is a flat bar right under it, the strips and the blade moved right but clear of BMW\'s black box', () => {
+        check('mblade: with the map up the window is inside Waze on cluster\'s slot, the hexagon gives way, the fuel is a flat bar right under the window, the strips and the blade moved right but clear of BMW\'s black box', () => {
             const o = by('backdrop_open'), n = by('backdrop');
             const win = [o.hole[0] + o.holeInset, o.hole[1] + o.holeInset, o.hole[0] + o.hole[2] - o.holeInset, o.hole[1] + o.hole[3] - o.holeInset];
-            assert(o.hex[0] >= win[2] + 10, 'the hexagon\'s left tip is less than 10 px from the window (' + o.hex[0] + ' vs ' + win[2] + ')');
+            assert(!o.hex, 'no hexagon (and so no tabs) with the map up: the window takes its place');
+            assert(win[0] >= 416 && win[1] >= 120 && win[2] <= 1504 && win[3] <= 600, 'the window leaves Waze on cluster\'s own slot (x 416..1504, y 120..600): ' + win);
             assert(o.fuelH === true && !n.fuelH, 'the fuel bar must be flat with the map up only');
             const left = 1920 - o.g0[2], right = 1920 - o.g0[1];                 // the flat bar, back in panel px
             assert(left >= win[0] && right <= win[2], 'the fuel bar is wider than the window');
             assert(o.g0[0] >= win[3] + 8 && o.g0[0] + 27 <= 684 - 20, 'the fuel bar is not right under the window, clear of the bottom row');
             assert(o.g1[0] > n.g1[0] && o.g2[0] > n.g2[0] && o.bl[2] > n.bl[2], 'not moved to the right');
+            assert(win[2] + 10 <= 1050, 'the window runs into the blade, whose base starts near x 1050 (' + win[2] + ')');
             const f = ['o_f_lo', 'o_f_mid', 'o_f_hi', 'o_fuel_icon'].map(by);
             assert(f.every((w) => w && w.toggle === 'mapUp' && w.x >= win[0] - 60 && w.x + w.w <= win[2] + 20), 'fuel scale outside the window\'s span');
             assert(!by('o_f_hi').text || by('o_f_hi').y >= o.g0[0] + 27, 'the scale is not under the bar');
+            ['o_gear', 'o_speed', 'o_speed_unit'].forEach((id) => assert(by(id).x + by(id).w <= win[0] - 10, id + ' is not in the left column, clear of the window'));
         });
         // the bottom row's right end exists twice: for the normal view (no prefix, backdrop) and for the map view ("o_", backdrop_open),
         // where the oil, the electric range and the outside temperature follow the strips

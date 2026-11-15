@@ -109,7 +109,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s0"
     },
     {
       "id": "spd1",
@@ -134,7 +135,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s0"
     },
     {
       "id": "spd2",
@@ -159,7 +161,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s0"
     },
     {
       "id": "spd3",
@@ -184,7 +187,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s0"
     },
     {
       "id": "spd4",
@@ -209,7 +213,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s1"
     },
     {
       "id": "spd5",
@@ -234,7 +239,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s1"
     },
     {
       "id": "spd6",
@@ -259,7 +265,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s1"
     },
     {
       "id": "spd7",
@@ -284,7 +291,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s1"
     },
     {
       "id": "spd8",
@@ -309,7 +317,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s1"
     },
     {
       "id": "rpm0",
@@ -335,7 +344,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s2"
     },
     {
       "id": "rpm1",
@@ -361,7 +371,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s2"
     },
     {
       "id": "rpm2",
@@ -387,7 +398,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s3"
     },
     {
       "id": "rpm3",
@@ -413,7 +425,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s3"
     },
     {
       "id": "rpm4",
@@ -439,7 +452,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s3"
     },
     {
       "id": "rpm5",
@@ -465,7 +479,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s3"
     },
     {
       "id": "rpm6",
@@ -491,7 +506,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s3"
     },
     {
       "id": "rpm7",
@@ -517,7 +533,8 @@
         0,
         3
       ],
-      "nearMid": "s_scale_m"
+      "nearMid": "s_scale_m",
+      "sheet": "s3"
     },
     {
       "id": "mph_cap",
@@ -530,7 +547,8 @@
       "text": "{{u:speedLc}}",
       "font": "s_unit",
       "color": "sblue",
-      "align": "center"
+      "align": "center",
+      "sheet": "s1"
     },
     {
       "id": "rpm_cap",
@@ -543,7 +561,8 @@
       "text": "{{tachUnit}}",
       "font": "s_unit",
       "color": "sred",
-      "align": "center"
+      "align": "center",
+      "sheet": "s4"
     },
     {
       "id": "charge_note",
@@ -556,7 +575,8 @@
       "text": "{{chargeNote}}",
       "font": "s_unit",
       "color": "fg",
-      "align": "right"
+      "align": "right",
+      "sheet": "s5"
     },
     {
       "id": "drive_icon",
@@ -567,7 +587,8 @@
       "y": 182,
       "w": 40,
       "h": 36,
-      "color": "dim"
+      "color": "dim",
+      "sheet": "s1"
     },
     {
       "id": "speed",
@@ -581,7 +602,8 @@
       "font": "s_speed",
       "color": "fg",
       "align": "center",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s1"
     },
     {
       "id": "speed_unit",
@@ -595,7 +617,8 @@
       "font": "s_unit",
       "color": "sblue",
       "align": "center",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s1"
     },
     {
       "id": "gear",
@@ -610,7 +633,9 @@
       "color": "fg",
       "align": "center",
       "hotWhen": "now",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "mspeed",
@@ -624,7 +649,8 @@
       "font": "s_speed",
       "color": "fg",
       "align": "center",
-      "toggle": "mapUp"
+      "toggle": "mapUp",
+      "sheet": "s1"
     },
     {
       "id": "mspeed_unit",
@@ -638,7 +664,8 @@
       "font": "s_unit",
       "color": "sblue",
       "align": "center",
-      "toggle": "mapUp"
+      "toggle": "mapUp",
+      "sheet": "s1"
     },
     {
       "id": "mgear",
@@ -653,7 +680,9 @@
       "color": "fg",
       "align": "center",
       "hotWhen": "now",
-      "toggle": "mapUp"
+      "toggle": "mapUp",
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "f_full",
@@ -667,7 +696,8 @@
       "font": "s_gl",
       "color": "fg",
       "align": "center",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s0"
     },
     {
       "id": "f_half",
@@ -681,7 +711,8 @@
       "font": "s_gl",
       "color": "fg",
       "align": "center",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s0"
     },
     {
       "id": "fuel_icon",
@@ -694,7 +725,8 @@
       "w": 26,
       "h": 30,
       "color": "dim",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s0"
     },
     {
       "id": "f_empty",
@@ -708,7 +740,8 @@
       "font": "s_gl",
       "color": "fg",
       "align": "center",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s0"
     },
     {
       "id": "o_hot",
@@ -722,7 +755,8 @@
       "font": "s_gl",
       "color": "fg",
       "align": "center",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s2"
     },
     {
       "id": "o_unit",
@@ -736,7 +770,8 @@
       "font": "s_unit",
       "color": "dim",
       "align": "center",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s2"
     },
     {
       "id": "o_mid",
@@ -750,7 +785,8 @@
       "font": "s_gl",
       "color": "fg",
       "align": "center",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s2"
     },
     {
       "id": "oil_icon",
@@ -763,7 +799,8 @@
       "w": 26,
       "h": 32,
       "color": "dim",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s2"
     },
     {
       "id": "o_cold",
@@ -777,7 +814,8 @@
       "font": "s_gl",
       "color": "fg",
       "align": "center",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s2"
     },
     {
       "id": "boost",
@@ -791,7 +829,9 @@
       "font": "s_val",
       "color": "fg",
       "align": "right",
-      "toggle": "boostShown"
+      "toggle": "boostShown",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "boost_unit",
@@ -805,7 +845,9 @@
       "font": "s_unit",
       "color": "dim",
       "align": "left",
-      "toggle": "boostShown"
+      "toggle": "boostShown",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "power",
@@ -819,7 +861,9 @@
       "font": "s_val",
       "color": "fg",
       "align": "right",
-      "toggle": "power"
+      "toggle": "power",
+      "sheet": "s8",
+      "conn": 1
     },
     {
       "id": "power_unit",
@@ -833,7 +877,9 @@
       "font": "s_unit",
       "color": "dim",
       "align": "left",
-      "toggle": "power"
+      "toggle": "power",
+      "sheet": "s8",
+      "conn": 1
     },
     {
       "id": "therm",
@@ -845,7 +891,9 @@
       "y": 628,
       "w": 24,
       "h": 30,
-      "color": "dim"
+      "color": "dim",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "coolant",
@@ -859,7 +907,9 @@
       "text": "{{hvSoc}}",
       "font": "s_val",
       "color": "fg",
-      "align": "right"
+      "align": "right",
+      "sheet": "s8",
+      "conn": 1
     },
     {
       "id": "coolant_unit",
@@ -872,7 +922,9 @@
       "text": "%",
       "font": "s_unit",
       "color": "dim",
-      "align": "left"
+      "align": "left",
+      "sheet": "s8",
+      "conn": 1
     },
     {
       "id": "time",
@@ -885,7 +937,9 @@
       "text": "{{time}}",
       "font": "s_val",
       "color": "fg",
-      "align": "right"
+      "align": "right",
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "ampm",
@@ -898,7 +952,9 @@
       "text": "{{ampmLc}}",
       "font": "s_unit",
       "color": "dim",
-      "align": "left"
+      "align": "left",
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "range_icon",
@@ -910,7 +966,9 @@
       "y": 680,
       "w": 24,
       "h": 28,
-      "color": "dim"
+      "color": "dim",
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "range",
@@ -924,7 +982,9 @@
       "text": "{{rangeTotal}}",
       "font": "s_val",
       "color": "fg",
-      "align": "right"
+      "align": "right",
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "range_unit",
@@ -937,7 +997,9 @@
       "text": "{{u:distLc}}",
       "font": "s_unit",
       "color": "dim",
-      "align": "left"
+      "align": "left",
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "ev_icon",
@@ -949,7 +1011,9 @@
       "w": 24,
       "h": 30,
       "icon": "battBolt",
-      "color": "dim"
+      "color": "dim",
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "ev_range",
@@ -963,7 +1027,9 @@
       "text": "{{evRange}}",
       "font": "s_val",
       "color": "fg",
-      "align": "right"
+      "align": "right",
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "ev_range_unit",
@@ -976,7 +1042,9 @@
       "text": "{{u:distLc}}",
       "font": "s_unit",
       "color": "dim",
-      "align": "left"
+      "align": "left",
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "outside",
@@ -990,7 +1058,9 @@
       "font": "s_val",
       "color": "fg",
       "align": "right",
-      "iceBy": true
+      "iceBy": true,
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "outside_unit",
@@ -1003,7 +1073,9 @@
       "text": "{{u:temp}}",
       "font": "s_unit",
       "color": "dim",
-      "align": "left"
+      "align": "left",
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "badge",
@@ -1017,7 +1089,9 @@
       "font": "s_unit",
       "color": "dim",
       "align": "center",
-      "readyHides": true
+      "readyHides": true,
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "drive_mode",
@@ -1031,7 +1105,9 @@
       "font": "mode",
       "color": "dim",
       "align": "right",
-      "accentBy": true
+      "accentBy": true,
+      "sheet": "s10",
+      "conn": 1
     },
     {
       "id": "emblem",
@@ -1041,7 +1117,9 @@
       "x": 780,
       "y": 148,
       "w": 360,
-      "h": 96
+      "h": 96,
+      "sheet": "s11",
+      "conn": 1
     },
     {
       "id": "lim_ring",
@@ -1054,7 +1132,8 @@
       "h": 72,
       "color": "dim",
       "limitBy": true,
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s1"
     },
     {
       "id": "lim_num",
@@ -1069,7 +1148,9 @@
       "color": "fg",
       "align": "center",
       "limitBy": true,
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "run_icon",
@@ -1082,7 +1163,9 @@
       "h": 30,
       "color": "dim",
       "launchBy": true,
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "run_time",
@@ -1098,7 +1181,9 @@
       "align": "right",
       "launchBy": true,
       "toggle": "!mapUp",
-      "rate": 100
+      "rate": 100,
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "run_unit",
@@ -1112,7 +1197,9 @@
       "font": "s_unit",
       "color": "dim",
       "align": "left",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "ice_icon",
@@ -1124,7 +1211,9 @@
       "w": 24,
       "h": 30,
       "color": "dim",
-      "iceBy": true
+      "iceBy": true,
+      "sheet": "s10",
+      "conn": 1
     },
     {
       "id": "ev_share_icon",
@@ -1141,7 +1230,9 @@
         255,
         255
       ],
-      "evShareBy": true
+      "evShareBy": true,
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "ev_share",
@@ -1154,7 +1245,9 @@
       "text": "{{evShare}}",
       "font": "s_val",
       "color": "fg",
-      "align": "right"
+      "align": "right",
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "ev_share_unit",
@@ -1167,7 +1260,9 @@
       "text": "{{evShareUnit}}",
       "font": "s_unit",
       "color": "dim",
-      "align": "left"
+      "align": "left",
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "ready_flag",
@@ -1180,7 +1275,8 @@
       "h": 28,
       "color": "fg",
       "conn": 1,
-      "readyBy": true
+      "readyBy": true,
+      "sheet": "s10"
     },
     {
       "id": "ready_text",
@@ -1195,7 +1291,8 @@
       "color": "fg",
       "align": "left",
       "conn": 1,
-      "readyBy": true
+      "readyBy": true,
+      "sheet": "s10"
     }
   ]
 }

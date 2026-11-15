@@ -151,7 +151,8 @@
       "x": 780,
       "y": 100,
       "w": 360,
-      "h": 96
+      "h": 96,
+      "sheet": "s0"
     },
     {
       "id": "spd0",
@@ -171,7 +172,8 @@
       ],
       "toggle": "!mapUp",
       "nearFont": "m_num_z",
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s1"
     },
     {
       "id": "o_spd0",
@@ -191,7 +193,8 @@
       ],
       "toggle": "mapUp",
       "nearFont": "m_num_z",
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s1"
     },
     {
       "id": "spd1",
@@ -211,7 +214,8 @@
       ],
       "toggle": "!mapUp",
       "nearFont": "m_num_z",
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s1"
     },
     {
       "id": "o_spd1",
@@ -231,7 +235,8 @@
       ],
       "toggle": "mapUp",
       "nearFont": "m_num_z",
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s1"
     },
     {
       "id": "spd2",
@@ -251,7 +256,8 @@
       ],
       "toggle": "!mapUp",
       "nearFont": "m_num_z",
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s1"
     },
     {
       "id": "o_spd2",
@@ -271,7 +277,8 @@
       ],
       "toggle": "mapUp",
       "nearFont": "m_num_z",
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s1"
     },
     {
       "id": "spd3",
@@ -291,7 +298,8 @@
       ],
       "toggle": "!mapUp",
       "nearFont": "m_num_z",
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s1"
     },
     {
       "id": "o_spd3",
@@ -311,7 +319,8 @@
       ],
       "toggle": "mapUp",
       "nearFont": "m_num_z",
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s1"
     },
     {
       "id": "spd4",
@@ -337,7 +346,8 @@
         0,
         0,
         0
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "o_spd4",
@@ -363,7 +373,8 @@
         0,
         0,
         0
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "spd5",
@@ -389,7 +400,8 @@
         0,
         0,
         0
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "o_spd5",
@@ -415,7 +427,8 @@
         0,
         0,
         0
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "spd6",
@@ -441,7 +454,8 @@
         0,
         0,
         0
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "o_spd6",
@@ -467,7 +481,8 @@
         0,
         0,
         0
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "spd7",
@@ -493,7 +508,8 @@
         0,
         22,
         0
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "o_spd7",
@@ -519,7 +535,8 @@
         0,
         22,
         0
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "rev0",
@@ -533,7 +550,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "!mapUp",
       "near": [
         "rpm",
@@ -548,7 +564,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "rev1",
@@ -562,7 +579,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "!mapUp",
       "near": [
         "rpm",
@@ -577,7 +593,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "rev2",
@@ -591,7 +608,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "!mapUp",
       "near": [
         "rpm",
@@ -606,7 +622,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "rev3",
@@ -620,7 +637,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "!mapUp",
       "near": [
         "rpm",
@@ -635,7 +651,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "rev4",
@@ -649,7 +666,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "!mapUp",
       "near": [
         "rpm",
@@ -664,7 +680,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "rev5",
@@ -678,7 +695,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "!mapUp",
       "near": [
         "rpm",
@@ -693,7 +709,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "rev6",
@@ -707,7 +724,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "!mapUp",
       "near": [
         "rpm",
@@ -722,7 +738,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "rev7",
@@ -736,7 +753,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "!mapUp",
       "near": [
         "rpm",
@@ -751,7 +767,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "o_rev0",
@@ -765,7 +782,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "mapUp",
       "near": [
         "rpm",
@@ -780,7 +796,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "o_rev1",
@@ -794,7 +811,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "mapUp",
       "near": [
         "rpm",
@@ -809,7 +825,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "o_rev2",
@@ -823,7 +840,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "mapUp",
       "near": [
         "rpm",
@@ -838,7 +854,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "o_rev3",
@@ -852,7 +869,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "mapUp",
       "near": [
         "rpm",
@@ -867,7 +883,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "o_rev4",
@@ -881,7 +898,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "mapUp",
       "near": [
         "rpm",
@@ -896,7 +912,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "o_rev5",
@@ -910,7 +927,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "mapUp",
       "near": [
         "rpm",
@@ -925,7 +941,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "o_rev6",
@@ -939,7 +956,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "mapUp",
       "near": [
         "rpm",
@@ -954,7 +970,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "o_rev7",
@@ -968,7 +985,6 @@
       "font": "m_gl",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "toggle": "mapUp",
       "near": [
         "rpm",
@@ -983,7 +999,8 @@
         3,
         0,
         3
-      ]
+      ],
+      "sheet": "s1"
     },
     {
       "id": "rev_unit",
@@ -997,7 +1014,7 @@
       "font": "m_tiny",
       "color": "fg",
       "align": "center",
-      "conn": 1
+      "sheet": "s1"
     },
     {
       "id": "rev_charge",
@@ -1011,7 +1028,7 @@
       "font": "m_unit",
       "color": "fg",
       "align": "left",
-      "conn": 1
+      "sheet": "s1"
     },
     {
       "id": "speed",
@@ -1025,7 +1042,8 @@
       "font": "m_gear",
       "color": "fg",
       "align": "center",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s2"
     },
     {
       "id": "speed_unit",
@@ -1039,7 +1057,8 @@
       "font": "m_tiny",
       "color": "dim",
       "align": "center",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s2"
     },
     {
       "id": "mspeed",
@@ -1053,7 +1072,8 @@
       "font": "m_big",
       "color": "fg",
       "align": "center",
-      "toggle": "mapUp"
+      "toggle": "mapUp",
+      "sheet": "s2"
     },
     {
       "id": "mspeed_unit",
@@ -1067,7 +1087,8 @@
       "font": "m_tiny",
       "color": "dim",
       "align": "center",
-      "toggle": "mapUp"
+      "toggle": "mapUp",
+      "sheet": "s2"
     },
     {
       "id": "fuel_icon",
@@ -1079,7 +1100,8 @@
       "w": 29,
       "h": 34,
       "color": "dim",
-      "lowWhen": "fuel"
+      "lowWhen": "fuel",
+      "sheet": "s1"
     },
     {
       "id": "range_icon",
@@ -1091,7 +1113,8 @@
       "w": 29,
       "h": 34,
       "color": "dim",
-      "lowWhen": "fuel"
+      "lowWhen": "fuel",
+      "sheet": "s1"
     },
     {
       "id": "range",
@@ -1105,7 +1128,9 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "lowWhen": "fuel"
+      "lowWhen": "fuel",
+      "sheet": "s3",
+      "conn": 1
     },
     {
       "id": "range_unit",
@@ -1117,7 +1142,9 @@
       "h": 29,
       "text": "{{u:distLc}}",
       "font": "m_tiny",
-      "color": "dim"
+      "color": "dim",
+      "sheet": "s3",
+      "conn": 1
     },
     {
       "id": "lim_ring",
@@ -1130,7 +1157,8 @@
       "h": 72,
       "color": "dim",
       "toggle": "!mapUp",
-      "limitBy": true
+      "limitBy": true,
+      "sheet": "s4"
     },
     {
       "id": "lim_num",
@@ -1145,7 +1173,8 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
-      "limitBy": true
+      "limitBy": true,
+      "sheet": "s5"
     },
     {
       "id": "run_icon",
@@ -1158,7 +1187,8 @@
       "h": 36,
       "color": "dim",
       "toggle": "!mapUp",
-      "launchBy": true
+      "launchBy": true,
+      "sheet": "s2"
     },
     {
       "id": "run_time",
@@ -1174,7 +1204,8 @@
       "align": "right",
       "toggle": "!mapUp",
       "launchBy": true,
-      "rate": 100
+      "rate": 100,
+      "sheet": "s2"
     },
     {
       "id": "run_unit",
@@ -1187,7 +1218,8 @@
       "text": "{{launchUnit}}",
       "font": "m_tiny",
       "color": "dim",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s2"
     },
     {
       "id": "ready_flag",
@@ -1200,7 +1232,8 @@
       "h": 28,
       "color": "fg",
       "conn": 1,
-      "readyBy": true
+      "readyBy": true,
+      "sheet": "s3"
     },
     {
       "id": "ready_text",
@@ -1215,7 +1248,8 @@
       "color": "fg",
       "align": "left",
       "conn": 1,
-      "readyBy": true
+      "readyBy": true,
+      "sheet": "s3"
     },
     {
       "id": "ev_share_icon",
@@ -1232,7 +1266,9 @@
         255,
         255
       ],
-      "evShareBy": true
+      "evShareBy": true,
+      "sheet": "s3",
+      "conn": 1
     },
     {
       "id": "ev_share",
@@ -1245,7 +1281,9 @@
       "text": "{{evShare}}",
       "font": "m_mid",
       "color": "fg",
-      "align": "right"
+      "align": "right",
+      "sheet": "s3",
+      "conn": 1
     },
     {
       "id": "ev_share_unit",
@@ -1257,7 +1295,9 @@
       "h": 29,
       "text": "{{evShareUnit}}",
       "font": "m_tiny",
-      "color": "dim"
+      "color": "dim",
+      "sheet": "s3",
+      "conn": 1
     },
     {
       "id": "time",
@@ -1270,7 +1310,9 @@
       "text": "{{time}}",
       "font": "m_mid",
       "color": "fg",
-      "align": "right"
+      "align": "right",
+      "sheet": "s3",
+      "conn": 1
     },
     {
       "id": "ampm",
@@ -1282,7 +1324,9 @@
       "h": 29,
       "text": "{{ampmLc}}",
       "font": "m_tiny",
-      "color": "dim"
+      "color": "dim",
+      "sheet": "s3",
+      "conn": 1
     },
     {
       "id": "batt_icon",
@@ -1294,8 +1338,9 @@
       "w": 26,
       "h": 34,
       "color": "dim",
-      "conn": 1,
-      "lowWhen": "battery"
+      "lowWhen": "battery",
+      "sheet": "s3",
+      "conn": 1
     },
     {
       "id": "ev_pct",
@@ -1309,8 +1354,9 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "conn": 1,
-      "lowWhen": "battery"
+      "lowWhen": "battery",
+      "sheet": "s3",
+      "conn": 1
     },
     {
       "id": "ev_pct_unit",
@@ -1323,6 +1369,7 @@
       "text": "%",
       "font": "m_tiny",
       "color": "dim",
+      "sheet": "s3",
       "conn": 1
     },
     {
@@ -1337,8 +1384,9 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "conn": 1,
-      "lowWhen": "battery"
+      "lowWhen": "battery",
+      "sheet": "s3",
+      "conn": 1
     },
     {
       "id": "ev_range_unit",
@@ -1351,6 +1399,7 @@
       "text": "{{u:distLc}}",
       "font": "m_tiny",
       "color": "dim",
+      "sheet": "s3",
       "conn": 1
     },
     {
@@ -1363,8 +1412,9 @@
       "w": 29,
       "h": 34,
       "color": "dim",
-      "conn": 1,
-      "tempBy": "oil"
+      "tempBy": "oil",
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "oil",
@@ -1378,8 +1428,9 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "conn": 1,
-      "tempBy": "oil"
+      "tempBy": "oil",
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "oil_unit",
@@ -1392,6 +1443,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1404,6 +1456,7 @@
       "w": 29,
       "h": 34,
       "color": "dim",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1418,8 +1471,9 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "conn": 1,
-      "iceBy": true
+      "iceBy": true,
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "ice_icon",
@@ -1431,7 +1485,9 @@
       "w": 26,
       "h": 34,
       "color": "dim",
-      "iceBy": true
+      "iceBy": true,
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "outside_unit",
@@ -1444,6 +1500,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1511,8 +1568,9 @@
         56,
         255
       ],
-      "conn": 1,
-      "toggle": "danger"
+      "toggle": "danger",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "al_title",
@@ -1531,8 +1589,9 @@
         255
       ],
       "align": "left",
-      "conn": 1,
-      "toggle": "danger"
+      "toggle": "danger",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "al_dist",
@@ -1546,8 +1605,9 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "conn": 1,
-      "toggle": "danger"
+      "toggle": "danger",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "al_unit",
@@ -1561,8 +1621,9 @@
       "font": "m_unit",
       "color": "dim",
       "align": "left",
-      "conn": 1,
-      "toggle": "danger"
+      "toggle": "danger",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "al_ring",
@@ -1579,8 +1640,9 @@
         56,
         255
       ],
-      "conn": 1,
-      "toggle": "dangerLimit"
+      "toggle": "dangerLimit",
+      "sheet": "s8",
+      "conn": 1
     },
     {
       "id": "al_limit",
@@ -1594,8 +1656,9 @@
       "font": "m_tiny",
       "color": "fg",
       "align": "center",
-      "conn": 1,
-      "toggle": "dangerLimit"
+      "toggle": "dangerLimit",
+      "sheet": "s9",
+      "conn": 1
     },
     {
       "id": "drive_mode",
@@ -1609,8 +1672,9 @@
       "font": "mode",
       "color": "dim",
       "align": "right",
-      "conn": 1,
-      "accentBy": true
+      "accentBy": true,
+      "sheet": "s3",
+      "conn": 1
     }
   ]
 }

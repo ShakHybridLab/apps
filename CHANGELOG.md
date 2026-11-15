@@ -1,5 +1,15 @@
 # Modifications par rapport aux projets d'origine
 
+## 15 novembre 2026 (soir)
+
+### ShakTheme 0.20.1 et ShakHUD 0.6.3 (corrections après les photos de la voiture ; tout est vérifié sur le banc d'essai, pas encore sur la voiture)
+- **Éléments manquants sur la voiture : la mémoire de pixels était pleine.** cluster-render n'a que 16 Mio de pixels pour toutes les applications ensemble (chaque image compte deux fois) et il n'en reste qu'environ 10 pour nous ; les thèmes en demandaient 9 à 13 (Sport 14 en pire cas) : les derniers widgets étaient refusés (barres, textes, icônes absents sur les photos). Chaque texte et icône porte maintenant sa **feuille** (`"sheet"`) et sa connexion (`"conn"`), calculées par le nouvel outil `tools/pack_sheets.py` (boîtes serrées, sans recouvrement) : **Sport 5,0 / 3,3 Mio, M 5,9 / 4,1, M Blade 5,5 / 4,7, Navi 4,8 / 3,6** (sans / avec la carte Waze), 8 couches au plus par connexion. Nouveau test `tools/test_pixel_memory.js` (moteur réel, `_plan`) : au plus 6,5 Mio, 8 couches par connexion, aucune feuille qui mêle deux textes qui se recouvrent.
+- **M Blade avec Waze : la fenêtre est au centre, dans la zone où Waze on Cluster dessine sa carte** (x 416 à 1504, y 120 à 600), au lieu d'un cadre sur le côté, hors de cette zone : sur la voiture, la carte n'y apparaissait qu'en lamelle et le cadran de BMW se voyait à travers. Plus d'hexagone avec la carte (pas la place) : le rapport, la vitesse et la puissance passent dans la colonne de gauche, le carburant en barre plate sous la fenêtre, la lame et les deux jauges restent à droite.
+- **M avec Waze : fenêtre agrandie vers le bas** (jusqu'à y 534 au lieu de 440) pour que la flèche de la voiture, qui est en bas de la carte de Waze, ne soit plus coupée ; la plaque rapport / vitesse descend en dessous.
+- **Le gros rectangle noir de BMW** (sa case de rapport, x 1406 à 1597, y 342 à 419, impossible à cacher) est entouré d'un fin liseré pâle sur Sport, M Blade et Navi : il se lit comme un encart voulu, plus comme un trou dans le décor.
+- **ShakHUD : toucher « M Style » ne faisait rien.** Le HUD se cache par défaut pendant que la carte Waze s'affiche (réglage « Cacher avec Waze ») et l'écran ne disait pas pourquoi. La carte de la disposition indique maintenant « Masqué · carte Waze affichée · touchez la disposition pour afficher quand même le HUD », et un toucher propose d'afficher le HUD malgré Waze (réglage coupé après confirmation).
+- Tests : `test_pixel_memory.js` (12), `test_map_window.js`, `test_mblade_navi.js`, `test_zones.js` (42), `test_shakhud.js` (8) passent ; `test_video_bridge.js` et `test_video_app.js` échouaient déjà avant.
+
 ## 15 novembre 2026
 
 ### ShakTheme 0.20.0 et ShakHUD 0.6.2 (pas encore essayés sur la voiture ; tout est vérifié sur le banc d'essai)

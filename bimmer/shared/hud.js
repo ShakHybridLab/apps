@@ -1188,11 +1188,19 @@ class HudApp {
 
     /** The layout name to show now: per drive mode when that's on and known, else the plain setting. */
     _layoutName() {
-        if (this.screen && this.screen.yielded) return 'off';
-        if (this.claimBy) return 'off';
-        // config "hideWithWaze" (ShakHUD) and its setting on: the whole HUD steps aside while Waze's map shows (Waze on Cluster, status.json)
-        if (this.config.hideWithWaze === true && this.ctx.settings.get('hideWithWaze') !== false && this._wazeShowing(Date.now())) return 'off';
+        if (this.hiddenBy()) return 'off';
         return this._chosenName();
+    }
+    /**
+     * Why the layout the driver picked isn't showing now (null: nothing hides it): 'screen' (ShakTheme has the screen),
+     * 'claim' (another kit app holds the HUD), 'waze' (config "hideWithWaze" and its setting on: the whole HUD steps aside
+     * while Waze's map shows; Waze on Cluster, status.json). The page says which, so a tap that changes nothing isn't silent.
+     */
+    hiddenBy() {
+        if (this.screen && this.screen.yielded) return 'screen';
+        if (this.claimBy) return 'claim';
+        if (this.config.hideWithWaze === true && this.ctx.settings.get('hideWithWaze') !== false && this._wazeShowing(Date.now())) return 'waze';
+        return null;
     }
     /** The layout the driver picked for now, before anything that makes us step aside. */
     _chosenName() {
@@ -2112,7 +2120,12 @@ class HudApp {
         }
         let effects = 0, own = 0, sheets = 0, bytes = 0, px = 0;
         plan.forEach((e) => {
-            if (e.kind === 'sheet') { sheets++; bytes += e.w * e.h * 4; px += e.w * e.h * 8; this._guard('sheet ' + e.members[0].id, () => this._createSheet(e)); }
+            if (e.kind === 'sheet') {
+                sheets++; bytes += e.w * e.h * 4; px += e.w * e.h * 8; this._guard('sheet ' + e.members[0].id, () => this._createSheet(e));
+                // what each sheet costs (the car's own log then says which sheet to shrink when its pixel memory runs out)
+                this.log.info('  sheet ' + e.w + 'x' + e.h + ' at ' + e.x + ',' + e.y + ' on connection ' + ((e.conn || 0) + 1) + ': ' + mib(e.w * e.h * 8) + ', ' + e.members.length + ' widgets (' +
+                    e.members.slice(0, 24).map((m) => m.id).join(' ') + (e.members.length > 24 ? ' ...' : '') + ')');
+            }
             else {
                 if (IMAGE_TYPES[e.w.type]) { own++; px += e.w.w * e.w.h * 8; } else effects++;
                 this._guard('widget ' + e.w.id, () => this._create(e.w, null));
@@ -2154,6 +2167,10 @@ class HudApp {
         widgets.forEach((w) => {
             const klass = w.class || 'content', z = w.z || 0, conn = this._connOf(w);
             if (!IMAGE_TYPES[w.type] || w.own === true) { plan.push({ kind: 'layer', w, klass, z, conn }); return; }
+            // "sheet": "<name>" (tools/pack_sheets.py): the layout says which widgets share a sheet, so the memory a theme needs
+            // is the sum of tight boxes, not of whatever the file order and the size limit made of it; only keyed widgets
+            // of the same name join one (the size limit and "packWaste" don't apply to them)
+            const key = typeof w.sheet === 'string' && w.sheet ? w.sheet : null;
             let after = -1;
             plan.forEach((e, i) => {
                 if (e.klass !== klass || e.z !== z || e.conn !== conn) return;
@@ -2162,12 +2179,12 @@ class HudApp {
             let sheet = null, box = null;
             for (let i = after + 1; i < plan.length && !sheet; i++) {
                 const s = plan[i];
-                if (s.kind !== 'sheet' || s.klass !== klass || s.z !== z || s.conn !== conn) continue;
+                if (s.kind !== 'sheet' || s.klass !== klass || s.z !== z || s.conn !== conn || (s.key || null) !== key) continue;
                 const u = union(s, w);
                 const own = s.members.reduce((a, m) => a + m.w * m.h, 0) + w.w * w.h;
-                if (u.w * u.h <= maxPx && u.w * u.h <= waste * own) { sheet = s; box = u; }
+                if (key || (u.w * u.h <= maxPx && u.w * u.h <= waste * own)) { sheet = s; box = u; }
             }
-            if (!sheet) { sheet = { kind: 'sheet', klass, z, conn, x: w.x, y: w.y, w: w.w, h: w.h, members: [], ref: 0, c: null, ci: conn, buf: null }; plan.push(sheet); }
+            if (!sheet) { sheet = { kind: 'sheet', key, klass, z, conn, x: w.x, y: w.y, w: w.w, h: w.h, members: [], ref: 0, c: null, ci: conn, buf: null }; plan.push(sheet); }
             else { sheet.x = box.x; sheet.y = box.y; sheet.w = box.w; sheet.h = box.h; }
             sheet.members.push(w);
         });

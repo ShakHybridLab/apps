@@ -18,6 +18,10 @@ const EXACT = {
     "A cluster theme and the HUD can't show at the same time.": "Un thème du cluster et le HUD ne peuvent pas s'afficher en même temps.",
     "The HUD and a cluster theme can't show at the same time.": "Le HUD et un thème du cluster ne peuvent pas s'afficher en même temps.",
     'Turn HUD off': 'Éteindre le HUD', 'Turn theme off': 'Éteindre le thème', 'Cancel': 'Annuler', 'Centre': 'Centrer',
+    'Waze map is showing': 'La carte Waze est affichée', 'The HUD hides while the Waze map is showing.': 'Le HUD se cache tant que la carte Waze est affichée.',
+    'Show the HUD': 'Afficher le HUD',
+    'Hidden · Waze map is showing · tap the layout to show the HUD anyway': 'Caché · la carte Waze est affichée · touche la disposition pour afficher le HUD quand même',
+    'Hidden · another app has the HUD': 'Caché · une autre appli a le HUD',
     'DEMO DATA': 'DONNÉES DE DÉMO',
     // thèmes
     '  ·  now': '  ·  actuel', 'none here': 'aucune ici', ' slots': ' emplacements', 'moved': 'déplacé', 'centred': 'centré',
@@ -73,6 +77,7 @@ const EXACT = {
 const PATTERNS = [
     [/^Turn HUD Widgets off so (.*) shows\?$/, 'Éteindre HUD Widgets pour afficher $1 ?'],
     [/^Turn the cluster theme off so (.*) shows\?$/, 'Éteindre le thème du cluster pour afficher $1 ?'],
+    [/^Show (.*) on the HUD anyway\?$/, 'Afficher $1 sur le HUD quand même ?'],
     [/^(.*) is on$/, '$1 est actif'],
     [/^Off · (.*) has the screen · pick one to take it back$/, "Éteint · $1 a l'écran · choisis-en un pour le reprendre"],
     [/^(.*) · tap a drive mode to give it that layout$/, '$1 · touche un mode de conduite pour lui donner cette disposition'],

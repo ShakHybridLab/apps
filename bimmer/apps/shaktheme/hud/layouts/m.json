@@ -17,18 +17,18 @@
       "h": 720,
       "hole": [
         705,
-        165,
+        168,
         510,
-        275
+        366
       ],
       "holeWhen": "mapUp",
       "holeInset": 6,
       "holeRadius": 24,
       "plate": [
         711,
-        446,
+        540,
         498,
-        96,
+        70,
         896
       ],
       "card": [
@@ -202,7 +202,8 @@
       ],
       "nearFont": "m_num_z",
       "rpmMax": 7000,
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s0"
     },
     {
       "id": "nr0",
@@ -216,14 +217,14 @@
       "font": "m_num",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "near": [
         "rpm",
         0
       ],
       "nearFont": "m_num_z",
       "rpmMax": 7000,
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s0"
     },
     {
       "id": "nl2",
@@ -243,7 +244,8 @@
       ],
       "nearFont": "m_num_z",
       "rpmMax": 7000,
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s1"
     },
     {
       "id": "nr2",
@@ -257,14 +259,14 @@
       "font": "m_num",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "near": [
         "rpm",
         2
       ],
       "nearFont": "m_num_z",
       "rpmMax": 7000,
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s2"
     },
     {
       "id": "nl4",
@@ -284,7 +286,8 @@
       ],
       "nearFont": "m_num_z",
       "rpmMax": 7000,
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s1"
     },
     {
       "id": "nr4",
@@ -298,14 +301,14 @@
       "font": "m_num",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "near": [
         "rpm",
         4
       ],
       "nearFont": "m_num_z",
       "rpmMax": 7000,
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s2"
     },
     {
       "id": "nl6",
@@ -325,7 +328,8 @@
       ],
       "nearFont": "m_num_z",
       "rpmMax": 7000,
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s1"
     },
     {
       "id": "nr6",
@@ -339,14 +343,14 @@
       "font": "m_num",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "near": [
         "rpm",
         6
       ],
       "nearFont": "m_num_z",
       "rpmMax": 7000,
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s2"
     },
     {
       "id": "nl7",
@@ -366,7 +370,8 @@
       ],
       "nearFont": "m_num_z",
       "rpmMax": 7000,
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s1"
     },
     {
       "id": "nr7",
@@ -380,14 +385,14 @@
       "font": "m_num",
       "color": "fg",
       "align": "center",
-      "conn": 1,
       "near": [
         "rpm",
         7
       ],
       "nearFont": "m_num_z",
       "rpmMax": 7000,
-      "nearMid": "m_num_m"
+      "nearMid": "m_num_m",
+      "sheet": "s2"
     },
     {
       "id": "rpm_unit",
@@ -400,7 +405,7 @@
       "text": "1/min x1000",
       "font": "m_tiny",
       "color": "faint",
-      "conn": 1
+      "sheet": "s0"
     },
     {
       "id": "gear",
@@ -414,7 +419,8 @@
       "font": "m_gear",
       "color": "fg",
       "align": "center",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s3"
     },
     {
       "id": "speed",
@@ -428,7 +434,8 @@
       "font": "m_speed",
       "color": "fg",
       "align": "center",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s3"
     },
     {
       "id": "speed_unit",
@@ -442,6 +449,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
+      "sheet": "s4",
       "conn": 1
     },
     {
@@ -449,21 +457,22 @@
       "type": "text",
       "z": 5,
       "x": 742,
-      "y": 464,
+      "y": 545,
       "w": 126,
       "h": 60,
       "text": "{{gear}}",
       "font": "m_gear_p",
       "color": "fg",
       "align": "center",
-      "toggle": "mapUp"
+      "toggle": "mapUp",
+      "sheet": "s3"
     },
     {
       "id": "mspeed",
       "type": "text",
       "z": 5,
       "x": 924,
-      "y": 464,
+      "y": 545,
       "w": 189,
       "h": 60,
       "text": "{{speed}}",
@@ -471,20 +480,21 @@
       "color": "fg",
       "align": "right",
       "toggle": "mapUp",
-      "conn": 1
+      "sheet": "s3"
     },
     {
       "id": "mspeed_unit",
       "type": "text",
       "z": 5,
       "x": 1119,
-      "y": 494,
+      "y": 575,
       "w": 59,
       "h": 29,
       "text": "{{u:speedLc}}",
       "font": "m_tiny",
       "color": "dim",
       "toggle": "mapUp",
+      "sheet": "s4",
       "conn": 1
     },
     {
@@ -498,7 +508,9 @@
       "text": "{{u:pressure}}",
       "font": "m_tiny",
       "color": "dim",
-      "align": "center"
+      "align": "center",
+      "sheet": "s5",
+      "conn": 1
     },
     {
       "id": "tyre_icon",
@@ -509,7 +521,9 @@
       "y": 230,
       "w": 29,
       "h": 29,
-      "color": "dim"
+      "color": "dim",
+      "sheet": "s5",
+      "conn": 1
     },
     {
       "id": "tyre_unit_t",
@@ -521,7 +535,9 @@
       "h": 29,
       "text": "{{u:temp}}",
       "font": "m_tiny",
-      "color": "dim"
+      "color": "dim",
+      "sheet": "s5",
+      "conn": 1
     },
     {
       "id": "tp_FL",
@@ -535,7 +551,9 @@
       "font": "m_tyre",
       "color": "fg",
       "align": "center",
-      "tyreBy": "FL"
+      "tyreBy": "FL",
+      "sheet": "s5",
+      "conn": 1
     },
     {
       "id": "tt_FL",
@@ -548,7 +566,9 @@
       "text": "{{tyreT:FL}}",
       "font": "m_tyre",
       "color": "fg",
-      "align": "center"
+      "align": "center",
+      "sheet": "s5",
+      "conn": 1
     },
     {
       "id": "tp_FR",
@@ -562,7 +582,9 @@
       "font": "m_tyre",
       "color": "fg",
       "align": "center",
-      "tyreBy": "FR"
+      "tyreBy": "FR",
+      "sheet": "s5",
+      "conn": 1
     },
     {
       "id": "tt_FR",
@@ -575,7 +597,9 @@
       "text": "{{tyreT:FR}}",
       "font": "m_tyre",
       "color": "fg",
-      "align": "center"
+      "align": "center",
+      "sheet": "s5",
+      "conn": 1
     },
     {
       "id": "tp_RL",
@@ -589,7 +613,9 @@
       "font": "m_tyre",
       "color": "fg",
       "align": "center",
-      "tyreBy": "RL"
+      "tyreBy": "RL",
+      "sheet": "s5",
+      "conn": 1
     },
     {
       "id": "tt_RL",
@@ -602,7 +628,9 @@
       "text": "{{tyreT:RL}}",
       "font": "m_tyre",
       "color": "fg",
-      "align": "center"
+      "align": "center",
+      "sheet": "s5",
+      "conn": 1
     },
     {
       "id": "tp_RR",
@@ -616,7 +644,9 @@
       "font": "m_tyre",
       "color": "fg",
       "align": "center",
-      "tyreBy": "RR"
+      "tyreBy": "RR",
+      "sheet": "s5",
+      "conn": 1
     },
     {
       "id": "tt_RR",
@@ -629,7 +659,9 @@
       "text": "{{tyreT:RR}}",
       "font": "m_tyre",
       "color": "fg",
-      "align": "center"
+      "align": "center",
+      "sheet": "s5",
+      "conn": 1
     },
     {
       "id": "b_hi",
@@ -642,7 +674,9 @@
       "text": "1",
       "font": "m_gl",
       "color": "fg",
-      "align": "center"
+      "align": "center",
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "b_mid",
@@ -654,7 +688,9 @@
       "h": 28,
       "text": "1/2",
       "font": "m_gl",
-      "color": "fg"
+      "color": "fg",
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "b_lo",
@@ -666,7 +702,9 @@
       "h": 28,
       "text": "0",
       "font": "m_gl",
-      "color": "fg"
+      "color": "fg",
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "fuel_icon",
@@ -678,7 +716,9 @@
       "y": 536,
       "w": 26,
       "h": 29,
-      "color": "dim"
+      "color": "dim",
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "range_icon",
@@ -690,7 +730,9 @@
       "y": 625,
       "w": 29,
       "h": 34,
-      "color": "dim"
+      "color": "dim",
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "range",
@@ -704,7 +746,9 @@
       "text": "{{rangeTotal}}",
       "font": "m_mid",
       "color": "fg",
-      "align": "right"
+      "align": "right",
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "range_unit",
@@ -716,7 +760,9 @@
       "h": 29,
       "text": "{{u:distLc}}",
       "font": "m_tiny",
-      "color": "dim"
+      "color": "dim",
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "time",
@@ -729,7 +775,9 @@
       "text": "{{time}}",
       "font": "m_mid",
       "color": "fg",
-      "align": "right"
+      "align": "right",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "ampm",
@@ -741,7 +789,9 @@
       "h": 29,
       "text": "{{ampmLc}}",
       "font": "m_tiny",
-      "color": "dim"
+      "color": "dim",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "ico_engine",
@@ -753,6 +803,7 @@
       "w": 31,
       "h": 29,
       "color": "fg",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -766,6 +817,7 @@
       "text": "{{setup:engine}}",
       "font": "m_label",
       "color": "fg",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -778,6 +830,7 @@
       "w": 31,
       "h": 29,
       "color": "fg",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -791,6 +844,7 @@
       "text": "{{setup:chassis}}",
       "font": "m_label",
       "color": "fg",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -803,6 +857,7 @@
       "w": 31,
       "h": 29,
       "color": "fg",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -816,6 +871,7 @@
       "text": "{{setup:steering}}",
       "font": "m_label",
       "color": "fg",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -828,6 +884,7 @@
       "w": 31,
       "h": 29,
       "color": "fg",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -841,6 +898,7 @@
       "text": "{{setup:gearbox}}",
       "font": "m_label",
       "color": "fg",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -855,6 +913,7 @@
       "font": "m_gl",
       "color": "fg",
       "align": "right",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -869,6 +928,7 @@
       "font": "m_gl",
       "color": "fg",
       "align": "right",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -883,6 +943,7 @@
       "font": "m_gl",
       "color": "fg",
       "align": "right",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -896,6 +957,7 @@
       "text": "%",
       "font": "m_tiny",
       "color": "dim",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -909,6 +971,7 @@
       "w": 26,
       "h": 32,
       "color": "dim",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -923,8 +986,9 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "conn": 1,
-      "iceBy": true
+      "iceBy": true,
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "outside_unit",
@@ -937,6 +1001,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -950,6 +1015,7 @@
       "icon": "oilPour",
       "tempBy": "oil",
       "color": "dim",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -964,8 +1030,9 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "conn": 1,
-      "tempBy": "oil"
+      "tempBy": "oil",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "oil_unit",
@@ -978,6 +1045,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -991,6 +1059,7 @@
       "icon": "tempWave",
       "tempBy": "coolant",
       "color": "dim",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1005,8 +1074,9 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "conn": 1,
-      "tempBy": "coolant"
+      "tempBy": "coolant",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "cool_unit",
@@ -1019,6 +1089,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1032,6 +1103,7 @@
       "h": 34,
       "icon": "battBolt",
       "color": "dim",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1047,6 +1119,7 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1060,6 +1133,7 @@
       "text": "{{u:distLc}}",
       "font": "m_tiny",
       "color": "dim",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1074,7 +1148,9 @@
       "font": "m_badge",
       "color": "dim",
       "align": "center",
-      "readyHides": true
+      "readyHides": true,
+      "sheet": "s11",
+      "conn": 1
     },
     {
       "id": "drive_mode",
@@ -1088,7 +1164,9 @@
       "font": "mode",
       "color": "dim",
       "align": "right",
-      "accentBy": true
+      "accentBy": true,
+      "sheet": "s10",
+      "conn": 1
     },
     {
       "id": "lim_ring",
@@ -1102,6 +1180,7 @@
       "color": "dim",
       "limitBy": true,
       "toggle": "!mapUp",
+      "sheet": "s4",
       "conn": 1
     },
     {
@@ -1118,6 +1197,7 @@
       "align": "center",
       "limitBy": true,
       "toggle": "!mapUp",
+      "sheet": "s11",
       "conn": 1
     },
     {
@@ -1131,7 +1211,8 @@
       "h": 36,
       "color": "dim",
       "launchBy": true,
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s0"
     },
     {
       "id": "run_time",
@@ -1147,7 +1228,8 @@
       "align": "right",
       "launchBy": true,
       "toggle": "!mapUp",
-      "rate": 100
+      "rate": 100,
+      "sheet": "s0"
     },
     {
       "id": "run_unit",
@@ -1161,7 +1243,8 @@
       "font": "m_tiny",
       "color": "dim",
       "align": "left",
-      "toggle": "!mapUp"
+      "toggle": "!mapUp",
+      "sheet": "s0"
     },
     {
       "id": "ice_icon",
@@ -1173,7 +1256,9 @@
       "w": 24,
       "h": 32,
       "color": "dim",
-      "iceBy": true
+      "iceBy": true,
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "ev_share_icon",
@@ -1190,7 +1275,9 @@
         255,
         255
       ],
-      "evShareBy": true
+      "evShareBy": true,
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "ev_share",
@@ -1203,7 +1290,9 @@
       "text": "{{evShare}}",
       "font": "m_mid",
       "color": "fg",
-      "align": "right"
+      "align": "right",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "ev_share_unit",
@@ -1216,7 +1305,9 @@
       "text": "{{evShareUnit}}",
       "font": "m_tiny",
       "color": "dim",
-      "align": "left"
+      "align": "left",
+      "sheet": "s7",
+      "conn": 1
     },
     {
       "id": "ready_flag",
@@ -1229,7 +1320,8 @@
       "h": 28,
       "color": "fg",
       "conn": 1,
-      "readyBy": true
+      "readyBy": true,
+      "sheet": "s11"
     },
     {
       "id": "ready_text",
@@ -1244,7 +1336,8 @@
       "color": "fg",
       "align": "left",
       "conn": 1,
-      "readyBy": true
+      "readyBy": true,
+      "sheet": "s11"
     }
   ]
 }

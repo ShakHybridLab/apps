@@ -10,6 +10,7 @@ Usage: python3 tools/gen_mblade_navi.py   (from the app's root)
 import json, math, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from zoom_labels import zoomify
+import pack_sheets
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'apps', 'shaktheme', 'hud', 'layouts')
 
@@ -250,30 +251,26 @@ def mblade():
     W.append(dict(base, id='backdrop', toggle='!mapUp', hex=[612 + DX, 167, 1.0, 0], sp=SP, sq=SQ, sy=[613, 321, 153],
                   bl=[137, 560, 1333 + DX, -0.558], br=[1487 + DX, -0.605, 13, 130], bx=[1.0, 1245 + DX, 864 + DX, 0],
                   scale=[RPM_Y7, RPM_Y0], g0=G0, g1=G1, g2=G2, deco=True))
-    # ---- with the map up, as the photo's own map view: the map in a window at the left where the speed scale was (Waze on cluster draws it
-    # right there, see mapPlace), the hexagon right of it with a gap (it no longer goes under the window), the blade and the two strips a
-    # little to the right of the normal view (the blade's "4" is the limit: BMW's black box starts at x 1406), the fuel as a flat bar
-    # under the window
+    # ---- with the map up: the map in a window in the middle of Waze on cluster's own slot (x 416..1504, y 120..600, where it draws the map by
+    # default; a Waze on cluster that honours our window (0.9.107+, see mapPlace) fills this same window with the map centred on the car).
+    # The first version put the window at the far left like the photo's own map view, outside that slot: with the Waze on cluster the
+    # owner's car runs only a sliver of the map showed in it and BMW's own dial showed through the rest (photos of Nov 15 2026). The hexagon
+    # gives way (no room beside a window this wide); the gear and the speed take the left column, the blade and the two strips stay on the
+    # right a little further right than the normal view (the blade's "4" is the limit: BMW's black box starts at x 1406), the fuel as a
+    # flat bar under the window
     HB = 18                                       # the blade is this far right of the normal view (its "4" is the limit: BMW's black box)
     SX = 30                                       # the two strips (and the oil / electric range / outside under them)
-    HNAR = 0.08                                   # the hexagon is this share narrower than the photo's (same height): its right tip stays 20 px
-    HTIP = 612 + DX + 32 + round(567 * HNAR)      # from the blade, its left tip, where the window ends, moves right
-    WIN = [80, 167, HTIP - 18 - 80, 422]          # the window (x, y, w, h): from the hood's limit (x 80 at y 167) to 18 px before the hexagon's tip
-
-    def hexx(x, rel):
-        """A text box of the normal view (x) placed in the narrower hexagon: its centre keeps its place in the hexagon, `rel` px (photo
-        design) right of the tip."""
-        return round(x + (HTIP - (612 + DX)) - rel * HNAR)
-
+    WIN = [446, 128, 582, 458]                    # the window (x, y, w, h): inside Waze's slot, clear of the shift light above and the blade at the right
+    LX = 84                                       # the gear's box in the left column (the hood's limit is x 80 at y 167)
     INS = 10
-    FB = [122, 558, 606]                          # the flat fuel bar: left end x, right end x, top y (27 thick)
+    FB = [462, 962, 606]                          # the flat fuel bar: left end x, right end x, top y (27 thick), under the window
     G1o = [G1[0] + SX, G1[1], G1[2], G1[3]]
     G2o = [G2[0] + SX, G2[1], G2[2], G2[3]]
     G0o = [FB[2], 1920 - FB[1], 1920 - FB[0], 0]  # the first strip, lying flat: in the frame the shader turns it into
-    W.append(dict(base, id='backdrop_open', toggle='mapUp', hex=[HTIP, 167, 1.0, HNAR],
+    W.append(dict(base, id='backdrop_open', toggle='mapUp',
                   bl=[137, 560, 1333 + DX + HB, -0.558], br=[1487 + DX + HB, -0.605, 13, 130],
-                  bx=[1.0, 1245 + DX + HB, HTIP + round(252 * (1 - HNAR)), 0],
-                  scale=[RPM_Y7, RPM_Y0], g0=G0o, g1=G1o, g2=G2o, fuelH=True, deco=True,
+                  bx=[1.0, 1245 + DX + HB, 992, 0],
+                  scale=[RPM_Y7, RPM_Y0], g0=G0o, g1=G1o, g2=G2o, fuelH=True,
                   hole=[WIN[0] - INS, WIN[1] - INS, WIN[2] + 2 * INS, WIN[3] + 2 * INS], holeWhen='mapUp', holeInset=INS, holeRadius=14,
                   mapPlace=True))
     W.append(shiftlight(750, 32))          # where BMW's own shift light sits (x 750..1170), as on the M and Sport themes
@@ -294,13 +291,13 @@ def mblade():
     # (its name stays white: it sits on the hexagon's tab, which already takes the mode's colour)
     W.append(text('drive_mode', 851, 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='!mapUp', readyHides=True))
     W.extend(tab_cue(851 + 100, '', '!mapUp', PLAIN))
-    W.append(text('o_gear', hexx(725, 283), 291, 280, 101, '{{stage}}', 'm_gear', align='center', toggle='mapUp'))
-    W.append(text('o_speed', hexx(735, 283), 449, 170, 40, '{{speed}}', 'm_spd', 'fg', 'right', toggle='mapUp'))
-    W.append(text('o_speed_unit', hexx(915, 283), 461, 80, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'left', toggle='mapUp'))
-    W.append(text('o_power', hexx(740, 283), 528, 120, 29, '{{powerKw}}', 'm_mid', 'fg', 'right', 1, toggle='powerOpen'))
-    W.append(text('o_power_unit', hexx(866, 283), 528, 50, 36, 'kW', 'm_unit', 'dim', 'left', 1, toggle='powerOpen'))
-    W.append(text('o_drive_mode', hexx(851, 369), 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='mapUp', readyHides=True))
-    W.extend(tab_cue(hexx(851, 369) + 100, 'o_', 'mapUp', PLAIN))
+    W.append(text('o_gear', LX, 291, 280, 101, '{{stage}}', 'm_gear', align='center', toggle='mapUp'))
+    W.append(text('o_speed', LX + 10, 449, 170, 40, '{{speed}}', 'm_spd', 'fg', 'right', toggle='mapUp'))
+    W.append(text('o_speed_unit', LX + 190, 461, 80, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'left', toggle='mapUp'))
+    W.append(text('o_power', LX + 15, 528, 120, 29, '{{powerKw}}', 'm_mid', 'fg', 'right', 1, toggle='powerOpen'))
+    W.append(text('o_power_unit', LX + 141, 528, 50, 36, 'kW', 'm_unit', 'dim', 'left', 1, toggle='powerOpen'))
+    W.append(text('o_drive_mode', 860, 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='mapUp', readyHides=True))
+    W.extend(tab_cue(960, 'o_', 'mapUp', PLAIN))
     W.extend(mb_blade('', '!mapUp', lambda x, y: (x + DX, y), 1.0))
     W.extend(mb_blade('o_', 'mapUp', lambda x, y: (x + DX + HB, y), 1.0))
     # the strips' numbers: fuel on the left; on the right the oil temperature (50 / 100 / 150) and the battery (0 / 50 / 100 %)
@@ -342,9 +339,9 @@ def mblade():
                   "lettering: the clock, the fuel range, then the coolant temperature, the oil temperature and the electric range (each under "
                   "its strip) and the outside temperature, clear of BMW's belt light (x 587..626, y 663..700). Waze's map normally sits at "
                   "the centred 1088x480 of the panel; Waze on the cluster 0.9.107 or later takes a window from shared/map_window.js "
-                  "(map_window.txt) and this layout asks for a narrow one at the far left like the photo (x 80..641, y 167..589) when "
-                  "'Show Waze map inside the theme' is on. The theme is then rebuilt (backdrop_open and the o_ readouts): the hexagon "
-                  "(8 % narrower, same height, its right tip stays put), the blade (18 px) and the strips (30 px, with the oil, electric range and outside temperature under them) move to the right so nothing is tight against the map, the speed scale gives way to the map "
+                  "(map_window.txt) and this layout asks for a window in the middle of that slot (x 446..1028, y 128..586) when "
+                  "'Show Waze map inside the theme' is on. The theme is then rebuilt (backdrop_open and the o_ readouts): no hexagon (the "
+                  "gear, the speed and the power move to a column at the left of the window), the blade (18 px) and the strips (30 px, with the oil, electric range and outside temperature under them) move to the right so nothing is tight against the map, the speed scale gives way to the map "
                   "and the vertical fuel strip becomes a flat bar under the map (pump icon, 0 / 1/2 / 1). "
                   "Nothing is drawn under the map. Clear of the black box BMW draws at x 1406..1597, y 342..419. Widget reference: "
                   "shared/hud.js header.",
@@ -444,9 +441,12 @@ def navi():
     }
 
 
+SHEETS = {'mblade': 14, 'navi': 10}      # image sheets per theme: the memory a theme takes is the sum of their boxes (tools/pack_sheets.py)
+
 if __name__ == '__main__':
     for name, L in (('mblade', mblade()), ('navi', navi())):
         zoomify(name, L['widgets'])                        # the scale numbers that grow in their zone: bigger boxes (tools/zoom_labels.py)
+        print(name, pack_sheets.pack(L['widgets'], SHEETS[name]))   # tight sheets for cluster-render's pixel memory (tools/pack_sheets.py)
         p = os.path.join(OUT, name + '.json')
         with open(p, 'w') as f:
             json.dump(L, f, indent=2)

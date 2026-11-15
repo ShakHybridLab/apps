@@ -800,6 +800,12 @@ float slotD(vec2 p) {
     return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - 16.0;
 }
 float slot(vec2 p) { float d = slotD(p); return clamp(d + 0.5, 0.0, 1.0) * mix(0.45, 1.0, smoothstep(0.0, 36.0, d)); }
+// A thin pale rim just outside that window (2.5 px out, 1.5 px thick, with a faint glow): the black box then reads as an insert the theme
+// meant to have (a gear window), not as a hole in it. Added to the backdrop colour after slot().
+vec3 slotRim(vec2 p) {
+    float e = abs(slotD(p) - 2.5);
+    return vec3(0.42, 0.55, 0.82) * (cov(e - 0.75) * 0.5 + exp(-e / 4.0) * 0.07);
+}
 float hash2(vec2 i) { return fract(sin(dot(i, vec2(12.9898, 78.233))) * 43758.5453); }
 // the facets of the Sport view's backdrop, in the left frame (the right one is mirrored): lozenges between two families of
 // slanted lines, each in one of three shades (0, 0.55, 1), and a thin lit edge on the lines. x: the shade, y: the edge.
@@ -823,7 +829,7 @@ const NAVY = `vec3 navyFacets(vec2 p, vec2 size, float amount) {
     vec3 navy = mix(vec3(0.016, 0.05, 0.125), vec3(0.026, 0.08, 0.19), exp(-gx * gx - gy * gy));
     float side = clamp((abs(p.x - size.x * 0.5) - 60.0) / 200.0, 0.0, 1.0);
     vec2 fc = facets(p.x < size.x * 0.5 ? p : pm);
-    return (navy + (vec3(0.014, 0.045, 0.11) * fc.x + vec3(0.03, 0.08, 0.17) * fc.y * 0.55) * side * amount) * slot(p);
+    return (navy + (vec3(0.014, 0.045, 0.11) * fc.x + vec3(0.03, 0.08, 0.17) * fc.y * 0.55) * side * amount) * slot(p) + slotRim(p);
 }
 `;
 // The Waze map window's frame (Sport, M Blade, Navi): hd is the distance outside the window's edge. bezel() draws, outside it, a
@@ -988,7 +994,7 @@ void main() {
         vec2 fc = facets(p.x < u_size.x * 0.5 ? p : pm);
         navy += (vec3(0.02, 0.07, 0.16) * fc.x + vec3(0.07, 0.2, 0.38) * fc.y * 0.6) * side * u_facets;
         c.rgb = mix(c.rgb, navy * u_tint, il * ir * yIn);
-        c.rgb *= slot(p);
+        c.rgb = c.rgb * slot(p) + slotRim(p);
     }
 
     // the fills are white, orange in the run-up to a zone and red in it; the hybrid's electric power and charge keep their blue and green

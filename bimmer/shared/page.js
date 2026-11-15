@@ -101,7 +101,12 @@ class Page {
         return this.optLabel(k, v);
     }
     /** the layout showing now, else the one meant to (before cluster-render answers) */
-    shownName() { return this.hud.activeName || this.hud._layoutName() || 'off'; }
+    shownName() {
+        // Waze's map or another kit app hides the layout the driver picked: the page keeps that pick marked (and says why, yieldNote)
+        const by = this.hud.hiddenBy ? this.hud.hiddenBy() : null;
+        if (by === 'waze' || by === 'claim') return this.hud._chosenName();
+        return this.hud.activeName || this.hud._layoutName() || 'off';
+    }
     /** the layouts a theme card can show (not the calibration ones) */
     looks() { return ((this.item('inSport') || {}).options || []).map((o) => o[0]); }
     /**
@@ -111,6 +116,18 @@ class Page {
      */
     chooseLayout(key, v) {
         const scr = this.hud.screen;
+        // the layout picked already, hidden only because Waze's map shows (ShakHUD hides the whole HUD then): a tap that changed
+        // nothing looked dead, so ask whether to show it anyway
+        if (v !== 'off' && this.hud.hiddenBy && this.hud.hiddenBy() === 'waze' && this.hud._chosenName() === v) {
+            this.confirm = {
+                title: 'Waze map is showing',
+                lines: ['The HUD hides while the Waze map is showing.', 'Show ' + this.layoutName(v) + ' on the HUD anyway?'],
+                yes: 'Show the HUD',
+                run: () => this.set('hideWithWaze', false),
+            };
+            this.kick();
+            return;
+        }
         if (v === 'off' || !scr || !scr.otherOn()) {
             if (scr) scr.release();
             this.set(key, v);
@@ -129,7 +146,9 @@ class Page {
     }
     /** what the Look tab says while the other app has the screen, else null */
     yieldNote() {
-        const scr = this.hud.screen;
+        const scr = this.hud.screen, by = this.hud.hiddenBy ? this.hud.hiddenBy() : null;
+        if (by === 'waze') return 'Hidden · Waze map is showing · tap the layout to show the HUD anyway';
+        if (by === 'claim') return 'Hidden · another app has the HUD';
         return scr && scr.yielded ? 'Off · ' + scr.otherName + ' has the screen · pick one to take it back' : null;
     }
 

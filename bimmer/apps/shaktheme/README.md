@@ -96,6 +96,12 @@ Neither theme has been tried on a car; they are checked on the bench against the
 - **Nom du mode de conduite en couleur :** Electric, Hybrid et Sport s'écrivent en bleu, vert et rouge sur Sport, M et Navi (sur le M, seul ce nom change ; sur M Blade il reste blanc, car il est posé sur l'onglet de l'hexagone, qui a déjà la couleur du mode).
 - **Launch Control Ready (0.19.1, condition de régime au 0.19.2) :** voiture immobile en mode Sport, **moteur à 2 000 tr/min ou plus** (le pied sur l'accélérateur ; pas au feu rouge), un **drapeau à damier** et « Launch Control Ready » s'affichent **en bas au centre** (avec ou sans la carte Waze ; en blanc sur l'onglet de l'hexagone de M Blade, à la place du nom du mode) ; le chrono compte dès que la voiture démarre. Réglages **Drapeau « Launch Control Ready » (mode Sport, à l'arrêt)** et **Launch Control Ready : à partir de** (0 = dès l'arrêt). L'appli ne lit ni le launch control de la voiture ni le frein : c'est le chrono qui est prêt.
 
+## Détails de finition (0.20.1)
+
+- **Mémoire de pixels réduite de moitié :** sur la voiture, il ne reste qu'environ 10 Mio de pixels pour nous sur les 16 de cluster-render, et les thèmes en voulaient 9 à 13 : les derniers widgets étaient refusés. Chaque texte et icône est rangé dans une feuille serrée (`"sheet"`, outil `tools/pack_sheets.py`, contrôlé par `tools/test_pixel_memory.js`) : de 3 à 6 Mio selon le thème.
+- **M Blade avec Waze :** la fenêtre de la carte est au centre, dans la zone de Waze on Cluster (x 416 à 1504, y 120 à 600) ; le rapport et la vitesse passent à gauche, le carburant en barre plate sous la fenêtre. **M avec Waze :** fenêtre agrandie vers le bas, la flèche de la voiture n'est plus coupée.
+- **Case de rapport de BMW (rectangle noir) :** un liseré pâle l'entoure sur Sport, M Blade et Navi.
+
 ## Détails de finition (0.20)
 
 - **Bague de limitation de vitesse, plus petite et mieux placée :** une bague de 72 px, de la couleur discrète du thème (grise-bleue ; **rouge**, chiffre compris, dès que la vitesse affichée dépasse la limite), posée **juste à côté des chiffres de la vitesse** et à leur hauteur : à droite sur **Sport**, à gauche sur **M** et sur **Navi**. Sur **M Blade**, aucune place propre à côté de la vitesse (l'hexagone est traversé de traits), elle est en **bas à gauche**, au-dessus de l'heure. Elle ne cache plus rien : le chrono 0-100 garde le centre pour lui et la bague reste affichée pendant qu'il compte. Toujours masquée quand la carte Waze est ouverte (Waze montre déjà la limite).
