@@ -1029,7 +1029,8 @@
       "text": "{{modeName}}",
       "font": "mode",
       "color": "dim",
-      "align": "right"
+      "align": "right",
+      "accentBy": true
     },
     {
       "id": "emblem",

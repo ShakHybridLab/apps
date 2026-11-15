@@ -229,11 +229,13 @@
  * The electric share of the drive (the setting "evShare"): {{evShare}} in %, {{evShareUnit}} a "%" (both blank without a battery or under 0.3 km),
  * "evShareBy": true on the "leaf" icon (blank when there is no share).
  * Colour by drive mode (cluster only, the setting "accentByMode"): Sport, M Blade and Navi take blue in Electric Eco Pro, green in Hybrid, red in Sport
+ * "accentBy": true on a text (the drive mode's name) takes the mode's colour as well, the Sport theme's bright blue in its hue.
  * (accent.js: the shaders' listed blues and the theme's "sblue" role are rewritten when the layout is built; the layout is rebuilt when the mode changes).
  * The speed limit ring (cluster only; speedlimit.js, the setting "limitRing"): {{limit}} is the limit in the unit shown ('' without one, or while
  * the 0-100 timer is up) and "limitBy": true on its text, or on the "ring" icon, makes them red while the speed is over it; the icon is
  * blank without a limit. The 0-100 km/h timer (0-60 mph; the setting "launchTimer"): {{launch}} is its time (0.1 s live, 0.01 s held 12 s once
  * it has finished), {{launchUnit}} an "s" while it shows, "launchBy": true on a text or on the "stopwatch" icon (blank otherwise; green for a new best time).
+ * The launch cue (the setting "launchReady"): in the Sport drive mode, once the car has stood still, the same stopwatch and "0.0 s" wait in green (the car's own launch control can't be read).
  * Text "tempBy": "oil" | "coolant" (with the same token): blue while the reading is under "oilCold" / "coolantCold" (C; 0 = never
  * blue), green once it is warm (three white flashes when it gets there while the app runs), and over the warning limit it flashes between the
  * shift red and a dark red.
@@ -278,7 +280,8 @@ const { shiftLightState } = require('./shift_light');
 const badges = require('./badges');
 const Runs = require('./runs');
 const { SpeedLimit } = require('./speedlimit');
-const { hueOfMode, accentTheme } = require('./accent');
+const { hueOfMode, accentTheme, mapRole } = require('./accent');
+const ACCENT_BRIGHT = [92, 158, 255, 255];   // the Sport theme's brightest blue (0.36, 0.62, 1.0), whose hue the drive mode's name takes
 const tz = require('./tz');
 // sharing the HUD with other kit apps (Redline, issue #4): kit/runtime/hud_claim.js, from cauliflowermossgrape's kit
 // (MIT). HUD Widgets is a "standing" app, like Cluster functions: it gives way while another app holds a fresh
@@ -316,7 +319,7 @@ const PLACE_KEYS = ['hudX', 'hudY', 'hudScale', 'stripClear'];
 // cluster-render has no clip, so the switch squeezes every layer to 662 / 720 of its height about the panel's top.
 const STRIP_TOP = 662;
 // settings that only change what a text shows (the next tick paints it), no rebuild
-const LIVE_KEYS = ['iceBelow', 'evShare', 'warnOil', 'warnCoolant', 'warnBoost', 'oilCold', 'coolantCold', 'tyreLow', 'badge', 'badgeBMW', 'gFlipLat', 'gFlipLong', 'gRange', 'gTrail'];
+const LIVE_KEYS = ['iceBelow', 'evShare', 'launchReady', 'warnOil', 'warnCoolant', 'warnBoost', 'oilCold', 'coolantCold', 'tyreLow', 'badge', 'badgeBMW', 'gFlipLat', 'gFlipLong', 'gRange', 'gTrail'];
 // g (the idea of a G-meter app, no code): a sample over G_BAD is a bad reading, not a corner;
 // the rest are averaged over G_AVG_MS so kerbs and potholes don't throw the dot about
 const G_BAD = 3;
@@ -1441,7 +1444,17 @@ class HudApp {
     /** The 0-100 timer's time now (s), or null: it shows on the cluster only, while the setting "launchTimer" is on. */
     _launchTime(now) {
         if (this.target !== 'panel' || this.setting('launchTimer') === false) return null;
-        return this.runs.shownHeld(now);
+        const v = this.runs.shownHeld(now);
+        return isNum(v) ? v : this._launchReady(now) ? 0 : null;
+    }
+
+    /**
+     * The launch cue: the timer is armed (the car has stood still half a second, runs.js), the drive mode is Sport and there is no time to show
+     * yet; the stopwatch and "0.0 s" then wait in green, ready to go (the setting "launchReady"; the car's own launch control can't be read).
+     */
+    _launchReady(now) {
+        return this.target === 'panel' && this.setting('launchTimer') !== false && this.setting('launchReady') !== false
+            && this.driveMode === 'sport' && this.runs.state === 'armed' && !isNum(this.runs.shownHeld(now));
     }
 
     /** The speed limit ring now: { text (the number shown), over (the speed shown is over it) }, or null when there is none to show. */
@@ -1851,7 +1864,7 @@ class HudApp {
             // the speed limit ring's number (blank when no limit is known, the ring is off, or the 0-100 timer takes its place)
             case 'limit': { const l = this._limitNow(Date.now()); return l ? l.text : ''; }
             // the 0-100 km/h timer (0-60 mph): the running clock, then the finished run held a few seconds; blank otherwise
-            case 'launch': { const v = this._launchTime(Date.now()); return isNum(v) ? v.toFixed(this.runs.state === 'run' || v >= 10 ? 1 : 2) : ''; }
+            case 'launch': { const now = Date.now(), v = this._launchTime(now); return isNum(v) ? v.toFixed(this.runs.state === 'run' || v >= 10 || this._launchReady(now) ? 1 : 2) : ''; }
             // the share of this drive done with the engine off, in % (a plug-in hybrid only, from 0.3 km on; the setting "evShare"); blank otherwise
             case 'evShare': { const v = this._evShare(); return isNum(v) ? String(v) : ''; }
             case 'evShareUnit': return isNum(this._evShare()) ? '%' : '';
@@ -2610,6 +2623,12 @@ class HudApp {
         return hueOfMode(this.driveMode);
     }
 
+    /** The colour of the drive mode's name (a text with "accentBy"): the theme's own bright blue in the mode's hue, [r, g, b, a]; null when the colours don't follow the mode (the setting off, no mode yet, not the cluster). */
+    _accentColor() {
+        if (this.target !== 'panel' || this.setting('accentByMode') === false || !this.driveMode) return null;      // (the M theme too: only its mode name)
+        return mapRole(ACCENT_BRIGHT, hueOfMode(this.driveMode));
+    }
+
     /** The strength of the navy backdrop of the Sport, M Blade and Navi themes: the setting "sportTint" in % of the car's own blue (0 = pure black). */
     _tint() { return this.ctx.settings.item('sportTint') ? Math.max(0, this.setting('sportTint')) / 100 : 0; }
     /** The strength of the facets on that backdrop: the setting "sportFacets" in % (100 = the full pattern, 0 = the plain navy). */
@@ -2691,8 +2710,9 @@ class HudApp {
             }
             if (w.tyreBy) role = this._tyreRole(w.tyreBy, role);               // a low tyre pressure: yellow, then red
             if (w.limitBy) { const l = this._limitNow(now); if (l && l.over) role = 'hot'; }                         // over the speed limit: the shift red
+            if (w.accentBy) role = this._accentColor() || role;                                                       // the drive mode's own text: in the mode's colour
             if (w.iceBy && this._ice(now).on) role = VERDICT.COLD;                                                    // ice: the outside temperature in the cold blue
-            if (w.launchBy && this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];            // a new best time: green
+            if (w.launchBy && (this._launchReady(now) || this.runs.state !== 'run' && this.runs.record)) role = VERDICT['SPOT ON'];   // ready, or a new best time: green
             if (w.lowWhen && this._lowNow(w.lowWhen)) role = 'hot';             // in reserve: the shift red, steady
             // over its warning limit: the value flashes in the shift red
             // ("warnFlash": false: not on a tile that turns red itself, the Dyno theme's)
@@ -2767,7 +2787,7 @@ class HudApp {
             if (w.evShareBy) hide = !isNum(this._evShare());                                                          // the leaf only with a share to show
             if (w.launchBy) {
                 hide = !isNum(this._launchTime(now));
-                if (this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];
+                if (this._launchReady(now) || this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];
             }
             const key = JSON.stringify(role) + hide;
             if (!force && key === x.last) return;

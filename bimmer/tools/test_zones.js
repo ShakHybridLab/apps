@@ -657,6 +657,55 @@ check('accent by mode: blue is the identity; green and red rewrite only the list
     h.S.accentByMode = true; h.accentLayout = false; assert.strictEqual(h._accentHue(), 'blue', 'the M theme: no accent');
     h.accentLayout = true; h.target = 'hud'; assert.strictEqual(h._accentHue(), 'blue', 'not on the HUD');
 });
+check('drive mode name: in the mode\'s colour on Sport, M and Navi (white on M Blade\'s coloured tab; the theme\'s bright blue in the hue), unchanged on the M, with the setting off or before the car has said', () => {
+    const h = make({ settings: { accentByMode: true } });
+    h.target = 'panel'; h.accentLayout = true; h.driveMode = 'eco';
+    assert.deepStrictEqual(h._accentColor(), [92, 158, 255, 255], 'blue: the bright blue of the theme');
+    h.driveMode = 'hybrid'; const g = h._accentColor(); assert(g[1] > g[0] && g[1] > g[2] && g[1] > 180, 'green ' + g);
+    h.driveMode = 'sport'; const r = h._accentColor(); assert(r[0] > 200 && r[1] < 80 && r[2] < 80, 'red ' + r);
+    h.driveMode = null; assert.strictEqual(h._accentColor(), null, 'no mode yet');
+    h.driveMode = 'sport'; h.S.accentByMode = false; assert.strictEqual(h._accentColor(), null, 'the setting off');
+    h.S.accentByMode = true; h.accentLayout = false; assert(h._accentColor() && h._accentColor()[0] > 200 && h._accentColor()[1] < 80, 'the M theme: its mode name is red in Sport too');
+    h.accentLayout = true; h.target = 'hud'; assert.strictEqual(h._accentColor(), null, 'not on the HUD');
+    // the text of the mode carries the key on the three accent themes, not on the M
+    ['sport', 'navi'].forEach((id) => {
+        const names = lay(id).widgets.filter((w) => /^(o_)?drive_mode$/.test(w.id));
+        assert(names.length >= 1 && names.every((w) => w.accentBy && w.text === '{{modeName}}'), id + ': the mode name must follow the mode\'s colour');
+    });
+    // M Blade: the name sits on the hexagon's tab, which already has the mode's colour: it stays white to be read
+    lay('mblade').widgets.filter((w) => /^(o_)?drive_mode$/.test(w.id)).forEach((w) => assert(!w.accentBy && w.color === 'fg', 'M Blade: the mode name stays white on its coloured tab'));
+    const mm = lay('m').widgets.filter((w) => w.id === 'drive_mode'); assert(mm.length === 1 && mm[0].accentBy, 'the M theme\'s mode name follows the mode too (its body keeps the M colours)');
+    ['sdash', 'mblade', 'navi'].forEach((t) => assert(require(path.join(tmp, 'shared', 'shaders.js')).ACCENT_LITERALS[t]));
+    assert(!require(path.join(tmp, 'shared', 'shaders.js')).ACCENT_LITERALS.mdash, 'the M theme\'s shader is not recoloured');
+    assert(/w\.accentBy\) role = this\._accentColor\(\) \|\| role/.test(fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8')), 'the text branch reads it');
+});
+check('launch cue: armed in the Sport drive mode with nothing to show, 0.0 s and the stopwatch wait in green; not in other modes, not with the setting off, not under a held time, not on the HUD', () => {
+    const h = make({ settings: { launchTimer: true, launchReady: true } });
+    h.target = 'panel'; h.driveMode = 'sport';
+    h.runs = { state: 'armed', record: false, shownHeld: () => null };
+    h.speedLimit = { limit: () => 50 };
+    assert.strictEqual(h._launchReady(1), true); assert.strictEqual(h._launchTime(1), 0);
+    const shown = (k) => h._token(k);
+    assert.strictEqual(shown('launch'), '0.0'); assert.strictEqual(shown('launchUnit'), 's');
+    assert.strictEqual(h._limitNow(1), null, 'the limit ring gives way to it, as to the timer');
+    h.driveMode = 'hybrid'; assert.strictEqual(h._launchReady(1), false, 'only in Sport'); assert.strictEqual(h._launchTime(1), null);
+    assert.strictEqual(shown('launch'), '');
+    h.driveMode = 'eco'; assert.strictEqual(h._launchReady(1), false);
+    h.driveMode = 'sport'; h.S.launchReady = false; assert.strictEqual(h._launchReady(1), false, 'the setting off');
+    h.S.launchReady = true; h.S.launchTimer = false; assert.strictEqual(h._launchReady(1), false, 'the timer off');
+    h.S.launchTimer = true; h.runs.state = 'idle'; assert.strictEqual(h._launchReady(1), false, 'not armed (moving, or not still yet)');
+    h.runs.state = 'run'; assert.strictEqual(h._launchReady(1), false, 'timing: the clock shows, not the cue');
+    h.runs.state = 'armed'; h.runs.shownHeld = () => 12.34; assert.strictEqual(h._launchReady(1), false, 'a finished time is held first');
+    assert.strictEqual(h._launchTime(1), 12.34);
+    h.runs.shownHeld = () => null; h.target = 'hud'; assert.strictEqual(h._launchReady(1), false, 'cluster only');
+    // the engine paints them green
+    const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
+    assert((hud.match(/_launchReady\(now\) \|\| this\.runs\.state !== 'run' && this\.runs\.record\)/g) || []).length === 2, 'the text and the icon');
+    const set = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'app.json'), 'utf8')).settings.find((x) => x.key === 'launchReady');
+    assert(set && set.type === 'bool' && set.default === true);
+    assert(/'launchReady'/.test(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'main.js'), 'utf8')));
+    assert(/LIVE_KEYS = \['iceBelow', 'evShare', 'launchReady'/.test(hud));
+});
 check('Waze contour: the bezel and glass pass is in Sport, M Blade and Navi (not the M theme), and the map window is still cut out', () => {
     const sh = require(path.join(tmp, 'shared', 'shaders.js'));
     ['sdash', 'mblade', 'navi'].forEach((t) => {

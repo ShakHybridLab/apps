@@ -1086,7 +1086,8 @@
       "text": "{{modeName}}",
       "font": "mode",
       "color": "dim",
-      "align": "right"
+      "align": "right",
+      "accentBy": true
     },
     {
       "id": "lim_ring",
