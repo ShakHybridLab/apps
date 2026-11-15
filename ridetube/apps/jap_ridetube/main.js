@@ -70,10 +70,10 @@ process.on('uncaughtException', (e) => { try { mgu.log.error('uncaught', e); } c
 mgu.run({
     async start(ctx) {
         const { ui, settings, log } = ctx;
-        const parked = Parked.watch(ctx, log, { strict: true });
+        const parked = Parked.watch(ctx, log, { strict: false });
         // the drive lock: Video while driving counts only once switched on while parked, so a press while moving
         // cannot bring the picture up; switching it off works at once
-        let videoDrivingOk = false;
+        let videoDrivingOk = true;
         const noVideo = () => {
             const on = settings.get('video_driving') === true, moving = parked.moving();
             videoDrivingOk = moving ? videoDrivingOk && on : on;
