@@ -2,7 +2,7 @@
   "id": "idrive_hud_widgets",
   "title": "HUD Widgets",
   "description": "Gear, shift lights, boost, oil, coolant and intake temperatures, a G-meter and trip figures on the windshield HUD, in Classic, M or Night themes",
-  "version": "0.12.10",
+  "version": "0.12.11",
   "vendor": "custom",
   "loggingId": "OAH1",
   "iconGlyph": "HUD",
@@ -150,7 +150,7 @@
     },
     {
       "key": "byMode",
-      "label": "Change with the drive mode (Electric Eco Pro / Hybrid / Sport Plus)",
+      "label": "Change with the drive mode (Hybrid Eco Pro / Hybrid / Sport Plus)",
       "type": "bool",
       "default": true
     },
@@ -260,7 +260,7 @@
     },
     {
       "key": "inEco",
-      "label": "In Electric Eco Pro (also Electric, Electric Individual; off by default: BMW's own HUD)",
+      "label": "In Hybrid Eco Pro (also Electric, Electric Individual; off by default: BMW's own HUD)",
       "type": "choice",
       "default": "off",
       "options": [

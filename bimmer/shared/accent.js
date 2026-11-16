@@ -10,7 +10,7 @@
  */
 const HUES = ['blue', 'green', 'red'];
 
-/** The hue for a drive mode ('eco' = Electric Eco Pro | 'hybrid' | 'sport'); blue until the car has said. */
+/** The hue for a drive mode ('eco' = Hybrid Eco Pro | 'hybrid' | 'sport'); blue until the car has said. */
 function hueOfMode(mode) {
     return mode === 'sport' ? 'red' : mode === 'hybrid' ? 'green' : 'blue';
 }

@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.21.17",
+  "version": "0.21.19",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -174,7 +174,7 @@
     },
     {
       "key": "byMode",
-      "label": "Changer avec le mode de conduite (Electric Eco Pro / Hybrid / Sport Plus)",
+      "label": "Changer avec le mode de conduite (Hybrid Eco Pro / Hybrid / Sport Plus)",
       "type": "bool",
       "default": true
     },
@@ -236,7 +236,7 @@
     },
     {
       "key": "inEco",
-      "label": "En Electric Eco Pro (et Electric, Electric Individual)",
+      "label": "En Hybrid Eco Pro (et Electric, Electric Individual)",
       "type": "choice",
       "default": "sport",
       "options": [
@@ -1242,6 +1242,12 @@
       "label": "Puissance du moteur électrique lue dans la voiture, sans eDrive Live (essai)",
       "type": "bool",
       "default": false
+    },
+    {
+      "key": "estPower",
+      "label": "Puissance estimée en électrique (vitesse et accélération) : la barre des tours monte sans donnée de la voiture",
+      "type": "bool",
+      "default": true
     },
     {
       "key": "launchTimer",

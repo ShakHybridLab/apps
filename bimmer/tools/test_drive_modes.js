@@ -17,13 +17,15 @@ function eq(what, got, want) { if (got !== want) { bad++; console.log('FAIL ' + 
 const cases = [
     // [raw, group, name]
     [17, 'hybrid', 'Hybrid'], [19, 'hybrid', 'Hybrid'], [22, 'hybrid', 'Battery Control'], ['PHEV_BATTERY_CONTROL', 'hybrid', 'Battery Control'], ['Battery control', 'hybrid', 'Battery Control'],
-    [20, 'eco', 'Electric'], [21, 'eco', 'Electric Individual'], [18, 'eco', 'Electric Eco Pro'],
+    [20, 'eco', 'Electric'], [21, 'eco', 'Electric Individual'], [18, 'eco', 'Hybrid Eco Pro'], [7, 'eco', 'Hybrid Eco Pro'], [8, 'eco', 'Hybrid Eco Pro'], [9, 'eco', 'Hybrid Eco Pro'],
     [15, 'sport', 'Sport'], [16, 'sport', 'Sport Individual'], [23, 'sport', 'Sport Plus'], [28, 'sport', 'Xtraboost'],
     ['PHEV_HYBRID_STANDARD', 'hybrid', 'Hybrid'], ['PHEV_ELECTRIC_STANDARD', 'eco', 'Electric'],
-    ['PHEV_ELECTRIC_INDIVIDUAL', 'eco', 'Electric Individual'], ['PHEV_HYBRID_ECO', 'eco', 'Electric Eco Pro'],
+    ['PHEV_ELECTRIC_INDIVIDUAL', 'eco', 'Electric Individual'], ['PHEV_HYBRID_ECO', 'eco', 'Hybrid Eco Pro'],
     ['PHEV_SPORT_STANDARD', 'sport', 'Sport'], ['PHEV_SPORT_INDIVIDUAL', 'sport', 'Sport Individual'],
     ['PHEV_SPORT_PLUS', 'sport', 'Sport Plus'], ['BOOST', 'sport', 'Xtraboost'], ['xtraboost', 'sport', 'Xtraboost'],
-    ['Electric Eco Pro', 'eco', 'Electric Eco Pro'], ['ELECTRIC ECO PRO', 'eco', 'Electric Eco Pro'],
+    ['Hybrid Eco Pro', 'eco', 'Hybrid Eco Pro'], ['HYBRID ECO PRO', 'eco', 'Hybrid Eco Pro'],
+    // "Electric Eco Pro" does not exist on the car (the owner, Nov 16 2026): if a string ever says so, it is still the Eco Pro slot, named the car's way
+    ['Electric Eco Pro', 'eco', 'Hybrid Eco Pro'], ['ELECTRIC ECO PRO', 'eco', 'Hybrid Eco Pro'],
 ];
 cases.forEach(([raw, group, name]) => {
     eq(raw + ' group', Hud.driveModeOf(raw), group);

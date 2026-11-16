@@ -41,7 +41,7 @@ const RAIL = { x: 16, y: 54, w: 252, h: 66, gap: 8 };
 const RAIL7 = { x: 16, y: 54, w: 252, h: 54, gap: 6 };     // six tabs: a little shorter, so they fit (and the app's mark below)
 const RAIL8 = { x: 16, y: 54, w: 252, h: 50, gap: 4 };     // seven tabs or more
 const CX = 300, CR = 1584, CW = CR - CX;
-const MODES = [['inHybrid', 'Hybrid'], ['inEco', 'Electric Eco Pro'], ['inSport', 'Sport Plus']];
+const MODES = [['inHybrid', 'Hybrid'], ['inEco', 'Hybrid Eco Pro'], ['inSport', 'Sport Plus']];
 const MODE_KEY = { hybrid: 'inHybrid', electric: 'inEco', eco: 'inEco', sport: 'inSport', comfort: 'inHybrid' };
 const TAB = {
     look: { icon: 'screen' },

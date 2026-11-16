@@ -2,7 +2,7 @@
   "id": "shakhud",
   "title": "ShakHUD",
   "description": "ShakHUD : un HUD pour le pare-brise, le compte-tours M Style (une barre brisée, rouge dans la zone rouge, bleu clair en électrique, verte en recharge), avec la batterie, les autonomies et les températures en bas à droite ; il se cache tout seul quand la carte Waze du HUD est affichée",
-  "version": "0.6.22",
+  "version": "0.6.24",
   "vendor": "custom",
   "loggingId": "OAS1",
   "iconGlyph": "SH",
@@ -127,7 +127,7 @@
     },
     {
       "key": "byMode",
-      "label": "Changer avec le mode de conduite (Electric Eco Pro / Hybrid / Sport Plus)",
+      "label": "Changer avec le mode de conduite (Hybrid Eco Pro / Hybrid / Sport Plus)",
       "type": "bool",
       "default": false
     },
@@ -165,7 +165,7 @@
     },
     {
       "key": "inEco",
-      "label": "En Electric Eco Pro (et Electric, Electric Individual ; éteint par défaut : le HUD de BMW)",
+      "label": "En Hybrid Eco Pro (et Electric, Electric Individual ; éteint par défaut : le HUD de BMW)",
       "type": "choice",
       "default": "mstyle",
       "options": [
@@ -797,6 +797,12 @@
       "label": "Puissance du moteur électrique lue dans la voiture, sans eDrive Live (essai)",
       "type": "bool",
       "default": false
+    },
+    {
+      "key": "estPower",
+      "label": "Puissance estimée en électrique (vitesse et accélération) : la barre des tours monte sans donnée de la voiture",
+      "type": "bool",
+      "default": true
     },
     {
       "key": "hybridRev",

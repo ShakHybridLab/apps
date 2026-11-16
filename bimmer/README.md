@@ -10,7 +10,7 @@
 
 <img src="apps/shaktheme/icon.png" width="72" align="left" alt="ShakTheme logo">
 
-Redraws the whole instrument cluster in one of four themes: **Sport**, **M**, **M Blade** and **Navi**. Pick the theme on the center screen, or let it follow the drive mode (Hybrid, Electric Eco Pro, Sport Plus on a plug-in hybrid). It shows the battery and the electric range, oil and coolant temperatures that turn blue when cold, green when warm and flash red over their limit, a shift light, a window for the Waze map, and an energy flow in place of the boost when another app shares it. [Read more](apps/shaktheme/README.md)
+Redraws the whole instrument cluster in one of four themes: **Sport**, **M**, **M Blade** and **Navi**. Pick the theme on the center screen, or let it follow the drive mode (Hybrid, Hybrid Eco Pro, Sport Plus on a plug-in hybrid). It shows the battery and the electric range, oil and coolant temperatures that turn blue when cold, green when warm and flash red over their limit, a shift light, a window for the Waze map, and an energy flow in place of the boost when another app shares it. [Read more](apps/shaktheme/README.md)
 
 <p align="center"><img src="docs/images/cluster-m.png" width="900" alt="M theme"></p>
 <p align="center"><img src="docs/images/cluster-mblade.png" width="900" alt="M Blade theme"></p>

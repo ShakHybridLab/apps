@@ -47,13 +47,14 @@ check('powerQuotaOf: -100..100 from the struct or a plain number; 255, 65535, te
 const hudSrc = fs.readFileSync(path.join(ROOT, 'shared', 'hud.js'), 'utf8');
 const grab = (name) => { const m = hudSrc.match(new RegExp('\\n    ' + name + '\\([^)]*\\) \\{[\\s\\S]*?\\n    \\}\\n')); assert(m, 'hud.js has no ' + name); return m[0]; };
 const isNum = (v) => typeof v === 'number' && isFinite(v);
-const names = ['_carNext', '_nextLimitNow', '_carAlertSet', '_alertNow', '_laneSet', '_laneNow', '_carPowerSet', '_carPower', '_hybridTach'];
+const names = ['_carNext', '_nextLimitNow', '_carAlertSet', '_alertNow', '_laneSet', '_laneNow', '_carPowerSet', '_carPower', '_estStep', '_estPower', '_hybridTach'];
+const EST_SRC = hudSrc.match(/const EST = \{[^}]*\};/); assert(EST_SRC, 'hud.js has no EST');
 const VERDICT = require('../shared/hud_themes').VERDICT;
-const Cls = new Function('extras', 'hybridTach', 'isNum', 'formatLimit', 'VERDICT', 'return class {' + names.map(grab).join('') + '}')(ex, hybridTach, isNum, formatLimit, VERDICT);
+const Cls = new Function('extras', 'hybridTach', 'isNum', 'formatLimit', 'VERDICT', EST_SRC[0] + 'return class {' + names.map(grab).join('') + '}')(ex, hybridTach, isNum, formatLimit, VERDICT);
 function mk(set, over) {
     const o = Object.create(Cls.prototype);
     Object.assign(o, { target: 'panel', nextLim: null, carAlert: null, carQuota: null, lane: null, logs: [], log: { info: (m) => o.logs.push(m) },
-        speedLimit: { limit: () => null }, ci: { sharedPower: () => null },
+        speedLimit: { limit: () => null }, ci: { sharedPower: () => null }, car: { data: () => ({ speed: null }) },
         ctx: { settings: { item: (k) => (set[k] !== undefined ? { key: k } : undefined), get: (k) => set[k] } },
         setting: (k) => (set[k] === undefined ? undefined : set[k]) }, over || {});
     return o;
@@ -122,6 +123,100 @@ check('hybrid rev counter: without eDrive Live the car\'s motor share gives the 
     const hudOn = mk({ hybridRev: true, carPower: true }, { target: 'hud' }); hudOn._carPowerSet({ quotaImmediateElectricEngineDriveRecuperation: 30 });
     assert.strictEqual(hudOn._hybridTach(w, 0).ev, true, 'the HUD too (setting hybridRev)');
     o._carPowerSet({ quotaImmediateElectricEngineDriveRecuperation: 255 }); o._carPowerSet('x'); assert.strictEqual(o.carQuota.q, -50, 'unclear readings change nothing');
+});
+// the estimated electric power (setting estPower): the rev bar rises in electric with no data from the car; every tick is 25 ms
+function drive(o, kmh, ms, from) {
+    // speed ramps / holds for ms milliseconds; returns the hybrid state at the end (the engine at rest: rpm 0)
+    let t = (o.t0 = o.t0 || 1000000), v0 = from === undefined ? (o.estV === null || o.estV === undefined ? kmh : o.estV * 3.6) : from, last;
+    const n = Math.round(ms / 25);
+    for (let i = 1; i <= n; i++) {
+        t += 25; o.t0 = t;
+        const v = v0 + (kmh - v0) * i / n;
+        o.car = { data: () => ({ speed: v }) };
+        o._estStep(t);
+        last = o._hybridTach({ hybridTach: true }, 0);
+    }
+    return last;
+}
+check('estimated electric power: standing = nothing, accelerating = the blue bar rises, cruising = a little, slowing = the green charge', () => {
+    const o = mk({ sportPower: true, estPower: true });
+    let st = drive(o, 0, 500, 0); assert.strictEqual(st.engineOff, true); assert.strictEqual(st.ev, true); assert.strictEqual(st.kw, 0, 'standing: zero');
+    st = drive(o, 50, 5000, 0);                                   // 0 -> 50 km/h in 5 s (2.8 m/s2)
+    assert.strictEqual(st.ev, true); assert(st.kw > 5, 'accelerating hard: the bar is up (' + st.kw + ' kW)');
+    let peak = 0; const o2 = mk({ sportPower: true, estPower: true }); drive(o2, 0, 300, 0);
+    for (let k = 0; k < 40; k++) { const s2 = drive(o2, 50, 125, k === 0 ? 0 : undefined); peak = Math.max(peak, s2.kw); }
+    assert(peak > 15 && peak <= 80, 'the peak while accelerating is a motor figure: ' + peak);
+    const c = mk({ sportPower: true, estPower: true }); drive(c, 100, 1000, 100);
+    st = drive(c, 100, 3000, 100); assert(st.kw > 14 && st.kw < 26, 'cruising at 100 km/h: about 20 kW (' + st.kw + ')');
+    st = drive(c, 60, 4000, 100);                                  // 100 -> 60 km/h in 4 s
+    assert(st.chg > 0 && st.ev === false, 'slowing down: the green charge (' + JSON.stringify(st) + ')');
+    const coast = mk({ sportPower: true, estPower: true }); drive(coast, 50, 1000, 50);
+    st = drive(coast, 49, 1000, 50); assert(st.ev === true && st.chg === 0, 'coasting is not charging');
+});
+check('estimated electric power: only with the setting on, a speed, the engine at rest; the real power wins over it', () => {
+    const w = { hybridTach: true };
+    const offO = mk({ sportPower: true, estPower: false }); assert.strictEqual(drive(offO, 80, 2000, 40).kw, null, 'setting off: nothing');
+    const none = mk({ sportPower: true }); assert.strictEqual(drive(none, 80, 1000, 40).kw, null, 'setting unknown (not in this app): nothing');
+    const o = mk({ sportPower: true, estPower: true }); drive(o, 80, 2000, 40);
+    assert.strictEqual(o._hybridTach(w, 2500).ev, false, 'the engine runs: the rpm shows alone'); assert.strictEqual(o._hybridTach(w, 2500).engineOff, false);
+    assert.strictEqual(o._hybridTach(w, null).ev, true, 'an rpm that never comes: the engine at rest');
+    const nosp = mk({ sportPower: true, estPower: true }); nosp.car = { data: () => ({ speed: null }) }; nosp._estStep(1);
+    assert.strictEqual(nosp._hybridTach(w, 0).kw, null, 'no speed: nothing (the rpm alone)'); assert.strictEqual(nosp._hybridTach(w, null).ev, false);
+    const wild = mk({ sportPower: true, estPower: true }); wild.car = { data: () => ({ speed: 900 }) }; wild._estStep(1); assert.strictEqual(wild._estPower(), null, 'an absurd speed is no speed');
+    const shared = mk({ sportPower: true, estPower: true }, { ci: { sharedPower: () => ({ kw: -20, old: false }) } }); drive(shared, 80, 1000, 80);
+    assert.strictEqual(shared._hybridTach(w, 0).kw, -20, 'eDrive Live\'s power wins');
+    const own = mk({ sportPower: true, estPower: true, carPower: true }); drive(own, 80, 1000, 80); own._carPowerSet({ quotaImmediateElectricEngineDriveRecuperation: 50 });
+    assert.strictEqual(own._hybridTach(w, 0).kw, 40, 'the car\'s own share (setting carPower) wins over the estimate');
+    const hudT = mk({ hybridRev: true, estPower: true }, { target: 'hud' }); assert(drive(hudT, 90, 2000, 40).kw > 5, 'the HUD too (setting hybridRev)');
+    const noFlow = mk({ sportPower: false, estPower: true }); assert.strictEqual(drive(noFlow, 90, 1000, 40).kw, null, 'with the hybrid rev counter off: nothing');
+    // never above the motor, never below the most it can recover
+    const hard = mk({ sportPower: true, estPower: true }); let hi = -1e9, lo = 1e9; drive(hard, 0, 100, 0);
+    for (let k = 0; k < 40; k++) { const s2 = drive(hard, 200, 25, k === 0 ? 0 : undefined); hi = Math.max(hi, s2.kw === null ? -1e9 : s2.kw); }
+    assert(hi <= 80, 'capped at the motor\'s 80 kW: ' + hi);
+    drive(hard, 200, 500, 200); for (let k = 0; k < 40; k++) { const s2 = drive(hard, 0, 25, k === 0 ? 200 : undefined); lo = Math.min(lo, s2.kw === null ? 1e9 : s2.kw); }
+    assert(lo >= -60, 'recovery capped at 60 kW: ' + lo);
+});
+check('estimated electric power: the setting exists in both apps (on by default, French), and hud.js runs the step every tick', () => {
+    [theme, require('../apps/shakhud/app.json')].forEach((a) => {
+        const it = a.settings.find((x) => x.key === 'estPower');
+        assert(it && it.type === 'bool' && it.default === true && /estimée/.test(it.label), a.id + ': the setting');
+    });
+    assert(/this\._estStep\(now\);/.test(hudSrc), '_estStep is not called in _tick');
+});
+// simulated drives through the real methods (the car sends the speed every sampleMs, held between two readings): is the estimate a plausible motor?
+function cycle(profile, secs, sampleMs) {
+    const o = mk({ sportPower: true, estPower: true }); let held = profile(0), next = 0; const out = [];
+    for (let t = 0; t <= secs * 1000; t += 25) {
+        if (t >= next) { held = profile(t / 1000); next = t + sampleMs; }
+        o.car = { data: () => ({ speed: held }) }; o._estStep(1000000 + t);
+        out.push({ t, v: profile(t / 1000), kw: o._hybridTach({ hybridTach: true }, 0).kw });
+    }
+    return out;
+}
+function energy(r) {   // kWh per 100 km, drive and recuperation apart
+    let up = 0, down = 0, km = 0;
+    for (let i = 1; i < r.length; i++) { const kw = r[i].kw || 0; if (kw > 0) up += kw * 0.025 / 3600; else down += kw * 0.025 / 3600; km += r[i].v / 3.6 * 0.025 / 1000; }
+    return { up: up / km * 100, down: down / km * 100, net: (up + down) / km * 100 };
+}
+check('estimated electric power on simulated drives: a plausible consumption (town, 80, 130 km/h), recuperation in town, quick and steady for any speed rate', () => {
+    const A = 1.2 * 3.6, D = 1.0 * 3.6, tUp = 50 / A, tDn = 50 / D, cyc = tUp + 20 + tDn + 5;
+    const town = (t) => { const x = t % cyc; if (x < tUp) return A * x; if (x < tUp + 20) return 50; if (x < tUp + 20 + tDn) return 50 - D * (x - tUp - 20); return 0; };
+    [100, 200].forEach((ms) => {
+        const e = energy(cycle(town, cyc * 6, ms));
+        assert(e.net > 12 && e.net < 21, 'town: ' + e.net.toFixed(1) + ' kWh/100 km (speed every ' + ms + ' ms)');
+        assert(e.down < -3 && e.down > -10, 'town: some recuperation, not all of it: ' + e.down.toFixed(1));
+        const r80 = energy(cycle(() => 80, 40, ms)).net; assert(r80 > 13 && r80 < 17, '80 km/h: ' + r80.toFixed(1));
+        const r130 = energy(cycle(() => 130, 40, ms)).net; assert(r130 > 25 && r130 < 31, '130 km/h: ' + r130.toFixed(1));
+        const acc = (t) => (t < 5 ? 50 : t < 10 ? 50 + 3.6 * (t - 5) : 68), r = cycle(acc, 12, ms);
+        const base = r.filter((x) => x.t >= 4500 && x.t < 5000).map((x) => x.kw).reduce((a, b) => a + b) / 20;
+        const fin = r.filter((x) => x.t >= 8000 && x.t < 9500).map((x) => x.kw), f = fin.reduce((a, b) => a + b) / fin.length;
+        const half = r.find((x) => x.t >= 5000 && x.kw >= base + (f - base) / 2);
+        assert(half && half.t - 5000 < 800, 'the bar is half way within 0.8 s of the acceleration (' + (half && half.t - 5000) + ' ms, speed every ' + ms + ' ms)');
+        const seg = r.filter((x) => x.t >= 6500 && x.t < 9500).map((x) => x.kw); let hf = 0;
+        for (let i = 20; i < seg.length - 20; i++) { const m = seg.slice(i - 20, i + 21).reduce((a, b) => a + b) / 41; hf += (seg[i] - m) * (seg[i] - m); }
+        assert(Math.sqrt(hf / (seg.length - 40)) < 2, 'the bar does not tremble while accelerating steadily (speed every ' + ms + ' ms)');
+        const cr = cycle(() => 50, 6, ms).filter((x) => x.t > 3000).map((x) => x.kw); assert(Math.max.apply(null, cr) - Math.min.apply(null, cr) < 0.01, 'a steady speed gives a steady bar');
+    });
 });
 check('hud.js wires the lane assist symbol, the setting exists (off, French) and the signal is declared optional', () => {
     assert(/p\.id === 'wheel'\) this\._guard\('lane', \(\) => this\._laneSet\(v\)\)/.test(hudSrc), 'not wired');

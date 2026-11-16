@@ -210,7 +210,7 @@
  * Text tokens: {{speed}} {{u:speed}} {{oil}} {{coolant}} {{boost}} {{u:boost}} {{rpm}}
  * {{gear}} (P / R / N, D3 / S3 / M3 by the shifter programme, or just 3 when the selector position is unknown), {{gearnum}} (3, or P / R / N)
  * {{spd:<i>}} (speed scale label i of SPEED_SCALE: 0..200 mph, 0..320 km/h) {{range}} {{rangeTotal}} (fuel + electric range) {{u:distLc}} (mi, km) {{u:dist}} (MI, KM) {{ambient}} (outside, signed: +75) {{u:speedLc}} (mph, km/h) {{ampmLc}} (am, pm) {{torque}} {{u:torque}} (lb-ft, Nm) {{torquePct}} {{powerPct}} (% of config.engine's peak) {{boostHi}} {{boostMid}}
- * (gauge labels for 1.4 / 0.7 bar in the display unit) {{stage}} (P R N, D / S / M by the shifter programme) {{gearInD}} (gear number while in D) {{mode}} (COMFORT, SPORT, SPORT PLUS, SPORT INDIVIDUAL, ECO PRO, ...) {{modeName}} (the same in mixed case for the small drive-mode text: Hybrid, Electric Eco Pro, Sport Plus)
+ * (gauge labels for 1.4 / 0.7 bar in the display unit) {{stage}} (P R N, D / S / M by the shifter programme) {{gearInD}} (gear number while in D) {{mode}} (COMFORT, SPORT, SPORT PLUS, SPORT INDIVIDUAL, ECO PRO, ...) {{modeName}} (the same in mixed case for the small drive-mode text: Hybrid, Hybrid Eco Pro, Sport Plus)
  * {{temp:<deg C>}} (that temperature in the display unit, °F rounded to 10, for gauge labels) {{setup:engine|chassis|steering|gearbox}} (what that part is set to in the drive mode now)
  * {{time}} {{ampm}} {{u:temp}} (°F / °C) {{gLat}} {{gLong}} (g, 2 decimals) {{gSide}} ("0.42 L", "0.42 R")
  * {{gFwd}} ("0.31 ACC", "0.31 BRK") {{gBest}} (the most g this drive) {{gMax}} (the G-meter's range, "1.2") {{signal:<car.data() key>}} (raw, 1 decimal).
@@ -228,7 +228,7 @@
  * temperature is at or under it; flashes 8 s, then lit, in the cold blue) and on the outside temperature's text (cold blue meanwhile).
  * The electric share of the drive (the setting "evShare"): {{evShare}} in %, {{evShareUnit}} a "%" (both blank without a battery or under 0.3 km),
  * "evShareBy": true on the "leaf" icon (blank when there is no share).
- * Colour by drive mode (cluster only, the setting "accentByMode"): Sport, M Blade and Navi take blue in Electric Eco Pro, green in Hybrid, red in Sport
+ * Colour by drive mode (cluster only, the setting "accentByMode"): Sport, M Blade and Navi take blue in Hybrid Eco Pro, green in Hybrid, red in Sport
  * "accentBy": true on a text (the drive mode's name) takes the mode's colour as well, the Sport theme's bright blue in its hue.
  * (accent.js: the shaders' listed blues and the theme's "sblue" role are rewritten when the layout is built; the layout is rebuilt when the mode changes).
  * The speed limit ring (cluster only; speedlimit.js, the setting "limitRing"): {{limit}} is the limit in the unit shown ('' without one) and "limitBy": true on its text, or on the "ring" icon, makes them red while the speed is over it; the icon is
@@ -314,13 +314,17 @@ const MAX_CONN = 4;              // connections a layout may ask for ("conn"): 3
 const PIXEL_BYTES = 16 * 1024 * 1024;   // cluster-render's pixel memory for every app's images together (CompositorLimits.pixel_bytes)
 const SHEET_AREA_FRAC = 4;       // the first sheet size limit: 1/4 of the target area (see the header)
 const TICK_MS = 25;              // 40 Hz: shift bar and gauges (was 20 Hz: the bars moved in visible steps; the cluster refreshes faster than that)
+// the electric power estimated from the speed (setting "estPower", the rev bar in electric when nobody gives the real power): the X3 xDrive30e's
+// own figures, rounded. mass kg with a driver, drag = half rho Cd A in N per (m/s)^2, rolling resistance, the drive and recuperation efficiencies,
+// the motor's power in kW (the most it can show), the most it can recover, and the filters of the speed and of the acceleration (ms)
+const EST = { massKg: 2150, drag: 0.5, roll: 0.010, etaDrive: 0.85, etaRegen: 0.6, maxKw: 80, maxRegenKw: 60, minRegenKw: 2, speedMs: 250, accelMs: 300 };
 const SPEED_FILTER_MS = 90;      // the speed bars' own smoothing (the car sends the speed a few times a second): the bars glide, the digits stay the car's own
 const ZOOM_MS = 60;              // the scale numbers that grow or change colour re-draw this often while they ease
 const TEXT_MS = 200;             // text re-draws at most 5 times a second (what BMW's own readouts do)
 const TARGET_SIZES = { hud: [800, 480], panel: [1920, 720] };
-// X3 30e (plug-in hybrid): three modes, Hybrid / Electric Eco Pro / Sport, no Comfort (a Comfort number, if the car
-// ever sends one, counts as Hybrid). Its Eco Pro is the electric one: every Eco Pro or Electric number from the car
-// is that one mode ('eco').
+// X3 30e (plug-in hybrid): three modes, Hybrid / Hybrid Eco Pro / Sport, no Comfort (a Comfort number, if the car
+// ever sends one, counts as Hybrid). There is no "Electric Eco Pro" (the owner, Nov 16 2026): its Eco Pro is the Hybrid Eco Pro; every
+// Eco Pro or Electric number from the car is that one slot ('eco').
 const MODE_KEY = { hybrid: 'inHybrid', electric: 'inEco', eco: 'inEco', sport: 'inSport', comfort: 'inHybrid' };
 const TYRE_CORNERS = ['FL', 'FR', 'RL', 'RR'];
 // the Roadster's speed dial: 0..160 mph or 0..240 km/h in 8 steps (labels {{dial:speed:<i>}})
@@ -381,7 +385,7 @@ const PRESS_TO_BAR = { BAR: 1, KPA: 0.01, PSI: 1 / 14.5038 };
 const unitName = (map, v) => map[v] || (Object.values(map).indexOf(v) >= 0 ? v : null);
 // MDrive dataDisplayGearbox.displayProgramGearbox: the programme the cluster shows next to the gear (car_vitals, MIT)
 const PROGRAMS = { S_MINUS_PROGRAMM: 'S', M_MINUS_PROGRAMM: 'M', 1: 'S', 2: 'M' };
-const MODE_NAME = { hybrid: 'Hybrid', electric: 'Electric Eco Pro', eco: 'Electric Eco Pro', sport: 'Sport', comfort: 'Hybrid' };
+const MODE_NAME = { hybrid: 'Hybrid', electric: 'Electric', eco: 'Hybrid Eco Pro', sport: 'Sport', comfort: 'Hybrid' };
 const FRESH_MS = 3000;
 const TZ_AUTO = -9999;           // the "timeZone" setting's Automatic: the head unit's own time zone
 // A plug-in hybrid's high-voltage battery charge: read-only UDS 22 DDBC from its battery unit (SME, 0x07), 0.1 %.
@@ -451,7 +455,7 @@ function driveModeOf(raw) {
     if (typeof v === 'number') {
         if ((v >= 1 && v <= 3) || v === 15 || v === 16 || v === 23 || v === 28) return 'sport';     // 15 / 16 / 23: PHEV Sport, Sport individual, Sport Plus; 28 Boost
         if ((v >= 7 && v <= 9) || v === 18) return 'eco';                                           // 18: PHEV Hybrid Eco (Eco Pro)
-        if (v === 20 || v === 21) return 'eco';                                                     // PHEV Electric, Electric individual: this car's Electric Eco Pro
+        if (v === 20 || v === 21) return 'eco';                                                     // PHEV Electric, Electric individual: this car's Hybrid Eco Pro
         if ((v >= 4 && v <= 6) || v === 10 || v === 17 || v === 19 || v === 22) return 'hybrid';   // no Comfort on a plug-in hybrid: Hybrid; 22: PHEV Battery Control (the Cluster Centre FES table)
         return null;
     }
@@ -467,13 +471,13 @@ function driveModeOf(raw) {
 
 /**
  * The drive mode as the car's screens name it, for the small text in every theme ({{modeName}}): the X3 30e's
- * Hybrid, Electric, Electric Eco Pro, Electric Individual, Sport, Sport Individual, Sport Plus and XtraBoost.
+ * Hybrid, Electric, Hybrid Eco Pro, Electric Individual, Sport, Sport Individual, Sport Plus and XtraBoost.
  * Wire numbers from the kit's ambient_config (MIT): 15 Sport, 16 Sport individual, 17 Hybrid, 18 Hybrid
- * Eco (this car calls it Electric Eco Pro), 19 Hybrid comfort, 20 Electric, 21 Electric individual, 22 Battery Control, 23 Sport Plus,
+ * Eco (this car calls it Hybrid Eco Pro), 19 Hybrid comfort, 20 Electric, 21 Electric individual, 22 Battery Control, 23 Sport Plus,
  * 28 Boost. A number or word that is not known gives null (the group's own name is used then).
  */
-const DRIVE_NAMES = { 1: 'Sport', 2: 'Sport Plus', 3: 'Sport Individual', 4: 'Hybrid', 5: 'Hybrid', 6: 'Hybrid', 7: 'Electric Eco Pro',
-    8: 'Electric Eco Pro', 9: 'Electric Eco Pro', 10: 'Hybrid', 15: 'Sport', 16: 'Sport Individual', 17: 'Hybrid', 18: 'Electric Eco Pro',
+const DRIVE_NAMES = { 1: 'Sport', 2: 'Sport Plus', 3: 'Sport Individual', 4: 'Hybrid', 5: 'Hybrid', 6: 'Hybrid', 7: 'Hybrid Eco Pro',
+    8: 'Hybrid Eco Pro', 9: 'Hybrid Eco Pro', 10: 'Hybrid', 15: 'Sport', 16: 'Sport Individual', 17: 'Hybrid', 18: 'Hybrid Eco Pro',
     19: 'Hybrid', 20: 'Electric', 21: 'Electric Individual', 22: 'Battery Control', 23: 'Sport Plus', 28: 'Xtraboost' };
 function driveNameOf(raw) {
     let v = raw;
@@ -483,8 +487,8 @@ function driveNameOf(raw) {
     const u = v.trim().toUpperCase(), ind = /INDIVID/.test(u);
     if (/XTRA|BOOST/.test(u)) return 'Xtraboost';
     if (/BATTERY|BATTERIE/.test(u)) return 'Battery Control';
-    if (/ELECTRIC|ELEKTR/.test(u)) return /ECO/.test(u) ? 'Electric Eco Pro' : ind ? 'Electric Individual' : 'Electric';
-    if (/ECO|EFFICIEN/.test(u)) return 'Electric Eco Pro';
+    if (/ELECTRIC|ELEKTR/.test(u)) return /ECO/.test(u) ? 'Hybrid Eco Pro' : ind ? 'Electric Individual' : 'Electric';
+    if (/ECO|EFFICIEN/.test(u)) return 'Hybrid Eco Pro';
     if (/SPORT/.test(u)) return /PLUS|EXPERT/.test(u) ? 'Sport Plus' : ind ? 'Sport Individual' : 'Sport';
     if (/HYBRID|COMFORT|ADAPTIVE/.test(u)) return 'Hybrid';
     return null;
@@ -632,7 +636,7 @@ class HudApp {
         this.powerShown = '';            // whether the layout was built for the power shown or not
         // the "danger zone" alert (danger.js): a file another app writes while a zone is ahead; the layout is rebuilt when it comes
         // or goes (widgets with toggle "danger"), the distance and limit are the tokens {{dangerDist}} {{dangerUnit}} {{dangerLimit}}
-        // the theme's colour from the drive mode (accent.js): blue in Electric Eco Pro, green in Hybrid, red in Sport; read when the layout is built
+        // the theme's colour from the drive mode (accent.js): blue in Hybrid Eco Pro, green in Hybrid, red in Sport; read when the layout is built
         this.accentHue = 'blue'; this.accentLayout = false;
         this.danger = new Danger({}, this.log, () => this._guard('danger', () => this._dangerChanged()));
         // the speed limit (speedlimit.js): a file another app writes; the ring and its number read it every frame (no rebuild)
@@ -1119,6 +1123,41 @@ class HudApp {
         if (!this.ctx.settings.item('carPower') || this.ctx.settings.get('carPower') !== true) return null;
         const c = this.carQuota;
         return c && Date.now() - c.at < extras.POWER_TTL_MS ? { kw: extras.powerKw(c.q), old: false } : null;
+    }
+
+    /**
+     * The speed and the acceleration for the estimated electric power, each eased (EST.speedMs, EST.accelMs): the car sends the speed a few
+     * times a second, and the acceleration is its slope. Called every tick; no speed (or an absurd one) forgets them.
+     */
+    _estStep(now) {
+        const raw = this.car.data().speed, dt = this.estT ? Math.min(500, now - this.estT) : 0;
+        this.estT = now;
+        if (!isNum(raw) || raw < 0 || raw > 400) { this.estV = null; this.estA = 0; return; }
+        const v = raw / 3.6;
+        if (!isNum(this.estV) || dt <= 0) { this.estV = v; this.estA = 0; return; }
+        const vf = this.estV + (v - this.estV) * (1 - Math.exp(-dt / EST.speedMs));
+        const a = (vf - this.estV) / (dt / 1000);
+        this.estA = (isNum(this.estA) ? this.estA : 0) + (a - (isNum(this.estA) ? this.estA : 0)) * (1 - Math.exp(-dt / EST.accelMs));
+        this.estV = vf;
+    }
+
+    /**
+     * The motor's power as { kw, old } estimated from the speed and its slope (the wheels' power: mass x acceleration + air + rolling, times the
+     * speed; over the drive efficiency while driving, under the recuperation efficiency while slowing), only while the setting "estPower" is on
+     * (the default) and the car sends a speed; else null. An ESTIMATE: no slope of the road, no heating or accessories, the engine's help ignored.
+     * Under 2 kW of recovery is coasting, not charging.
+     */
+    _estPower() {
+        if (!this.ctx.settings.item('estPower') || this.ctx.settings.get('estPower') === false) return null;
+        const v = this.estV;
+        if (!isNum(v)) return null;
+        if (v < 0.5) return { kw: 0, old: false };
+        const a = isNum(this.estA) ? this.estA : 0;
+        const pw = (EST.massKg * a + EST.drag * v * v + EST.roll * EST.massKg * 9.81) * v / 1000;
+        let kw = pw >= 0 ? pw / EST.etaDrive : pw * EST.etaRegen;
+        kw = Math.max(-EST.maxRegenKw, Math.min(EST.maxKw, kw));
+        if (kw < 0 && kw > -EST.minRegenKw) kw = 0;
+        return { kw, old: false };
     }
 
     /** A new value of CarPlayManager.projectedGuidanceActive: a route started or ended, the theme opens or closes its map window. */
@@ -2111,10 +2150,10 @@ class HudApp {
             case 'mode': {
                 if (!this.driveMode) return '';
                 if (this.driveName) return this.driveName.toUpperCase();
-                const base = { sport: 'SPORT', eco: 'ELECTRIC ECO PRO', electric: 'ELECTRIC ECO PRO', hybrid: 'HYBRID' }[this.driveMode] || 'HYBRID';
+                const base = { sport: 'SPORT', eco: 'HYBRID ECO PRO', electric: 'ELECTRIC', hybrid: 'HYBRID' }[this.driveMode] || 'HYBRID';
                 return base + (this.driveVariant === 'plus' ? ' PLUS' : this.driveVariant === 'individual' ? ' INDIVIDUAL' : '');
             }
-            case 'modeName': {      // the drive mode as the car's own screens write it: "Hybrid", "Electric Eco Pro", "Sport Plus"
+            case 'modeName': {      // the drive mode as the car's own screens write it: "Hybrid", "Hybrid Eco Pro", "Sport Plus"
                 if (!this.driveMode) return '';
                 return this.driveName || (MODE_NAME[this.driveMode] || 'Hybrid') + (this.driveVariant === 'plus' ? ' Plus' : this.driveVariant === 'individual' ? ' Individual' : '');
             }
@@ -2170,7 +2209,8 @@ class HudApp {
     /**
      * The hybrid rev counter's state for a layer that asks for it ("hybridTach"), from the battery's power that eDrive Live shares and the
      * engine's rpm: { kw, engineOff, ev, chg }. ev: the battery alone drives (engine off, power >= 0); chg: 0..1, the power going back into the
-     * battery over hybrid_tach's CHARGE_KW. Without a shared power (or its last read held) nothing is hybrid: ev false, chg 0, so the rpm shows alone.
+     * battery over hybrid_tach's CHARGE_KW. Without any power (shared, the car's own, or the estimated one) nothing is hybrid: ev false, chg 0,
+     * so the rpm shows alone.
      */
     _hybridTach(w, rpm) {
         // the cluster themes: the setting "sportPower"; the HUD (ShakHUD): the setting "hybridRev"
@@ -2179,8 +2219,10 @@ class HudApp {
         const flow = w.hybridTach === true && !!on;
         // the power eDrive Live shares, else (the setting "carPower") the car's own share of the motor: with that one, an rpm the car does not send
         // counts as 0 (the engine at rest: the car sends no engine speed then, as far as the owner's photos show), so the blue power shows
-        const shared = flow ? this.ci.sharedPower() : null, own = flow && !shared ? this._carPower() : null, pw = shared || own;
-        return hybridTach.state(pw && !pw.old ? pw.kw : null, own && !isNum(rpm) ? 0 : rpm);
+        // and last, the power estimated from the speed (setting "estPower", on): the same for an rpm the car does not send
+        const shared = flow ? this.ci.sharedPower() : null, own = flow && !shared ? this._carPower() : null;
+        const est = flow && !shared && !own ? this._estPower() : null, pw = shared || own || est;
+        return hybridTach.state(pw && !pw.old ? pw.kw : null, (own || est) && !isNum(rpm) ? 0 : rpm);
     }
 
     /** The fuel tank's size in litres: the "tankLitres" setting, else config.tankLitres (the car sends litres only). */
@@ -2940,6 +2982,7 @@ class HudApp {
         const now = Date.now();
         this._smoothRpm(now);
         this._smoothSpeed(now);
+        this._estStep(now);
         if (this.config.hideWithWaze === true && this.started && this._layoutName() !== this.activeName) { this._rebuild(); return; }
         // the 0-60 timer only on the car's own data (the demo drive would set a best time)
         if (!this.car.data().demo) this.runs.update(this.car.data().speed, now, this.setting('units') === 'us' ? 'us' : 'metric');

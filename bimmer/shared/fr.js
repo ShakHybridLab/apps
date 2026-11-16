@@ -2,7 +2,7 @@
 /**
  * fr.js - les textes de la page de l'écran central en français (ShakTheme, ShakHUD, RideTube cluster : "config": { "lang": "fr" }).
  * page.js passe chaque texte dessiné par tr() quand l'appli demande le français ; ce qui n'est pas dans la table reste tel quel.
- * Les accents viennent de tools/bake_accents.py (les polices de la page n'avaient que l'ASCII). Les noms de BMW (Hybrid, Electric Eco Pro,
+ * Les accents viennent de tools/bake_accents.py (les polices de la page n'avaient que l'ASCII). Les noms de BMW (Hybrid, Hybrid Eco Pro,
  * Sport Plus, M Blade, Navi, Waze) ne sont pas traduits.
  */
 const EXACT = {
