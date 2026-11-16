@@ -19,6 +19,7 @@
  * Theme pictures: previews.js (shot on the bench by tools/previews.py; the centre screen can't draw our
  * cluster-render themes live). Plain Node 8 (the car's 8.16.2).
  */
+const path = require('path');
 const G = require('./kit/gauges');
 const themes = require('./kit/themes');
 const previews = require('./previews');
@@ -59,6 +60,8 @@ const TAB = {
 // the kit's own chrome (header, bar, Settings sheet) in BMW blue, to match the page
 Object.assign(themes.THEMES.m_tricolour, { sel: C.blue, selText: '#ffffff', accent2: C.blueHi, bg: C.bg });
 
+const REDRAW_MS = 1000;                // the longest the page goes without being drawn again (what changes by itself shows within this)
+
 class Page {
     constructor(ctx, hud, cfg) {
         this.ctx = ctx; this.hud = hud; this.cfg = cfg;
@@ -71,6 +74,8 @@ class Page {
         this.cat = sensors.CATS[0];      // Readouts: the sensor group shown
         this.series = null;              // Badge: the series shown (null: the picked model's)
         this.confirm = null;             // { title, lines, yes, run } while a question is open over the page
+        this.dirty = true;               // the next render draws (see render)
+        this.drawnAt = 0;
     }
 
     start() {
@@ -79,12 +84,15 @@ class Page {
         ctx.settings.onChange(() => this.kick());
         ctx.onLayout(() => this.kick());
         this.hud.onStatus(() => this.kick());
+        // back in front: draw at once (the frame is only redrawn on a change, see render)
+        if (ctx.ui && ctx.ui.onVisible) ctx.ui.onVisible((name, v) => { if (v) this.kick(); });
         // the Signals tab: new readings and the dots (green for 5 seconds) are redrawn every 2 seconds, on that tab only
         this.sigTimer = setInterval(() => { if (this.tab === 'signals') this.kick(); }, 2000);
         if (this.sigTimer.unref) this.sigTimer.unref();
         this.render();
     }
-    kick() { if (this.loop && this.loop.kick) this.loop.kick(); }
+    /** Something changed (a tap, a setting, the status): the page is drawn again at once. */
+    kick() { this.dirty = true; if (this.loop && this.loop.kick) this.loop.kick(); }
 
     /* ---------- settings ---------- */
     get(k) { return this.hud.setting(k); }
@@ -167,6 +175,13 @@ class Page {
 
     /* ---------- drawing ---------- */
     render() {
+        // The page is redrawn only when something changed (every tap, setting and status change calls kick) or, for what moves by itself (the
+        // Waze state, the car's data, the dots of the Signals tab), once a second: it used to be drawn on every frame, up to 60 a second with
+        // the renderer, which kept the car's processor busy (the cluster's gauges and the touch screen lagged behind it, ShakTheme 0.21.17).
+        // 'idle' tells the kit's loop that nothing was drawn (the last frame stays up, the display resends it every second).
+        const now = Date.now();
+        if (!this.dirty && now - this.drawnAt < REDRAW_MS) return 'idle';
+        this.dirty = false; this.drawnAt = now;
         const cv = this.ctx.canvas(W, H);
         if (this.fr) {                                     // "lang": "fr": every text goes through shared/fr.js (accents: tools/bake_accents.py)
             const text = cv.text.bind(cv), width = cv.textWidth.bind(cv);
@@ -523,7 +538,23 @@ class Page {
 
     /** A page of the car's own catalogue of signals (catalog.js): the names of one group, no values, to photograph. */
     catalogPage(cv, bottom, pg, np) {
-        const cat = catalog.load(), g = cat.groups[pg - probes.PAGES.length] || cat.groups[0];
+        const cat = catalog.peek();
+        if (!cat) {
+            // the car's catalogue is a big file: read it a moment after this frame went out, not inside it (the page says so meanwhile)
+            if (!this.catTimer) {
+                this.catTimer = setTimeout(() => {
+                    try { catalog.load(this.ctx.dataDir ? path.join(this.ctx.dataDir, 'catalog-cache.json') : null); } catch (e) { if (this.hud.log) this.hud.log.warn('catalogue: ' + (e && e.message || e)); }
+                    this.catTimer = null; this.kick();
+                }, 300);
+                if (this.catTimer.unref) this.catTimer.unref();
+            }
+            label(cv, CX, 70, 'Speed limit, steering wheel and media signals (the car\'s catalog)');
+            this.sigChips(cv, pg, np);
+            glass(cv, CX, 84, CW, 46, false);
+            cv.text('Reading the car\'s catalog (once, a few seconds)...', CX + 18, 84 + 28, 15, C.label);
+            return;
+        }
+        const g = cat.groups[pg - probes.PAGES.length] || cat.groups[0];
         if (this.catLogged !== true && this.hud.log) {
             this.catLogged = true;
             this.hud.log.info('catalogue: ' + (cat.error ? 'not readable: ' + cat.error : cat.groups.map((x) => x.id + ' ' + x.rows.map((r) => r.iface.split('.').slice(-2).join('.') + '.' + r.field + (r.flags ? ' ' + r.flags : '')).join(', ')).join(' | ')));

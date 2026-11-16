@@ -5,7 +5,7 @@
  * read next. Only NAMES are listed here (no values: a value needs a declared signal, and the car refuses the whole installation when a
  * declared field is not in this catalogue, ShakTheme 0.21.12), and the names come from the car itself, never from memory.
  *   buttons  the steering wheel's and the stalks' buttons     media  what is playing     sign  the speed limit signs
- * Reading a catalogue is done once per run (cached): it is a big JSON file. Same file and same way as eroobeeroo's signal_finder.js.
+ * Reading a catalogue is done once per run (cached in memory, and on disk for the next runs): it is a big JSON file. Same file and same way as eroobeeroo's signal_finder.js.
  */
 const fs = require('fs');
 
@@ -56,7 +56,32 @@ function find(file) {
 }
 
 let cached = null;
-/** find() once per run. */
-function load() { if (!cached) cached = find(); return cached; }
+/** The catalogue's identity (size and date): the cache on disk is only good for the same file. */
+function stamp(file) { try { const st = fs.statSync(file || PATH); return st.size + ':' + Math.round(st.mtimeMs); } catch (e) { return null; } }
+/** What the cache is a cut of: when a group's name, title or pattern changes, the cache is no longer good. */
+const SHAPE = GROUPS.map((g) => g.id + '|' + g.title + '|' + String(g.match)).join('||') + '|' + MAX_ROWS;
+function fromDisk(cacheFile, st) {
+    try {
+        const c = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+        if (c && c.v === 1 && c.stamp === st && c.shape === SHAPE && Array.isArray(c.groups)) return { groups: c.groups, error: null };
+    } catch (e) { /* no cache yet, or an old one */ }
+    return null;
+}
+/** The catalogue if it was already read (this run), else null: the page asks for it later (load) instead of waiting for it. */
+function peek() { return cached; }
+/**
+ * find() once per run. The car's file is big and parsing it stops the whole app for a while (the cluster's gauges too), so the three
+ * small groups it yields are kept in cacheFile (the app's own data folder): the same file, the same answer, read in no time on the next run.
+ */
+function load(cacheFile) {
+    if (cached) return cached;
+    const st = stamp();
+    if (cacheFile && st) { const c = fromDisk(cacheFile, st); if (c) return (cached = c); }
+    cached = find();
+    if (cacheFile && st && !cached.error) {
+        try { fs.writeFileSync(cacheFile, JSON.stringify({ v: 1, stamp: st, shape: SHAPE, groups: cached.groups })); } catch (e) { /* read-only: read again next run */ }
+    }
+    return cached;
+}
 
-module.exports = { GROUPS, MAX_ROWS, find, load, members, PATH };
+module.exports = { GROUPS, MAX_ROWS, find, load, peek, members, PATH, stamp };

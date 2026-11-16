@@ -576,9 +576,11 @@ async function runInner(impl) {
                 if (!on || running) return;
                 running = true;
                 const t0 = Date.now();
-                try { await fn(); } catch (e) { log.error('loop ' + stateName, e); }
+                let idle = false;
+                try { idle = (await fn()) === 'idle'; } catch (e) { log.error('loop ' + stateName, e); }
                 running = false;
                 const dt = Date.now() - t0;
+                if (idle) { schedule(dt, true); return; }      // nothing was drawn (the app's page unchanged): not a frame, nothing to collect
                 frames++; spent += dt;
                 // software frames allocate image and PNG buffers; Node 8 frees them lazily, which lets
                 // memory float up to the platform's limit (the app is then killed). Collect regularly.
@@ -590,9 +592,10 @@ async function runInner(impl) {
                 }
                 schedule(dt);
             };
-            const schedule = (dt) => {
+            const schedule = (dt, idle) => {
                 if (!on || timer !== null || running) return;
-                if (gpuOn()) {
+                if (idle) timer = setTimeout(tick, 100);        // idle: look again in 100 ms (a kick() or a tick from the renderer comes sooner)
+                else if (gpuOn()) {
                     // the renderer sends a tick when it can take the next frame; if this frame was
                     // not sent (unchanged), look again shortly
                     // (a tick normally follows a sent frame; 250 ms is the safety net if none comes)

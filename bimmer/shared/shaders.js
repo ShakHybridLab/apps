@@ -680,7 +680,7 @@ void main() {
 
     // the side dials, traced off the M8 photo: the glass crescent, the fuel one as laid out, the oil one its mirror
     c = gauge(p, u_gaugeL, 0.0, u_low.x, c);
-    c = gauge(pm, vec4(u_size.x - u_gaugeR.x, u_gaugeR.yzw), 1.0, u_low.y, c);
+    c = gauge(pm, vec4(u_size.x - u_gaugeR.x, u_gaugeR.yzw), 0.0, u_low.y, c);   // the battery: the same as the fuel dial (level streak, reserve streak at the bottom); the photo's oil dial (hot / cold ends) is no longer drawn
 
     c = segbar(p, u_seg0, vec2(u_segLit.x, u_segMax.x), c);
     c = segbar(p, u_seg1, vec2(u_segLit.y, u_segMax.y), c);
@@ -981,7 +981,7 @@ vec4 bar(vec2 p, vec4 s, float val, float zones, float low, vec4 c) {
     float body = cov(abs(side) - 7.0) * cov(segD(p, a, b) - 7.5);
     vec3 col = vec3(0.92, 0.94, 0.97);
     if (zones > 0.5 && zones < 1.5 && h > 0.88) col = vec3(1.0, 0.2, 0.22);
-    if (zones > 0.5 && h < 0.1) col = vec3(0.25, 0.5, 1.0);
+    if (zones > 0.5 && zones < 1.5 && h < 0.1) col = vec3(0.25, 0.5, 1.0);   // the oil's cold end (blue); the battery bar (2) is the fuel bar's twin: white, all red in reserve
     col = mix(col, vec3(1.0, 0.2, 0.22), low);                    // in reserve: all of it red
     c = over(vec4(0.36, 0.38, 0.44, 0.9 * body), c);
     c = over(vec4(col, body * step(h, val) * step(0.001, val)), c);

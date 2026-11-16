@@ -200,9 +200,11 @@ function liveLoop(hu) {
             if (!on || running) return;
             running = true;
             const t0 = Date.now();
-            try { await fn(); } catch (e) { log.error('loop ' + stateName, e); }
+            let idle = false;
+            try { idle = (await fn()) === 'idle'; } catch (e) { log.error('loop ' + stateName, e); }
             running = false;
             const dt = Date.now() - t0;
+            if (idle) { schedule(dt, true); return; }
             frames++; spent += dt;
             if (frames % (gpuOn() ? 600 : 100) === 0) {
                 log.info('loop ' + stateName + ': ' + (spent / (gpuOn() ? 600 : 100)).toFixed(1) + ' ms per frame in JS' + (gpuOn() ? ' (GPU renderer)' : ' (software, asked for ' + fps + ' fps)'));
@@ -210,8 +212,9 @@ function liveLoop(hu) {
             }
             schedule(dt);
         };
-        const schedule = (dt) => {
+        const schedule = (dt, idle) => {
             if (!on || timer !== null || running) return;
+            if (idle) { timer = setTimeout(tick, 100); return; }
             // the renderer ticks when it can take the next frame; 250 ms is the safety net if none comes
             if (gpuOn()) timer = setTimeout(tick, display.gpu.waiting ? 250 : 16);
             else timer = setTimeout(tick, Math.max(15, 1000 / fps - (dt || 0)));

@@ -313,7 +313,8 @@ const LAYER_BUDGET = 8;          // cluster-render's limit per client connection
 const MAX_CONN = 4;              // connections a layout may ask for ("conn"): 32 layers service-wide / 8 per connection
 const PIXEL_BYTES = 16 * 1024 * 1024;   // cluster-render's pixel memory for every app's images together (CompositorLimits.pixel_bytes)
 const SHEET_AREA_FRAC = 4;       // the first sheet size limit: 1/4 of the target area (see the header)
-const TICK_MS = 50;              // 20 Hz: shift bar and gauges
+const TICK_MS = 25;              // 40 Hz: shift bar and gauges (was 20 Hz: the bars moved in visible steps; the cluster refreshes faster than that)
+const SPEED_FILTER_MS = 90;      // the speed bars' own smoothing (the car sends the speed a few times a second): the bars glide, the digits stay the car's own
 const ZOOM_MS = 60;              // the scale numbers that grow or change colour re-draw this often while they ease
 const TEXT_MS = 200;             // text re-draws at most 5 times a second (what BMW's own readouts do)
 const TARGET_SIZES = { hud: [800, 480], panel: [1920, 720] };
@@ -1722,6 +1723,7 @@ class HudApp {
      */
     _barRaw(name) {
         const v = this._raw(name), f = this._sweepF(Date.now());
+        if (name === 'speed' && f <= 0 && isNum(v) && isNum(this.speedF)) return this.speedF;       // eased (_smoothSpeed); the sweep and the readouts use the car's own
         return f > 0 && (name === 'rpm' || name === 'speed') ? Math.max(isNum(v) ? v : 0, f * (name === 'rpm' ? 7000 : 330)) : v;
     }
 
@@ -1905,10 +1907,7 @@ class HudApp {
             const shared = this.ci.sharedSoc();                                                        // or shared by eDrive Live / the other app
             return isNum(shared) ? shared : this.car.data().demo ? 64 : null;
         }
-        if (name === 'evRange') {
-            if (isNum(this.carErange) && Date.now() - this.carErangeAt < CAR_ERANGE_MS) return this.carErange;      // the car's own figure
-            const c = this._raw('hvSoc'); return isNum(c) ? c * this._evRangeFull() / 100 : null;                    // else the charge and a full battery's range
-        }
+        if (name === 'evRange') return this._evRangeNow();
         if (name === 'fuel' || name === 'range' || name === 'ambient') {
             // the kit's demo drive has none of these: made-up but steady values while it runs
             const demo = this.car.data().demo;
@@ -2143,6 +2142,25 @@ class HudApp {
         }
     }
 
+    /**
+     * The electric range now, in km: the cluster's own figure (KombiIF displayRangeElectricVehicle) unless the charge says it cannot be.
+     * The owner's car showed "93 km" in red at a charge of 9 % (the battery's reserve), where a figure of a few km is what the charge gives: a
+     * range over twice a full battery's (the setting "evRangeFull") or over twice the charge's share plus 10 km is dropped, and the charge's
+     * share (the charge times a full battery's range) shows in its place. Without the car's figure, the charge's share; without either, null.
+     */
+    _evRangeNow() {
+        const full = this._evRangeFull(), soc = this._raw('hvSoc');
+        const est = isNum(soc) ? soc * full / 100 : null;
+        const car = isNum(this.carErange) && Date.now() - this.carErangeAt < CAR_ERANGE_MS ? this.carErange : null;
+        if (car === null) return est;
+        const cap = est === null ? full * 2 : Math.min(full * 2, est * 2 + 10);
+        if (car <= cap) { this.evIgnored = null; return car; }
+        if (this.evIgnored !== Math.round(car)) {
+            this.evIgnored = Math.round(car);
+            this.log.warn('electric range from the car ignored: ' + Math.round(car) + ' km at a charge of ' + (isNum(soc) ? Math.round(soc) + ' %' : 'unknown') + ' (most it can be: ' + Math.round(cap) + ' km)');
+        }
+        return est;
+    }
     /** The electric range of a full battery in km: the "evRangeFull" setting, else config.evRangeFull (the car's WLTP figure is 42-50 km, real driving less). */
     _evRangeFull() {
         const s = this.ctx.settings.item('evRangeFull') ? this.setting('evRangeFull') : null;
@@ -2921,6 +2939,7 @@ class HudApp {
     _tick() {
         const now = Date.now();
         this._smoothRpm(now);
+        this._smoothSpeed(now);
         if (this.config.hideWithWaze === true && this.started && this._layoutName() !== this.activeName) { this._rebuild(); return; }
         // the 0-60 timer only on the car's own data (the demo drive would set a best time)
         if (!this.car.data().demo) this.runs.update(this.car.data().speed, now, this.setting('units') === 'us' ? 'us' : 'metric');
@@ -2961,6 +2980,16 @@ class HudApp {
         if (!isNum(raw)) { this.rpmF = null; this.rpmShown = null; return; }
         this.rpmF = isNum(this.rpmF) ? this.rpmF + (raw - this.rpmF) * (1 - Math.exp(-dt / 120)) : raw;
         if (!isNum(this.rpmShown) || Math.abs(this.rpmF - this.rpmShown) >= 40) this.rpmShown = Math.max(0, Math.round(this.rpmF / 50) * 50);
+    }
+
+    /** The speed the bars see: the car's, eased over about SPEED_FILTER_MS so a bar glides between two readings instead of stepping (the readouts keep the car's own). */
+    _smoothSpeed(now) {
+        const raw = this.car.data().speed, dt = this.lastSpdT ? Math.min(500, now - this.lastSpdT) : 0;
+        this.lastSpdT = now;
+        if (!isNum(raw)) { this.speedF = null; return; }
+        // (a jump of 40 km/h or more at once is not a drive: the demo restarting, a unit change: no easing through it)
+        this.speedF = isNum(this.speedF) && Math.abs(raw - this.speedF) < 40 ? this.speedF + (raw - this.speedF) * (1 - Math.exp(-dt / SPEED_FILTER_MS)) : raw;
+        if (Math.abs(raw - this.speedF) < 0.05) this.speedF = raw;
     }
 
     _update(x, now, force) {

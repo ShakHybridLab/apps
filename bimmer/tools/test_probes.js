@@ -12,7 +12,7 @@ const app = (n) => JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps',
 const theme = app('shaktheme'), hud = app('shakhud');
 
 // "get notify" in the catalog photos is "rs", "notify" alone "s" (a notifier without getter)
-const FLAGS = { rpm: 'rs', engt: 'rs', speed: 'rs', sign: 's', next: 'rs', fas: 'rs', fasx: 'rs', wheel: 's', pdrive: 's', pdrive2: 's', pdist: 'rs', cc: 'rs', cbs: 'rs', ccrisk: 'rs' };
+const FLAGS = { rpm: 'rs', engt: 'rs', speed: 'rs', sign: 's', next: 'rs', fas: 'rs', fasx: 'rs', wheel: 's', pdrive: 's', pdrive2: 's', pdist: 'rs', erange: 'rs', cc: 'rs', cbs: 'rs', ccrisk: 'rs' };
 
 check('every probe is declared in ShakTheme\'s app.json with the flags the catalog lists (a signal the car does not have breaks the installation)', () => {
     assert.deepStrictEqual(PROBES.map((p) => p.id).sort(), Object.keys(FLAGS).sort(), 'the probes are not the ones listed here');
@@ -25,7 +25,8 @@ check('every probe is declared in ShakTheme\'s app.json with the flags the catal
 // the three the app draws from itself (régime, températures, vitesse): ShakHUD declares them too, since its rev counter needs them
 const OWN = ['rpm', 'engt', 'speed'];
 // and the cluster's power meter (the electric motor's share, for the hybrid rev counter without eDrive Live: setting carPower, car_extras.js)
-const HUD_ASKS = OWN.concat(['pdrive', 'pdrive2']);
+// and its electric range (the plug-in hybrid's own figure, KombiIF displayRangeElectricVehicle, which ShakHUD's widgets read already)
+const HUD_ASKS = OWN.concat(['pdrive', 'pdrive2', 'erange']);
 check('ShakHUD declares only what the app draws from (it asks for no signal it does not use)', () => {
     PROBES.forEach((p) => {
         const has = !!(hud.signals && hud.signals[p.iface] && hud.signals[p.iface][p.field]);
@@ -120,8 +121,8 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
         const hud = { probes: new Probes(null), ctx: {}, car: { subs: [] }, log: { info: (t) => calls.logs.push(t) } };
         if (feed) PROBES.concat([GUIDE]).forEach((p) => hud.probes.feed(p.id, feed[p.id] === undefined ? { a: 1, b: 'x'.repeat(80) } : feed[p.id], Date.now()));
         const self = { sigPage: pg, hud, kick() {} };
-        const deps = [(c, x, y, t) => {}, (c, x, y, t) => { calls.chips.push(t); return 50; }, (c, x, y, w, h) => { calls.glass.push({ y, h }); }, (c, x, y, lines) => { calls.note = { y, n: lines.length }; }, C, 300, 1584, 1284, require('../shared/probes'), cat ? { GROUPS: catalog.GROUPS, MAX_ROWS: catalog.MAX_ROWS, load: () => cat } : catalog, Date];
-        const names = ['label', 'miniChip', 'glass', 'note', 'C', 'CX', 'CR', 'CW', 'probes', 'catalog', 'Date'];
+        const deps = [(c, x, y, t) => {}, (c, x, y, t) => { calls.chips.push(t); return 50; }, (c, x, y, w, h) => { calls.glass.push({ y, h }); }, (c, x, y, lines) => { calls.note = { y, n: lines.length }; }, C, 300, 1584, 1284, require('../shared/probes'), cat ? { GROUPS: catalog.GROUPS, MAX_ROWS: catalog.MAX_ROWS, load: () => cat, peek: () => (cat === 'READING' ? null : cat) } : catalog, Date, require('path')];
+        const names = ['label', 'miniChip', 'glass', 'note', 'C', 'CX', 'CR', 'CW', 'probes', 'catalog', 'Date', 'path'];
         Object.keys(bodies).forEach((k) => { self[k] = function () { return new Function(...ARGS[k], ...names, bodies[k]).apply(this, Array.prototype.slice.call(arguments).concat(deps)); }; });
         self.signalsTab(cv, 512);
         return calls;
@@ -170,10 +171,14 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
                 assert(c.logs.length === 1 && /^catalogue: /.test(c.logs[0]), 'the catalogue is logged once');
             });
             assert(run(2, null, cat).text.some((t) => /SteeringWheelButtons · statusMFLButtons$/.test(t.t)));
+            // not read yet (the car's file is big: it is read a moment after the frame, the page says so meanwhile, then it is drawn again)
+            const wait = run(3, null, 'READING');
+            assert(wait.text.some((t) => t.t === "Reading the car's catalog (once, a few seconds)..."), 'the page does not say the catalogue is being read');
+            assert.strictEqual(wait.chips.length, NPAGES, 'the page chips stay while it reads'); assert.strictEqual(wait.logs.length, 0, 'nothing is logged before it is read');
             const bad = run(3, null, { groups: catalog.GROUPS.map((g) => ({ id: g.id, title: g.title, rows: [] })), error: 'ENOENT' });
             assert(bad.text.some((t) => t.t === 'Catalog not readable') && bad.glass.length === 1);
         } finally { try { fs.unlinkSync(file); } catch (e) { /* gone */ } }
-        const real = ['Catalog not readable', "Nothing found in the car's catalog", ...catalog.GROUPS.map((g) => g.title)];
+        const real = ['Catalog not readable', "Nothing found in the car's catalog", "Reading the car's catalog (once, a few seconds)...", ...catalog.GROUPS.map((g) => g.title)];
         real.forEach((k) => assert(fr.tr(k) !== k, 'not in French: ' + k));
     }
     const FR = { '→ 2500 rpm': '→ 2500 tr/min', '→ limit 70': '→ limite 70', '→ next limit 90': '→ limite suivante 90', '→ no limit read': '→ aucune limite lue', '→ no next limit': '→ aucune limite suivante', '→ not understood': '→ non compris', '→ alert: yes': '→ alerte : oui', '→ route: no': '→ itinéraire : non',

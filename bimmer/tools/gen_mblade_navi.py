@@ -89,7 +89,7 @@ def danger_alert(x, y, h):
 # (x 534..1386, y 120..600, the same as Sport's), the blade on the left, a small hexagon with the speed on the right above BMW's
 # box, the strips and the temperatures below it, nothing under the map.
 DX = -30
-ROW = 624                            # the bottom row's text top in the normal view: the whole row sits above BMW's gear letter and its black box (y 662..708), as on the M theme; units end at y 659
+ROW = 668                            # the bottom row's text top in the normal view: the same height as with the map (ROW_O), now that BMW's black box is gone (gear window, size 1: x 1380..1460, y 660..720 stays free); units end at y 703
 ROW_O = 668                          # ... and with the map up (the map and its fuel bar take the room above): one notch up from the panel's edge, its middle (y 682) on the middle of BMW's belt light and gear letter, the right end clear of their box
 SLOPE = 0.5714                       # the labels' lean along the blade (x per y px)
 RPM_Y0, RPM_Y7 = 613, 160            # y of the 0 and of the 7 mark on the photo's blade
@@ -230,26 +230,36 @@ def mb_right_strip(pre, tog, G, name, hi, mid, lo, unit, icon_name, icon_w=26):
     return W
 
 
-def mb_bottom_right(pre='', tog=None, dx=0, y=ROW, up=True):
-    """The right end of the bottom row, on the fuel range's line and in its lettering (m_mid): the coolant temperature, the oil
-    temperature (under its strip) and the electric range (under the battery strip), then the outside temperature (added by the
-    caller). The two temperatures are coloured by their value (tempBy: blue cold, green warm, red flashing over the limit). The same
-    in both views. Each is an icon, a number, a unit; the value boxes hold the longest value (three digits for the temperatures,
-    302 F). `up`: the row is above BMW's gear box (normal view): the temperatures are spread; otherwise (map view) the row is level with the
-    box and ends before it (x 1386..1454), the oil starts after it."""
+ROW1 = 622                             # the row of the three sensors: just under the strips' lower end (y 611), above BMW's gear hole (it starts at y 660)
+RC_ICON, RC_NUM, RC_UNIT = 1726, 1754, 1862   # the right column: the icons, the numbers' left edge (box 104 wide, right edge 1858), the units
+
+
+def mb_under_strips(pre, tog, cx_oil, cx_ev, y=ROW1):
+    """The oil temperature and the electric range, each centred right under its own strip (cx: the middle of the strip's lower end), on the
+    sensors' row (ROW1). No icon here: the strip's own icon (the oil can, the battery) is just above, and with icons the two groups touched
+    (the strips are 130 px apart). The number ends 20 px (oil) or 6 px (range) right of the strip's middle and its unit follows at once, so a two- or
+    three-digit value stays under the strip. The oil takes the colour of its value (tempBy: blue cold, green warm, red flashing over the limit).
+    The value boxes hold the longest value (302 F = 87 px, an electric range 99 = 58)."""
     k = {'toggle': tog} if tog else {}
-    W = []
-    cx, ox = (1262, 1450) if up else (1205, 1458)
-    for x, name, icon_name, tok, sig in ((cx, 'cool', 'therm', '{{coolant}}', 'coolant'), (ox, 'oil', 'oilcan', '{{oil}}', 'oil')):
-        # the coolant is not under a strip: it keeps its place, ending before BMW's gear letter and its black box (x 1386..1454: shared/visible.js
-        # GEAR_P, drawn over the panel at the bottom); the oil starts right after them, then the electric range, then the outside temperature
-        # (box x 1736), in both views, with tight boxes (the widest value: 302 = 87 px, an electric range 99 = 58, a unit 26 to 34)
-        W.append(icon(pre + name + '_icon', icon_name, x, y - 3, 26, 34, 'fg', 1, tempBy=sig, **k))
-        W.append(text(pre + name, x + 27 if name == 'oil' else x + 32, y, 87, 29, tok, 'm_mid', 'fg', 'right', 1, tempBy=sig, **k))
-        W.append(text(pre + name + '_unit', x + 115 if name == 'oil' else x + 123, y + 3, 28 if name == 'oil' else 36, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, **k))
-    W += [icon(pre + 'ev_icon', 'battery', 1606, y - 3, 26, 34, 'fg', 1, **k),
-          text(pre + 'ev_range', 1637, y, 58, 29, '{{evRange}}', 'm_mid', 'fg', 'right', 1, **k),
-          text(pre + 'ev_range_unit', 1696, y + 3, 36, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1, **k)]
+    ro, re_ = cx_oil + 20, cx_ev + 6
+    return [text(pre + 'oil', ro - 87, y, 87, 29, '{{oil}}', 'm_mid', 'fg', 'right', 1, tempBy='oil', **k),
+            text(pre + 'oil_unit', ro + 1, y + 3, 28, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, **k),
+            text(pre + 'ev_range', re_ - 58, y, 58, 29, '{{evRange}}', 'm_mid', 'fg', 'right', 1, **k),
+            text(pre + 'ev_range_unit', re_ + 1, y + 3, 36, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1, **k)]
+
+
+def mb_side_block():
+    """The coolant temperature (no strip of its own, with its thermometer) and the outside temperature (no icon), in one table at the far right: the coolant on the sensors' row,
+    a little above, the outside temperature on the bottom row. The same in both views (clear of the strips, whose right edge is x 1692 at most).
+    Icons in one column, values ending at the same x, units in one column. The coolant is coloured by its value (tempBy); the outside one has NO
+    icon (its thermometer looks like the coolant's: the owner would confuse them, Nov 16 2026), it goes blue near freezing (iceBy) and a snowflake
+    shows then in the icon column."""
+    W = [icon('cool_icon', 'therm', RC_ICON, ROW1 - 3, 26, 34, 'fg', 1, tempBy='coolant'),
+         text('cool', RC_NUM, ROW1, 104, 29, '{{coolant}}', 'm_mid', 'fg', 'right', 1, tempBy='coolant'),
+         text('cool_unit', RC_UNIT, ROW1 + 3, 44, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1),
+         icon('ice_icon', 'snow', RC_ICON, ROW - 1, 24, 32, 'dim', iceBy=True),
+         text('outside', RC_NUM, ROW, 104, 29, '{{ambient}}', 'm_mid', 'fg', 'right', 1, iceBy=True),
+         text('outside_unit', RC_UNIT, ROW + 3, 44, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1)]
     return W
 
 
@@ -332,17 +342,11 @@ def mblade():
     W.extend(limit_and_timer(672, 318, 76, True, ring=(234, 540, 72), next_at=(-68, 4)))   # the timer in the black void left of the gear letter; the ring small, bottom left above the clock (no clean place by the speed there)
     W.extend(ev_share(662, ROW - 3, 26, 34, 692, ROW + 3, 52, 32, 'm_tiny', 748, ROW + 3, 26, 32, 'm_tiny', '', '!mapUp'))   # the normal view: right of the speed scale's 0
     W.extend(ev_share(632, ROW_O - 3, 26, 34, 662, ROW_O + 3, 52, 32, 'm_tiny', 718, ROW_O + 3, 26, 32, 'm_tiny', 'o_', 'mapUp'))   # the map view: between the belt light and the fuel scale's 1/2
-    # the right end follows the strips: in the map view they are SX px further right, so the oil, the electric range and the outside
-    # temperature move with them (the coolant stays)
-    W.extend(mb_bottom_right('', '!mapUp', 0, ROW, True))
-    W.extend(mb_bottom_right('o_', 'mapUp', SX, ROW_O, False))
-    W.append(text('outside', 1736, ROW, 118, 29, '{{ambient}}', 'm_mid', 'fg', 'right', 1, toggle='!mapUp', iceBy=True))
-    W.append(icon('ice_icon', 'snow', 1848, ROW - 38, 24, 32, 'dim', toggle='!mapUp', iceBy=True))        # over the temperature (its box has no room beside it)
-    W.append(text('outside_unit', 1860, ROW + 3, 44, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, toggle='!mapUp'))
-    OX = SX - 16          # (its value box holds '+104', so its left 30 px are empty for '+22': it needs less than the strips' shift)
-    W.append(text('o_outside', 1722 + OX, ROW_O, 118, 29, '{{ambient}}', 'm_mid', 'fg', 'right', 1, toggle='mapUp', iceBy=True))
-    W.append(icon('o_ice_icon', 'snow', 1834 + OX, ROW_O - 38, 24, 32, 'dim', toggle='mapUp', iceBy=True))
-    W.append(text('o_outside_unit', 1846 + OX, ROW_O + 3, 44, 32, '{{u:temp}}', 'm_tiny', 'dim', conn=1, toggle='mapUp'))
+    # the oil and the electric range sit centred under their strips (they follow the strips 30 px right in the map view); the coolant and the outside
+    # temperature are a table at the far right
+    W.extend(mb_under_strips('', '!mapUp', round(strip_x(G1, G1[2]) + 33), round(strip_x(G2, G2[2]) + 33)))
+    W.extend(mb_under_strips('o_', 'mapUp', round(strip_x(G1o, G1o[2]) + 33), round(strip_x(G2o, G2o[2]) + 33)))
+    W.extend(mb_side_block())
     W += danger_alert(1612, 340, 78)       # right of BMW's black box (x < 1597), above the strips (y 443)
     return {
         'schemaVersion': 2, 'name': 'M Blade', 'theme': 'mblade', 'runUp': False,
@@ -353,8 +357,9 @@ def mblade():
                   "when eDrive Live shares it), the red rev blade on the right (0..7000 rpm, the "
                   "stock-style shift light at the top), the fuel strip bottom left and, bottom right, two aligned strips: the oil temperature "
                   "(blue under 75 deg, green warm, red flashing over the limit) and the hybrid battery in %. Along the bottom row, in one "
-                  "lettering: the clock, the fuel range, then the coolant temperature, the oil temperature and the electric range (each under "
-                  "its strip) and the outside temperature, clear of BMW's belt light (x 587..626, y 663..700). Waze's map normally sits at "
+                  "lettering: the clock and the fuel range at the left, the outside temperature at the right, clear of BMW's belt light (x 587..626, "
+                  "y 663..700); a row of sensors just above (y 622): the oil temperature and the electric range, each centred under its strip, "
+                  "and the coolant temperature at the far right over the outside one. Waze's map normally sits at "
                   "the centred 1088x480 of the panel; Waze on the cluster 0.9.107 or later takes a window from shared/map_window.js "
                   "(map_window.txt) and this layout asks for a window in the middle of that slot (x 446..1028, y 128..586) when "
                   "'Show Waze map inside the theme' is on. The theme is then rebuilt (backdrop_open and the o_ readouts): no hexagon (the "
@@ -435,13 +440,14 @@ def navi():
     W.append(text('ev_range', 1270, 630, 60, 34, '{{evRange}}', 'm_mid', 'fg', 'right', 1))
     W.append(text('ev_range_unit', 1336, 636, 44, 29, '{{u:distLc}}', 'm_tiny', 'dim', conn=1))
     # the oil and outside temperatures in the free space on the right (right of the map window, under BMW's black box)
-    W.append(icon('oil_icon', 'oilcan', 1644, 446, 29, 34, 'dim', 1, tempBy='oil'))
-    W.append(text('oil', 1684, 447, 96, 34, '{{oil}}', 'm_mid', 'fg', 'right', 1, tempBy='oil'))
-    W.append(text('oil_unit', 1786, 453, 44, 29, '{{u:temp}}', 'm_tiny', 'dim', conn=1))
-    W.append(icon('out_icon', 'tempOut', 1644, 506, 29, 34, 'dim', 1))
-    W.append(text('outside', 1676, 507, 104, 34, '{{ambient}}', 'm_mid', 'fg', 'right', 1, iceBy=True))
-    W.append(icon('ice_icon', 'snow', 1610, 506, 26, 34, 'dim', iceBy=True))
-    W.append(text('outside_unit', 1786, 513, 44, 29, '{{u:temp}}', 'm_tiny', 'dim', conn=1))
+    # (now that BMW's black box is gone they follow the speed's block, 50 px under its unit, instead of sitting under the box's old place)
+    TY = 396
+    W.append(icon('oil_icon', 'oilcan', 1644, TY, 29, 34, 'dim', 1, tempBy='oil'))
+    W.append(text('oil', 1684, TY + 1, 96, 34, '{{oil}}', 'm_mid', 'fg', 'right', 1, tempBy='oil'))
+    W.append(text('oil_unit', 1786, TY + 7, 44, 29, '{{u:temp}}', 'm_tiny', 'dim', conn=1))
+    W.append(text('outside', 1676, TY + 61, 104, 34, '{{ambient}}', 'm_mid', 'fg', 'right', 1, iceBy=True))
+    W.append(icon('ice_icon', 'snow', 1610, TY + 60, 26, 34, 'dim', iceBy=True))
+    W.append(text('outside_unit', 1786, TY + 67, 44, 29, '{{u:temp}}', 'm_tiny', 'dim', conn=1))
     W += danger_alert(1196, 38, 76)         # in the top strip right of the shift light: clear of the map window (y 120) and of the hood
     W.append(text('drive_mode', 1664, 668, 216, 22, '{{modeName}}', 'mode', 'dim', 'right', 1, accentBy=True))
     return {

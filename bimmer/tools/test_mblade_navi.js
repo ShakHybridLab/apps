@@ -95,35 +95,56 @@ NAMES.forEach((n) => {
         // the bottom row's right end exists twice: for the normal view (no prefix, backdrop) and for the map view ("o_", backdrop_open),
         // where the oil, the electric range and the outside temperature follow the strips
         const VIEWS = [['', '!mapUp', 'backdrop'], ['o_', 'mapUp', 'backdrop_open']];
-        check('mblade: the clock, the fuel range, the electric range, the oil and coolant temperatures and the outside temperature share one line at the bottom (same y), in both views: above BMW\'s gear box in the normal view, level with it (its middle on the box\'s) with the map up', () => {
+        check('mblade: the clock and the fuel range share the bottom line (same y), in both views, level with BMW\'s gear letter (its middle on the letter\'s)', () => {
             VIEWS.forEach(([pre]) => {
-                const ys = [by(pre + 'time'), by(pre + 'range'), by(pre + 'ev_range'), by(pre + 'oil'), by(pre + 'cool'), by(pre + 'outside')].map((w) => w.y);
+                const ys = [by(pre + 'time'), by(pre + 'range')].map((w) => w.y);
                 assert(ys.every((y) => y === ys[0]), pre + ' y differ: ' + ys.join(', '));
-                if (pre === '') {
-                    // the whole line sits above BMW's gear letter and its black box (visible.GEAR_P, y 662..708): the units, the lowest boxes, end above it
-                    assert(ys[0] + 3 + 32 <= visible.GEAR_P[1], 'the normal view\'s line runs into the gear letter\'s box: y ' + ys[0]);
-                } else {
-                    // with the map up it stays at the bottom, its middle on the middle of the gear letter and the belt light (y 663..708)
-                    assert(Math.abs(ys[0] + 29 / 2 - 683) <= 5, pre + ' the line is not centred on the belt light and the gear letter: y ' + ys[0]);
-                }
-                [pre + 'range_icon', pre + 'ev_icon', pre + 'oil_icon', pre + 'cool_icon'].forEach((i) => assert(by(i).y === ys[0] - 3, i + ' is not on the line'));
-                [pre + 'range_unit', pre + 'ev_range_unit', pre + 'oil_unit', pre + 'cool_unit', pre + 'outside_unit'].forEach((i) => assert(by(i).y === ys[0] + 3, i + ' is not on the line'));
+                assert(Math.abs(ys[0] + 29 / 2 - 683) <= 5, pre + ' the line is not centred on the belt light and the gear letter: y ' + ys[0]);
+                assert(by(pre + 'range_icon').y === ys[0] - 3 && by(pre + 'range_unit').y === ys[0] + 3, pre + ' the range\'s icon or unit is off the line');
             });
         });
-        check('mblade: the coolant, the oil and the electric range are on the bottom row in the range\'s lettering and height, the oil under its strip and the electric range under the battery strip, before the outside temperature, in both views', () => {
-            VIEWS.forEach(([pre, tog, bid]) => {
-                const ids = ['ev_range', 'oil', 'cool'].map((i) => by(pre + i));
-                assert(ids.every((w) => w.font === 'm_mid' && w.y === by(pre + 'range').y), pre + ': not the range\'s lettering and line');
-                assert(by(pre + 'oil').tempBy === 'oil' && by(pre + 'cool').tempBy === 'coolant', pre + ': tempBy missing');
-                ['ev_range', 'oil', 'cool', 'oil_icon', 'cool_icon', 'ev_icon', 'oil_unit', 'cool_unit', 'ev_range_unit', 'outside', 'outside_unit'].forEach((i) => assert(by(pre + i).toggle === tog, pre + i + ': not for its own view'));
-                const right = (id) => by(pre + id).x + by(pre + id).w, b = by(bid);
-                assert(by(pre + 'cool_icon').x >= 1190, pre + ': in the hexagon\'s tabs / red glow');
-                assert(by(pre + 'oil_icon').x > right('cool_unit') && by(pre + 'ev_icon').x > right('oil_unit') && by(pre + 'outside').x > right('ev_range_unit'), pre + ': the readouts touch or are out of order');
-                assert(by(pre + 'outside').x - right('ev_range_unit') >= 0 && by(pre + 'outside_unit').x + 30 <= 1890, pre + ': outside temperature too close to the electric range or to the panel edge');
-                const under = (g) => g[0] + g[3] * (g[2] - g[1]);                          // a strip's left edge at its bottom
-                assert(Math.abs(by(pre + 'oil_icon').x + 40 - (under(b.g1) + 13)) <= 60, pre + ': the oil reading is not under the oil strip (up to 60 px right of it: BMW\'s gear letter pushes it out of its old place)');
-                assert(by(pre + 'ev_icon').x >= under(b.g2) - 15 && by(pre + 'ev_icon').x <= under(b.g2) + 55, pre + ': the electric range is not under the battery strip (up to 55 px right of its foot: BMW\'s gear letter, x 1386..1454, pushes the oil and the range out of their old places)');
+        check('mblade: the oil and the electric range sit on one row right under their strips, each centred under its own strip (no icon: the strip\'s own is above), in both views', () => {
+            VIEWS.forEach(([pre]) => {
+                const b = by(pre === '' ? 'backdrop' : 'backdrop_open');
+                const mid = (g) => g[0] + g[3] * (g[2] - g[1]) + 33;                    // the middle of a strip's lower end
+                const ink = { oil: 77, ev_range: 42 };                                    // a three-digit oil, a two-digit electric range
+                const unitOf = (n) => by(pre + n + '_unit');
+                const y = by(pre + 'oil').y;
+                assert(by(pre + 'ev_range').y === y && unitOf('oil').y === y + 3 && unitOf('ev_range').y === y + 3, pre + ': the row is not one line');
+                assert(y >= b.g1[2] + 6 && y + 29 <= 660, pre + ': the row is not between the strips\' lower end (y ' + b.g1[2] + ') and BMW\'s gear hole (y 660)');
+                assert(y + 29 + 6 <= by(pre + 'time').y, pre + ': the row is not above the bottom line');
+                [['oil', b.g1], ['ev_range', b.g2]].forEach(([n, g]) => {
+                    const val = by(pre + n), u = unitOf(n);
+                    assert(by(pre + n).font === 'm_mid' && val.x + val.w <= u.x && !val.icon, n + ': value and unit out of order');
+                    const left = val.x + val.w - ink[n], right = u.x + u.w - (n === 'oil' ? 2 : 0);     // the longest group, from the first digit to the end of the unit
+                    const centre = (left + right) / 2;
+                    assert(Math.abs(centre - mid(g)) <= 22, pre + n + ': the value is not under its strip (group middle ' + centre + ', strip middle ' + mid(g) + ')');
+                });
+                const o = by(pre + 'oil'), ou = unitOf('oil'), e = by(pre + 'ev_range');
+                assert(e.x + e.w - 62 - (ou.x + ou.w) >= 15, pre + ': the oil and the electric range touch');
+                assert(by(pre + 'oil').tempBy === 'oil', pre + ': the oil value does not take its colour');
+                assert(!by(pre + 'oil_icon') && !by(pre + 'ev_icon'), pre + ': an icon is back under the strips (it made the two groups touch)');
             });
+            // the map view follows the strips 30 px right
+            assert(by('o_oil').x - by('oil').x === 30 && by('o_ev_range').x - by('ev_range').x === 30, 'the map view\'s values do not follow the strips');
+        });
+        check('mblade: the coolant (over) and the outside temperature (under) are one table at the far right, same in both views: icons, values and units each in one column', () => {
+            const rows = [['cool', 'cool_icon', 'cool_unit'], ['outside', 'ice_icon', 'outside_unit']].map((r) => r.map((i) => by(i)));
+            assert(!by('out_icon'), 'the outside temperature has no thermometer (it looks like the coolant\'s: the owner would confuse them)');
+            rows.forEach((r) => r.forEach((w) => assert(!w.toggle, w.id + ': the column is the same in both views')));
+            assert(by('cool').tempBy === 'coolant' && by('cool_icon').tempBy === 'coolant', 'tempBy missing');
+            assert(by('outside').iceBy && by('ice_icon').iceBy && by('ice_icon').icon === 'snow', 'the snowflake and the ice colour are missing');
+            assert(rows[0][0].y === by('oil').y, 'the coolant is not on the sensors\' row (the oil\'s)');
+            assert(rows[1][0].y === by('time').y, 'the outside temperature is not on the bottom line');
+            assert(new Set(rows.map((r) => r[0].x + r[0].w)).size === 1, 'the values do not end at the same x');
+            assert(new Set(rows.map((r) => r[1].x)).size === 1, 'the icons are not in one line');
+            assert(new Set(rows.map((r) => r[2].x)).size === 1, 'the units are not in one line');
+            rows.forEach(([val, ic, unit]) => {
+                assert(val.font === 'm_mid' && ic.x + ic.w <= val.x && val.x + val.w <= unit.x + 6, val.id + ': icon, value and unit out of order');
+                assert(ic.x >= 1712 && unit.x + unit.w <= 1920, val.id + ': too close to the strips (map view: the electric range ends x 1664) or off the panel');
+            });
+                        // the oil is under its strip now: nothing of it is in the right column
+            assert(by('o_ev_range_unit').x + by('o_ev_range_unit').w <= by('ice_icon').x - 10, 'the electric range runs into the right column in the map view');
         });
         check('mblade: nothing shown together overlaps anything else (text and icon boxes), in either view', () => {
             const g = (w) => (w.toggle === 'powerShut' ? '!mapUp' : w.toggle === 'powerOpen' ? 'mapUp' : w.toggle) || '';

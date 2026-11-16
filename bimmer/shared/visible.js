@@ -86,9 +86,8 @@ function check(widgets, target) {
                 const worst = under.reduce((a, b) => (b.d > a.d ? b : a));
                 out.push(id + ': ' + worst.what + ' ' + worst.d + ' px under the hood');
             }
-            if (overlaps(w, BLACK_BOX)) {
-                out.push(id + ': overlaps BMW\'s gear box x' + BLACK_BOX[0] + '-' + BLACK_BOX[2] + ' y' + BLACK_BOX[1] + '-' + BLACK_BOX[3]);
-            }
+            // BMW's black box (BLACK_BOX) is no longer a reason to move a widget: with the gear letter's hole open (setting gearWindow, on by default) BMW does not
+            // draw it (cars of Nov 16 2026: gone in the four themes). Only the setting "off" brings it back, and then it bites what stands there: the owner's choice.
             if (overlaps(w, BELT)) {
                 out.push(id + ': overlaps BMW\'s seat-belt light x' + BELT[0] + '-' + BELT[2] + ' y' + BELT[1] + '-' + BELT[3]);
             }

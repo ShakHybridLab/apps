@@ -532,7 +532,7 @@ check('limit ring and timer: in the four layouts, blank-safe, clear of the map a
     assert(set.indexOf('limitRing') >= 0 && set.indexOf('launchTimer') >= 0);
     assert(typeof require(path.join(tmp, 'shared', 'icons.js')).ICONS.stopwatch === 'function');
 });
-check('limit ring: small, beside the speed digits (Sport, M, Navi) or in the bottom left corner (M Blade), clear of every other widget and of BMW\'s gear box and belt light; the timer keeps the middle', () => {
+check('limit ring: small, beside the speed digits (Sport, Navi), under the tyre block (M) or in the bottom left corner (M Blade), clear of every other widget and of BMW\'s gear box and belt light; the timer keeps the middle', () => {
     const visible = require(path.join(tmp, 'shared', 'visible.js'));
     const SHADERS = ['sdash', 'mdash', 'mblade', 'navi', 'shiftlight', 'emblem'];
     ['sport', 'm', 'mblade', 'navi'].forEach((id) => {
@@ -544,6 +544,14 @@ check('limit ring: small, beside the speed digits (Sport, M, Navi) or in the bot
         assert.strictEqual(r.color, 'dim', id + ': the ring is the quiet colour (red when over the limit)');
         if (id === 'mblade') {
             assert(r.y >= 530 && r.y + r.h <= by('time').y - 4 && r.x + r.w <= 320, id + ': bottom left, just above the clock\'s row (which sits above the gear letter since 0.20.6)');
+        } else if (id === 'm') {
+            // as the M3 cluster's own (owner's photo, Nov 16 2026): right under the tyre pressures, centred on them, with the next limit beside it
+            const tp = ['tp_FL', 'tp_FR', 'tp_RL', 'tp_RR'].map(by), left = Math.min(...tp.map((w) => w.x)), right = Math.max(...tp.map((w) => w.x + w.w)), low = Math.max(...tp.map((w) => w.y + w.h));
+            assert(Math.abs(r.x + r.w / 2 - (left + right) / 2) <= 8, id + ': the ring is not centred under the tyre block');
+            assert(r.y >= low + 12 && r.y - low <= 70, id + ': the ring is not right under the tyre block (its lowest line ends y ' + low + ', the ring starts y ' + r.y + ')');
+            assert(r.y + r.h <= 520, id + ': the ring runs into the card\'s lower rim (y 535)');
+            const nx = by('lim_nxt_ring');
+            assert(nx.x >= r.x + r.w + 8 && Math.abs((nx.y + nx.h / 2) - (r.y + r.h / 2)) <= 3, id + ': the next limit is not beside the ring');
         } else {
             // beside the speed digits: level with them, 16 px off the widest speed (three digits), on the side the layout leaves free
             const sp = by('speed'), f = font(sp.font), g = f.glyphs['0'], adv = typeof g === 'object' ? g.advance : g;
@@ -835,7 +843,7 @@ check('Waze contour: the bezel and glass pass is in Sport, M Blade and Navi (not
     });
     assert(!/vec4 bezel\(/.test(sh.mdash), 'the M theme keeps its own plate');
 });
-check('la case noire de BMW : 117 px de haut (photos du 15 nov. 2026), la fenêtre des fonds la couvre, rien de lisible dessous', () => {
+check('la case noire de BMW (réglage gearWindow « off » seulement) : 117 px de haut (photos du 15 nov. 2026), la fenêtre des fonds la couvre', () => {
     const vis = require(path.join(__dirname, '..', 'shared', 'visible.js'));
     const B = vis.BLACK_BOX;
     assert(B[3] - B[1] >= 115 && B[3] - B[1] <= 120, 'hauteur de la case : ' + (B[3] - B[1]));
@@ -844,14 +852,8 @@ check('la case noire de BMW : 117 px de haut (photos du 15 nov. 2026), la fenêt
     assert(m, 'fenêtre de la case introuvable dans shaders.js');
     const cx = +m[1], cy = +m[2], hx = +m[3], hy = +m[4];
     assert(cx - hx <= B[0] && cx + hx >= B[2] && cy - hy <= B[1] && cy + hy >= B[3], 'la fenêtre ne couvre pas la case : ' + [cx - hx, cy - hy, cx + hx, cy + hy]);
-    // les textes de chaque thème, vues exclusives comprises : aucun ne touche la case (fonds et feuilles pleines exceptés)
-    const dir = path.join(__dirname, '..', 'apps', 'shaktheme', 'hud', 'layouts');
-    ['sport', 'm', 'mblade', 'navi'].forEach((name) => {
-        JSON.parse(fs.readFileSync(path.join(dir, name + '.json'), 'utf8')).widgets.forEach((w) => {
-            if (!['text', 'icon', 'emblem', 'badge'].includes(w.type) || w.w >= 1000) return;
-            assert(!(w.x < B[2] && w.x + w.w > B[0] && w.y < B[3] && w.y + w.h > B[1]), name + ' : ' + w.id + ' touche la case noire de BMW');
-        });
-    });
+    // plus aucun thème n'évite la case : avec le trou de la lettre de rapport ouvert (réglage gearWindow, par défaut), BMW ne la dessine plus (essai du 16 nov. 2026,
+    // les quatre thèmes) ; seul le réglage « off » la ramène. Les réglages individual du thème M, par exemple, ont retrouvé leur place régulière.
 });
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log('test_zones: ' + n + ' checks' + (process.exitCode ? ' (some failed)' : ' ok'));

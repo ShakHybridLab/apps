@@ -36,6 +36,7 @@ const PROBES = [
     { id: 'pdrive', iface: EFF, field: 'displayPowerDrive', name: 'Power meter: drive and recuperation' },
     { id: 'pdrive2', iface: EFF, field: 'displayPowerDrive2', name: 'Power meter: second reading' },
     { id: 'pdist', iface: KOMBI, field: 'statusDisplayElectricalPowerDistribution', name: 'Electric power: drive and air conditioning' },
+    { id: 'erange', iface: KOMBI, field: 'displayRangeElectricVehicle', name: 'Electric range (cluster)' },
     { id: 'cc', iface: KOMBI, field: 'statusActiveCCMessage', name: 'Check control message showing' },
     { id: 'cbs', iface: KOMBI2, field: 'cbsDataServiceList', name: 'Services due' },
     { id: 'ccrisk', iface: KOMBI2, field: 'ccListRiskClass', name: 'Check control risk class' },
@@ -49,7 +50,7 @@ const PROBES = [
 const GUIDE = { id: 'guide', iface: CARPLAY, field: 'projectedGuidanceActive', name: 'CarPlay guidance active (route)' };
 const SHOWN = PROBES.map((p) => p.id);
 // the Signals tab's two pages (ids; 'guide' is the one probe above): the engine and the energy first, then the road signs and the assistance
-const PAGES = [['rpm', 'engt', 'speed', 'pdrive', 'pdrive2', 'pdist', 'guide'], ['sign', 'next', 'fas', 'fasx', 'wheel', 'cc', 'ccrisk', 'cbs']];
+const PAGES = [['rpm', 'engt', 'speed', 'pdrive', 'pdrive2', 'pdist', 'erange', 'guide'], ['sign', 'next', 'fas', 'fasx', 'wheel', 'cc', 'ccrisk', 'cbs']];
 const KEEP = 3;               // distinct values kept for each (the page shows the newest first)
 const LOG_FIRST = 12;         // distinct values of each that go to the log, then one a minute at most
 const LOG_EVERY_MS = 60000;
@@ -142,6 +143,12 @@ function meaningOf(id, v) {
         // the scale is NOT known: the owner's car sent 100 at a crawl (2 km/h), which no motor share is, so the number is shown as it is
         const q = Extras.powerQuotaOf(v);
         t = q === null ? null : 'share ' + Math.round(q) + ' (scale to confirm)';
+        break;
+    }
+    case 'erange': {
+        // the cluster's electric range, in the unit it is set to (km, or miles on a US setting): 0xFFFE and up is "none"
+        const n = typeof v === 'number' ? v : v && typeof v === 'object' ? v.displayRangeElectricVehicle : null;
+        t = typeof n === 'number' && isFinite(n) && n >= 0 && n < 0xFFFE ? 'range ' + Math.round(n) : null;
         break;
     }
     case 'cc': t = yn(Extras.alertOf(v), 'alert'); break;

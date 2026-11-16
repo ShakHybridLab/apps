@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('assert');
-const D = require('../src/shakcamdiag');
+const D = require('../shared/shakcamdiag');
 assert.strictEqual(D.stageOf('R'), 'R');
 assert.strictEqual(D.stageOf(4), 'D');
 assert.deepStrictEqual(D.selectionOf(2), { stage: 'R' });

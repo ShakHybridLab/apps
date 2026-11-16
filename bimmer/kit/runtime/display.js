@@ -487,7 +487,7 @@ class Display {
 
     /** GPU path gone (or off): the HMI's own image shows again - push a frame now. */
     _lost() {
-        this.lastWords = null; this.bgShown = null;
+        this.lastWords = null; this.bgShown = null; this.softWords = null;
         this.ui._invalidate && this.ui._invalidate();
         // the HMI's image still shows the plain background: draw the last frame there at once
         // (apps that draw only on changes would otherwise leave it blank)
@@ -688,6 +688,11 @@ class Display {
         this._keep(name, r, softImage);
         // an HMI popup covers the screen the kit runs: the HMI's image stays plain (_lost) meanwhile
         if (this.ownable() && !this.blocked && this.gpu.visible === false && this.ui.isVisible(this.screen.name)) return Promise.resolve();
+        // software path: a frame equal to the last one is not drawn, encoded and pushed to the HMI again (that cost the car's processor and the
+        // HMI link on every frame); one is still pushed every 3 s, and at once after _lost
+        const sw = r.words(), swb = Buffer.from(sw.buffer, sw.byteOffset, sw.byteLength), nowSw = Date.now();
+        if (this.softWords && nowSw - this.softAt < 3000 && this.softWords.length === swb.length && swb.equals(this.softWords)) return Promise.resolve();
+        this.softWords = Buffer.from(swb); this.softAt = nowSw;
         const cv = new Canvas(r.w, r.h);
         play(r.words(), cv);
         return softImage(name, cv);

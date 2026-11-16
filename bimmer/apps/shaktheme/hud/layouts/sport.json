@@ -624,9 +624,9 @@
       "id": "gear",
       "type": "text",
       "z": 5,
-      "x": 1185,
+      "x": 1315,
       "y": 310,
-      "w": 210,
+      "w": 90,
       "h": 65,
       "text": "{{gearnum}}",
       "font": "s_gear",
@@ -634,8 +634,7 @@
       "align": "center",
       "hotWhen": "now",
       "toggle": "!mapUp",
-      "sheet": "s6",
-      "conn": 1
+      "sheet": "s5"
     },
     {
       "id": "mspeed",
@@ -681,8 +680,7 @@
       "align": "center",
       "hotWhen": "now",
       "toggle": "mapUp",
-      "sheet": "s6",
-      "conn": 1
+      "sheet": "s5"
     },
     {
       "id": "f_full",
@@ -756,7 +754,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s2"
+      "sheet": "s5"
     },
     {
       "id": "o_unit",
@@ -771,7 +769,7 @@
       "color": "dim",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s2"
+      "sheet": "s5"
     },
     {
       "id": "o_mid",
@@ -786,7 +784,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s2"
+      "sheet": "s5"
     },
     {
       "id": "oil_icon",
@@ -800,7 +798,7 @@
       "h": 32,
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s2"
+      "sheet": "s5"
     },
     {
       "id": "o_cold",
@@ -815,7 +813,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s2"
+      "sheet": "s5"
     },
     {
       "id": "boost",
@@ -830,7 +828,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "boostShown",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -846,7 +844,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "boostShown",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -862,7 +860,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "power",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -878,7 +876,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "power",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -892,7 +890,7 @@
       "w": 24,
       "h": 30,
       "color": "dim",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -908,7 +906,7 @@
       "font": "s_val",
       "color": "fg",
       "align": "right",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -923,7 +921,7 @@
       "font": "s_unit",
       "color": "dim",
       "align": "left",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -938,7 +936,7 @@
       "font": "s_val",
       "color": "fg",
       "align": "right",
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -953,7 +951,7 @@
       "font": "s_unit",
       "color": "dim",
       "align": "left",
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -967,7 +965,7 @@
       "w": 24,
       "h": 28,
       "color": "dim",
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -983,7 +981,7 @@
       "font": "s_val",
       "color": "fg",
       "align": "right",
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -998,7 +996,7 @@
       "font": "s_unit",
       "color": "dim",
       "align": "left",
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1012,7 +1010,7 @@
       "h": 30,
       "icon": "battBolt",
       "color": "dim",
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1028,7 +1026,7 @@
       "font": "s_val",
       "color": "fg",
       "align": "right",
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1043,7 +1041,7 @@
       "font": "s_unit",
       "color": "dim",
       "align": "left",
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1059,7 +1057,7 @@
       "color": "fg",
       "align": "right",
       "iceBy": true,
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1090,7 +1088,7 @@
       "color": "dim",
       "align": "center",
       "readyHides": true,
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1106,7 +1104,7 @@
       "color": "dim",
       "align": "right",
       "accentBy": true,
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1149,7 +1147,7 @@
       "align": "center",
       "limitBy": true,
       "toggle": "!mapUp",
-      "sheet": "s6",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1180,7 +1178,7 @@
       "align": "center",
       "nextBy": true,
       "toggle": "!mapUp",
-      "sheet": "s6",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1223,7 +1221,7 @@
       "color": "dim",
       "launchBy": true,
       "toggle": "!mapUp",
-      "sheet": "s6",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1241,7 +1239,7 @@
       "launchBy": true,
       "toggle": "!mapUp",
       "rate": 100,
-      "sheet": "s6",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1257,7 +1255,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "!mapUp",
-      "sheet": "s6",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -1271,7 +1269,7 @@
       "h": 30,
       "color": "dim",
       "iceBy": true,
-      "sheet": "s11",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1290,7 +1288,7 @@
         255
       ],
       "evShareBy": true,
-      "sheet": "s11",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1305,7 +1303,7 @@
       "font": "s_val",
       "color": "fg",
       "align": "right",
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1320,7 +1318,7 @@
       "font": "s_unit",
       "color": "dim",
       "align": "left",
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
