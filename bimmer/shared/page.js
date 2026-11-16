@@ -27,6 +27,7 @@ const visible = require('./visible');
 const badges = require('./badges');
 const fr = require('./fr');
 const probes = require('./probes');
+const catalog = require('./catalog');
 const tz = require('./tz');
 
 const W = 1600, H = 520;
@@ -484,11 +485,13 @@ class Page {
     /* ---------- Car signals (cluster) ---------- */
     /** The signals of the car this app only reads for now (probes.js): the last values heard, the newest first, for a photo of the screen. */
     signalsTab(cv, bottom) {
-        const pg = this.sigPage === 1 ? 1 : 0, ids = probes.PAGES[pg];
+        // pages 1 and 2: the signals the app reads (values); then one page per group of the car's catalogue (names only, catalog.js)
+        const NP = probes.PAGES.length + catalog.GROUPS.length;
+        const pg = this.sigPage >= 1 && this.sigPage < NP ? this.sigPage : 0;
+        if (pg >= probes.PAGES.length) { this.catalogPage(cv, bottom, pg, NP); return; }
+        const ids = probes.PAGES[pg];
         label(cv, CX, 70, 'Signals of the car, read only');
-        // the two pages as small chips at the right of the title
-        let px = CR - 2 * (cv.textWidth('1/2', 13, { font: 'bold', literal: true }) + 18) - 6;
-        [['1/2', 0], ['2/2', 1]].forEach((c) => { px += miniChip(cv, px, 48, c[0], pg === c[1], () => { this.sigPage = c[1]; this.kick(); }, 'sigpage:' + c[1]) + 6; });
+        this.sigChips(cv, pg, NP);
         const list = ids.map((id) => probes.PROBES.concat([probes.GUIDE]).find((p) => p.id === id)), pr = this.hud.probes, now = Date.now();
         const rh = Math.max(38, Math.min(52, Math.floor((bottom - 128) / list.length)));      // two lines a row: the name, then what the app understood; the two note lines fit under
         const sig = this.hud.ctx && this.hud.ctx.signals, busy = sig && sig.busyWith ? sig.busyWith() : null;      // the native step running now (signals.js)
@@ -508,7 +511,43 @@ class Page {
             cv.text(v, vx, y + (rh - 4) / 2 + 4, 12, got ? C.dim : C.label, { literal: true });
             y += rh;
         });
-        note(cv, CX, y + 12, ['Photograph both pages after a drive: they show the last values the car sent.', 'Blue: what the app understood of the value. Read only: nothing here changes the car.']);
+        note(cv, CX, y + 12, ['Photograph pages 1 and 2 after a drive: they show the last values the car sent.', 'Blue: what the app understood of the value. Read only: nothing here changes the car.']);
+    }
+
+    /** The pages of the Signals tab as small chips at the right of the title ("1/5" ...). */
+    sigChips(cv, pg, np) {
+        const w = cv.textWidth('1/' + np, 13, { font: 'bold', literal: true }) + 18;
+        let px = CR - np * (w + 6);
+        for (let i = 0; i < np; i++) { const t = (i + 1) + '/' + np, k = i; px += miniChip(cv, px, 48, t, pg === i, () => { this.sigPage = k; this.kick(); }, 'sigpage:' + k) + 6; }
+    }
+
+    /** A page of the car's own catalogue of signals (catalog.js): the names of one group, no values, to photograph. */
+    catalogPage(cv, bottom, pg, np) {
+        const cat = catalog.load(), g = cat.groups[pg - probes.PAGES.length] || cat.groups[0];
+        if (this.catLogged !== true && this.hud.log) {
+            this.catLogged = true;
+            this.hud.log.info('catalogue: ' + (cat.error ? 'not readable: ' + cat.error : cat.groups.map((x) => x.id + ' ' + x.rows.map((r) => r.iface.split('.').slice(-2).join('.') + '.' + r.field + (r.flags ? ' ' + r.flags : '')).join(', ')).join(' | ')));
+        }
+        label(cv, CX, 70, g.title);
+        this.sigChips(cv, pg, np);
+        const rh = Math.max(38, Math.min(52, Math.floor((bottom - 128) / Math.max(1, Math.min(g.rows.length, catalog.MAX_ROWS)))));
+        const fit = (t, w, sz) => { while (t.length > 1 && cv.textWidth(t, sz, { literal: true }) > w) t = t.slice(0, -2) + '…'; return t; };
+        let y = 84;
+        if (!g.rows.length) {
+            glass(cv, CX, y, CW, rh - 4, false);
+            cv.text(cat.error ? 'Catalog not readable' : 'Nothing found in the car\'s catalog', CX + 18, y + (rh - 4) / 2 + 6, 15, C.label);
+            if (cat.error) cv.text(fit(cat.error, CW - 36, 12), CX + 18, y + rh + 12, 12, C.label, { literal: true });
+            y += rh;
+        }
+        g.rows.forEach((r) => {
+            glass(cv, CX, y, CW, rh - 4, false);
+            const flags = r.flags, fw = cv.textWidth(flags, 12, { literal: true });
+            cv.text(fit(r.iface.split('.').slice(-2).join('.') + ' · ' + r.field, CW - 44 - fw - 20, 15), CX + 18, y + 19, 15, C.text, { literal: true });
+            cv.text(flags, CR - 12 - fw, y + 19, 12, C.blueHi, { literal: true });
+            if (r.members.length) cv.text(fit(r.members.join(', '), CW - 36, 13), CX + 18, y + rh - 11, 13, C.label, { literal: true });
+            y += rh;
+        });
+        note(cv, CX, y + 12, ['Names only, no values: photograph this page to give the names the app can read next.', 'get: can be read; notify: told when it changes. Read only: nothing here changes the car.']);
     }
 
     /* ---------- Badge (cluster) ---------- */

@@ -63,6 +63,7 @@ check('the build gives the app its declared signals (ctx.spec.signals): without 
 });
 check('both apps ship probes.js, and ShakTheme has the Signals tab', () => {
     assert(theme.shared.indexOf('probes.js') >= 0 && hud.shared.indexOf('probes.js') >= 0, 'probes.js is not in a "shared" list');
+    assert(theme.shared.indexOf('catalog.js') >= 0 && hud.shared.indexOf('catalog.js') >= 0, 'catalog.js (required by page.js) is not in a "shared" list: the app would not start on the car');
     assert(/tabs: \[[^\]]*'signals'/.test(fs.readFileSync(path.join(__dirname, '..', 'apps', 'shaktheme', 'main.js'), 'utf8')), 'no signals tab in main.js');
 });
 check('the page texts are in French, with their accents', () => {
@@ -104,23 +105,31 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
     const { PAGES, meaningOf } = require('../shared/probes');
     assert.deepStrictEqual(PAGES.reduce((a, b) => a.concat(b), []).sort(), PROBES.map((p) => p.id).concat([GUIDE.id]).sort(), 'the pages do not hold every probe once');
     const page = fs.readFileSync(path.join(__dirname, '..', 'shared', 'page.js'), 'utf8');
-    const m = /    signalsTab\(cv, bottom\) \{[\s\S]*?\n    \}\n/.exec(page);
-    assert(m, 'no signalsTab');
-    const body = m[0].replace(/^    signalsTab\(cv, bottom\) \{/, '').replace(/\n    \}\n$/, '');
+    const cut = (name, args) => {
+        const m = new RegExp('    ' + name + '\\(' + args + '\\) \\{[\\s\\S]*?\\n    \\}\\n').exec(page);
+        assert(m, 'no ' + name);
+        return m[0].replace(new RegExp('^    ' + name + '\\(' + args + '\\) \\{'), '').replace(/\n    \}\n$/, '');
+    };
+    const bodies = { signalsTab: cut('signalsTab', 'cv, bottom'), sigChips: cut('sigChips', 'cv, pg, np'), catalogPage: cut('catalogPage', 'cv, bottom, pg, np') };
+    const ARGS = { signalsTab: ['cv', 'bottom'], sigChips: ['cv', 'pg', 'np'], catalogPage: ['cv', 'bottom', 'pg', 'np'] };
     const C = { text: '#fff', dim: '#aaa', label: '#888', blue: '#00f', blueHi: '#0af', live: '#0f0', off: '#ccc' };
-    const run = (pg, feed) => {
-        const calls = { text: [], glass: [], chips: [] };
+    const catalog = require('../shared/catalog');
+    const run = (pg, feed, cat) => {
+        const calls = { text: [], glass: [], chips: [], logs: [] };
         const cv = { circle() {}, text(t, x, y, size, col) { calls.text.push({ t, x, y, size, col }); }, textWidth: (t, sz) => String(t).length * sz * 0.55, target() {} };
-        const hud = { probes: new Probes(null), ctx: {}, car: { subs: [] } };
+        const hud = { probes: new Probes(null), ctx: {}, car: { subs: [] }, log: { info: (t) => calls.logs.push(t) } };
         if (feed) PROBES.concat([GUIDE]).forEach((p) => hud.probes.feed(p.id, feed[p.id] === undefined ? { a: 1, b: 'x'.repeat(80) } : feed[p.id], Date.now()));
         const self = { sigPage: pg, hud, kick() {} };
-        new Function('cv', 'bottom', 'label', 'miniChip', 'glass', 'note', 'C', 'CX', 'CR', 'CW', 'probes', 'Date', body)
-            .call(self, cv, 512, () => {}, (c, x, y, t) => { calls.chips.push(t); return 50; }, (c, x, y, w, h) => { calls.glass.push({ y, h }); }, (c, x, y, lines) => { calls.note = { y, n: lines.length }; }, C, 300, 1584, 1284, require('../shared/probes'), Date);
+        const deps = [(c, x, y, t) => {}, (c, x, y, t) => { calls.chips.push(t); return 50; }, (c, x, y, w, h) => { calls.glass.push({ y, h }); }, (c, x, y, lines) => { calls.note = { y, n: lines.length }; }, C, 300, 1584, 1284, require('../shared/probes'), cat ? { GROUPS: catalog.GROUPS, MAX_ROWS: catalog.MAX_ROWS, load: () => cat } : catalog, Date];
+        const names = ['label', 'miniChip', 'glass', 'note', 'C', 'CX', 'CR', 'CW', 'probes', 'catalog', 'Date'];
+        Object.keys(bodies).forEach((k) => { self[k] = function () { return new Function(...ARGS[k], ...names, bodies[k]).apply(this, Array.prototype.slice.call(arguments).concat(deps)); }; });
+        self.signalsTab(cv, 512);
         return calls;
     };
+    const NPAGES = PAGES.length + catalog.GROUPS.length;
     [0, 1].forEach((pg) => [false, true].forEach((fed) => {
         const c = run(pg, fed ? { rpm: 2500, speed: 62, sign: 70, guide: true, cc: { numberDisplayControlCheckControlMessage: 3 } } : null);
-        assert.strictEqual(c.chips.join(), '1/2,2/2');
+        assert.strictEqual(c.chips.join(), Array.from({ length: NPAGES }, (_, i) => (i + 1) + '/' + NPAGES).join());
         const last = c.glass[c.glass.length - 1];
         assert.strictEqual(c.glass.length, PAGES[pg].length, 'rows on page ' + pg);
         assert(last.y + last.h <= 512, 'page ' + pg + ' rows end at ' + (last.y + last.h) + ', past 512');
@@ -128,6 +137,45 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
         assert(c.note && c.note.y + (c.note.n - 1) * 26 + 6 <= 512, 'the note runs past 512: ' + JSON.stringify(c.note));
         if (fed && pg === 0) assert(c.text.some((t) => /^→ 2500 rpm$/.test(t.t)) && c.text.some((t) => t.t === '→ route: yes'), 'no meaning line');
     }));
+    // the pages of the car's catalogue: a fixture catalogue in the file's shape (interfaces -> fields -> getter / notifier / dataRef, datatypes)
+    {
+        const os = require('os');
+        const file = path.join(os.tmpdir(), 'catalog_fixture_' + process.pid + '.json');
+        const fields = (o) => { const r = {}; Object.keys(o).forEach((k) => { r[k] = { dataRef: 'S_' + k, getter: o[k].indexOf('r') >= 0 ? { id: 1 } : undefined, notifier: o[k].indexOf('s') >= 0 ? { id: 2 } : undefined }; }); return r; };
+        const db = { interfaces: {
+            'de.bmw.infotainment.controlelements.SteeringWheelButtons': { fields: fields({ statusMFLButtons: 'rs', otherField: 'r' }) },
+            'de.bmw.infotainment.vehicle.Misc': { fields: fields({ unrelated: 'r' }) },
+            'de.bmw.infotainment.mediaplayer.MediaPlayer': { fields: fields({ statusCurrentTrack: 'rs', statusPlayState: 'rs' }) },
+            'de.bmw.infotainment.vehicle.TrafficSignDisplayControl': { fields: fields({ displaySpeedLimitAndNoPassingRestriction: 'rs' }) },
+            'com.other.Thing': { fields: fields({ statusButton: 'rs' }) },
+        }, datatypes: { S_statusMFLButtons: { type: 'struct', members: [{ name: 'buttonPlus' }, { name: 'buttonMinus' }] }, S_unrelated: { type: 'struct', members: [{ name: 'x' }] }, S_statusCurrentTrack: { type: 'struct', members: [{ name: 'titleName' }, { name: 'artistName' }] } } };
+        fs.writeFileSync(file, JSON.stringify(db));
+        try {
+            const cat = catalog.find(file);
+            assert.strictEqual(cat.error, null);
+            const by = (id) => cat.groups.find((g) => g.id === id).rows.map((r) => r.field);
+            assert.deepStrictEqual(by('buttons'), ['otherField', 'statusMFLButtons'], 'buttons: every field of an interface whose name matches, no field of another, no interface outside de.bmw');
+            assert.deepStrictEqual(by('media'), ['statusCurrentTrack', 'statusPlayState']);
+            assert.deepStrictEqual(by('sign'), ['displaySpeedLimitAndNoPassingRestriction']);
+            const mfl = cat.groups[0].rows.find((r) => r.field === 'statusMFLButtons');
+            assert.strictEqual(mfl.flags, 'get notify'); assert.deepStrictEqual(mfl.members, ['buttonPlus', 'buttonMinus']);
+            assert(catalog.find('/nonexistent/catalog.json').error, 'a missing catalogue is an error, not a crash');
+            [2, 3, 4].forEach((pg) => {
+                const c = run(pg, null, cat);
+                assert.strictEqual(c.chips.length, NPAGES);
+                assert.strictEqual(c.glass.length, Math.max(1, cat.groups[pg - 2].rows.length), 'rows on catalogue page ' + pg);
+                const last = c.glass[c.glass.length - 1];
+                assert(last.y + last.h <= 512 && c.note.y + (c.note.n - 1) * 26 + 6 <= 512, 'catalogue page ' + pg + ' runs past 512');
+                c.text.forEach((t) => assert(t.y <= 512, 'text below the page: ' + t.t));
+                assert(c.logs.length === 1 && /^catalogue: /.test(c.logs[0]), 'the catalogue is logged once');
+            });
+            assert(run(2, null, cat).text.some((t) => /SteeringWheelButtons · statusMFLButtons$/.test(t.t)));
+            const bad = run(3, null, { groups: catalog.GROUPS.map((g) => ({ id: g.id, title: g.title, rows: [] })), error: 'ENOENT' });
+            assert(bad.text.some((t) => t.t === 'Catalog not readable') && bad.glass.length === 1);
+        } finally { try { fs.unlinkSync(file); } catch (e) { /* gone */ } }
+        const real = ['Catalog not readable', "Nothing found in the car's catalog", ...catalog.GROUPS.map((g) => g.title)];
+        real.forEach((k) => assert(fr.tr(k) !== k, 'not in French: ' + k));
+    }
     const FR = { '→ 2500 rpm': '→ 2500 tr/min', '→ limit 70': '→ limite 70', '→ next limit 90': '→ limite suivante 90', '→ no limit read': '→ aucune limite lue', '→ no next limit': '→ aucune limite suivante', '→ not understood': '→ non compris', '→ alert: yes': '→ alerte : oui', '→ route: no': '→ itinéraire : non',
         '→ share 100 (scale to confirm)': '→ part 100 (échelle à confirmer)', '→ coolant 77 C · oil 76 C': '→ liquide 77 °C · huile 76 °C', '→ oil 76 C': '→ huile 76 °C', '→ wheel on, green': '→ volant allumé, vert', '→ wheel on, yellow, warning': '→ volant allumé, jaune, alerte', '→ wheel off': '→ volant éteint' };
     Object.keys(FR).forEach((k) => assert.strictEqual(fr.tr(k), FR[k], k));
