@@ -39,6 +39,7 @@ const EXACT = {
     'Power meter: second reading': 'Puissance : seconde lecture', 'Electric power: drive and air conditioning': 'Puissance électrique : propulsion et clim',
     'Check control message showing': "Message d'alerte affiché", 'Services due': 'Entretiens à prévoir', 'Check control risk class': "Classe de risque des alertes",
     'Photograph this page after a drive: it shows the last values the car sent.': 'Photographie cette page après un trajet : elle montre les dernières valeurs envoyées par la voiture.',
+    'Not read in this version': 'Non lu dans cette version',
     '→ no limit read': '→ aucune limite lue', '→ no next limit': '→ aucune limite suivante', '→ not understood': '→ non compris', '→ motor at rest': '→ moteur au repos', '→ wheel off': '→ volant éteint',
     'Photograph both pages after a drive: they show the last values the car sent.': 'Photographie les deux pages après un trajet : elles montrent les dernières valeurs envoyées par la voiture.',
     'Blue: what the app understood of the value. Read only: nothing here changes the car.': "Bleu : ce que l'appli a compris de la valeur. Lecture seule : rien ici ne change la voiture.",

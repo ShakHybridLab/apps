@@ -40,6 +40,9 @@ const PROBES = [
     { id: 'cbs', iface: KOMBI2, field: 'cbsDataServiceList', name: 'Services due' },
     { id: 'ccrisk', iface: KOMBI2, field: 'ccListRiskClass', name: 'Check control risk class' },
 ];
+// NOT DECLARED in app.json since ShakTheme 0.21.13: the car's app manager refused 0.21.12 ("UPDATE_FAILED", the previous version kept) and
+// this was the one signal declared since the last version the owner had installed. Re-add it (with the flags of the car's catalog) only when
+// a test install on the car has shown it accepted: until then hud.js does not subscribe (declaredIn) and the map shows as it did before.
 // the car's own word for "a route is being guided on the phone (CarPlay)": not in PROBES (those are the signals every app lists and counts), but
 // the second line of the Signals tab's first page (PAGES) and the Map tab show it, and hud.js reads it (guidanceOf) to show Waze's map in the
 // theme only while a route is on
@@ -118,6 +121,11 @@ function meaningOf(id, v) {
     return '→ ' + (t === null ? 'not understood' : t);
 }
 
+/** Whether the app's spec (ctx.spec) declares probe `p`'s signal: a signal that is not declared is never subscribed to, and shows "Not read in this version". */
+function declaredIn(spec, p) {
+    return !!(spec && spec.signals && spec.signals[p.iface] && spec.signals[p.iface][p.field]);
+}
+
 class Probes {
     constructor(log) { this.log = log; this.by = {}; }
     /** A new reading of probe `id` (any value; null / undefined count as nothing, an empty object shows as "(empty)"). */
@@ -165,4 +173,4 @@ function stateOf(sub, field, iface, busy) {
     return 'Subscribed, nothing received';
 }
 
-module.exports = { PROBES, GUIDE, PAGES, Probes, rawOf, guidanceOf, meaningOf, SHOWN, stateOf };
+module.exports = { PROBES, GUIDE, PAGES, Probes, rawOf, guidanceOf, meaningOf, declaredIn, SHOWN, stateOf };

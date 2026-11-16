@@ -1,0 +1,65 @@
+{
+ "comment": "Signals the car's app manager accepted: declared by a ShakTheme or ShakHUD version (or another app, see the owner's installs) that installed on the owner's car. The car refuses the whole installation when one declared signal does not match its catalog (ShakTheme 0.21.12: UPDATE_FAILED, the previous version kept, over CarPlayManager.projectedGuidanceActive). tools/test_declared_signals.js checks that app.json declares nothing outside this list: add a signal here only after a test install on the car has shown it accepted.",
+ "signals": {
+  "de.bmw.infotainment.vehicle.CDS": {
+   "statusEngineSpeed2": "rs",
+   "statusEngineTemperature": "rs"
+  },
+  "de.bmw.infotainment.vehicle.CDS2": {
+   "statusLongitudinalAccelerationMassCenter": "rs",
+   "statusLateralAccelerationMassCenter": "rs"
+  },
+  "de.bmw.infotainment.vehicle.Vehicle2": {
+   "statusCarSpeed2": "rs"
+  },
+  "de.bmw.infotainment.drivingexcitement.FES": {
+   "statusSwitchDriveDynamicSport2": "rs",
+   "statusActualValueTorque2": "rs",
+   "statusFESVehicleDynamicSwitchHMI": "rs",
+   "statusVehicleDynamicEngine": "rs"
+  },
+  "de.bmw.infrastructure.VehicleInformation": {
+   "statusGearboxDrive": "s",
+   "DataPowerTrain2": "s"
+  },
+  "de.bmw.infotainment.KombiIF": {
+   "statusRangeTankStatus": "rs",
+   "displayRangeElectricVehicle": "rs",
+   "statusDisplayElectricalPowerDistribution": "rs",
+   "statusActiveCCMessage": "rs"
+  },
+  "de.bmw.infotainment.vehicle.Vehicle": {
+   "statusNewCurrentUnitsStatusExt": "rs"
+  },
+  "de.bmw.infotainment.misc.MDrive": {
+   "dataDisplayGearbox": "s"
+  },
+  "de.bmw.infotainment.vehicle.TPMS": {
+   "statusTyrePressure": "rs",
+   "statusTyreTemperature": "rs"
+  },
+  "de.bmw.infrastructure.EnvironmentalInformation": {
+   "ExteriorTemperature": "s"
+  },
+  "de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl": {
+   "displaySpeedLimitAndNoPassingRestriction": "s"
+  },
+  "de.bmw.infotainment.fasus.FASuS": {
+   "statusNextSpeedLimitRecognition": "rs",
+   "statusIDriveFAS": "rs",
+   "statusIDriveFASExtended": "rs"
+  },
+  "de.bmw.dass.driverassistanceapplications.DisplayDriverAssistanceLateralCoordinated": {
+   "displaySteeringWheel": "s"
+  },
+  "de.bmw.infotainment.drivingexcitement.Efficiencytainment2": {
+   "displayPowerDrive": "s",
+   "displayPowerDrive2": "s"
+  },
+  "de.bmw.infotainment.KombiInterface_2": {
+   "cbsDataServiceList": "rs",
+   "ccListRiskClass": "rs"
+  },
+  "com.harman.infotainment.systemfunctions.tasu.tasu.InternalTasu": {}
+ }
+}

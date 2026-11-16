@@ -167,12 +167,17 @@ check('signals.js keeps why a field was refused (failed / getFailed), for the Si
 });
 
 // ---- the route: CarPlayManager.projectedGuidanceActive (the Waze map in the theme only with a route) ----
-check('the guidance signal is declared (optional, "rs") by ShakTheme only, and is not a line of the Signals tab (no room left)', () => {
-    assert(theme.signals[GUIDE.iface] && theme.signals[GUIDE.iface][GUIDE.field] === 'rs', 'ShakTheme does not declare ' + GUIDE.field);
-    assert(typeof theme.signals[GUIDE.iface]._optional === 'string' && theme.signals[GUIDE.iface]._optional.length > 20, 'a wrong name would block the installation: it must be optional');
+check('the guidance signal is NOT declared by either app (the car refused 0.21.12 over it), the app does not subscribe to it and says so; it is not in PROBES', () => {
+    const { declaredIn } = require('../shared/probes');
+    assert(!theme.signals[GUIDE.iface], 'declared again: only after a test install on the car has shown it accepted (0.21.12 was refused with it: UPDATE_FAILED)');
     assert(!(hud.signals && hud.signals[GUIDE.iface]), 'ShakHUD asks for a signal it does not use');
-    assert(PROBES.every((p) => p.id !== GUIDE.id), 'the guidance probe is in the Signals tab list');
+    assert(!declaredIn({ signals: theme.signals }, GUIDE) && declaredIn({ signals: { [GUIDE.iface]: { [GUIDE.field]: 'rs' } } }, GUIDE), 'declaredIn');
+    assert(!declaredIn(null, GUIDE) && !declaredIn({}, GUIDE) && !declaredIn({ signals: { [GUIDE.iface]: {} } }, GUIDE));
+    assert(PROBES.every((p) => p.id !== GUIDE.id), 'the guidance probe is in the PROBES list');
     assert(/^de\.bmw\.infotainment\.a4a\.carplay\.CarPlayManager$/.test(GUIDE.iface));
+    assert.strictEqual(fr.tr('Not read in this version'), 'Non lu dans cette version');
+    // every probe the Signals tab lists and the app declares is declared with the flags the car's catalog accepted before (a probe never declared before would block the install)
+    PROBES.forEach((p) => { if (theme.signals[p.iface] && theme.signals[p.iface][p.field]) assert(/^(rs|s)$/.test(theme.signals[p.iface][p.field]), p.id + ': flags'); });
 });
 check('guidanceOf: a boolean, 0 / 1, a word or a struct holding one; nothing clear is null', () => {
     assert.strictEqual(guidanceOf(true), true); assert.strictEqual(guidanceOf(false), false);

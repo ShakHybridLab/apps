@@ -463,7 +463,7 @@ class Page {
         y = this.toggleRow(cv, CX, y, w, 'Show the map only with a route', 'mapOnlyWithRoute', 44);
         const route = this.hud.routeActive, gd = this.hud.probes && this.hud.probes.get(probes.GUIDE.id), gv = gd && gd.vals[0] ? ' · ' + String(gd.vals[0]).slice(0, 16) : '';
         const gsub = (this.hud.car && this.hud.car.subs || []).find((x) => x && x.iface === probes.GUIDE.iface), gsig = this.hud.ctx && this.hud.ctx.signals;
-        const gtext = route === true ? 'Route on' + gv : route === false ? 'No route' + gv : gd ? 'Value not understood' + gv
+        const gtext = !probes.declaredIn(this.hud.ctx && this.hud.ctx.spec, probes.GUIDE) ? 'Not read in this version' : route === true ? 'Route on' + gv : route === false ? 'No route' + gv : gd ? 'Value not understood' + gv
             : probes.stateOf(gsub, probes.GUIDE.field, probes.GUIDE.iface, gsig && gsig.busyWith ? gsig.busyWith() : null);
         cv.text(gtext, CX + w - 100, rowY + 29, 16, route === true ? C.live : route === false ? C.dim : '#e0a340', { align: 'right', literal: true });
         y = this.toggleRow(cv, CX, y, w, 'Centre window for Cluster Centre / Cluster Info', 'centreWindow');
@@ -503,7 +503,7 @@ class Page {
             const vx = CX + 470, room = CR - 12 - vx, got = d && d.vals.length;
             const fit = (t, w) => { while (t.length > 1 && cv.textWidth(t, 12, { literal: true }) > w) t = t.slice(0, -2) + '…'; return t; };
             const sub = (this.hud.car && this.hud.car.subs || []).find((s) => s && s.iface === p.iface);
-            let v = got ? fit(d.vals[0], room) : fit(probes.stateOf(sub, p.field, p.iface, busy), room);                                       // the newest value, then the one before it if there is room
+            let v = got ? fit(d.vals[0], room) : !probes.declaredIn(this.hud.ctx && this.hud.ctx.spec, p) ? 'Not read in this version' : fit(probes.stateOf(sub, p.field, p.iface, busy), room);                                       // the newest value, then the one before it if there is room
             if (got && d.vals[1] && room - cv.textWidth(v, 12, { literal: true }) > 160) v += '   |   ' + fit(d.vals[1], room - cv.textWidth(v, 12, { literal: true }) - 40);
             cv.text(v, vx, y + (rh - 4) / 2 + 4, 12, got ? C.dim : C.label, { literal: true });
             y += rh;
