@@ -94,14 +94,43 @@ function guidanceOf(v, depth) {
  * uses that signal (nothing to say) or there is no value, "→ not understood" when its reader answers nothing for it. A tolerant mirror of
  * the readers the themes and the HUD use, so that a photo of the tab says at once whether a value is read the way the app thinks.
  */
+// The car sends these three as STRUCTS of raw numbers (seen on the owner's car, 16 Nov 2026: { actualValueRPMEngineCrankshaft: 0 },
+// { speedVehicleCentreOfGravity: 130 } = 2 km/h, { temperatureEngineDrive: 124, ... } = 76 C): the same scales as kit/runtime/car.js SCALE
+// (tools/test_probes.js checks they agree). A bare number is taken as already in its unit.
+const RAW = {
+    rpm: { re: /^actualValueRPMEngineCrankshaft$/i, factor: 0.25, offset: 0, invalid: 65535 },
+    speed: { re: /^speedVehicleCentreOfGravity$/i, factor: 0.015625, offset: 0, invalid: 65535 },
+    coolant: { re: /^temperatureEngineDrive$/i, factor: 1, offset: -48, invalid: 255 },
+    oil: { re: /^temperatureEngineOilDrive$/i, factor: 1, offset: -48, invalid: 255 },
+};
+/** The reading of `v` for RAW[key] in its unit, whole, when it is within lo..hi; null for a missing field, the invalid number or anything else. */
+function unitOf(v, key, lo, hi) {
+    const c = RAW[key];
+    let n;
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+        const k = Object.keys(v).find((x) => c.re.test(x));
+        const raw = k === undefined ? undefined : Extras.scalar(v[k]);
+        if (typeof raw !== 'number' || !isFinite(raw) || raw === c.invalid) return null;
+        n = raw * c.factor + c.offset;
+    } else {
+        n = Extras.scalar(v);
+        if (typeof n !== 'number' || !isFinite(n) || n === c.invalid) return null;
+    }
+    return n >= lo && n <= hi ? Math.round(n) : null;
+}
+
 function meaningOf(id, v) {
     if (v === null || v === undefined) return '';
-    const num = (lo, hi) => { const n = Extras.scalar(v); return typeof n === 'number' && isFinite(n) && n >= lo && n <= hi ? Math.round(n) : null; };
     const yn = (b, w) => b === null ? null : w + ': ' + (b ? 'yes' : 'no');
     let t = null;
     switch (id) {
-    case 'rpm': { const n = num(0, 9999); t = n === null ? null : n + ' rpm'; break; }
-    case 'speed': { const n = num(0, 400); t = n === null ? null : n + ' km/h'; break; }
+    case 'rpm': { const n = unitOf(v, 'rpm', 0, 9999); t = n === null ? null : n + ' rpm'; break; }
+    case 'speed': { const n = unitOf(v, 'speed', 0, 400); t = n === null ? null : n + ' km/h'; break; }
+    case 'engt': {
+        const c = unitOf(v, 'coolant', -40, 215), o = unitOf(v, 'oil', -40, 215);
+        t = c === null && o === null ? null : (c === null ? '' : 'coolant ' + c + ' C') + (c !== null && o !== null ? ' · ' : '') + (o === null ? '' : 'oil ' + o + ' C');
+        break;
+    }
     case 'sign': { const n = limitOf(v); t = n === null ? 'no limit read' : 'limit ' + n; break; }
     case 'next': { const n = Extras.nextLimitOf(v); t = n === null ? 'no next limit' : 'next limit ' + n; break; }
     case 'wheel': {
@@ -110,8 +139,9 @@ function meaningOf(id, v) {
         break;
     }
     case 'pdrive': case 'pdrive2': {
+        // the scale is NOT known: the owner's car sent 100 at a crawl (2 km/h), which no motor share is, so the number is shown as it is
         const q = Extras.powerQuotaOf(v);
-        t = q === null ? null : (q === 0 ? 'motor at rest' : (q > 0 ? 'motor ' : 'recuperation ') + Math.abs(Math.round(q)) + ' % · ' + Math.abs(Math.round(Extras.powerKw(q))) + ' kW');
+        t = q === null ? null : 'share ' + Math.round(q) + ' (scale to confirm)';
         break;
     }
     case 'cc': t = yn(Extras.alertOf(v), 'alert'); break;

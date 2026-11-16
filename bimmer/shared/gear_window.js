@@ -14,13 +14,13 @@
  * haut (hud.js _follow). Aucun texte ni icône ne touche le trou. Quatre tailles de trou à essayer (réglage gearWindow) :
  *   1 : x 1380..1460 (Bimmer Lab 0.17.8, la plus petite)       2 : x 1300..1500
  *   3 : x 1150..1470 (Bimmer Lab 0.17.6, essayée sur voiture)   4 : toute la bande (comme eroobeeroo : BMW garde la sienne)
- * « auto » : une taille par thème, pour que les 4 photos d'un passage donnent 4 réponses.
+ * « auto » : la taille 1 pour les quatre thèmes (l'essai d'une taille par thème, 1 / 2 / 3 / 4, a fait disparaître la case dans les quatre).
  */
 const WIDTH = 1920;
 const HEIGHT = 720;
 const TOP = 660;
 const VARIANTS = { '1': [1380, 1460], '2': [1300, 1500], '3': [1150, 1470], '4': [0, WIDTH] };
-const AUTO = { sport: '1', m: '2', mblade: '3', navi: '4' };
+const AUTO = { sport: '1', m: '1', mblade: '1', navi: '1' };   // essai du 16 nov. 2026 (tailles 1, 2, 3 et 4 : la case noire a disparu dans les quatre thèmes) : la plus petite suffit
 const LETTER = [1392, 666, 1448, 702];          // la lettre de rapport de BMW, mesurée sur les photos
 const PIECES = { sdash: true, mdash: true, mblade: true, navi: true };   // les fonds dont le shader sait dessiner un morceau de l'image (u_rect, u_org)
 const NUDGE = 6;                                 // un texte ou une icône qui mord d'au plus 6 px est poussé hors du trou

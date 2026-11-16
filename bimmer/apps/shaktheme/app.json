@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.21.13",
+  "version": "0.21.14",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -670,7 +670,7 @@
       "options": [
         [
           "auto",
-          "Essai : une taille par thème (Sport 1, M 2, M Blade 3, Navi 4)"
+          "Automatique : la taille 1 pour les quatre thèmes"
         ],
         [
           "1",

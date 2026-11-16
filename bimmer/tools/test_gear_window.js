@@ -36,8 +36,8 @@ check('quatre tailles de trou, y 660 à 720 ; la lettre de BMW (x 1392..1448, y 
     THEMES.forEach((t) => assert.strictEqual(gw.pick('1', t).y, 660, t));
 });
 
-check('auto : une taille par thème (Sport 1, M 2, M Blade 3, Navi 4) ; « off », une valeur inconnue ou un layout qui n\'est pas un thème : pas de trou', () => {
-    assert.deepStrictEqual(THEMES.map((t) => gw.pick('auto', t).id), ['1', '2', '3', '4']);
+check('auto : la taille 1 pour les quatre thèmes (l\'essai 1 / 2 / 3 / 4 du 16 nov. 2026 a fait disparaître la case dans les quatre) ; « off », une valeur inconnue ou un layout qui n\'est pas un thème : pas de trou', () => {
+    assert.deepStrictEqual(THEMES.map((t) => gw.pick('auto', t).id), ['1', '1', '1', '1']);
     assert.strictEqual(gw.pick(undefined, 'sport').id, '1');
     assert.strictEqual(gw.pick('off', 'sport'), null);
     assert.strictEqual(gw.pick('9', 'sport'), null);

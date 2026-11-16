@@ -129,11 +129,33 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
         if (fed && pg === 0) assert(c.text.some((t) => /^→ 2500 rpm$/.test(t.t)) && c.text.some((t) => t.t === '→ route: yes'), 'no meaning line');
     }));
     const FR = { '→ 2500 rpm': '→ 2500 tr/min', '→ limit 70': '→ limite 70', '→ next limit 90': '→ limite suivante 90', '→ no limit read': '→ aucune limite lue', '→ no next limit': '→ aucune limite suivante', '→ not understood': '→ non compris', '→ alert: yes': '→ alerte : oui', '→ route: no': '→ itinéraire : non',
-        '→ motor 40 % · 32 kW': '→ moteur 40 % · 32 kW', '→ recuperation 25 % · 20 kW': '→ récupération 25 % · 20 kW', '→ motor at rest': '→ moteur au repos', '→ wheel on, green': '→ volant allumé, vert', '→ wheel on, yellow, warning': '→ volant allumé, jaune, alerte', '→ wheel off': '→ volant éteint' };
+        '→ share 100 (scale to confirm)': '→ part 100 (échelle à confirmer)', '→ coolant 77 C · oil 76 C': '→ liquide 77 °C · huile 76 °C', '→ oil 76 C': '→ huile 76 °C', '→ wheel on, green': '→ volant allumé, vert', '→ wheel on, yellow, warning': '→ volant allumé, jaune, alerte', '→ wheel off': '→ volant éteint' };
     Object.keys(FR).forEach((k) => assert.strictEqual(fr.tr(k), FR[k], k));
     // the readings: a value that is not clear is never taken for one
     assert.strictEqual(meaningOf('rpm', 65535), '→ not understood'); assert.strictEqual(meaningOf('rpm', 2499.6), '→ 2500 rpm');
-    assert.strictEqual(meaningOf('pdrive', { quota: 255 }), '→ not understood'); assert.strictEqual(meaningOf('pdrive', { quota: 40 }), '→ motor 40 % · 32 kW');
+    // the car's own values, as the owner's Signals tab showed them on 16 Nov 2026 (structs of raw numbers, the scales of kit/runtime/car.js)
+    assert.strictEqual(meaningOf('rpm', { actualValueRPMEngineCrankshaft: 0 }), '→ 0 rpm'); assert.strictEqual(meaningOf('rpm', { actualValueRPMEngineCrankshaft: 8000 }), '→ 2000 rpm');
+    assert.strictEqual(meaningOf('rpm', { actualValueRPMEngineCrankshaft: 65535 }), '→ not understood'); assert.strictEqual(meaningOf('rpm', { other: 1 }), '→ not understood');
+    assert.strictEqual(meaningOf('speed', { speedVehicleCentreOfGravity: 130 }), '→ 2 km/h'); assert.strictEqual(meaningOf('speed', { speedVehicleCentreOfGravity: 65535 }), '→ not understood');
+    assert.strictEqual(meaningOf('engt', { temperatureEngineDrive: 125, temperatureEngineOilDrive: 124 }), '→ coolant 77 C · oil 76 C');
+    assert.strictEqual(meaningOf('engt', { temperatureEngineDrive: 255, temperatureEngineOilDrive: 124 }), '→ oil 76 C'); assert.strictEqual(meaningOf('engt', { temperatureEngineDrive: 255 }), '→ not understood');
+    assert.strictEqual(meaningOf('pdrive', { quota: 255 }), '→ not understood');
+    assert.strictEqual(meaningOf('pdrive', { degradedRecuperationPower: 0, quotaImmediateElectricEngineDriveRecuperation: 100 }), '→ share 100 (scale to confirm)');
+    // the same scales as the car's own reader (kit/runtime/car.js), fed the same raw numbers
+    {
+        const Car = require('../kit/runtime/car');
+        const seen = {};
+        const ctx = { log: { info() {}, warn() {} }, spec: { config: {} }, settings: { get: () => 'off' }, signals: { watch: (iface, v, handlers) => { seen[iface] = handlers; return Promise.resolve({ iface, available: true }); } } };
+        const car = new Car(ctx, ['rpm', 'speed', 'temps'], {});
+        seen['de.bmw.infotainment.vehicle.CDS'].statusEngineSpeed2({ actualValueRPMEngineCrankshaft: 8000 });
+        seen['de.bmw.infotainment.vehicle.Vehicle2'].statusCarSpeed2({ speedVehicleCentreOfGravity: 130 });
+        seen['de.bmw.infotainment.vehicle.CDS'].statusEngineTemperature({ temperatureEngineDrive: 125, temperatureEngineOilDrive: 124 });
+        const d = car.data();
+        assert.strictEqual('→ ' + Math.round(d.rpm) + ' rpm', meaningOf('rpm', { actualValueRPMEngineCrankshaft: 8000 }));
+        assert.strictEqual('→ ' + Math.round(d.speed) + ' km/h', meaningOf('speed', { speedVehicleCentreOfGravity: 130 }));
+        assert.strictEqual('→ coolant ' + Math.round(d.coolant) + ' C · oil ' + Math.round(d.oil) + ' C', meaningOf('engt', { temperatureEngineDrive: 125, temperatureEngineOilDrive: 124 }));
+        car.subs.length = 0;
+    }
     assert.strictEqual(meaningOf('fas', 3), ''); assert.strictEqual(meaningOf('rpm', null), ''); assert.strictEqual(meaningOf('guide', 'weird'), '→ not understood');
     assert.strictEqual(meaningOf('wheel', { steeringWheelDisplay: 1, steeringWheelColor: 'YELLOW', displayLateralWarning: 'LEFT' }), '→ wheel on, yellow, warning');
 });
