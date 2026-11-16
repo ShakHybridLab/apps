@@ -1,0 +1,16 @@
+'use strict';
+const assert = require('assert');
+const D = require('../src/shakcamdiag');
+assert.strictEqual(D.stageOf('R'), 'R');
+assert.strictEqual(D.stageOf(4), 'D');
+assert.deepStrictEqual(D.selectionOf(2), { stage: 'R' });
+assert.deepStrictEqual(D.selectionOf(8), { stage: 'D' });
+assert.strictEqual(D.selectionOf(99), null);
+const e0 = D.classifyEvidence([]);
+assert.strictEqual(e0.videoNode, false);
+const e1 = D.classifyEvidence(['/dev/video0', '/run/dasvideo']);
+assert.strictEqual(e1.videoNode, true);
+assert.strictEqual(e1.service, true);
+const e2 = D.classifyEvidence(['/dev/shm/mgu-video-ridetube']);
+assert.strictEqual(e2.sharedFrame, true);
+console.log('7 tests passed');
