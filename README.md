@@ -14,7 +14,7 @@ Le dépôt contient aussi HUD Widgets (le HUD) et les apps Cluster Centre / Clus
 
 | Dossier | Apps | Licence |
 |---|---|---|
-| `bimmer/` | **ShakTheme** (4 thèmes du cluster), **HUD Widgets** (10 dispositions du HUD), **ShakCamDiag** (diagnostic caméra en lecture seule, prototype) | MIT (voir `LICENSES.md`) |
+| `bimmer/` | **ShakTheme** (4 thèmes du cluster), **HUD Widgets** (10 dispositions du HUD), **ShakPark** (caméra avant sous 15 km/h et caméra arrière dans le cluster ; l'outil de capture d'image reste à écrire) | MIT (voir `LICENSES.md`) |
 | `eroobeeroo/` | **Cluster Centre** (pages de données au centre du cluster), **Cluster Info** (petit panneau sur la carte Waze) | PolyForm Noncommercial 1.0.0 (voir `LICENSES.md`) |
 
 À installer à côté, depuis leur propre source du Store (non copiés ici, non modifiés) :

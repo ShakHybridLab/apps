@@ -2,6 +2,40 @@
 
 ## 17 novembre 2026
 
+### ShakTheme 0.21.22, ShakHUD 0.6.27 : deux pages « GPS » dans l'onglet Signals (pas encore essayé sur la voiture)
+Demande du propriétaire : voir à l'écran ce que le catalogue de la voiture dit de sa position, pour les zones de danger (CarPlay n'envoie que l'image de la carte, jamais une position).
+- **Deux pages de plus** (`shared/catalog.js`, groupes `gps` et `gps2`) : les interfaces dont le nom parle de GNSS, GPS, NMEA, latitude, longitude, position du véhicule ou navigation, avec leurs membres. Les noms qui parlent vraiment d'une position viennent en tête ; un filtre `not` écarte le bruit (sièges, pédales, vitres, rétroviseurs, volant, essuie-glaces...). Titres traduits (`shared/fr.js`).
+- Seulement des noms, aucune valeur lue, rien de déclaré : aucun risque de refus à l'installation. À photographier et à envoyer.
+- Test : `tools/test_catalog_camera.js` (9 vérifications, faux catalogue avec des pièges : siège, vitre, vitesse).
+
+### ShakPark 0.2.0 : image dans toute la fenêtre, demande à l'outil de capture (pas encore essayé sur la voiture)
+- **Bandes noires** (`shared/park_frame.js`) : la couche vidéo a la taille de toute la fenêtre (561 x 422) ; l'image 16:9 est centrée avec des bandes noires écrites dans l'image. Pas de couche de plus (8 vidéos au plus, 2 à l'écran), pas de mémoire de plus, et les bandes ne coûtent rien après la première image (seules les tuiles qui changent sont écrites). Le protocole ne dit pas si une image est étirée à la taille de la couche : une couche noire sous la vidéo n'était donc pas sûre.
+- **Réglage « Remplir la fenêtre »** (désactivé par défaut) : plus de bandes, les bords de l'image sont coupés, centrés.
+- **Demande de capture** : ShakPark écrit `/dev/shm/shakpark-capture/request.json` (`front`, `rear` ou `off`, renouvelé toutes les 500 ms, `off` en mode essai).
+- Tests : `tools/test_park.js` passe à 32 vérifications.
+
+### shakpark-capture : squelette de l'outil de capture (pas dans le Store, pas installable)
+- `shakpark-capture/` : service root `capture.js` (lit la demande, lance le décodeur de la caméra voulue seulement, l'arrête 3 s après `off`, relance limitée, état dans `status.json`), écrivain MGVF, décodeur de test, `component.json` et unité systemd sur le modèle de `ridetube/service`. Test : `node shakpark-capture/test_capture.js` (8 vérifications, avec le vrai lecteur `video_bridge.js`).
+- **Manque le décodeur natif** (flux AVB de la caméra, décodage H.264) et la demande SOME/IP au calculateur caméra : les noms viendront des pages « Caméras » de la voiture. Non déclaré dans `mgu-repo.json` volontairement.
+
+### ShakTheme 0.21.21, ShakHUD 0.6.26 : deux pages « Caméras » dans l'onglet Signals (pas encore essayé sur la voiture)
+Demande du propriétaire : pas d'accès SSH, donc un moyen de lire à l'écran ce que le catalogue de la voiture dit des caméras, pour écrire l'outil de capture de ShakPark.
+- **Deux pages de plus** à la fin de l'onglet Signals (`shared/catalog.js`, groupes `camera` et `camera2`, 8 rangées chacune) : tout ce que `CameraProxy` et `ICAM2Proxy` ont dans le catalogue, **champs, méthodes et diffusions**, avec ce qui entre et sort de chacune. Les autres pages du catalogue ne changent pas.
+- À photographier (les deux pages) et à envoyer. Seulement des noms, aucune valeur ; rien n'est déclaré, rien n'est lu sur la voiture : aucun risque de refus à l'installation.
+- Les titres sont traduits (`shared/fr.js`). Test : `tools/test_catalog_camera.js` (faux catalogue). Le catalogue ne dit pas le nom du flux vidéo (AVB) : il se lira dans les champs de ces interfaces si la voiture l'y met.
+
+### ShakPark 0.1.0 : la caméra avant et arrière dans le cluster (pas encore essayé sur la voiture, capture d'image à écrire)
+Demande du propriétaire : une appli qui montre la caméra avant seulement en avançant sous 15 km/h, et la caméra arrière en marche arrière.
+- **Règles** (`shared/park.js`, sans réglage pour les changer) : avant en D sous 15 km/h avec une vitesse connue et récente (14 km/h pour apparaître, coupée à 15) ; arrière en R, et 2 s après ; sinon aucune image. Tout est caché dans le même tick dès que les règles disent non.
+- **Affichage** (`shared/park_app.js`) : dans la fenêtre du thème, comme RideTube on cluster mais sans son verrou « voiture à l'arrêt ». Lit deux fichiers d'images MGVF (`/dev/shm/shakpark-front`, `/dev/shm/shakpark-rear`).
+- **Priorité sur l'écran du cluster : la caméra, puis Waze, puis RideTube.** La caméra est dans la classe « alert » de cluster-render (au-dessus de tout) et ne s'écarte devant personne ; sa demande de fenêtre porte `priority: "camera"`. **Waze** : `shared/waze_yield.js` éteint la carte Waze du cluster tant que la caméra est voulue (l'autoradio ne tient que 2 vidéos, Waze en prend déjà deux) et la rallume 3 s après, par le socket de contrôle de Waze on cluster ; réglage « La caméra prend la place de la carte Waze du cluster ». **RideTube** : `shared/video_app.js` (`_cameraOn`, ajout après le verrou, qui n'est pas touché) retire son image du cluster et du HUD tant que la caméra est affichée ; son son n'est pas touché.
+- **Mode essai** (`shared/park_demo.js`, réglage « Mode essai », désactivé par défaut) : une image de test bleue « AVANT » ou rouge « ARRIERE » à la place de la caméra, avec les mêmes règles, la même fenêtre et les mêmes priorités. Permet d'essayer à la voiture tout sauf la capture.
+- **Pas de capture** : l'outil qui écrit ces fichiers n'existe pas encore. Il faut les méthodes de `CameraProxy` / `ICAM2Proxy` et le flux AVB de la caméra, que seule la voiture peut donner.
+- Signaux déjà acceptés par la voiture, rien de nouveau à déclarer. Tests : `tools/test_park.js` (26 vérifications), `tools/test_waze_yield.js` (9, avec un vrai socket), `test_declared_signals.js` et `test_shared_requires.js` mis à jour.
+
+### ShakCamDiag retiré du dépôt
+Demande du propriétaire. Supprimés : `bimmer/apps/shakcamdiag/`, `bimmer/shared/shakcamdiag.js`, `bimmer/tools/test_shakcamdiag.js`. `bimmer/tools/test_probes.js` et le README ne le citent plus. L'appli n'avait jamais tourné sur la voiture ; l'entrée du 0.1.0 plus bas reste comme historique.
+
 ### ShakTheme 0.21.20, ShakHUD 0.6.25 : signaux inutiles retirés, aperçus des thèmes refaits (pas encore essayé sur la voiture)
 Demande du propriétaire : optimiser les applis, réactualiser l'affichage des thèmes, vérifier le plein écran, supprimer les signaux dont on n'a plus besoin.
 - **Signaux retirés de ShakTheme** (`app.json`) : `KombiInterface_2` en entier (`cbsDataServiceList`, `ccListRiskClass`) et `FES.statusVehicleDynamicEngine`. Les deux premiers ne servaient qu'à deux lignes de l'onglet Signaux (« Entretiens à prévoir », « Classe de risque des alertes », retirées aussi : la page 2 passe de 8 à 6 lignes) ; aucune fonction ne les lisait. Le troisième (puissance et couple en % de l'affichage sport de la voiture) ne nourrit que les jetons `{{powerPct}}` et `{{torquePct}}`, qu'aucun thème livré n'affiche (ils retombent sur le couple du vilebrequin). `shared/hud.js` ne le demande plus à la voiture quand l'appli ne le déclare pas : **ShakHUD et HUD Widgets le demandaient sans le déclarer** (une demande en moins au démarrage). `tools/car_accepted_signals.json` (le catalogue de la voiture) n'est pas touché.

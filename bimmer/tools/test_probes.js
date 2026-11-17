@@ -355,9 +355,9 @@ check('signals nobody needs are gone: the services due and the risk class (nothi
     assert(/delete extra\[FES\]\.statusVehicleDynamicEngine/.test(hudJs), 'hud.js asks the car for it undeclared');
     // every field an app declares is read by the code it ships (the kit, hud.js and its handlers, the probes, main.js): a declared field nobody reads only costs the car
     const files = ['shared', 'kit/runtime'].map((d) => path.join(__dirname, '..', d)).reduce((a, d) => a.concat(fs.readdirSync(d).filter((f) => /\.js$/.test(f)).map((f) => path.join(d, f))), [])
-        .concat(['shaktheme', 'shakhud', 'shakcamdiag'].map((n) => path.join(__dirname, '..', 'apps', n, 'main.js')));
+        .concat(['shaktheme', 'shakhud'].map((n) => path.join(__dirname, '..', 'apps', n, 'main.js')));
     const code = files.map((f) => fs.readFileSync(f, 'utf8')).join('\n');
-    [['shaktheme', theme], ['shakhud', hud], ['shakcamdiag', app('shakcamdiag')]].forEach(([n, a]) => Object.keys(a.signals).forEach((iface) => Object.keys(a.signals[iface]).forEach((f) => {
+    [['shaktheme', theme], ['shakhud', hud]].forEach(([n, a]) => Object.keys(a.signals).forEach((iface) => Object.keys(a.signals[iface]).forEach((f) => {
         if (f[0] !== '_') assert(code.indexOf(f) >= 0, n + ' declares ' + iface + '.' + f + ' and no code reads it');
     })));
 });
