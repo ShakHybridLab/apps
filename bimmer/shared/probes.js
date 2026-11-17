@@ -154,7 +154,7 @@ function meaningOf(id, v) {
     case 'erange': {
         // the cluster's electric range, in the unit it is set to (km, or miles on a US setting): 0xFFFE and up is "none"
         const n = typeof v === 'number' ? v : v && typeof v === 'object' ? v.displayRangeElectricVehicle : null;
-        t = typeof n === 'number' && isFinite(n) && n >= 0 && n < 0xFFFE ? 'range ' + Math.round(n) : null;
+        t = typeof n === 'number' && isFinite(n) && n >= 0 ? (n >= 4093 ? 'none (' + Math.round(n) + ')' : 'range ' + Math.round(n)) : null;
         break;
     }
     case 'cc': t = yn(Extras.alertOf(v), 'alert'); break;

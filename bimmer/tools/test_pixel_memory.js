@@ -22,16 +22,20 @@ const IMAGE = { text: true, scale: true, stripe: true, badge: true, gridlabels: 
 let bad = 0, n = 0;
 function check(name, fn) { try { fn(); n++; } catch (e) { bad++; console.error('FAIL ' + name + ': ' + e.message); process.exitCode = 1; } }
 
-// ce qui est à l'écran dans un état de la carte : "mapUp" suit la carte, "powerShut" / "powerOpen" aussi (la puissance cède la place à la carte) ;
-// les autres réglages sont tous « allumés » (le pire cas : ce qui s'ouvre et se ferme à la demande compte)
-function shownIn(widgets, map) {
-    const on = (t) => {
+// ce qui est à l'écran dans un état de la carte et pour une vue : "mapUp" suit la carte, "powerShut" / "powerOpen" aussi (la puissance cède la place à
+// la carte), "viewSel=<nom>" est allumé quand c'est la vue montrée (une seule à la fois, ou aucune) ; les autres réglages sont tous « allumés » (le pire
+// cas : ce qui s'ouvre et se ferme à la demande compte)
+function shownIn(widgets, map, view, sport) {
+    const one = (t) => {
         const not = t.charAt(0) === '!', k = not ? t.slice(1) : t;
-        const v = k === 'mapUp' || k === 'powerOpen' ? map : k === 'powerShut' ? !map : true;
+        const v = k === 'mapUp' || k === 'powerOpen' ? map : k === 'powerShut' ? !map : k === 'driveSport' ? sport === true : k.indexOf('viewSel=') === 0 ? k.slice(8) === view : true;
         return not ? !v : v;
     };
+    const on = (t) => t.split('&').every(one);
     return widgets.filter((w) => !(w.toggle && !on(w.toggle)));
 }
+// la vue « drive » montre autre chose en Sport (la G-force) et hors Sport (les réglages des modes) : les deux sont comptés
+const VIEWS = [[null, false], ['gauges', false], ['tyres', false], ['drive', true], ['drive', false]];
 
 ['sport', 'm', 'mblade', 'navi'].forEach((name) => {
     const L = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'hud', 'layouts', name + '.json'), 'utf8'));
@@ -40,9 +44,9 @@ function shownIn(widgets, map) {
         const loose = L.widgets.filter((w) => IMAGE[w.type] && w.own !== true && !(typeof w.sheet === 'string' && w.sheet));
         assert.strictEqual(loose.length, 0, loose.slice(0, 5).map((w) => w.id).join(', ') + ' sans feuille');
     });
-    [false, true].forEach((map) => {
-        check(name + ' (' + (map ? 'avec' : 'sans') + ' la carte) : mémoire de pixels, couches par connexion', () => {
-            const plan = h._plan(shownIn(L.widgets, map), Infinity, Infinity);
+    [false, true].forEach((map) => VIEWS.forEach(([view, sport]) => {
+        check(name + ' (' + (map ? 'avec' : 'sans') + ' la carte, vue ' + (view || 'aucune') + (view === 'drive' ? (sport ? ', en Sport' : ', hors Sport') : '') + ') : mémoire de pixels, couches par connexion', () => {
+            const plan = h._plan(shownIn(L.widgets, map, view, sport), Infinity, Infinity);
             let px = 0; const per = [];
             plan.forEach((e) => {
                 per[e.conn] = (per[e.conn] || 0) + 1;
@@ -57,7 +61,7 @@ function shownIn(widgets, map) {
                 assert(!(a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h), 'la feuille ' + s.key + ' mêle ' + a.id + ' et ' + b.id + ', qui se recouvrent');
             })));
         });
-    });
+    }));
 });
 
 console.log(bad ? bad + ' FAILED' : 'pixel memory: ' + n + ' checks pass');

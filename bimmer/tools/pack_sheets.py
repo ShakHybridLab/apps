@@ -26,14 +26,24 @@ CAP = 8            # couches par connexion (CompositorLimits.per_client)
 NCONN = 4          # MAX_CONN
 
 
-def shown(w, mapup):
+def shown(w, mapup, view=None, sport=False):
+    """le widget est-il à l'écran dans cet état : carte Waze ouverte ou non, la vue en cours (réglage viewSel : None = aucune) et le mode
+    de conduite (sport : la voiture est en Sport, bascule « driveSport »)"""
     t = w.get('toggle')
     if not t:
         return True
-    neg = t.startswith('!')
-    k = t[1:] if neg else t
-    on = mapup if k == 'mapUp' else True
-    return (not on) if neg else on
+    for part in t.split('&'):            # "a&!b": every one of them
+        neg = part.startswith('!')
+        k = part[1:] if neg else part
+        if k.startswith('viewSel='):
+            on = view == k[len('viewSel='):]
+        elif k == 'driveSport':
+            on = sport
+        else:
+            on = mapup if k == 'mapUp' else True
+        if on == neg:                       # "a" veut a allumé, "!a" veut a éteint
+            return False
+    return True
 
 
 def box(ms):
@@ -172,11 +182,11 @@ def groups_of(widgets, k, order, layers, pin=None):
     return improve(g, order, layers, pin)
 
 
-def plan(widgets, mapup):
+def plan(widgets, mapup, view=None, sport=False):
     """le rangement du moteur (hud.js _plan) avec les clés "sheet" : [{ key, conn, members }]"""
     p = []
     for w in widgets:
-        if not shown(w, mapup):
+        if not shown(w, mapup, view, sport):
             continue
         if w['type'] not in IMG or w.get('own'):
             p.append({'layer': True, 'w': w, 'conn': int(w.get('conn', 0) or 0)})
@@ -202,9 +212,9 @@ def plan(widgets, mapup):
     return p
 
 
-def memory(widgets, mapup):
+def memory(widgets, mapup, view=None, sport=False):
     px = 0; n = 0; per = {}
-    for e in plan(widgets, mapup):
+    for e in plan(widgets, mapup, view, sport):
         n += 1; per[e['conn']] = per.get(e['conn'], 0) + 1
         if e.get('layer'):
             if e['w']['type'] in IMG:
@@ -221,9 +231,19 @@ def pack(widgets, k, verbose=False):
     pin = {id(w): 1 for w in img if w.get('readyBy')}
     # un widget avec "pinConn": N reste sur la connexion N (une feuille qui le porte y va aussi) : pour libérer une connexion pleine
     pin.update({id(w): int(w['pinConn']) for w in img if w.get('pinConn')})
+    # les feuilles « fixes » : un widget dont la clé commence par "xs_" (tools/add_sensor_bars.py) garde sa feuille, rangée à part ;
+    # seul le reste est regroupé en `k` feuilles (ainsi les barres de capteurs ajoutent leurs feuilles sans bousculer le rangement des autres)
+    fixed = {}
+    for w in img:
+        if str(w.get('sheet') or '').startswith('xs_'):
+            fixed.setdefault(w['sheet'], []).append(w)
+    img = [w for w in img if not str(w.get('sheet') or '').startswith('xs_')]
     for w in img:
         w.pop('sheet', None)
         if id(w) not in pin:
+            w.pop('conn', None)
+    for ms in fixed.values():
+        for w in ms:
             w.pop('conn', None)
     eff = {}
     for w in widgets:
@@ -235,6 +255,9 @@ def pack(widgets, k, verbose=False):
     g.sort(key=lambda m: min(index[id(x)] for x in m))
     if len(g) > k:
         print('  %d feuilles au lieu de %d (recouvrements)' % (len(g), k))
+    keys = ['s%d' % i for i in range(len(g))]
+    for key, ms in sorted(fixed.items(), key=lambda kv: min(index[id(x)] for x in kv[1])):
+        g.append(ms); keys.append(key)
     room = [CAP - eff.get(c, 0) for c in range(NCONN)]
     for members in g:                 # les feuilles imposées réservent leur place d'abord
         for c in pins(members, pin):
@@ -247,7 +270,7 @@ def pack(widgets, k, verbose=False):
         if not want:
             room[c] -= 1
         for w in members:
-            w['sheet'] = 's%d' % i
+            w['sheet'] = keys[i]
             if c:
                 w['conn'] = c
             else:

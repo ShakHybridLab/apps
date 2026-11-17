@@ -359,6 +359,17 @@ const WARM_PULSE_MS = 2400, WARM_FLASH_MS = 400;   // a temperature that reaches
 const TYRE_RED_BAR = 0.4;               // a tyre pressure this far under the setting "tyreLow" is red (yellow from the setting)
 const WARN_DIM = [120, 16, 22, 255];   // the dark red a temperature flashes from, up to the shift red, while over its warning limit
 const WARN_FLASH_MS = 300;
+// the sensors a slanted bar can show ("sensor"): the colour of the boost's bar (the oil's and the coolant's follow their temperature)
+const SENSOR_BAR = { oil: true, coolant: true, boost: [79, 180, 255, 255] };
+// The views a theme shows one at a time in place of its empty slot ("viewSel=<name>" in a widget's toggle; the setting "viewSel" picks one by hand, and the
+// button behind the steering wheel steps through them, nextView()): in the order they come, and the last press goes back to none (the theme as it was).
+const VIEW_ORDER = ['gauges', 'tyres', 'drive', 'conso', 'media'];
+/** The views of `widgets` (those whose toggle has "viewSel=<name>"), in VIEW_ORDER. */
+const viewsOf = (widgets) => {
+    const seen = {};
+    widgets.forEach((w) => { const m = /(?:^|&)viewSel=([a-z]+)/.exec(w.toggle || ''); if (m) seen[m[1]] = true; });
+    return VIEW_ORDER.filter((v) => seen[v]);
+};
 // The hybrid rev counter of M Blade and Sport (widget key "hybridTach"; the decision is in hybrid_tach.js): rpm while the engine runs, the battery's
 // power in blue while it alone drives (10 kW per mark), the charge in green (M Blade's foot under the 0, Sport's bracket).
 // a tile's bar (the Dyno theme's "tiles") per sensor (sensors.js id): the raw reading (hud _raw) between min and
@@ -402,6 +413,7 @@ const FUEL_EVERY_MS = 10000, FUEL_RETRY_MS = 300000, FUEL_STALE_MS = 60000;
 const HV_EVERY_MS = 5000, HV_RETRY_MS = 60000, HV_STALE_MS = 20000;
 const WINDOW_HOLD_MS = 6000;            // the centre window stays open this long after the last app that asked for it stopped asking
 const CAR_ERANGE_MS = 10 * 60 * 1000;   // the car's own electric range counts for this long after it last said (it changes slowly)
+const EV_RANGE_NONE = 4093;   // the electric range the cluster sends for "none" (4093 on the owner's car; 0xFFFE and up too): not a range
 // the zone colours of the rev and speed bars: white at first, orange in the run-up to the zone, then the theme's red
 const ZONE_RGB = [[0.97, 0.98, 1.0], [1.0, 0.68, 0.1], [1.0, 0.18, 0.24]];
 const SWEEP_MS = 1600;                  // the start-up sweep: the bars climb to the top and come back down in this long (half each way)
@@ -606,6 +618,8 @@ class HudApp {
         this.waze = this.config.waze ? new Waze(Object.assign({ dataDir: ctx.dataDir }, this.config.waze), this.log, () => this._guard('waze', () => {
             if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuild(); else this._status();
         })) : null;
+        this.viewNow = null;             // the view the steering wheel's button stepped to (null: the setting "viewSel" decides), see nextView()
+        this.layoutViews = [];           // the views the active layout has
         this.mapShown = false;           // "mapUp" when the layout was built
         this.routeActive = null;         // a route is guided on the phone (CarPlay), from GUIDE (probes.js); null until the car says
         // what the car's own signals say (car_extras.js; the values were not seen yet, so each is read tolerantly): the next limit the camera
@@ -643,6 +657,8 @@ class HudApp {
         this.speedLimit = new SpeedLimit({}, this.log);
         this.dangerLayout = false;       // the active layout has an alert widget (toggle "danger" / "dangerLimit" / "dangerNoLimit")
         this.dangerShown = '';           // which of the alert's states the layout was built for
+        this.driveLayout = false;        // the active layout has a widget that follows the drive mode (toggle "driveSport")
+        this.driveShown = false;         // the Sport state the layout was built for
         this.claimBy = null;             // the id of another kit app holding the HUD now (hud_claim), we step aside
         this.testAt = null;              // the shift-light test's start (Date.now()), while it runs
         this.nightOn = false;            // the layout was built with the night colours (nightDim)
@@ -652,6 +668,7 @@ class HudApp {
         ctx.settings.onChange((key) => {
             // a theme or layout picked anywhere (the page asks first, the kit's All settings list doesn't): no longer stepping aside
             if (['hudLayout', 'inHybrid', 'inSport', 'inEco', 'byMode'].indexOf(key) >= 0 && this.screen.yielded) this.screen.release();
+            if (key === 'viewSel') this.viewNow = null;           // a choice made on the page wins over the button's last step
             if (PLACE_KEYS.indexOf(key) >= 0) this._guard('place', () => this._place());
             else if (LIVE_KEYS.indexOf(key) >= 0) this.widgets.forEach((x) => { x.last = null; });
             else if (key !== 'demo') this._rebuild(); else this._status();
@@ -799,6 +816,10 @@ class HudApp {
         // "mapUp": not saved, the centre window is open now: the Waze map shows inside the theme (the setting on, waze.js
         // says so, and a route is on when the setting "mapOnlyWithRoute" asks for it), or Cluster Centre / Cluster Info asked for the window (centreWindow)
         if (key === 'mapUp') return !!(this._wazeMapOn() || this.windowOpen === true);
+        // "viewSel": the view showing: the button's step when it has been pressed, else the saved choice ("none" = nothing extra)
+        if (key === 'viewSel' && this.viewNow !== null) return this.viewNow;
+        // "driveSport": not saved, the car's drive mode is Sport (the "drive" view shows the G-meter then, the settings of the modes otherwise)
+        if (key === 'driveSport') return this.driveMode === 'sport';
         // "danger": not saved, a danger zone is ahead (danger.js) and the alert is turned on; "dangerLimit" / "dangerNoLimit": and its speed limit is / isn't known
         if (key === 'danger' || key === 'dangerLimit' || key === 'dangerNoLimit') {
             const d = this.target === 'panel' && this.ctx.settings.get('dangerAlert') === true ? this.danger.state() : null;
@@ -835,7 +856,9 @@ class HudApp {
                 // Not on every car: without it the electric range is the charge times what a full battery gives (evRangeFull).
                 displayRangeElectricVehicle: (v) => {
                     const n = typeof v === 'number' ? v : v && typeof v === 'object' ? v.displayRangeElectricVehicle : null;
-                    if (!isNum(n) || n < 0 || n >= 0xFFFE) return;
+                    // 0xFFFE and up, and 4093 (the owner's car sent it at the same time as a range of 1: the 12-bit "none" next to the fuel
+                    // range's 4095): no range, a plug-in hybrid never goes that far
+                    if (!isNum(n) || n < 0 || n >= EV_RANGE_NONE) return;
                     if (!isNum(this.carErange)) this.log.info('electric range from the car: ' + n + (this.setting('units') === 'us' ? ' mi' : ' km'));
                     this.carErange = n * (this.setting('units') === 'us' ? 1.609344 : 1); this.carErangeAt = Date.now();
                 },
@@ -901,7 +924,8 @@ class HudApp {
                     if (m === this.driveMode && variant === this.driveVariant && name === this.driveName) return;
                     this.log.info('drive mode ' + (name || MODE_NAME[m]) + ' (' + raw + ')');
                     this.driveMode = m; this.driveVariant = variant; this.driveName = name;
-                    if (this._layoutName() !== this.activeName || this._accentHue() !== this.accentHue) this._rebuild(); else this._status();
+                    if (this._layoutName() !== this.activeName || this._accentHue() !== this.accentHue
+                        || (this.driveLayout && (this.driveMode === 'sport') !== this.driveShown)) this._rebuild(); else this._status();
                 },
             },
         };
@@ -1190,6 +1214,22 @@ class HudApp {
         kw = Math.max(-EST.maxRegenKw, Math.min(EST.maxKw, kw));
         if (kw < 0 && kw > -EST.minRegenKw) kw = 0;
         return { kw, old: false };
+    }
+
+    /** The views the active layout has, in the order the button steps through them (without "none"). */
+    views() { return this.layoutViews.slice(); }
+
+    /**
+     * The button behind the steering wheel was pressed: the next view of this theme, and after the last one none again (the theme as it is
+     * without a view). Returns the name now showing ("none" included). A theme without views does nothing.
+     */
+    nextView() {
+        if (!this.layoutViews.length) return 'none';
+        const list = ['none'].concat(this.layoutViews), now = this.setting('viewSel');
+        const next = list[(Math.max(0, list.indexOf(now)) + 1) % list.length];
+        this.viewNow = next;
+        this._rebuild();
+        return next;
     }
 
     /** A new value of CarPlayManager.projectedGuidanceActive: a route started or ended, the theme opens or closes its map window. */
@@ -2335,7 +2375,11 @@ class HudApp {
         }
         this.problem = null;
         this.mapLayout = layout.widgets.some((w) => w.holeWhen === 'mapUp');
+        this.layoutViews = viewsOf(layout.widgets);
+        if (this.viewNow !== null && this.viewNow !== 'none' && this.layoutViews.indexOf(this.viewNow) < 0) this.viewNow = null;      // this theme doesn't have it
         this.dangerLayout = layout.widgets.some((w) => /^!?danger/.test(w.toggle || ''));
+        this.driveLayout = layout.widgets.some((w) => /(^|&)!?driveSport(&|$)/.test(w.toggle || ''));
+        this.driveShown = this.driveMode === 'sport';
         this.dangerShown = this._dangerKey();
         this.powerLayout = layout.widgets.some((w) => w.toggle === 'power' || w.toggle === 'powerShut' || w.toggle === 'powerOpen' || w.toggle === 'boostShown');
         this.powerShown = this._powerKey();
@@ -2562,8 +2606,9 @@ class HudApp {
         return on;
     }
 
-    /** "key" is on while that bool setting is on; "!key" while it is off. */
+    /** "key" is on while that bool setting is on; "!key" while it is off; "a&!b" while every one of them is (a bar shown only without the map window). */
     _toggleOn(t) {
+        if (t.indexOf('&') > 0) return t.split('&').every((p) => this._toggleOn(p));
         const not = t.charAt(0) === '!';
         const k = not ? t.slice(1) : t, eq = k.indexOf('=');
         const on = eq > 0 ? String(this.setting(k.slice(0, eq))) === k.slice(eq + 1) : this.setting(k) !== false;
@@ -3437,6 +3482,22 @@ class HudApp {
             x.last = key;
             x.c.uniform(x.ref, 'u_v', [v, pk, zone, 0]);
             x.c.uniform(x.ref, 'u_hy', bar === 1 ? [0.3, 0.75, 1.0, 1] : bar === 2 ? [0.2, 0.85, 0.5, 1] : [0, 0, 0, 0]);
+        } else if (w.type === 'slantbar' && SENSOR_BAR[w.sensor]) {
+            // a sensor's bar ("sensor": oil | coolant | boost, "min" / "max" in C or bar): blue while the oil / the coolant is under its cold limit, green once
+            // warm, light blue for the boost, and over the warning limit flashing between the shift red and a dark red (the readouts' colours, "tempBy")
+            const raw = this._raw(w.sensor), mn = isNum(w.min) ? w.min : 0, mx = isNum(w.max) ? w.max : 1;
+            const v = isNum(raw) && mx !== mn ? Math.min(1, Math.max(0, (raw - mn) / (mx - mn))) : 0, q = Math.round(v * 200) / 200;
+            const cold = COLD_BELOW[w.sensor] ? this.setting(COLD_BELOW[w.sensor]) : 0;
+            const over = !!this._overLimit(w.sensor);
+            const flash = over && Math.floor(now / WARN_FLASH_MS) % 2 === 0;
+            const col = over ? (flash ? this.theme.hot : WARN_DIM)
+                : w.sensor === 'boost' ? SENSOR_BAR.boost
+                    : isNum(raw) && isNum(cold) && cold > 0 && raw < cold ? VERDICT.COLD : VERDICT['SPOT ON'];
+            const key = q + '|' + col.join(',');
+            if (!force && key === x.last) return;
+            x.last = key;
+            x.c.uniform(x.ref, 'u_value', [q]);
+            x.c.uniform(x.ref, 'u_on', rgba(col));
         } else if (w.type === 'slantbar') {
             const raw = this._raw(w.signal || 'hvSoc'), mn = isNum(w.min) ? w.min : 0, mx = isNum(w.max) ? w.max : 100;
             const v = isNum(raw) && mx !== mn ? Math.min(1, Math.max(0, (raw - mn) / (mx - mn))) : 0, q = Math.round(v * 200) / 200;
@@ -3590,4 +3651,6 @@ function pad2(n) { return n < 10 ? '0' + n : String(n); }
 function mib(bytes) { return (bytes / 1048576).toFixed(1) + ' MiB'; }
 
 HudApp.driveModeOf = driveModeOf; HudApp.driveNameOf = driveNameOf; HudApp.driveVariantOf = driveVariantOf;   // for tools/test_drive_modes.js
+HudApp.viewsOf = viewsOf;
+HudApp.VIEW_ORDER = VIEW_ORDER;
 module.exports = HudApp;

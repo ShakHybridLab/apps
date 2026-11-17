@@ -1147,9 +1147,10 @@ vec4 strip(vec2 p, vec4 g, float lvl, vec3 lit, float low, vec4 c) {
 ${BEZEL}
 void main() {
     vec2 p = v_uv * u_rect + u_org;
-    // the near black navy, with the photo's faint hexagon outlines
-    vec4 c = vec4(vec3(0.016, 0.026, 0.078) * u_tint, 1.0);
-    if (u_tint > 0.0) c = over(vec4(0.45, 0.6, 1.0, 0.045 * u_facets * cov(abs(honey(p, 150.0)) - 0.7)), c);
+    // a deep blue (the colour the backdrop lost when it was darkened to hide BMW's black box, which is gone), with the photo's faint hexagon
+    // outlines; no gradient on purpose: this shader is 9 tokens under the 8748 that hold on the car (tools/shader_budget.js)
+    vec4 c = vec4(vec3(0.03, 0.07, 0.19) * u_tint, 1.0);
+    if (u_tint > 0.0) c = over(vec4(0.45, 0.6, 1.0, 0.07 * u_facets * cov(abs(honey(p, 150.0)) - 0.7)), c);
 
     // ---- the hexagon: five panels cut by dark gaps (design coordinates of the photo, scaled), the void for the speed between ----
     if (u_hex.z > 0.0) {
@@ -1921,7 +1922,7 @@ void main() {
 const ACCENT_LITERALS = {
     sdash: ['0.36, 0.62, 1.0', '0.13, 0.3, 0.78', '0.62, 0.86, 1.0', '0.2, 0.45, 0.98', '0.012, 0.036, 0.09', '0.03, 0.09, 0.19', '0.04, 0.12, 0.24',
         '0.02, 0.07, 0.16', '0.07, 0.2, 0.38', '0.06, 0.2, 0.62', '0.15, 0.36, 0.92'],
-    mblade: ['0.016, 0.026, 0.078', '0.09, 0.31, 0.7', '0.085, 0.34, 0.79', '0.075, 0.31, 0.72', '0.07, 0.275, 0.66', '0.08, 0.31, 0.74', '0.075, 0.28, 0.68',
+    mblade: ['0.03, 0.07, 0.19', '0.09, 0.31, 0.7', '0.085, 0.34, 0.79', '0.075, 0.31, 0.72', '0.07, 0.275, 0.66', '0.08, 0.31, 0.74', '0.075, 0.28, 0.68',
         '0.095, 0.32, 0.76', '0.45, 0.6, 1.0', '0.5, 0.7, 1.0', '0.4, 0.62, 1.0', '0.12, 0.3, 0.62', '0.12, 0.34, 0.7', '0.1, 0.3, 0.66', '0.3, 0.78, 1.0'],
     navi: ['0.016, 0.05, 0.125', '0.026, 0.08, 0.19', '0.014, 0.045, 0.11', '0.03, 0.08, 0.17', '0.1, 0.18, 0.84'],
 };

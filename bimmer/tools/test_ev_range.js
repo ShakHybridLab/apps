@@ -63,4 +63,13 @@ check('la limite suit le réglage « autonomie d\'une batterie pleine »', () =>
     assert.strictEqual(make({ soc: 100, car: 93, full: 80 })._evRangeNow(), 93);
 });
 
+check('4093 (ce que la voiture a envoyé avec une autonomie de 1) : pas une autonomie, ni gardée ni affichée', () => {
+    // le gestionnaire du signal l'écarte déjà à la réception ...
+    assert(/const EV_RANGE_NONE = 4093;/.test(src), 'constante EV_RANGE_NONE');
+    assert(/n < 0 \|\| n >= EV_RANGE_NONE\) return;/.test(src), 'le gestionnaire écarte EV_RANGE_NONE et plus');
+    // ... et si un 4093 arrivait quand même, la charge le contredit : la part de la charge s'affiche
+    assert.strictEqual(make({ soc: 50, car: 4093 })._evRangeNow(), 20);
+    assert.strictEqual(make({ soc: 9, car: 4093 })._evRangeNow(), 9 * 40 / 100);
+});
+
 console.log(process.exitCode ? 'ev range: FAILED' : 'ev range: all ' + n + ' checks pass');

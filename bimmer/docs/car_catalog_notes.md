@@ -49,7 +49,9 @@ Intéressants, par ordre de valeur :
 - **Clignotants** : famille `body.Light`. **Compteur de dérives M** : `MDrive.statusDriftTrackInfoMeta`.
 - **Caméra de recul** : rien de précis ; les boutons `UserInteractionParkmenu.controlCameraCleaningButton` et les messages `ParkmenuInstrumentCluster` (`displayMessage`, `popUpRequest`) existent.
 
-Toujours introuvables : la position GPS, le titre du morceau CarPlay (`CarLifeMp` ne sert que Baidu).
+- **Position GPS** (le propriétaire l'a lue au catalogue, 17 nov. 2026, de la forme `infotainment.GPSData`, deux derniers morceaux du nom comme la page Signaux les écrit ; le nom complet `de.bmw.infotainment.GPSData` est déduit de `KombiIF`, **pas encore vu accepté**) : `GPSPositionCAN` (latitude et longitude, lisible et notifié), `GPSPositionExtendedCAN` (cap, altitude, qualité, vitesse). `entrypoint2.EntryPoint2.locationData` est lisible aussi, moins détaillé (préfixe du nom complet inconnu). Essai : appli `shakgps` (`shared/probe_sets.js`). Si la voiture la refuse, c'est le nom complet qui est faux. Les unités et les noms des membres sont à lire sur l'écran de l'essai avant d'écrire quoi que ce soit pour les radars.
+
+Toujours introuvable : le titre du morceau CarPlay (`CarLifeMp` ne sert que Baidu).
 
 ## Marche à suivre pour un nouveau signal
 

@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.21.20",
+  "version": "0.21.22",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -624,11 +624,47 @@
       "default": true
     },
     {
+      "key": "viewSel",
+      "label": "Vue dans le thème (bouton du volant)",
+      "type": "choice",
+      "default": "none",
+      "options": [
+        [
+          "none",
+          "Aucune"
+        ],
+        [
+          "gauges",
+          "Jauges"
+        ],
+        [
+          "tyres",
+          "Pneus"
+        ],
+        [
+          "drive",
+          "Conduite"
+        ]
+      ]
+    },
+    {
+      "key": "gFlipLat",
+      "label": "G-mètre : gauche / droite inversés",
+      "type": "bool",
+      "default": false
+    },
+    {
+      "key": "gFlipLong",
+      "label": "G-mètre : freinage en haut",
+      "type": "bool",
+      "default": false
+    },
+    {
       "key": "sportTint",
       "label": "Fond bleu (Sport, M Blade, Navi)",
       "type": "number",
       "unit": "%",
-      "default": 80,
+      "default": 140,
       "steps": [
         0,
         30,

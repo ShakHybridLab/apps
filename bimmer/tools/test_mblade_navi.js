@@ -131,7 +131,7 @@ NAMES.forEach((n) => {
         check('mblade: the coolant (over) and the outside temperature (under) are one table at the far right, same in both views: icons, values and units each in one column', () => {
             const rows = [['cool', 'cool_icon', 'cool_unit'], ['outside', 'ice_icon', 'outside_unit']].map((r) => r.map((i) => by(i)));
             assert(!by('out_icon'), 'the outside temperature has no thermometer (it looks like the coolant\'s: the owner would confuse them)');
-            rows.forEach((r) => r.forEach((w) => assert(!w.toggle, w.id + ': the column is the same in both views')));
+            rows.forEach((r) => r.forEach((w) => assert(!w.toggle || w.toggle === '!viewSel=gauges', w.id + ': the column is the same in both views (the coolant only gives way to its bar in the gauges view)')));
             assert(by('cool').tempBy === 'coolant' && by('cool_icon').tempBy === 'coolant', 'tempBy missing');
             assert(by('outside').iceBy && by('ice_icon').iceBy && by('ice_icon').icon === 'snow', 'the snowflake and the ice colour are missing');
             assert(rows[0][0].y === by('oil').y, 'the coolant is not on the sensors\' row (the oil\'s)');
@@ -148,16 +148,23 @@ NAMES.forEach((n) => {
         });
         check('mblade: nothing shown together overlaps anything else (text and icon boxes), in either view', () => {
             const g = (w) => (w.toggle === 'powerShut' ? '!mapUp' : w.toggle === 'powerOpen' ? 'mapUp' : w.toggle) || '';
+            // two widgets never show together when their toggles contradict: "mapUp" and "!mapUp", "driveSport" and "!driveSport", or two different views (viewSel=a, viewSel=b, or !viewSel=a)
+            const excl = (a, b) => g(a).split('&').some((p) => g(b).split('&').some((q) => {
+                const np = p.charAt(0) === '!', nq = q.charAt(0) === '!', kp = np ? p.slice(1) : p, kq = nq ? q.slice(1) : q;
+                if (!kp || !kq) return false;
+                if (kp === kq) return np !== nq;
+                return kp.indexOf('viewSel=') === 0 && kq.indexOf('viewSel=') === 0 && !np && !nq;
+            }));
             // the danger alert (al_), the limit ring (lim_), the 0-100 timer (run_) and the launch cue (ready_, over the drive mode's name) share their places by design: they take turns
             const own = (w) => /^(al_|lim_|run_|(o_)?ready_)/.test(w.id);
             const ws = L.widgets.filter((w) => /^(text|icon)$/.test(w.type) && !own(w));
             L.widgets.filter((w) => /^(lim_|run_|(o_)?ready_)/.test(w.id)).forEach((a) => ws.forEach((b) => {
                 if (/ready_/.test(a.id) && /drive_mode$/.test(b.id)) return;      // the launch cue takes the drive mode name's place
-                if ((g(a) === 'mapUp' && g(b) === '!mapUp') || (g(a) === '!mapUp' && g(b) === 'mapUp')) return;
+                if (excl(a, b)) return;
                 assert(!(a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y), a.id + ' overlaps ' + b.id);
             }));
             ws.forEach((a, i) => ws.slice(i + 1).forEach((b) => {
-                if ((g(a) === 'mapUp' && g(b) === '!mapUp') || (g(a) === '!mapUp' && g(b) === 'mapUp')) return;
+                if (excl(a, b)) return;
                 assert(!(a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y), a.id + ' overlaps ' + b.id);
             }));
         });

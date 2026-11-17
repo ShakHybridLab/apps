@@ -11,6 +11,7 @@ import json, math, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from zoom_labels import zoomify
 import pack_sheets
+import add_sensor_bars
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'apps', 'shaktheme', 'hud', 'layouts')
 
@@ -471,6 +472,7 @@ if __name__ == '__main__':
     for name, L in (('mblade', mblade()), ('navi', navi())):
         zoomify(name, L['widgets'])                        # the scale numbers that grow in their zone: bigger boxes (tools/zoom_labels.py)
         print(name, pack_sheets.pack(L['widgets'], SHEETS[name]))   # tight sheets for cluster-render's pixel memory (tools/pack_sheets.py)
+        print(name, add_sensor_bars.add(name, L['widgets']))        # the sensor bars and the tyre block (tempBars) with their own sheets and connections (tools/add_sensor_bars.py)
         p = os.path.join(OUT, name + '.json')
         with open(p, 'w') as f:
             json.dump(L, f, indent=2)
