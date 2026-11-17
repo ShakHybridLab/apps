@@ -14,7 +14,6 @@ const Extras = require('./car_extras');
 const { limitOf } = require('./speedlimit');
 
 const KOMBI = 'de.bmw.infotainment.KombiIF';
-const KOMBI2 = 'de.bmw.infotainment.KombiInterface_2';
 const FAS = 'de.bmw.infotainment.fasus.FASuS';
 const LATERAL = 'de.bmw.dass.driverassistanceapplications.DisplayDriverAssistanceLateralCoordinated';
 const EFF = 'de.bmw.infotainment.drivingexcitement.Efficiencytainment2';
@@ -33,13 +32,14 @@ const PROBES = [
     { id: 'fas', iface: FAS, field: 'statusIDriveFAS', name: 'Driver assistance: lane warnings' },
     { id: 'fasx', iface: FAS, field: 'statusIDriveFASExtended', name: 'Driver assistance: steering wheel light' },
     { id: 'wheel', iface: LATERAL, field: 'displaySteeringWheel', name: 'Lane assist: steering wheel symbol' },
+    // the stock cluster's own power meter (a percentage of drive and of recuperation): the name is already declared by the Cluster apps installed on the
+    // owner's car, so the car accepts it; hud.js draws the hybrid rev bar from it (_relPower) when eDrive Live shares no power
+    { id: 'rel', iface: EFF, field: 'statusPowerRelativHybrid', name: 'Power meter: cluster (drive and recuperation, %)' },
     { id: 'pdrive', iface: EFF, field: 'displayPowerDrive', name: 'Power meter: drive and recuperation' },
     { id: 'pdrive2', iface: EFF, field: 'displayPowerDrive2', name: 'Power meter: second reading' },
     { id: 'pdist', iface: KOMBI, field: 'statusDisplayElectricalPowerDistribution', name: 'Electric power: drive and air conditioning' },
     { id: 'erange', iface: KOMBI, field: 'displayRangeElectricVehicle', name: 'Electric range (cluster)' },
     { id: 'cc', iface: KOMBI, field: 'statusActiveCCMessage', name: 'Check control message showing' },
-    { id: 'cbs', iface: KOMBI2, field: 'cbsDataServiceList', name: 'Services due' },
-    { id: 'ccrisk', iface: KOMBI2, field: 'ccListRiskClass', name: 'Check control risk class' },
 ];
 // NOT DECLARED in app.json since ShakTheme 0.21.13: the car's app manager refused 0.21.12 ("UPDATE_FAILED", the previous version kept) and
 // this was the one signal declared since the last version the owner had installed. Re-add it (with the flags of the car's catalog) only when
@@ -50,7 +50,7 @@ const PROBES = [
 const GUIDE = { id: 'guide', iface: CARPLAY, field: 'projectedGuidanceActive', name: 'CarPlay guidance active (route)' };
 const SHOWN = PROBES.map((p) => p.id);
 // the Signals tab's two pages (ids; 'guide' is the one probe above): the engine and the energy first, then the road signs and the assistance
-const PAGES = [['rpm', 'engt', 'speed', 'pdrive', 'pdrive2', 'pdist', 'erange', 'guide'], ['sign', 'next', 'fas', 'fasx', 'wheel', 'cc', 'ccrisk', 'cbs']];
+const PAGES = [['rpm', 'engt', 'speed', 'rel', 'pdrive', 'pdrive2', 'pdist', 'erange', 'guide'], ['sign', 'next', 'fas', 'fasx', 'wheel', 'cc']];
 const KEEP = 3;               // distinct values kept for each (the page shows the newest first)
 const LOG_FIRST = 12;         // distinct values of each that go to the log, then one a minute at most
 const LOG_EVERY_MS = 60000;
@@ -137,6 +137,12 @@ function meaningOf(id, v) {
     case 'wheel': {
         const l = Extras.laneOf(v);
         t = l.on === null && !l.warn ? null : (l.on === false && !l.warn ? 'wheel off' : 'wheel on' + (l.tone ? ', ' + l.tone : '') + (l.warn ? ', warning' : ''));
+        break;
+    }
+    case 'rel': {
+        const r = Extras.relPowerOf(v);
+        const pc = (n) => n === null ? '-' : String(Math.round(n));
+        t = r === null ? null : r.over ? 'above 100 %: scale to confirm' : 'drive ' + pc(r.drive) + ' % · recup ' + pc(r.recup) + ' %';
         break;
     }
     case 'pdrive': case 'pdrive2': {

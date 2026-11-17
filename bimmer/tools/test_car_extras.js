@@ -47,13 +47,13 @@ check('powerQuotaOf: -100..100 from the struct or a plain number; 255, 65535, te
 const hudSrc = fs.readFileSync(path.join(ROOT, 'shared', 'hud.js'), 'utf8');
 const grab = (name) => { const m = hudSrc.match(new RegExp('\\n    ' + name + '\\([^)]*\\) \\{[\\s\\S]*?\\n    \\}\\n')); assert(m, 'hud.js has no ' + name); return m[0]; };
 const isNum = (v) => typeof v === 'number' && isFinite(v);
-const names = ['_carNext', '_nextLimitNow', '_carAlertSet', '_alertNow', '_laneSet', '_laneNow', '_carPowerSet', '_carPower', '_estStep', '_estPower', '_hybridTach'];
+const names = ['_carNext', '_nextLimitNow', '_carAlertSet', '_alertNow', '_laneSet', '_laneNow', '_carPowerSet', '_carPower', '_relSet', '_relPower', '_estStep', '_estPower', '_hybridTach'];
 const EST_SRC = hudSrc.match(/const EST = \{[^}]*\};/); assert(EST_SRC, 'hud.js has no EST');
 const VERDICT = require('../shared/hud_themes').VERDICT;
 const Cls = new Function('extras', 'hybridTach', 'isNum', 'formatLimit', 'VERDICT', EST_SRC[0] + 'return class {' + names.map(grab).join('') + '}')(ex, hybridTach, isNum, formatLimit, VERDICT);
 function mk(set, over) {
     const o = Object.create(Cls.prototype);
-    Object.assign(o, { target: 'panel', nextLim: null, carAlert: null, carQuota: null, lane: null, logs: [], log: { info: (m) => o.logs.push(m) },
+    Object.assign(o, { target: 'panel', nextLim: null, carAlert: null, carQuota: null, relPow: null, relAlive: false, lane: null, logs: [], log: { info: (m) => o.logs.push(m) },
         speedLimit: { limit: () => null }, ci: { sharedPower: () => null }, car: { data: () => ({ speed: null }) },
         ctx: { settings: { item: (k) => (set[k] !== undefined ? { key: k } : undefined), get: (k) => set[k] } },
         setting: (k) => (set[k] === undefined ? undefined : set[k]) }, over || {});
@@ -123,6 +123,48 @@ check('hybrid rev counter: without eDrive Live the car\'s motor share gives the 
     const hudOn = mk({ hybridRev: true, carPower: true }, { target: 'hud' }); hudOn._carPowerSet({ quotaImmediateElectricEngineDriveRecuperation: 30 });
     assert.strictEqual(hudOn._hybridTach(w, 0).ev, true, 'the HUD too (setting hybridRev)');
     o._carPowerSet({ quotaImmediateElectricEngineDriveRecuperation: 255 }); o._carPowerSet('x'); assert.strictEqual(o.carQuota.q, -50, 'unclear readings change nothing');
+});
+check('cluster power meter: relPowerOf reads drive and recuperation in %, and drops 255, 65535, negatives; a number over 100 is an unknown scale', () => {
+    const D = 'displayActualValuePowerRelativeDrivingElectric', R = 'displayActualValuePowerRelativeRecuperation';
+    assert.deepStrictEqual(ex.relPowerOf({ [D]: 20, [R]: 0 }), { drive: 20, recup: 0, over: false });
+    assert.deepStrictEqual(ex.relPowerOf({ [R]: 35 }), { drive: null, recup: 35, over: false });
+    assert.strictEqual(ex.relPowerOf({ [D]: 255, [R]: 65535 }), null, 'the all-ones numbers say nothing');
+    assert.strictEqual(ex.relPowerOf({ [D]: -4 }), null); assert.strictEqual(ex.relPowerOf(7), null); assert.strictEqual(ex.relPowerOf(null), null); assert.strictEqual(ex.relPowerOf([1]), null);
+    assert.strictEqual(ex.relPowerOf({ [D]: 'x' }), null);
+    assert.deepStrictEqual(ex.relPowerOf({ [D]: 150 }), { drive: null, recup: null, over: true }, 'a scale over 100 is flagged, never drawn');
+    assert.deepStrictEqual(ex.relPowerOf({ [D]: { value: 40 }, [R]: { name: 0 } }), { drive: 40, recup: 0, over: false }, 'struct values are read through scalar');
+    assert.strictEqual(ex.relKw({ drive: 50, recup: 0 }), 40); assert.strictEqual(ex.relKw({ drive: 0, recup: 50 }), -30); assert.strictEqual(ex.relKw({ drive: null, recup: 100 }), -60);
+    assert.strictEqual(ex.relKw({ drive: 100, recup: 0 }), ex.EV_MAX_KW); assert.strictEqual(ex.relKw({ drive: 0, recup: 0 }), 0); assert.strictEqual(ex.relKw(null), 0);
+});
+check('hybrid rev counter: the stock cluster\'s power meter (setting relPower, on) draws the bar ahead of the car\'s share and the estimate, once it has read above 0; eDrive Live still wins', () => {
+    const w = { hybridTach: true }, D = 'displayActualValuePowerRelativeDrivingElectric', R = 'displayActualValuePowerRelativeRecuperation';
+    const o = mk({ sportPower: true, relPower: true });
+    assert.strictEqual(o._relPower(), null, 'nothing read yet');
+    o._relSet({ [D]: 0, [R]: 0 }); assert.strictEqual(o._relPower(), null, 'only ever 0: not trusted (the estimate draws)');
+    o._relSet({ [D]: 50, [R]: 0 }); assert.strictEqual(o._relPower().kw, 40);
+    let st = o._hybridTach(w, 0); assert.strictEqual(st.ev, true); assert.strictEqual(st.kw, 40);
+    st = o._hybridTach(w, null); assert.strictEqual(st.ev, true, 'rpm unknown: the engine at rest, as with the car\'s share');
+    st = o._hybridTach(w, 2500); assert.strictEqual(st.ev, false); assert.strictEqual(st.engineOff, false);
+    o._relSet({ [D]: 0, [R]: 40 }); st = o._hybridTach(w, 0); assert.strictEqual(st.kw, -24); assert(st.chg > 0.3 && st.chg < 0.5, 'recuperation: the green charge, ' + st.chg);
+    o._relSet({ [D]: 0, [R]: 0 }); assert.strictEqual(o._relPower().kw, 0, 'alive and at 0: the bar sits at 0, it does not fall back');
+    o._relSet({ [D]: 255 }); o._relSet('x'); assert.strictEqual(o.relPow.recup, 0, 'unclear readings change nothing');
+    // stale: after REL_TTL_MS the estimate takes over again (the meter is re-read every 2 s while the car answers)
+    o.relPow.at -= ex.REL_TTL_MS + 10; assert.strictEqual(o._relPower(), null, 'stale');
+    // an unknown scale is never drawn, and does not stay alive on its own
+    const big = mk({ sportPower: true, relPower: true }); big._relSet({ [D]: 300 }); assert.strictEqual(big._relPower(), null); assert.strictEqual(big.relAlive, false);
+    big._relSet({ [D]: 20 }); assert.strictEqual(big._relPower().kw, 16, 'a good reading after an odd one is taken');
+    big._relSet({ [D]: 300 }); assert.strictEqual(big._relPower(), null, 'then an odd one again: not drawn');
+    // priority: eDrive Live (real kW) > the cluster's meter > the car's share > the estimate
+    const base = { sportPower: true, carPower: true, relPower: true };
+    const all = mk(base, { ci: { sharedPower: () => ({ kw: -20, old: false }) } }); all._relSet({ [D]: 50 }); all._carPowerSet({ quotaImmediateElectricEngineDriveRecuperation: 25 });
+    assert.strictEqual(all._hybridTach(w, 0).kw, -20, 'eDrive Live wins');
+    const noShare = mk(base); noShare._relSet({ [D]: 50 }); noShare._carPowerSet({ quotaImmediateElectricEngineDriveRecuperation: 25 });
+    assert.strictEqual(noShare._hybridTach(w, 0).kw, 40, 'the cluster\'s meter before the car\'s share');
+    noShare.relPow.at -= ex.REL_TTL_MS + 10; assert.strictEqual(noShare._hybridTach(w, 0).kw, 20, 'meter stale: the share');
+    // setting off, and the HUD target (setting hybridRev)
+    const off = mk({ sportPower: true, relPower: false }); off._relSet({ [D]: 50 }); assert.strictEqual(off._relPower(), null); assert.strictEqual(off._hybridTach(w, 0).kw, null, 'setting off, no estimate speed: nothing');
+    const hudOn = mk({ hybridRev: true, relPower: true }, { target: 'hud' }); hudOn._relSet({ [D]: 25 }); assert.strictEqual(hudOn._hybridTach(w, 0).kw, 20, 'the HUD too (setting hybridRev)');
+    assert.strictEqual(hudOn._hybridTach({ hybridTach: false }, 0).kw, null, 'a layer that does not ask for it');
 });
 // the estimated electric power (setting estPower): the rev bar rises in electric with no data from the car; every tick is 25 ms
 function drive(o, kmh, ms, from) {
@@ -234,9 +276,10 @@ check('hud.js wires the lane assist symbol, the setting exists (off, French) and
 });
 check('hud.js wires the three readings and the live icon path takes the two new flags', () => {
     assert(/p\.id === 'next'\) this\._guard\('nextLimit'/.test(hudSrc) && /p\.id === 'cc'\) this\._guard\('carAlert'/.test(hudSrc) && /p\.id === 'pdrive' \|\| p\.id === 'pdrive2'\) this\._guard\('carPower'/.test(hudSrc));
+    assert(/p\.id === 'rel'\) this\._guard\('relPower'/.test(hudSrc) && /p\.id === 'rel'\) group\.\$pollMs = 2000/.test(hudSrc), 'the cluster\'s meter is not wired or not polled');
     assert(/w\.evShareBy \|\| w\.nextBy \|\| w\.alertBy \|\| w\.laneBy \|\| w\.readyBy/.test(hudSrc), 'the icons would always show');
     assert(/case 'nextLimit':/.test(hudSrc));
-    assert(/_hybridTach\(w, rpm\) \{[\s\S]*?_carPower\(\)/.test(hudSrc), '_hybridTach does not use the car\'s own power');
+    assert(/_hybridTach\(w, rpm\) \{[\s\S]*?_relPower\(\)[\s\S]*?_carPower\(\)/.test(hudSrc), '_hybridTach does not use the car\'s own power');
 });
 check('settings: nextLimit on, carAlert off, carPower off in ShakTheme, carPower off in ShakHUD, all in French', () => {
     const get = (a, k) => a.settings.find((x) => x.key === k);

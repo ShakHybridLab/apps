@@ -113,7 +113,7 @@ check('catalogue : lu une fois, puis sur le disque (la deuxième exécution ne r
         assert(third.groups.find((g) => g.id === 'sign').rows.length > first.groups.find((g) => g.id === 'sign').rows.length, 'et la réponse suit');
         // un cache abîmé ne casse rien
         fs.writeFileSync(cache, '{not json'); c = fresh();
-        assert(c.load(cache).groups.length === 3, 'cache abîmé : on relit');
+        assert(c.load(cache).groups.length === c.GROUPS.length, 'cache abîmé : on relit');
     } finally { fs.readFileSync = rfs; delete process.env.SOMEIP_CATALOG; }
 });
 check('catalogue : une erreur de lecture n\'est pas écrite dans le cache', () => {

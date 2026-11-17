@@ -12,7 +12,7 @@ const app = (n) => JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps',
 const theme = app('shaktheme'), hud = app('shakhud');
 
 // "get notify" in the catalog photos is "rs", "notify" alone "s" (a notifier without getter)
-const FLAGS = { rpm: 'rs', engt: 'rs', speed: 'rs', sign: 's', next: 'rs', fas: 'rs', fasx: 'rs', wheel: 's', pdrive: 's', pdrive2: 's', pdist: 'rs', erange: 'rs', cc: 'rs', cbs: 'rs', ccrisk: 'rs' };
+const FLAGS = { rpm: 'rs', engt: 'rs', speed: 'rs', sign: 's', next: 'rs', fas: 'rs', fasx: 'rs', wheel: 's', rel: 'rs', pdrive: 's', pdrive2: 's', pdist: 'rs', erange: 'rs', cc: 'rs' };
 
 check('every probe is declared in ShakTheme\'s app.json with the flags the catalog lists (a signal the car does not have breaks the installation)', () => {
     assert.deepStrictEqual(PROBES.map((p) => p.id).sort(), Object.keys(FLAGS).sort(), 'the probes are not the ones listed here');
@@ -26,7 +26,7 @@ check('every probe is declared in ShakTheme\'s app.json with the flags the catal
 const OWN = ['rpm', 'engt', 'speed'];
 // and the cluster's power meter (the electric motor's share, for the hybrid rev counter without eDrive Live: setting carPower, car_extras.js)
 // and its electric range (the plug-in hybrid's own figure, KombiIF displayRangeElectricVehicle, which ShakHUD's widgets read already)
-const HUD_ASKS = OWN.concat(['pdrive', 'pdrive2', 'erange']);
+const HUD_ASKS = OWN.concat(['rel', 'pdrive', 'pdrive2', 'erange']);
 check('ShakHUD declares only what the app draws from (it asks for no signal it does not use)', () => {
     PROBES.forEach((p) => {
         const has = !!(hud.signals && hud.signals[p.iface] && hud.signals[p.iface][p.field]);
@@ -81,7 +81,7 @@ check('a value is kept newest first, three at most, a repeat changes nothing, an
     ['2', '3', '4'].forEach((a, i) => p.feed('cc', { a }, 2000 + i));
     const d = p.get('cc');
     assert.deepStrictEqual(d.vals, ['a=4', 'a=3', 'a=2']); assert.strictEqual(d.n, 5); assert.strictEqual(d.at, 2002);
-    p.feed('cbs', null, 3000); assert.strictEqual(p.heard(), 1, 'a null reading is not a value'); p.feed('cbs', {}, 3000); assert.deepStrictEqual(p.get('cbs').vals, ['(empty)']); p.by.cbs = undefined;
+    p.feed('fasx', null, 3000); assert.strictEqual(p.heard(), 1, 'a null reading is not a value'); p.feed('fasx', {}, 3000); assert.deepStrictEqual(p.get('fasx').vals, ['(empty)']); p.by.fasx = undefined;
     p.feed('pdist', { x: 1 }, 3000); assert.strictEqual(p.heard(), 2);
     assert.strictEqual(SHOWN.length, PROBES.length);
 });
@@ -118,7 +118,7 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
     const run = (pg, feed, cat) => {
         const calls = { text: [], glass: [], chips: [], logs: [] };
         const cv = { circle() {}, text(t, x, y, size, col) { calls.text.push({ t, x, y, size, col }); }, textWidth: (t, sz) => String(t).length * sz * 0.55, target() {} };
-        const hud = { probes: new Probes(null), ctx: {}, car: { subs: [] }, log: { info: (t) => calls.logs.push(t) } };
+        const hud = { probes: new Probes(null), ctx: {}, car: { subs: [] }, log: { info: (t) => calls.logs.push(t) }, _estPower: () => ({ kw: 23.4, old: false }), _relPower: () => run.rel || null };
         if (feed) PROBES.concat([GUIDE]).forEach((p) => hud.probes.feed(p.id, feed[p.id] === undefined ? { a: 1, b: 'x'.repeat(80) } : feed[p.id], Date.now()));
         const self = { sigPage: pg, hud, kick() {} };
         const deps = [(c, x, y, t) => {}, (c, x, y, t) => { calls.chips.push(t); return 50; }, (c, x, y, w, h) => { calls.glass.push({ y, h }); }, (c, x, y, lines) => { calls.note = { y, n: lines.length }; }, C, 300, 1584, 1284, require('../shared/probes'), cat ? { GROUPS: catalog.GROUPS, MAX_ROWS: catalog.MAX_ROWS, load: () => cat, peek: () => (cat === 'READING' ? null : cat) } : catalog, Date, require('path')];
@@ -128,6 +128,32 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
         return calls;
     };
     const NPAGES = PAGES.length + catalog.GROUPS.length;
+    {   // the power meter's row says what the speed and its slope give next to the car's share: one photo calibrates the scale
+        const c = run(0, { pdrive: { quotaImmediateElectricEngineDriveRecuperation: 100 } });
+        assert(c.text.some((t) => t.t === '→ share 100 (scale to confirm) · estimate 23 kW'), 'no estimate beside the share: ' + c.text.map((t) => t.t).filter((t) => /share/.test(t)).join('|'));
+        assert.strictEqual(require('../shared/fr').tr('→ share 100 (scale to confirm) · estimate 23 kW'), '→ part 100 (échelle à confirmer) · estimée 23 kW');
+        assert.strictEqual(require('../shared/fr').tr('→ share 100 (scale to confirm) · estimate -12 kW'), '→ part 100 (échelle à confirmer) · estimée -12 kW');
+    }
+    {   // the cluster's own power meter: its row says what the app read, and whether the rev bar draws from it
+        assert.strictEqual(meaningOf('rel', { displayActualValuePowerRelativeDrivingElectric: 40, displayActualValuePowerRelativeRecuperation: 0 }), '→ drive 40 % · recup 0 %');
+        assert.strictEqual(meaningOf('rel', { displayActualValuePowerRelativeRecuperation: 25 }), '→ drive - % · recup 25 %');
+        assert.strictEqual(meaningOf('rel', { displayActualValuePowerRelativeDrivingElectric: 300 }), '→ above 100 %: scale to confirm');
+        assert.strictEqual(meaningOf('rel', { displayActualValuePowerRelativeDrivingElectric: 255 }), '→ not understood');
+        assert.strictEqual(meaningOf('rel', 7), '→ not understood');
+        assert.strictEqual(require('../shared/fr').tr('→ drive 40 % · recup 0 %'), '→ propulsion 40 % · récup 0 %');
+        assert.strictEqual(require('../shared/fr').tr('→ drive 40 % · recup 0 % · bar 32 kW'), '→ propulsion 40 % · récup 0 % · barre 32 kW');
+        assert.strictEqual(require('../shared/fr').tr('→ drive - % · recup 25 % · bar -15 kW'), '→ propulsion - % · récup 25 % · barre -15 kW');
+        assert.strictEqual(require('../shared/fr').tr('→ drive 0 % · recup 0 % · not used'), '→ propulsion 0 % · récup 0 % · pas utilisé');
+        assert.strictEqual(require('../shared/fr').tr('→ above 100 %: scale to confirm'), '→ au-dessus de 100 % : échelle à confirmer');
+        assert.strictEqual(require('../shared/fr').tr('Power meter: cluster (drive and recuperation, %)'), 'Puissance : compteur du tableau de bord (propulsion et récup., %)');
+        const live = { rel: { displayActualValuePowerRelativeDrivingElectric: 50, displayActualValuePowerRelativeRecuperation: 0 } };
+        const rows = (c) => c.text.filter((t) => /^→ drive 50 % · recup 0 %/.test(t.t)).map((t) => t.t);
+        run.rel = null; assert.deepStrictEqual(rows(run(0, live)), ['→ drive 50 % · recup 0 % · not used'], 'not used while the bar does not draw from it');
+        run.rel = { kw: 32.4, old: false }; assert.deepStrictEqual(rows(run(0, live)), ['→ drive 50 % · recup 0 % · bar 32 kW'], 'the bar\'s kW beside the reading');
+        run.rel = null;
+        const odd = run(0, { rel: { displayActualValuePowerRelativeDrivingElectric: 300 } }).text.map((t) => t.t);
+        assert(odd.indexOf('→ above 100 %: scale to confirm') >= 0 && !odd.some((t) => /not used|· bar/.test(t)), 'an unknown scale shows alone: ' + odd.join('|'));
+    }
     [0, 1].forEach((pg) => [false, true].forEach((fed) => {
         const c = run(pg, fed ? { rpm: 2500, speed: 62, sign: 70, guide: true, cc: { numberDisplayControlCheckControlMessage: 3 } } : null);
         assert.strictEqual(c.chips.join(), Array.from({ length: NPAGES }, (_, i) => (i + 1) + '/' + NPAGES).join());
@@ -148,7 +174,10 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
             'de.bmw.infotainment.vehicle.Misc': { fields: fields({ unrelated: 'r' }) },
             'de.bmw.infotainment.mediaplayer.MediaPlayer': { fields: fields({ statusCurrentTrack: 'rs', statusPlayState: 'rs' }) },
             'de.bmw.infotainment.vehicle.TrafficSignDisplayControl': { fields: fields({ displaySpeedLimitAndNoPassingRestriction: 'rs' }) },
-            'com.other.Thing': { fields: fields({ statusButton: 'rs' }) },
+            'de.bmw.infotainment.drivingexcitement.Efficiencytainment3': { fields: fields({ otherThing: 'r', displayPowerFlow: 's' }) },
+            'de.bmw.infotainment.vehicle.Dynamics': { fields: fields({ statusSteeringAngle: 'rs', statusAcceleratorPedal: 'rs', plain: 'r' }) },
+            'de.bmw.infotainment.navigation.SpeedCameraWarning': { fields: fields({ statusWarning: 'rs' }) },
+            'com.other.Thing': { fields: fields({ statusButton: 'rs', statusBatteryCurrent: 'r' }) },
         }, datatypes: { S_statusMFLButtons: { type: 'struct', members: [{ name: 'buttonPlus' }, { name: 'buttonMinus' }] }, S_unrelated: { type: 'struct', members: [{ name: 'x' }] }, S_statusCurrentTrack: { type: 'struct', members: [{ name: 'titleName' }, { name: 'artistName' }] } } };
         fs.writeFileSync(file, JSON.stringify(db));
         try {
@@ -158,10 +187,13 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
             assert.deepStrictEqual(by('buttons'), ['otherField', 'statusMFLButtons'], 'buttons: every field of an interface whose name matches, no field of another, no interface outside de.bmw');
             assert.deepStrictEqual(by('media'), ['statusCurrentTrack', 'statusPlayState']);
             assert.deepStrictEqual(by('sign'), ['displaySpeedLimitAndNoPassingRestriction']);
+            assert.deepStrictEqual(by('power'), ['displayPowerFlow', 'otherThing'], 'power: a name that matches comes before one that only sits in a matching interface; no interface outside de.bmw');
+            assert.deepStrictEqual(by('road'), ['statusAcceleratorPedal', 'statusSteeringAngle'], 'road: the pedals and the steering angle, not a field of an interface that does not match');
+            assert.deepStrictEqual(by('cam'), ['statusWarning'], 'cam: every field of a speed camera interface');
             const mfl = cat.groups[0].rows.find((r) => r.field === 'statusMFLButtons');
             assert.strictEqual(mfl.flags, 'get notify'); assert.deepStrictEqual(mfl.members, ['buttonPlus', 'buttonMinus']);
             assert(catalog.find('/nonexistent/catalog.json').error, 'a missing catalogue is an error, not a crash');
-            [2, 3, 4].forEach((pg) => {
+            Array.from({ length: catalog.GROUPS.length }, (_, i) => i + 2).forEach((pg) => {
                 const c = run(pg, null, cat);
                 assert.strictEqual(c.chips.length, NPAGES);
                 assert.strictEqual(c.glass.length, Math.max(1, cat.groups[pg - 2].rows.length), 'rows on catalogue page ' + pg);
@@ -313,6 +345,21 @@ check('the Map tab texts are in French', () => {
     assert.strictEqual(fr.tr('No route · false'), "Pas d'itinéraire · false");
     assert.strictEqual(fr.tr('Value not understood · x'), 'Valeur non comprise · x');
     assert.strictEqual(fr.tr(GUIDE.name), 'Guidage CarPlay actif (itinéraire)');
+});
+check('signals nobody needs are gone: the services due and the risk class (nothing showed them but the Signals tab), the sport display % (no theme shows it); no declared signal is left that no code reads', () => {
+    const sig = theme.signals, FES = 'de.bmw.infotainment.drivingexcitement.FES';
+    assert(!sig['de.bmw.infotainment.KombiInterface_2'], 'KombiInterface_2 is declared again');
+    assert(!sig[FES].statusVehicleDynamicEngine && !hud.signals[FES].statusVehicleDynamicEngine, 'statusVehicleDynamicEngine is declared');
+    assert(!PROBES.some((p) => p.id === 'cbs' || p.id === 'ccrisk'), 'the probes are back');
+    const hudJs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
+    assert(/delete extra\[FES\]\.statusVehicleDynamicEngine/.test(hudJs), 'hud.js asks the car for it undeclared');
+    // every field an app declares is read by the code it ships (the kit, hud.js and its handlers, the probes, main.js): a declared field nobody reads only costs the car
+    const files = ['shared', 'kit/runtime'].map((d) => path.join(__dirname, '..', d)).reduce((a, d) => a.concat(fs.readdirSync(d).filter((f) => /\.js$/.test(f)).map((f) => path.join(d, f))), [])
+        .concat(['shaktheme', 'shakhud', 'shakcamdiag'].map((n) => path.join(__dirname, '..', 'apps', n, 'main.js')));
+    const code = files.map((f) => fs.readFileSync(f, 'utf8')).join('\n');
+    [['shaktheme', theme], ['shakhud', hud], ['shakcamdiag', app('shakcamdiag')]].forEach(([n, a]) => Object.keys(a.signals).forEach((iface) => Object.keys(a.signals[iface]).forEach((f) => {
+        if (f[0] !== '_') assert(code.indexOf(f) >= 0, n + ' declares ' + iface + '.' + f + ' and no code reads it');
+    })));
 });
 console.log(failed ? failed + ' FAILED' : 'probes: all checks pass');
 process.exit(failed ? 1 : 0);

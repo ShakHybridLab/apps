@@ -610,7 +610,7 @@ class HudApp {
         this.routeActive = null;         // a route is guided on the phone (CarPlay), from GUIDE (probes.js); null until the car says
         // what the car's own signals say (car_extras.js; the values were not seen yet, so each is read tolerantly): the next limit the camera
         // recognised { kmh, at }, a check control message showing (true / false / null), the electric motor's share { q, at }
-        this.nextLim = null; this.carAlert = null; this.carQuota = null; this.lane = null;
+        this.nextLim = null; this.carAlert = null; this.carQuota = null; this.relPow = null; this.relAlive = false; this.lane = null;
         // the centre window opened for Cluster Centre / Cluster Info (cluster_info.js): the same window the Waze map
         // shows in, see-through while one of them asks for it (setting centreWindow); windowRect is the active
         // layout's, on the panel
@@ -909,9 +909,15 @@ class HudApp {
         // and the car's own reading of the road signs (its camera), which also feeds the speed limit ring: only an app that declares them (ShakTheme) asks for them
         this.probes = new Probes(this.log);
         const decl = (this.ctx.spec && this.ctx.spec.signals) || {};
+        // the car's own sport display (power and torque in %) only feeds the {{powerPct}} and {{torquePct}} readouts (no shipped theme shows them; they
+        // fall back to the crank torque): an app that does not declare it does not ask the car for it
+        const FES = 'de.bmw.infotainment.drivingexcitement.FES';
+        if (!(decl[FES] && decl[FES].statusVehicleDynamicEngine)) delete extra[FES].statusVehicleDynamicEngine;
         PROBES.concat([GUIDE]).forEach((p) => {
             if (!decl[p.iface] || !decl[p.iface][p.field]) return;
             const group = (extra[p.iface] = extra[p.iface] || {}), prev = group[p.field];
+            // the cluster's power meter is not told again while it holds one value: read it every 2 s (eroobeeroo's apps do the same)
+            if (p.id === 'rel') group.$pollMs = 2000;
             group[p.field] = (v) => {
                 if (prev) prev(v);
                 this.probes.feed(p.id, v);
@@ -921,6 +927,7 @@ class HudApp {
                 if (p.id === 'cc') this._guard('carAlert', () => this._carAlertSet(v));
                 if (p.id === 'wheel') this._guard('lane', () => this._laneSet(v));
                 if (p.id === 'pdrive' || p.id === 'pdrive2') this._guard('carPower', () => this._carPowerSet(v));
+                if (p.id === 'rel') this._guard('relPower', () => this._relSet(v));
             };
         });
         this.car = new Car(this.ctx, ['rpm', 'speed', 'temps', 'accel', 'gear', 'torque'], extra);
@@ -1116,6 +1123,31 @@ class HudApp {
         if (!this.carQuota || this.carQuota.q !== q) this.carQuotaLogs = (this.carQuotaLogs || 0) + 1;
         if (this.carQuotaLogs <= 20 && (!this.carQuota || this.carQuota.q !== q)) this.log.info('motor power share ' + q + ' %');
         this.carQuota = { q, at: Date.now() };
+    }
+
+    /**
+     * A new value of Efficiencytainment2.statusPowerRelativHybrid, the stock cluster's own power meter: the drive's and the recuperation's share, in
+     * %. Kept as { drive, recup, over, at }; relAlive turns on at the first reading above 0 (a meter that only ever reads 0 is not trusted: the
+     * estimate draws then). A number over 100 (a scale the app does not know) is kept as `over` and never drawn.
+     */
+    _relSet(v) {
+        const r = extras.relPowerOf(v);
+        if (r === null) return;
+        const was = this.relPow;
+        if (!was || was.drive !== r.drive || was.recup !== r.recup || was.over !== r.over) this.relLogs = (this.relLogs || 0) + 1;
+        if (this.relLogs <= 20 && (!was || was.drive !== r.drive || was.recup !== r.recup || was.over !== r.over)) this.log.info('cluster power meter: drive ' + r.drive + ' % recuperation ' + r.recup + ' %' + (r.over ? ' (over 100: scale unknown)' : ''));
+        this.relPow = { drive: r.drive, recup: r.recup, over: r.over, at: Date.now() };
+        if (!r.over && (r.drive > 0 || r.recup > 0)) this.relAlive = true;
+    }
+
+    /**
+     * The motor's power as { kw, old } from the stock cluster's power meter (drive % of EV_MAX_KW, recuperation % of REL_RECUP_KW), only while the
+     * setting "relPower" is on (the default), the meter has read above 0 once, its scale is 0..100 and its last reading is fresh; else null.
+     */
+    _relPower() {
+        if (!this.ctx.settings.item('relPower') || this.ctx.settings.get('relPower') === false) return null;
+        const r = this.relPow;
+        return r && !r.over && this.relAlive && Date.now() - r.at < extras.REL_TTL_MS ? { kw: extras.relKw(r), old: false } : null;
     }
 
     /** The motor's power as { kw, old } from the car's own share, only while the setting "carPower" is on and the share is fresh; else null. */
@@ -2220,9 +2252,11 @@ class HudApp {
         // the power eDrive Live shares, else (the setting "carPower") the car's own share of the motor: with that one, an rpm the car does not send
         // counts as 0 (the engine at rest: the car sends no engine speed then, as far as the owner's photos show), so the blue power shows
         // and last, the power estimated from the speed (setting "estPower", on): the same for an rpm the car does not send
-        const shared = flow ? this.ci.sharedPower() : null, own = flow && !shared ? this._carPower() : null;
-        const est = flow && !shared && !own ? this._estPower() : null, pw = shared || own || est;
-        return hybridTach.state(pw && !pw.old ? pw.kw : null, (own || est) && !isNum(rpm) ? 0 : rpm);
+        // between them, the stock cluster's own power meter (setting "relPower", on): a measure of the car, ahead of its share and of the estimate
+        const shared = flow ? this.ci.sharedPower() : null, rel = flow && !shared ? this._relPower() : null;
+        const own = flow && !shared && !rel ? this._carPower() : null;
+        const est = flow && !shared && !rel && !own ? this._estPower() : null, pw = shared || rel || own || est;
+        return hybridTach.state(pw && !pw.old ? pw.kw : null, (rel || own || est) && !isNum(rpm) ? 0 : rpm);
     }
 
     /** The fuel tank's size in litres: the "tankLitres" setting, else config.tankLitres (the car sends litres only). */

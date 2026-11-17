@@ -24,11 +24,16 @@ import zlib
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+CHROME = next((c for c in (os.environ.get('CHROME'), '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome',
+                           '/usr/bin/chromium', '/usr/bin/chromium-browser') if c and os.path.exists(c)), 'google-chrome')
+# as root (a container) Chrome needs --no-sandbox; a small /dev/shm is the other thing that hangs it there
+CHROME_FLAGS = (['--no-sandbox'] if hasattr(os, 'geteuid') and os.geteuid() == 0 else []) + ['--disable-dev-shm-usage']
 SKIP = {'off', 'grid', 'mapcal', 'wincal'}           # calibration layouts get no picture
 # the values every picture shows: 3rd gear at 4200 rpm, 61 mph, warm engine, a little boost, braking into a left turn
 SIGNALS = {'rpm': 4200, 'speed': 98, 'gear': 3, 'oil': 95, 'coolant': 90, 'boost': 1.1, 'torque': 290,
-           'fuelL': 38, 'range': 310, 'ambient': 18, 'tyreP': 2.4, 'tyreT': 30, 'gLat': 0.42, 'gLong': -0.3}
+           'fuelL': 38, 'range': 310, 'ambient': 18, 'tyreP': 2.4, 'tyreT': 30, 'gLat': 0.42, 'gLong': -0.3,
+           # the plug-in hybrid's rows (the battery, the electric range) and the limit ring: without them the new M, M Blade and Navi pictures show dashes
+           'hvSoc': 68, 'evRange': 24, 'limit': 90}
 # picture sizes in device px (the page is drawn at logical px and scaled about 1.165 on the car's screen)
 SIZES = {
     'panel': {'src': (1920, 720), 'crop': (0, 0, 1920, 720), 'big': (888, 333), 'small': (280, 105)},
@@ -51,7 +56,7 @@ def shot(port, size, out):
         if os.path.exists(out):
             os.remove(out)           # a stale file would look like success
         try:
-            subprocess.run([CHROME, '--headless=new', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
+            subprocess.run([CHROME] + CHROME_FLAGS + ['--headless=new', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
                             '--virtual-time-budget=20000', '--hide-scrollbars', '--window-size=%d,%d' % size,
                             '--screenshot=' + out, 'http://localhost:%d/?only=1&backdrop=0&clean=1&car=0' % port],
                            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=60)

@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.21.19",
+  "version": "0.21.20",
   "vendor": "custom",
   "loggingId": "OAC1",
   "iconGlyph": "SHK",
@@ -58,8 +58,7 @@
     "de.bmw.infotainment.drivingexcitement.FES": {
       "statusSwitchDriveDynamicSport2": "rs",
       "statusActualValueTorque2": "rs",
-      "statusFESVehicleDynamicSwitchHMI": "rs",
-      "statusVehicleDynamicEngine": "rs"
+      "statusFESVehicleDynamicSwitchHMI": "rs"
     },
     "de.bmw.infrastructure.VehicleInformation": {
       "statusGearboxDrive": "s",
@@ -112,14 +111,10 @@
       "_optional": "the lane assist's steering wheel symbol (displayLateralWarning, steeringWheelDisplay, steeringWheelColor, steeringWheelAnimation, handsOnSymbol): a notifier without getter, read and shown on the Signals tab, and drawn by the lane icon of the themes (setting carLane)"
     },
     "de.bmw.infotainment.drivingexcitement.Efficiencytainment2": {
+      "statusPowerRelativHybrid": "rs",
       "displayPowerDrive": "s",
       "displayPowerDrive2": "s",
-      "_optional": "the cluster's own power meter (quotaImmediateElectricEngineDriveRecuperation): notifiers without getter, only read, shown on the Signals tab"
-    },
-    "de.bmw.infotainment.KombiInterface_2": {
-      "cbsDataServiceList": "rs",
-      "ccListRiskClass": "rs",
-      "_optional": "the services due (condition based service) and the risk class of the check control messages: only read, shown on the Signals tab"
+      "_optional": "the cluster's own relative power meter (statusPowerRelativHybrid: drive and recuperation in %, a name the Cluster apps installed on the car declare too) draws the hybrid rev bar; the two displayPowerDrive notifiers only read, shown on the Signals tab (quotaImmediateElectricEngineDriveRecuperation): notifiers without getter, only read, shown on the Signals tab"
     }
   },
   "screens": [
@@ -1236,6 +1231,12 @@
       "label": "Volant de l'assistance de voie, dans la couleur de la voiture (essai)",
       "type": "bool",
       "default": false
+    },
+    {
+      "key": "relPower",
+      "label": "Puissance lue sur le compteur d'origine du tableau de bord (en %) : la barre des tours hybride en part sans eDrive Live",
+      "type": "bool",
+      "default": true
     },
     {
       "key": "carPower",

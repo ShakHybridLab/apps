@@ -2,7 +2,7 @@
   "id": "shakhud",
   "title": "ShakHUD",
   "description": "ShakHUD : un HUD pour le pare-brise, le compte-tours M Style (une barre brisée, rouge dans la zone rouge, bleu clair en électrique, verte en recharge), avec la batterie, les autonomies et les températures en bas à droite ; il se cache tout seul quand la carte Waze du HUD est affichée",
-  "version": "0.6.24",
+  "version": "0.6.25",
   "vendor": "custom",
   "loggingId": "OAS1",
   "iconGlyph": "SH",
@@ -90,9 +90,10 @@
       "_optional": "the tyre pressure warning on the HUD"
     },
     "de.bmw.infotainment.drivingexcitement.Efficiencytainment2": {
+      "statusPowerRelativHybrid": "rs",
       "displayPowerDrive": "s",
       "displayPowerDrive2": "s",
-      "_optional": "the cluster's own power meter (quotaImmediateElectricEngineDriveRecuperation): the electric motor's share of its power, for the hybrid rev counter when eDrive Live is not there (setting carPower, off by default)"
+      "_optional": "the cluster's own relative power meter (statusPowerRelativHybrid: drive and recuperation in %, a name the Cluster apps installed on the car declare too) draws the hybrid rev bar; the two displayPowerDrive notifiers only read, shown on the Signals tab (quotaImmediateElectricEngineDriveRecuperation): the electric motor's share of its power, for the hybrid rev counter when eDrive Live is not there (setting carPower, off by default)"
     }
   },
   "screens": [
@@ -791,6 +792,12 @@
           "Désactivé"
         ]
       ]
+    },
+    {
+      "key": "relPower",
+      "label": "Puissance lue sur le compteur d'origine du tableau de bord (en %) : la barre des tours hybride en part sans eDrive Live",
+      "type": "bool",
+      "default": true
     },
     {
       "key": "carPower",

@@ -1,26 +1,31 @@
 {
- "comment": "Signals the car's app manager accepted: declared by a ShakTheme or ShakHUD version (or another app, see the owner's installs) that installed on the owner's car. The car refuses the whole installation when one declared signal does not match its catalog (ShakTheme 0.21.12: UPDATE_FAILED, the previous version kept, over CarPlayManager.projectedGuidanceActive). tools/test_declared_signals.js checks that app.json declares nothing outside this list: add a signal here only after a test install on the car has shown it accepted.",
+ "comment": "Signals the car's app manager accepted: declared by a ShakTheme or ShakHUD version (or another app: the names also include everything declared by the Cluster Layouts 0.28.1 and Cluster Centre 0.9.0 apps (eroobeeroo/apps/*/app.json), which are installed on the owner's car, with the flags they declare) that installed on the owner's car. The car refuses the whole installation when one declared signal does not match its catalog (ShakTheme 0.21.12: UPDATE_FAILED, the previous version kept, over CarPlayManager.projectedGuidanceActive). tools/test_declared_signals.js checks that app.json declares nothing outside this list: add a signal here only after a test install on the car has shown it accepted.",
  "signals": {
   "de.bmw.infotainment.vehicle.CDS": {
    "statusEngineSpeed2": "rs",
-   "statusEngineTemperature": "rs"
+   "statusEngineTemperature": "rs",
+   "statusEngineStatus": "rs"
   },
   "de.bmw.infotainment.vehicle.CDS2": {
    "statusLongitudinalAccelerationMassCenter": "rs",
-   "statusLateralAccelerationMassCenter": "rs"
+   "statusLateralAccelerationMassCenter": "rs",
+   "statusYawVelocityVehicle": "rs"
   },
   "de.bmw.infotainment.vehicle.Vehicle2": {
-   "statusCarSpeed2": "rs"
+   "statusCarSpeed2": "rs",
+   "statusVehiclePartType": "rs"
   },
   "de.bmw.infotainment.drivingexcitement.FES": {
    "statusSwitchDriveDynamicSport2": "rs",
    "statusActualValueTorque2": "rs",
    "statusFESVehicleDynamicSwitchHMI": "rs",
-   "statusVehicleDynamicEngine": "rs"
+   "statusVehicleDynamicEngine": "rs",
+   "displaySportPowertrain": "s"
   },
   "de.bmw.infrastructure.VehicleInformation": {
    "statusGearboxDrive": "s",
-   "DataPowerTrain2": "s"
+   "DataPowerTrain2": "s",
+   "Range": "s"
   },
   "de.bmw.infotainment.KombiIF": {
    "statusRangeTankStatus": "rs",
@@ -32,14 +37,16 @@
    "statusNewCurrentUnitsStatusExt": "rs"
   },
   "de.bmw.infotainment.misc.MDrive": {
-   "dataDisplayGearbox": "s"
+   "dataDisplayGearbox": "s",
+   "statusMSystem": "rs"
   },
   "de.bmw.infotainment.vehicle.TPMS": {
    "statusTyrePressure": "rs",
    "statusTyreTemperature": "rs"
   },
   "de.bmw.infrastructure.EnvironmentalInformation": {
-   "ExteriorTemperature": "s"
+   "ExteriorTemperature": "s",
+   "UnitBN2020": "rs"
   },
   "de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl": {
    "displaySpeedLimitAndNoPassingRestriction": "s"
@@ -54,12 +61,32 @@
   },
   "de.bmw.infotainment.drivingexcitement.Efficiencytainment2": {
    "displayPowerDrive": "s",
-   "displayPowerDrive2": "s"
+   "displayPowerDrive2": "s",
+   "statusBatteryTemperature": "rs",
+   "statusPowerRelativHybrid": "rs"
   },
   "de.bmw.infotainment.KombiInterface_2": {
    "cbsDataServiceList": "rs",
    "ccListRiskClass": "rs"
   },
-  "com.harman.infotainment.systemfunctions.tasu.tasu.InternalTasu": {}
+  "com.harman.infotainment.systemfunctions.tasu.tasu.InternalTasu": {},
+  "de.bmw.infrastructure.VehicleCondition": {
+   "VehicleCondition": "s"
+  },
+  "de.bmw.infrastructure.analytics.BasicDataSet": {
+   "basicDataSet": "s"
+  },
+  "de.bmw.chassis.SteeringAngle": {
+   "ActualSteeringAngleDriver": "s"
+  },
+  "de.bmw.infotainment.resetlogic.ResetLogic": {
+   "currentConsumption": "rs"
+  },
+  "de.bmw.infotainment.displaydataserver.DisplayDataServer": {
+   "functionalLibraryData": "rs"
+  },
+  "de.bmw.infotainment.personalization.SessionManager": {
+   "currentUserAccountReference": "r"
+  }
  }
 }

@@ -516,7 +516,11 @@ class Page {
             glass(cv, CX, y, CW, rh - 4, false);
             cv.circle(CX + 18, y + (rh - 4) / 2, 5, fresh ? C.live : d ? C.off : '#ffffff22');      // green: heard in the last 5 seconds
             cv.text(p.name, CX + 34, y + 19, 15, C.text, { literal: true });
-            const mean = d && d.n ? probes.meaningOf(p.id, d.last) : '';
+            let mean = d && d.n ? probes.meaningOf(p.id, d.last) : '';
+            // the car's power share next to the power the speed and its slope give (hud.js _estPower): one photo of this page while accelerating says what the share means
+            if (p.id === 'pdrive' && mean && typeof this.hud._estPower === 'function') { const e = this.hud._estPower(); if (e && typeof e.kw === 'number') mean += ' · estimate ' + Math.round(e.kw) + ' kW'; }
+            // the cluster's power meter: whether the rev bar uses it now ("not used" while it has only ever read 0, or is off or stale: the estimate draws then)
+            if (p.id === 'rel' && mean && !/not understood$|scale to confirm$/.test(mean) && typeof this.hud._relPower === 'function') { const r = this.hud._relPower(); mean += r && typeof r.kw === 'number' ? ' · bar ' + Math.round(r.kw) + ' kW' : ' · not used'; }
             if (mean) cv.text(mean, CX + 34, y + rh - 11, 13, /not understood$/.test(mean) ? C.label : C.blueHi);
             const vx = CX + 470, room = CR - 12 - vx, got = d && d.vals.length;
             const fit = (t, w) => { while (t.length > 1 && cv.textWidth(t, 12, { literal: true }) > w) t = t.slice(0, -2) + '…'; return t; };
@@ -548,7 +552,7 @@ class Page {
                 }, 300);
                 if (this.catTimer.unref) this.catTimer.unref();
             }
-            label(cv, CX, 70, 'Speed limit, steering wheel and media signals (the car\'s catalog)');
+            label(cv, CX, 70, 'Signals in the car\'s catalog');
             this.sigChips(cv, pg, np);
             glass(cv, CX, 84, CW, 46, false);
             cv.text('Reading the car\'s catalog (once, a few seconds)...', CX + 18, 84 + 28, 15, C.label);

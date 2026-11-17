@@ -7,6 +7,9 @@
  *   powerQuotaOf(v)   the electric motor's share of its power, from Efficiencytainment2.displayPowerDrive[2]
  *                     (quotaImmediateElectricEngineDriveRecuperation): -100..100, drive positive, recuperation negative, or null
  *   powerKw(q)        that share as kW, on EV_MAX_KW (an estimate: the car does not say the motor's power)
+ *   relPowerOf(v)     the stock cluster's own power meter, from Efficiencytainment2.statusPowerRelativHybrid (displayActualValuePowerRelativeDrivingElectric
+ *                     and ...Recuperation, in %): { drive, recup, over } (each 0..100 or null), or null when it holds neither
+ *   relKw(r)          that meter as kW for the rev bar: drive % of EV_MAX_KW, recuperation % of REL_RECUP_KW (negative)
  *   laneOf(v)         the lane assist's steering wheel, from DisplayDriverAssistanceLateralCoordinated.displaySteeringWheel: { on, tone, warn }
  */
 const { limitOf } = require('./speedlimit');
@@ -14,6 +17,8 @@ const { limitOf } = require('./speedlimit');
 const EV_MAX_KW = 80;            // the electric motor of a 30e: 82 kW (the share is of what the motor can give)
 const NEXT_TTL_MS = 20000;       // the next limit is told once (a notifier): it counts this long, then goes
 const POWER_TTL_MS = 20000;      // the motor's share is told when it changes: it counts this long
+const REL_TTL_MS = 6000;         // the cluster's power meter is re-read every 2 s (hud.js): a reading counts this long
+const REL_RECUP_KW = 60;         // 100 % of recuperation = a full green bar (hybrid_tach CHARGE_KW)
 
 function scalar(x) {
     if (x && typeof x === 'object' && !Array.isArray(x)) {
@@ -51,6 +56,30 @@ function powerQuotaOf(v) {
     return typeof n === 'number' && isFinite(n) && n >= -100 && n <= 100 ? n : null;
 }
 
+/**
+ * The stock cluster's power meter: { drive, recup, over }. drive / recup: the percentage when it is a number from 0 to 100, else null (a missing
+ * field, a negative number, the all-ones numbers 255 and 65535). over: a number above 100 was there, so the scale is not 0..100 and the caller
+ * must not draw a bar from it. null when the struct holds neither field as a usable number and nothing above 100.
+ */
+function relPowerOf(v) {
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+    let over = false;
+    const pick = (re) => {
+        const n = field(v, re);
+        if (typeof n !== 'number' || !isFinite(n) || n < 0) return null;
+        if (n > 100) { if (n !== 255 && n !== 65535 && n !== 0x7FFF) over = true; return null; }
+        return n;
+    };
+    const drive = pick(/PowerRelative.*Driving/i), recup = pick(/PowerRelative.*Recup/i);
+    return drive === null && recup === null && !over ? null : { drive, recup, over };
+}
+
+/** The meter as kW for the rev bar: the drive's share of EV_MAX_KW while there is any, else the recuperation's share of REL_RECUP_KW (negative). */
+function relKw(r) {
+    const d = r && typeof r.drive === 'number' ? r.drive : 0, g = r && typeof r.recup === 'number' ? r.recup : 0;
+    return d > 0 ? d * EV_MAX_KW / 100 : g > 0 ? -g * REL_RECUP_KW / 100 : 0;
+}
+
 /** A word or a number as "off" (false), "on" (true) or unclear (null): 0 is off, a small positive number on, the all-ones numbers say nothing. */
 function onOff(x) {
     x = scalar(x);
@@ -81,4 +110,4 @@ function laneOf(v) {
 /** The share as kW (negative while the motor gives back). */
 function powerKw(q) { return q * EV_MAX_KW / 100; }
 
-module.exports = { nextLimitOf, alertOf, powerQuotaOf, powerKw, laneOf, onOff, scalar, EV_MAX_KW, NEXT_TTL_MS, POWER_TTL_MS };
+module.exports = { nextLimitOf, alertOf, powerQuotaOf, powerKw, relPowerOf, relKw, laneOf, onOff, scalar, EV_MAX_KW, NEXT_TTL_MS, POWER_TTL_MS, REL_TTL_MS, REL_RECUP_KW };

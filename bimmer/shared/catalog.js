@@ -1,10 +1,11 @@
 'use strict';
 /**
  * catalog.js - the car's own catalogue of signals (/etc/oap/someip/someip-interfaces.json, what the installer builds every app's signal
- * access from), cut into the three groups the owner asked for on the Signals tab, so that a photo of two pages names what the app can
+ * access from), cut into the groups on the Signals tab (the three the owner asked for, then what the app still needs), so that a photo of two pages names what the app can
  * read next. Only NAMES are listed here (no values: a value needs a declared signal, and the car refuses the whole installation when a
  * declared field is not in this catalogue, ShakTheme 0.21.12), and the names come from the car itself, never from memory.
  *   buttons  the steering wheel's and the stalks' buttons     media  what is playing     sign  the speed limit signs
+ *   power  the electric motor, the battery, the power     road  the pedals, the steering angle, the road's slope     cam  speed cameras, hazards
  * Reading a catalogue is done once per run (cached in memory, and on disk for the next runs): it is a big JSON file. Same file and same way as eroobeeroo's signal_finder.js.
  */
 const fs = require('fs');
@@ -15,6 +16,15 @@ const GROUPS = [
     { id: 'buttons', title: 'Steering wheel and stalk buttons (the car\'s catalog)', match: /taste|button|mfl|multifunction|lenkrad|lenkstock|steeringwheel|stalk|keypad|wheelkey|swc|paddle|thumbwheel/i },
     { id: 'media', title: 'Media: what is playing (the car\'s catalog)', match: /media|titel|title|artist|interpret|album|trackname|currenttrack|nowplaying|audiosource|playback|metadata|radiotext/i },
     { id: 'sign', title: 'Speed limit signs (the car\'s catalog)', match: /speedlimit|speed.?limit|tempolimit|geschwindigkeitsbegrenzung|verkehrszeichen|roadsign|trafficsign|limitspeed|nopassing|passingrestriction|overtak|\bsli\b/i },
+    // what the app would still like to read (the owner asked for what it needs): the real power of the electric motor (the blue rev bar is only an
+    // estimate), the pedals and the road's slope (to make it a better one), and the speed cameras (a position is not in the catalog). A name that matches
+    // `first` (in the field's own name) comes before one that only sits in a matching interface, which comes before one that only has a matching member
+    { id: 'power', title: 'Electric motor, battery and power (the car\'s catalog)', first: /power|leistung|current|strom|voltage|spannung|torque|moment|recuperat|rekuperat|regenerat|edrive|electricmotor/i,
+        match: /electricmotor|electricengine|elektromotor|emachine|e-?motor|edrive|hvbatt|hv.?batt|highvolt|hochvolt|batterycurrent|batteryvoltage|batterypower|powerdrive|powermeter|powerflow|energyflow|energiefluss|electricpower|electricalpower|powerdistribution|recuperat|rekuperat|regenerat|motortorque|drivetorque|efficiencytainment|boostpower|xtraboost/i },
+    { id: 'road', title: 'Pedals, steering and road slope (the car\'s catalog)', first: /pedal|accelerator|gradient|slope|incline|steigung|steering.?angle|lenkwinkel/i,
+        match: /gradient|slope|incline|inclin|steigung|neigung|pitch|accelerator|pedal|fahrpedal|gaspedal|throttle|brake|bremse|steeringangle|steering.?angle|lenkwinkel|yawrate|gierrate/i },
+    { id: 'cam', title: 'Speed cameras and road hazards (the car\'s catalog)', first: /speedcam|speed.?camera|blitzer|safetycam|speedtrap|enforcement/i,
+        match: /speedcam|speed.?camera|blitzer|safetycam|speedtrap|radartrap|radarfalle|hazard|gefahr|danger|enforcement|trafficcam|redlight|speedwarning/i },
 ];
 
 /** The member names of a field's data type (structs flattened, a parent's members first), at most two levels deep. */
@@ -46,10 +56,10 @@ function find(file) {
                 const f = fields[name] || {}, mem = members(db, f.dataRef, 0);
                 const own = g.match.test(name) || g.match.test(iface), inMem = mem.filter((m) => g.match.test(m));
                 if (!own && !inMem.length) return;
-                rows.push({ iface, field: name, own, flags: [f.getter && f.getter.id ? 'get' : '', f.notifier ? 'notify' : ''].filter(Boolean).join(' '), members: own ? mem : inMem });
+                rows.push({ iface, field: name, own, rank: g.first && g.first.test(name) ? 2 : own ? 1 : 0, flags: [f.getter && f.getter.id ? 'get' : '', f.notifier ? 'notify' : ''].filter(Boolean).join(' '), members: own ? mem : inMem });
             });
         });
-        rows.sort((a, b) => (b.own - a.own) || (a.iface + a.field).localeCompare(b.iface + b.field));
+        rows.sort((a, b) => (b.rank - a.rank) || (a.iface + a.field).localeCompare(b.iface + b.field));
         return { id: g.id, title: g.title, rows: rows.slice(0, MAX_ROWS) };
     });
     return { groups, error: null };
@@ -59,7 +69,7 @@ let cached = null;
 /** The catalogue's identity (size and date): the cache on disk is only good for the same file. */
 function stamp(file) { try { const st = fs.statSync(file || PATH); return st.size + ':' + Math.round(st.mtimeMs); } catch (e) { return null; } }
 /** What the cache is a cut of: when a group's name, title or pattern changes, the cache is no longer good. */
-const SHAPE = GROUPS.map((g) => g.id + '|' + g.title + '|' + String(g.match)).join('||') + '|' + MAX_ROWS;
+const SHAPE = GROUPS.map((g) => g.id + '|' + g.title + '|' + String(g.match) + '|' + String(g.first || '')).join('||') + '|' + MAX_ROWS;
 function fromDisk(cacheFile, st) {
     try {
         const c = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
