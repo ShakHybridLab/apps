@@ -25,6 +25,10 @@ const GROUPS = [
         match: /gradient|slope|incline|inclin|steigung|neigung|pitch|accelerator|pedal|fahrpedal|gaspedal|throttle|brake|bremse|steeringangle|steering.?angle|lenkwinkel|yawrate|gierrate/i },
     { id: 'cam', title: 'Speed cameras and road hazards (the car\'s catalog)', first: /speedcam|speed.?camera|blitzer|safetycam|speedtrap|enforcement/i,
         match: /speedcam|speed.?camera|blitzer|safetycam|speedtrap|radartrap|radarfalle|hazard|gefahr|danger|enforcement|trafficcam|redlight|speedwarning/i },
+    // the car's own camera interfaces (ShakPark): EVERY entry of every section (fields, methods, broadcasts...) of CameraProxy and ICAM2Proxy, with what
+    // goes in and out of it, over two pages of MAX_ROWS rows (`all`: not only fields; `skip`: the rows the page before already showed)
+    { id: 'camera', all: true, skip: 0, title: 'Cameras: CameraProxy and ICAM2Proxy', match: /cameraproxy|icam2/i },
+    { id: 'camera2', all: true, skip: MAX_ROWS, title: 'Cameras: next entries', match: /cameraproxy|icam2/i },
 ];
 
 /** The member names of a field's data type (structs flattened, a parent's members first), at most two levels deep. */
@@ -43,13 +47,58 @@ function members(db, ref, depth) {
     return out;
 }
 
+/**
+ * What an entry of the catalog holds, as short names, whatever its section (a method's arguments in and out, a broadcast's data): the
+ * member names of its type, and for every list or object it has, the names inside it. The names are the car's; nothing is guessed.
+ */
+function describe(db, e) {
+    const out = [];
+    if (!e || typeof e !== 'object') return out;
+    members(db, e.dataRef, 0).forEach((m) => out.push(m));
+    Object.keys(e).forEach((k) => {
+        const v = e[k];
+        if (k === 'dataRef') return;
+        if (Array.isArray(v)) {
+            v.forEach((a) => {
+                if (a && typeof a === 'object') { const m = members(db, a.dataRef, 0); out.push(k + ':' + (a.name || '?') + (m.length ? '{' + m.join('/') + '}' : '')); } else out.push(k + ':' + String(a));
+            });
+        } else if (v && typeof v === 'object') {
+            if (v.id !== undefined) out.push(k + '#' + v.id);
+            const m = members(db, v.dataRef, 0);
+            if (m.length) out.push(k + '{' + m.join('/') + '}');
+        } else out.push(k + '=' + v);
+    });
+    return out.slice(0, 40);
+}
+
+/** Every entry of every section of the interfaces `g.match` names (an interface's own plain values first, as one row). */
+function allRows(db, g) {
+    const rows = [];
+    Object.keys(db.interfaces || {}).forEach((iface) => {
+        if (!/^de\.bmw\./.test(iface) || !g.match.test(iface)) return;
+        const it = db.interfaces[iface] || {}, plain = [];
+        Object.keys(it).forEach((sec) => {
+            const sv = it[sec];
+            if (sv && typeof sv === 'object' && !Array.isArray(sv)) {
+                Object.keys(sv).forEach((name) => {
+                    const f = sv[name] || {};
+                    const flags = sec === 'fields' ? [f.getter && f.getter.id ? 'get' : '', f.notifier ? 'notify' : ''].filter(Boolean).join(' ') : sec;
+                    rows.push({ iface, field: sec + '.' + name, own: true, rank: 1, flags, members: describe(db, f) });
+                });
+            } else if (!Array.isArray(sv)) plain.push(sec + '=' + sv);
+        });
+        if (plain.length) rows.push({ iface, field: '(interface)', own: true, rank: 2, flags: '', members: plain });
+    });
+    return rows;
+}
+
 /** { groups: [{ id, title, rows: [{ iface, field, flags, members }] }], error }: the best MAX_ROWS of each group (a name that matches first). */
 function find(file) {
     let db;
     try { db = JSON.parse(fs.readFileSync(file || PATH, 'utf8')); } catch (e) { return { groups: GROUPS.map((g) => ({ id: g.id, title: g.title, rows: [] })), error: String(e && e.message || e) }; }
     const groups = GROUPS.map((g) => {
-        const rows = [];
-        Object.keys(db.interfaces || {}).forEach((iface) => {
+        const rows = g.all ? allRows(db, g) : [];
+        if (!g.all) Object.keys(db.interfaces || {}).forEach((iface) => {
             if (!/^de\.bmw\./.test(iface)) return;
             const fields = db.interfaces[iface].fields || {};
             Object.keys(fields).forEach((name) => {
@@ -60,7 +109,7 @@ function find(file) {
             });
         });
         rows.sort((a, b) => (b.rank - a.rank) || (a.iface + a.field).localeCompare(b.iface + b.field));
-        return { id: g.id, title: g.title, rows: rows.slice(0, MAX_ROWS) };
+        return { id: g.id, title: g.title, rows: rows.slice(g.skip || 0, (g.skip || 0) + MAX_ROWS) };
     });
     return { groups, error: null };
 }
@@ -69,7 +118,7 @@ let cached = null;
 /** The catalogue's identity (size and date): the cache on disk is only good for the same file. */
 function stamp(file) { try { const st = fs.statSync(file || PATH); return st.size + ':' + Math.round(st.mtimeMs); } catch (e) { return null; } }
 /** What the cache is a cut of: when a group's name, title or pattern changes, the cache is no longer good. */
-const SHAPE = GROUPS.map((g) => g.id + '|' + g.title + '|' + String(g.match) + '|' + String(g.first || '')).join('||') + '|' + MAX_ROWS;
+const SHAPE = GROUPS.map((g) => g.id + '|' + g.title + '|' + String(g.match) + '|' + String(g.first || '') + '|' + (g.all ? 'all' : '') + (g.skip || 0)).join('||') + '|' + MAX_ROWS;
 function fromDisk(cacheFile, st) {
     try {
         const c = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));

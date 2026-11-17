@@ -1,0 +1,53 @@
+{
+  "id": "shakpark",
+  "title": "ShakPark",
+  "description": "Caméra avant (en D, sous 15 km/h) et caméra arrière (en marche arrière) dans la fenêtre centrale du thème du cluster",
+  "version": "0.1.0",
+  "vendor": "custom",
+  "loggingId": "OAV2",
+  "iconGlyph": "SP",
+  "shared": [
+    "park.js",
+    "park_app.js",
+    "video_bridge.js",
+    "cluster_render_client.js"
+  ],
+  "signals": {
+    "de.bmw.infotainment.vehicle.Vehicle2": {
+      "statusCarSpeed2": "rs"
+    },
+    "de.bmw.infrastructure.VehicleInformation": {
+      "statusGearboxDrive": "s",
+      "DataPowerTrain2": "s"
+    }
+  },
+  "screens": [
+    {
+      "name": "MAIN",
+      "kind": "menu",
+      "title": "ShakPark",
+      "settings": true
+    }
+  ],
+  "settings": [
+    {
+      "key": "frontCam",
+      "label": "Caméra avant en avançant sous 15 km/h",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "rearCam",
+      "label": "Caméra arrière en marche arrière",
+      "type": "bool",
+      "default": true
+    }
+  ],
+  "config": {
+    "socketPath": "/dev/shm/cluster-render/render.sock",
+    "frontPath": "/dev/shm/shakpark-front",
+    "rearPath": "/dev/shm/shakpark-rear",
+    "_comment": "Les images viennent de deux fichiers MGVF (shared/video_bridge.js) que l'outil de capture écrit ; sans eux, aucune image. Règles de vitesse et de rapport : shared/park.js, sans réglage pour les changer.",
+    "lang": "fr"
+  }
+}
