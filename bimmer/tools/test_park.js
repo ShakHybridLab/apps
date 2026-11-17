@@ -161,11 +161,46 @@ check('la caméra qui ne donne plus d\'image est cachée après 1,5 s', () => {
     R.run(2000, 'R', 0, []);
     assert(!R.visible(), 'image figée');
 });
-check('l\'avant s\'écarte devant la carte Waze ; l\'arrière non', () => {
-    const F = rig(ON); F.mapUp = true;
-    F.run(2000, 'D', 5, ['front']); assert(!F.visible(), 'l\'avant devant la carte');
-    const B = rig(ON); B.mapUp = true;
-    B.run(2000, 'R', 0, ['rear']); assert(B.visible(), 'l\'arrière devant la carte');
+check('PRIORITÉ : les deux caméras s\'affichent devant la carte Waze, dans la classe « alert » au z le plus haut', () => {
+    ['front', 'rear'].forEach((cam) => {
+        const R = rig(ON); R.mapUp = true;
+        R.run(2000, cam === 'front' ? 'D' : 'R', cam === 'front' ? 5 : 0, [cam]);
+        assert(R.visible(), cam + ' cachée devant la carte Waze');
+        const l = R.renders[0].layers[Object.keys(R.renders[0].layers)[0]];
+        assert.strictEqual(l.klass, 'alert', cam + ' : classe ' + l.klass);
+        assert.strictEqual(l.z, 1000, cam + ' : z ' + l.z);
+    });
+});
+check('PRIORITÉ : la demande de fenêtre porte priority « camera » (RideTube la lit), fraîche, et disparaît avec la caméra', () => {
+    const R = rig(ON);
+    R.run(1500, 'R', 0, ['rear']);
+    const f = path.join(R.themes, 'window-shakpark.json');
+    const j = JSON.parse(fs.readFileSync(f, 'utf8'));
+    assert.strictEqual(j.priority, 'camera'); assert.strictEqual(j.app, 'ShakPark'); assert(Math.abs(R.t - j.t) < 3000, 'périmée');
+    R.run(5000, 'P', 0, []);
+    assert(!fs.existsSync(f), 'la demande reste');
+});
+check('PRIORITÉ : RideTube retire son image tant que la caméra est là (video_app.js _cameraOn), et la remet après', () => {
+    const { VideoApp } = require('../shared/video_app');
+    const R = rig(ON);
+    const rt = new VideoApp({ id: 'ridetube_cluster', now: () => R.t, setting: () => true, makeRender: R.cr, videoPath: path.join(R.dir, 'rt'), themesDir: R.themes, moving: () => true });
+    assert.strictEqual(rt._cameraOn(), false, 'sans caméra');
+    R.run(1500, 'R', 0, ['rear']);
+    assert.strictEqual(rt._cameraOn(), true, 'avec la caméra');
+    assert.strictEqual(rt._windowBusy(), true, 'RideTube devrait aussi voir la fenêtre occupée');
+    R.run(5000, 'P', 0, []);
+    assert.strictEqual(rt._cameraOn(), false, 'après la caméra');
+    fs.writeFileSync(path.join(R.themes, 'window-shakpark.json'), JSON.stringify({ t: R.t, app: 'x', kind: 'camera', showing: true }));
+    assert.strictEqual(rt._cameraOn(), false, 'sans priority « camera » : une autre appli ne prend pas la priorité');
+    fs.writeFileSync(path.join(R.themes, 'window-shakpark.json'), JSON.stringify({ t: R.t - 5000, app: 'ShakPark', kind: 'camera', priority: 'camera' }));
+    assert.strictEqual(rt._cameraOn(), false, 'une demande périmée');
+});
+check('la carte Waze du cluster : la caméra le demande à WazeYield (want vrai tant qu\'une vue est voulue, faux sinon)', () => {
+    const calls = [];
+    const R = rig(ON);
+    R.app.d.waze = { want: (on) => calls.push(on) };
+    R.run(300, 'P', 0, []); R.run(300, 'R', 0, ['rear']); R.run(5000, 'P', 0, []);
+    assert.strictEqual(calls[0], false); assert(calls.indexOf(true) > 0, 'jamais demandé'); assert.strictEqual(calls[calls.length - 1], false);
 });
 check('sans thème ouvert : rien n\'est dessiné', () => {
     const R = rig(ON); R.themeUp = false;

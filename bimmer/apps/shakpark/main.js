@@ -8,13 +8,18 @@ const mgu = require('./kit/mgu');
 const { ParkApp } = require('./park_app');
 const { stageOfStatus, stageOfSelection, speedOf } = require('./park');
 const { ClusterRender } = require('./cluster_render_client');
+const { WazeYield } = require('./waze_yield');
 
 mgu.run({
     start(ctx) {
-        let app;
+        let app, waze;
         try {
             const cfg = ctx.spec.config || {};
+            // la carte Waze du cluster cède sa place vidéo à la caméra (réglage « wazeYield », activé par défaut)
+            waze = new WazeYield({ log: ctx.log, enabled: () => ctx.settings.get('wazeYield') !== false, statusPath: cfg.wazeStatus, ctlPath: cfg.wazeCtl });
+            waze.start();
             app = new ParkApp({
+                waze,
                 id: ctx.spec.id, log: ctx.log,
                 setting: (k) => ctx.settings.get(k),
                 makeRender: (target) => new ClusterRender(ctx.spec.id + '_' + target, cfg.socketPath),
@@ -37,6 +42,6 @@ mgu.run({
             ctx.log.error('ShakPark n\'a pas démarré : ' + (e && e.stack || e));
             return;
         }
-        process.on('exit', () => { try { app.stop(); } catch (e) { /* on sort de toute façon */ } });
+        process.on('exit', () => { try { app.stop(); waze.stop(); } catch (e) { /* on sort de toute façon */ } });
     },
 });

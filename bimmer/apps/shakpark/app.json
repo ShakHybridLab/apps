@@ -10,6 +10,7 @@
     "park.js",
     "park_app.js",
     "video_bridge.js",
+    "waze_yield.js",
     "cluster_render_client.js"
   ],
   "signals": {
@@ -37,6 +38,12 @@
       "default": true
     },
     {
+      "key": "wazeYield",
+      "label": "La caméra prend la place de la carte Waze du cluster",
+      "type": "bool",
+      "default": true
+    },
+    {
       "key": "rearCam",
       "label": "Caméra arrière en marche arrière",
       "type": "bool",
@@ -47,6 +54,8 @@
     "socketPath": "/dev/shm/cluster-render/render.sock",
     "frontPath": "/dev/shm/shakpark-front",
     "rearPath": "/dev/shm/shakpark-rear",
+    "wazeStatus": "/run/waze-on-cluster/status.json",
+    "wazeCtl": "/dev/shm/waze-on-cluster/ctl.sock",
     "_comment": "Les images viennent de deux fichiers MGVF (shared/video_bridge.js) que l'outil de capture écrit ; sans eux, aucune image. Règles de vitesse et de rapport : shared/park.js, sans réglage pour les changer.",
     "lang": "fr"
   }

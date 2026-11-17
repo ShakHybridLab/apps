@@ -9,9 +9,12 @@
  * le même tick et la fenêtre est rendue au thème.
  *
  * Dans la fenêtre du thème (même protocole que video_app.js) : on la demande par /dev/shm/cluster-themes/window-<id>.json et on
- * attend que le thème dise qu'elle est ouverte (themes.json). Sans thème ouvert, rien n'est dessiné sur le cluster de BMW. La caméra
- * avant s'écarte quand la carte Waze ou une page d'une autre appli occupe la fenêtre ; la caméra arrière ne s'écarte pas devant eux
- * (elle demande la fenêtre quand même ; c'est le thème qui décide).
+ * attend que le thème dise qu'elle est ouverte (themes.json). Sans thème ouvert, rien n'est dessiné sur le cluster de BMW.
+ *
+ * PRIORITÉ : la caméra, puis Waze, puis RideTube. La caméra ne s'écarte devant personne : son image est dans la classe « alert » (le haut
+ * de la pile de cluster-render), au-dessus de la carte Waze, de Cluster Centre et de Cluster Info ; la demande de fenêtre porte
+ * priority « camera », que RideTube lit (video_app.js _cameraOn) pour retirer son image ; et la carte Waze du CLUSTER est éteinte tant que
+ * la caméra est voulue (shared/waze_yield.js : l'autoradio ne tient que 2 vidéos, Waze en prend déjà deux), puis rallumée.
  *
  * Tout ce qui est extérieur (l'horloge, les fichiers, cluster-render) passe par `deps` : tools/test_park.js la pilote sans voiture.
  * Node 8. MIT.
@@ -61,7 +64,8 @@ class Feed {
 
 class ParkApp {
     /**
-     * deps: { id, log, now(), setting(key), makeRender(target) -> { video, set, drop, frame, connect, close }, frontPath, rearPath, themesDir }.
+     * deps: { id, log, now(), setting(key), makeRender(target) -> { video, set, drop, frame, connect, close }, frontPath, rearPath, themesDir,
+     * waze: { want(bool) } (WazeYield, facultatif) }.
      * Le rapport et la vitesse arrivent par gear(stage) et speed(kmh).
      */
     constructor(deps) {
@@ -110,23 +114,10 @@ class ParkApp {
         this.askAt = t;
         try {
             try { fs.mkdirSync(this.themesDir); } catch (e) { /* déjà là */ }
-            fs.writeFileSync(f + '.tmp', JSON.stringify({ t, app: 'ShakPark', kind: 'camera', showing: true }), { mode: 0o644 });
+            fs.writeFileSync(f + '.tmp', JSON.stringify({ t, app: 'ShakPark', kind: 'camera', priority: 'camera', showing: true }), { mode: 0o644 });
             fs.renameSync(f + '.tmp', f);
             this.asking = true;
         } catch (e) { /* pas de dossier : pas de thème à qui demander */ }
-    }
-
-    /** La carte Waze, ou la page d'une autre appli (Cluster Centre, Cluster Info), est dans la fenêtre du thème. */
-    _windowBusy() {
-        const th = this._json('themes.json');
-        if (th && th.map === true) return true;
-        let names = [];
-        try { names = fs.readdirSync(this.themesDir); } catch (e) { return false; }
-        const now = this.now();
-        return names.some((n) => {
-            if (!/^window-[\w.-]+\.json$/.test(n) || n === 'window-' + this.id + '.json') return false;
-            try { const j = JSON.parse(fs.readFileSync(path.join(this.themesDir, n), 'utf8')); return !!j && typeof j.t === 'number' && Math.abs(now - j.t) < FRESH_MS; } catch (e) { return false; }
-        });
     }
 
     _room() {
@@ -151,7 +142,7 @@ class ParkApp {
         let force = false;
         if (!t.rect || ['x', 'y', 'w', 'h'].some((k) => t.rect[k] !== rect[k])) {
             if (t.ref) { try { t.cr.drop(t.ref); } catch (e) { /* parti */ } }
-            t.ref = t.cr.video({ target: 'panel', klass: 'overlay', z: 1, x: rect.x, y: rect.y, w: rect.w, h: rect.h, vw: rect.w, vh: rect.h, visible: false });
+            t.ref = t.cr.video({ target: 'panel', klass: 'alert', z: 1000, x: rect.x, y: rect.y, w: rect.w, h: rect.h, vw: rect.w, vh: rect.h, visible: false });
             t.rect = rect; t.shown = false; t.atlas = null; force = true;
         }
         if (!t.ref) return 'refused';
@@ -170,6 +161,7 @@ class ParkApp {
         // LA PORTE D'ABORD : ParkLogic dit quelle caméra, ou aucune. Rien n'est lu ni dessiné avant.
         const view = this.logic.view(now, { front: this.d.setting('frontCam') === true, rear: this.d.setting('rearCam') === true });
         this.state.view = view;
+        if (this.d.waze) this.d.waze.want(view !== 'off');      // la carte Waze du cluster cède sa place vidéo tant que la caméra est voulue
         if (view === 'off') {
             this._hide(); this._ask(false); this.state.live = false;
             this.feeds.front.forget(); this.feeds.rear.forget();      // pas de fichier gardé ouvert, pas d'image d'hier au prochain départ
@@ -182,8 +174,7 @@ class ParkApp {
         const feed = this.feeds[view];
         const frame = feed.read(now);
         this.state.live = feed.live(now);
-        const busy = view === 'front' && this._windowBusy();
-        if (!this.state.live || busy) { this._hide(); this._ask(false); return; }
+        if (!this.state.live) { this._hide(); this._ask(false); return; }
         this._ask(true);
         this.state.panel = this._draw(feed, frame);
     }

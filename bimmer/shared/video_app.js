@@ -133,6 +133,14 @@ class VideoApp {
         this._ask(false);
     }
 
+    /** La caméra de ShakPark est affichée (ou en train de s'ouvrir) : son fichier de demande, frais, porte priority « camera ». */
+    _cameraOn() {
+        try {
+            const j = JSON.parse(fs.readFileSync(path.join(this.themesDir, 'window-shakpark.json'), 'utf8'));
+            return !!j && j.priority === 'camera' && typeof j.t === 'number' && Math.abs(this.now() - j.t) < FRESH_MS;
+        } catch (e) { return false; }
+    }
+
     /** Waze's map, or another app's page (Cluster Centre, Cluster Info), is in the theme's window: the picture stays away. */
     _windowBusy() {
         const th = this._json('themes.json');
@@ -189,6 +197,9 @@ class VideoApp {
         const standing = this.gate.ok(now) && typeof this.d.moving === 'function' && this.d.moving() === true;
         this.state.standing = standing;
         if (!standing) { this._hideVideos(); this.state.playing = false; return { panel: false, hud: false }; }
+        // la caméra de ShakPark passe avant (priorité : caméra, Waze, RideTube) : tant qu'elle demande la fenêtre, plus d'image de RideTube,
+        // ni dans le cluster ni sur le HUD (le son n'est pas touché). Ce n'est pas un réglage du verrou ci-dessus, qui reste le premier.
+        if (this._cameraOn()) { this._hideVideos(); this.state.playing = false; return { panel: false, hud: false }; }
         const frame = this._read();
         const playing = this.seq !== null && this.seqAt > 0 && now - this.seqAt < PLAYING_MS;
         this.state.playing = playing;
