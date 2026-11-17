@@ -107,7 +107,7 @@ check('aucun jeton, identifiant ni secret dans la sonde', () => {
         assert.deepStrictEqual(spec.shared, ['net_probe.js']);
         assert(spec.config.lang === 'fr' && spec.config.readOnly);
         const SETS = require('../shared/probe_sets');
-        Object.keys(SETS).concat(['shaktheme', 'shakhud', 'shakcamdiag']).forEach((a) => {
+        Object.keys(SETS).concat(['shaktheme', 'shakhud', 'shakpark']).forEach((a) => {
             const o = a in SETS ? { loggingId: SETS[a].logId, iconGlyph: SETS[a].glyph } : JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', a, 'app.json'), 'utf8'));
             assert(o.loggingId !== spec.loggingId && o.iconGlyph !== spec.iconGlyph, a);
         });

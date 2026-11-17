@@ -28,7 +28,7 @@ Object.keys(SETS).forEach((id) => {
 });
 check('les applis d\'essai ont chacune leur identifiant, leur journal et leur glyphe', () => {
     ['logId', 'glyph', 'title'].forEach((k) => assert.strictEqual(new Set(Object.keys(SETS).map((i) => SETS[i][k])).size, Object.keys(SETS).length, k));
-    ['shaktheme', 'shakhud', 'shakcamdiag'].forEach((a) => {
+    ['shaktheme', 'shakhud', 'shakpark'].forEach((a) => {
         const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', a, 'app.json'), 'utf8'));
         Object.keys(SETS).forEach((i) => assert(SETS[i].logId !== spec.loggingId && SETS[i].glyph !== spec.iconGlyph, i + ' ressemble à ' + a));
     });
