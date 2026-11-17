@@ -31,6 +31,8 @@ const GROUPS = [
     { id: 'camera2', all: true, skip: MAX_ROWS, title: 'Cameras: next entries', match: /cameraproxy|icam2/i },
     // the car's own position (the zones of danger need it: CarPlay only sends the map's picture, never a position). Names only, from the car's catalog. `not` drops what
     // a "position" is not here (seats, pedals, windows, mirrors, the steering wheel, the wheel's own position...), `first` puts the names that speak of a place first
+    // what the camera interfaces take and give: every list of values (enumeration) their entries use, with the car's own names and numbers
+    { id: 'camvals', types: true, title: 'Cameras: the values their entries take', match: /cameraproxy|icam2/i },
     { id: 'gps', title: 'GPS: where the car is', first: /latitude|longitude|gnss|gps|nmea|breitengrad|laengengrad|geoposition|vehicleposition|currentposition|locationdata/i,
         match: /gnss|gps|nmea|latitude|longitude|breitengrad|laengengrad|geoposition|geo.?coord|vehicleposition|currentposition|carposition|locationdata|positioninfo|positiondata|navigationposition|positioning|ortung|locationinformation/i,
         not: /seat|sitz|pedal|window|fenster|mirror|spiegel|steering|lenk|wiper|door|tuer|roof|dach|trunk|heck|belt|gurt|headrest|kopfstuetze|lumbar|damper|dampfer|valve|ventil|piston|throttle|camshaft|crank/i },
@@ -79,6 +81,65 @@ function describe(db, e) {
     return out.slice(0, 40);
 }
 
+/** The names and numbers of an enumeration datatype, whatever its shape in the catalogue: "NAME=value". [] when it holds no such list. */
+function enumItems(d) {
+    const out = [];
+    Object.keys(d || {}).forEach((k) => {
+        const v = d[k];
+        if (Array.isArray(v)) v.forEach((it) => {
+            if (it && typeof it === 'object' && it.name !== undefined) {
+                const val = it.value !== undefined ? it.value : it.id !== undefined ? it.id : it.number !== undefined ? it.number : undefined;
+                out.push(String(it.name) + (val !== undefined ? '=' + val : ''));
+            }
+        });
+        else if (v && typeof v === 'object' && k !== 'extends' && (k === 'values' || k === 'enumerators' || k === 'literals' || k === 'items' || k === 'enumeration')) {
+            Object.keys(v).forEach((n) => { out.push(n + (typeof v[n] === 'number' || typeof v[n] === 'string' ? '=' + v[n] : '')); });
+        }
+    });
+    return out;
+}
+
+/** The datatype names a catalogue entry refers to: its own, its arguments', and those of its struct members (two levels). */
+function refsOf(db, e, depth, acc) {
+    if (!e || typeof e !== 'object' || depth > 2) return;
+    if (typeof e.dataRef === 'string') addRef(db, e.dataRef, depth, acc);
+    Object.keys(e).forEach((k) => {
+        const v = e[k];
+        if (Array.isArray(v)) v.forEach((a) => { if (a && typeof a === 'object' && typeof a.dataRef === 'string') addRef(db, a.dataRef, depth, acc); });
+        else if (v && typeof v === 'object' && typeof v.dataRef === 'string') addRef(db, v.dataRef, depth, acc);
+    });
+}
+function addRef(db, ref, depth, acc) {
+    if (acc[ref] || depth > 2) return;
+    const d = db.datatypes && db.datatypes[ref];
+    if (!d) return;
+    acc[ref] = d;
+    if (d.type === 'typedef') addRef(db, d.dataRef || d.baseType, depth, acc);
+    else if (d.type === 'array') addRef(db, d.elementDataRef, depth + 1, acc);
+    else if (d.type === 'struct') (d.members || []).forEach((m) => { if (m && typeof m.dataRef === 'string') addRef(db, m.dataRef, depth + 1, acc); });
+}
+
+/** One row per enumeration used by the entries of the interfaces `g.match` names: what each value means is the car's own text. */
+function typeRows(db, g) {
+    const acc = {};
+    Object.keys(db.interfaces || {}).forEach((iface) => {
+        if (!/^de\.bmw\./.test(iface) || !g.match.test(iface)) return;
+        const it = db.interfaces[iface] || {};
+        Object.keys(it).forEach((sec) => {
+            const sv = it[sec];
+            if (sv && typeof sv === 'object' && !Array.isArray(sv)) Object.keys(sv).forEach((name) => refsOf(db, sv[name], 0, acc));
+        });
+    });
+    const rows = [];
+    Object.keys(acc).forEach((ref) => {
+        const d = acc[ref];
+        if (d.type === 'struct' || d.type === 'array' || d.type === 'typedef') return;
+        const items = enumItems(d);
+        if (items.length) rows.push({ iface: ref.split('.').slice(-2).join('.'), field: String(d.type || 'enum'), own: true, rank: 1, flags: '', members: items.slice(0, 40) });
+    });
+    return rows;
+}
+
 /** Every entry of every section of the interfaces `g.match` names (an interface's own plain values first, as one row). */
 function allRows(db, g) {
     const rows = [];
@@ -105,8 +166,8 @@ function find(file) {
     let db;
     try { db = JSON.parse(fs.readFileSync(file || PATH, 'utf8')); } catch (e) { return { groups: GROUPS.map((g) => ({ id: g.id, title: g.title, rows: [] })), error: String(e && e.message || e) }; }
     const groups = GROUPS.map((g) => {
-        const rows = g.all ? allRows(db, g) : [];
-        if (!g.all) Object.keys(db.interfaces || {}).forEach((iface) => {
+        const rows = g.types ? typeRows(db, g) : g.all ? allRows(db, g) : [];
+        if (!g.all && !g.types) Object.keys(db.interfaces || {}).forEach((iface) => {
             if (!/^de\.bmw\./.test(iface)) return;
             const fields = db.interfaces[iface].fields || {};
             Object.keys(fields).forEach((name) => {
@@ -127,7 +188,7 @@ let cached = null;
 /** The catalogue's identity (size and date): the cache on disk is only good for the same file. */
 function stamp(file) { try { const st = fs.statSync(file || PATH); return st.size + ':' + Math.round(st.mtimeMs); } catch (e) { return null; } }
 /** What the cache is a cut of: when a group's name, title or pattern changes, the cache is no longer good. */
-const SHAPE = GROUPS.map((g) => g.id + '|' + g.title + '|' + String(g.match) + '|' + String(g.first || '') + '|' + (g.all ? 'all' : '') + (g.skip || 0) + '|' + String(g.not || '')).join('||') + '|' + MAX_ROWS;
+const SHAPE = GROUPS.map((g) => g.id + '|' + g.title + '|' + String(g.match) + '|' + String(g.first || '') + '|' + (g.all ? 'all' : '') + (g.types ? 'types' : '') + (g.skip || 0) + '|' + String(g.not || '')).join('||') + '|' + MAX_ROWS;
 function fromDisk(cacheFile, st) {
     try {
         const c = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));

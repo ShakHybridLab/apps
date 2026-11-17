@@ -2,6 +2,11 @@
 
 ## 17 novembre 2026
 
+### ShakTheme 0.21.23, ShakHUD 0.6.28 : une page « Caméras : les valeurs possibles » dans l'onglet Signals (pas encore essayé sur la voiture)
+Les pages Caméras photographiées à la voiture ont donné l'interface : `CameraProxy` (service 63369) a `clientAttach(type) -> cookie` (méthode 5), `clientDetach(cookie)` (6), `getCurrentPTS() -> pts` (7), les champs `streamInfo` (largeur, hauteur, images par seconde, débit), `cameraProxyState` et `targetBitrate` ; `ICAM2Proxy` (63370, étend `CameraProxy`) a `changeState(cookie, desiredState{application, mode, perspective})` (9) et le champ `currentState` (8). Les noms de ces types sont connus, **pas leurs valeurs** (quelle `application` = avant, arrière, 360 ?).
+- Nouvelle page (`shared/catalog.js`, groupe `camvals`) : toutes les listes de valeurs que ces entrées utilisent, avec les noms et numéros de la voiture. Elle se place avant les pages GPS (13 pages au lieu de 12).
+- Seulement des noms, rien de déclaré. Test : `tools/test_catalog_camera.js` (10 vérifications, plusieurs formes possibles de liste de valeurs).
+
 ### ShakTheme 0.21.22, ShakHUD 0.6.27 : deux pages « GPS » dans l'onglet Signals (pas encore essayé sur la voiture)
 Demande du propriétaire : voir à l'écran ce que le catalogue de la voiture dit de sa position, pour les zones de danger (CarPlay n'envoie que l'image de la carte, jamais une position).
 - **Deux pages de plus** (`shared/catalog.js`, groupes `gps` et `gps2`) : les interfaces dont le nom parle de GNSS, GPS, NMEA, latitude, longitude, position du véhicule ou navigation, avec leurs membres. Les noms qui parlent vraiment d'une position viennent en tête ; un filtre `not` écarte le bruit (sièges, pédales, vitres, rétroviseurs, volant, essuie-glaces...). Titres traduits (`shared/fr.js`).

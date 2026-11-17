@@ -51,6 +51,7 @@ const EXACT = {
     "Speed cameras and road hazards (the car's catalog)": 'Radars et dangers sur la route (catalogue de la voiture)',
     'Cameras: CameraProxy and ICAM2Proxy': 'Caméras : CameraProxy et ICAM2Proxy',
     'Cameras: next entries': 'Caméras : suite',
+    'Cameras: the values their entries take': 'Caméras : les valeurs possibles (type, application, mode, perspective)',
     'GPS: where the car is': 'GPS : où est la voiture',
     'GPS: next entries': 'GPS : suite',
     'Signals in the car\'s catalog': 'Signaux du catalogue de la voiture',
