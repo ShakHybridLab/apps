@@ -24,7 +24,10 @@ const path = require('path');
 const vb = require('./video_bridge');
 const { ParkLogic } = require('./park');
 const { DemoFeed } = require('./park_demo');
+const pf = require('./park_frame');
 
+const REQUEST_PATH = process.env.SHAKPARK_REQUEST || '/dev/shm/shakpark-capture/request.json';
+const REQUEST_MS = 500;       // la demande est renouvelée à ce rythme : l'outil la tient pour périmée après 2 s
 const FRONT_PATH = process.env.SHAKPARK_FRONT || '/dev/shm/shakpark-front';
 const REAR_PATH = process.env.SHAKPARK_REAR || '/dev/shm/shakpark-rear';
 const THEMES_DIR = process.env.CLUSTER_THEMES_DIR || '/dev/shm/cluster-themes';
@@ -74,6 +77,8 @@ class ParkApp {
         this.id = deps.id || 'shakpark';
         this.now = deps.now || Date.now;
         this.themesDir = deps.themesDir || THEMES_DIR;
+        this.requestPath = deps.requestPath || REQUEST_PATH;
+        this.reqAt = 0; this.reqCam = null;
         this.logic = new ParkLogic();
         this.feeds = { front: new Feed(deps.frontPath || FRONT_PATH), rear: new Feed(deps.rearPath || REAR_PATH) };
         this.demos = { front: new DemoFeed('front'), rear: new DemoFeed('rear') };      // le mode essai : une image de test à la place de la caméra
@@ -93,7 +98,7 @@ class ParkApp {
 
     stop() {
         if (this.timer) { clearInterval(this.timer); this.timer = null; }
-        this._hide(); this._ask(false);
+        this._hide(); this._ask(false); this._request('off', true);
         if (this.t.cr) { try { this.t.cr.close(); } catch (e) { /* fermeture */ } this.t.cr = null; }
         this.feeds.front.close(); this.feeds.rear.close();
     }
@@ -138,7 +143,9 @@ class ParkApp {
         const t = this.t, now = this.now();
         const raw = this._room();
         const room = raw ? { x: raw.x + INSET, y: raw.y + INSET, w: raw.w - 2 * INSET, h: raw.h - 2 * INSET } : null;
-        const rect = room && feed.head ? vb.fitRect(room, feed.head.w, feed.head.h, MAX_W) : null;
+        // la couche couvre TOUTE la fenêtre ; l'image y est centrée avec des bandes noires, ou remplit la fenêtre (park_frame.js)
+        const rect = room && feed.head ? pf.layerRect(room, MAX_W) : null;
+        const mode = this.d.setting('fillWindow') === true ? 'fill' : 'bars';
         if (!rect) { this._hide(); return 'no room'; }
         if (!t.cr) { t.cr = this.d.makeRender('panel'); t.cr.connect(); }
         let force = false;
@@ -148,8 +155,9 @@ class ParkApp {
             t.rect = rect; t.shown = false; t.atlas = null; force = true;
         }
         if (!t.ref) return 'refused';
+        if (t.mode !== mode) { t.mode = mode; force = true; }
         if ((frame || force) && feed.src && now - t.sentAt >= FRAME_MS) {
-            t.atlas = vb.toAtlas(feed.src, feed.head.w, feed.head.h, rect.w, rect.h, t.atlas);
+            t.atlas = pf.compose(feed.src, feed.head.w, feed.head.h, rect.w, rect.h, mode, t.atlas);
             if (t.cr.frame(t.ref, t.atlas, feed.seq)) {
                 t.sentAt = now;
                 if (!t.shown) { t.cr.set(t.ref, { visible: true }); t.shown = true; }
@@ -158,11 +166,23 @@ class ParkApp {
         return t.shown ? 'shown' : 'waiting';
     }
 
+    /** Dit à l'outil de capture (service root) quelle caméra il doit décoder : 'front', 'rear' ou 'off'. Jamais bloquant, jamais une erreur. */
+    _request(cam, force) {
+        const now = this.now();
+        if (!force && cam === this.reqCam && now - this.reqAt < REQUEST_MS) return;
+        this.reqCam = cam; this.reqAt = now;
+        try {
+            fs.writeFileSync(this.requestPath + '.tmp', JSON.stringify({ t: now, cam }), { mode: 0o644 });
+            fs.renameSync(this.requestPath + '.tmp', this.requestPath);
+        } catch (e) { /* le dossier n'existe pas tant que l'outil n'est pas installé : rien à faire */ }
+    }
+
     tick() {
         const now = this.now();
         // LA PORTE D'ABORD : ParkLogic dit quelle caméra, ou aucune. Rien n'est lu ni dessiné avant.
         const view = this.logic.view(now, { front: this.d.setting('frontCam') === true, rear: this.d.setting('rearCam') === true });
         this.state.view = view;
+        this._request(this.d.setting('demo') === true ? 'off' : view);      // l'outil de capture n'ouvre que la caméra voulue (rien en mode essai)
         if (this.d.waze) this.d.waze.want(view !== 'off');      // la carte Waze du cluster cède sa place vidéo tant que la caméra est voulue
         if (view === 'off') {
             this._hide(); this._ask(false); this.state.live = false;

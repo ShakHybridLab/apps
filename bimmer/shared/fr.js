@@ -51,6 +51,8 @@ const EXACT = {
     "Speed cameras and road hazards (the car's catalog)": 'Radars et dangers sur la route (catalogue de la voiture)',
     'Cameras: CameraProxy and ICAM2Proxy': 'Caméras : CameraProxy et ICAM2Proxy',
     'Cameras: next entries': 'Caméras : suite',
+    'GPS: where the car is': 'GPS : où est la voiture',
+    'GPS: next entries': 'GPS : suite',
     'Signals in the car\'s catalog': 'Signaux du catalogue de la voiture',
     'Catalog not readable': 'Catalogue illisible', "Nothing found in the car's catalog": 'Rien dans le catalogue de la voiture',
     'Names only, no values: photograph this page to give the names the app can read next.': "Les noms seulement, pas les valeurs : photographie cette page pour donner les noms que l'appli pourra lire ensuite.",

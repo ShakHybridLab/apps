@@ -2,6 +2,22 @@
 
 ## 17 novembre 2026
 
+### ShakTheme 0.21.22, ShakHUD 0.6.27 : deux pages « GPS » dans l'onglet Signals (pas encore essayé sur la voiture)
+Demande du propriétaire : voir à l'écran ce que le catalogue de la voiture dit de sa position, pour les zones de danger (CarPlay n'envoie que l'image de la carte, jamais une position).
+- **Deux pages de plus** (`shared/catalog.js`, groupes `gps` et `gps2`) : les interfaces dont le nom parle de GNSS, GPS, NMEA, latitude, longitude, position du véhicule ou navigation, avec leurs membres. Les noms qui parlent vraiment d'une position viennent en tête ; un filtre `not` écarte le bruit (sièges, pédales, vitres, rétroviseurs, volant, essuie-glaces...). Titres traduits (`shared/fr.js`).
+- Seulement des noms, aucune valeur lue, rien de déclaré : aucun risque de refus à l'installation. À photographier et à envoyer.
+- Test : `tools/test_catalog_camera.js` (9 vérifications, faux catalogue avec des pièges : siège, vitre, vitesse).
+
+### ShakPark 0.2.0 : image dans toute la fenêtre, demande à l'outil de capture (pas encore essayé sur la voiture)
+- **Bandes noires** (`shared/park_frame.js`) : la couche vidéo a la taille de toute la fenêtre (561 x 422) ; l'image 16:9 est centrée avec des bandes noires écrites dans l'image. Pas de couche de plus (8 vidéos au plus, 2 à l'écran), pas de mémoire de plus, et les bandes ne coûtent rien après la première image (seules les tuiles qui changent sont écrites). Le protocole ne dit pas si une image est étirée à la taille de la couche : une couche noire sous la vidéo n'était donc pas sûre.
+- **Réglage « Remplir la fenêtre »** (désactivé par défaut) : plus de bandes, les bords de l'image sont coupés, centrés.
+- **Demande de capture** : ShakPark écrit `/dev/shm/shakpark-capture/request.json` (`front`, `rear` ou `off`, renouvelé toutes les 500 ms, `off` en mode essai).
+- Tests : `tools/test_park.js` passe à 32 vérifications.
+
+### shakpark-capture : squelette de l'outil de capture (pas dans le Store, pas installable)
+- `shakpark-capture/` : service root `capture.js` (lit la demande, lance le décodeur de la caméra voulue seulement, l'arrête 3 s après `off`, relance limitée, état dans `status.json`), écrivain MGVF, décodeur de test, `component.json` et unité systemd sur le modèle de `ridetube/service`. Test : `node shakpark-capture/test_capture.js` (8 vérifications, avec le vrai lecteur `video_bridge.js`).
+- **Manque le décodeur natif** (flux AVB de la caméra, décodage H.264) et la demande SOME/IP au calculateur caméra : les noms viendront des pages « Caméras » de la voiture. Non déclaré dans `mgu-repo.json` volontairement.
+
 ### ShakTheme 0.21.21, ShakHUD 0.6.26 : deux pages « Caméras » dans l'onglet Signals (pas encore essayé sur la voiture)
 Demande du propriétaire : pas d'accès SSH, donc un moyen de lire à l'écran ce que le catalogue de la voiture dit des caméras, pour écrire l'outil de capture de ShakPark.
 - **Deux pages de plus** à la fin de l'onglet Signals (`shared/catalog.js`, groupes `camera` et `camera2`, 8 rangées chacune) : tout ce que `CameraProxy` et `ICAM2Proxy` ont dans le catalogue, **champs, méthodes et diffusions**, avec ce qui entre et sort de chacune. Les autres pages du catalogue ne changent pas.

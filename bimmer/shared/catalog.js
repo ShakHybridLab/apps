@@ -29,6 +29,14 @@ const GROUPS = [
     // goes in and out of it, over two pages of MAX_ROWS rows (`all`: not only fields; `skip`: the rows the page before already showed)
     { id: 'camera', all: true, skip: 0, title: 'Cameras: CameraProxy and ICAM2Proxy', match: /cameraproxy|icam2/i },
     { id: 'camera2', all: true, skip: MAX_ROWS, title: 'Cameras: next entries', match: /cameraproxy|icam2/i },
+    // the car's own position (the zones of danger need it: CarPlay only sends the map's picture, never a position). Names only, from the car's catalog. `not` drops what
+    // a "position" is not here (seats, pedals, windows, mirrors, the steering wheel, the wheel's own position...), `first` puts the names that speak of a place first
+    { id: 'gps', title: 'GPS: where the car is', first: /latitude|longitude|gnss|gps|nmea|breitengrad|laengengrad|geoposition|vehicleposition|currentposition|locationdata/i,
+        match: /gnss|gps|nmea|latitude|longitude|breitengrad|laengengrad|geoposition|geo.?coord|vehicleposition|currentposition|carposition|locationdata|positioninfo|positiondata|navigationposition|positioning|ortung|locationinformation/i,
+        not: /seat|sitz|pedal|window|fenster|mirror|spiegel|steering|lenk|wiper|door|tuer|roof|dach|trunk|heck|belt|gurt|headrest|kopfstuetze|lumbar|damper|dampfer|valve|ventil|piston|throttle|camshaft|crank/i },
+    { id: 'gps2', skip: MAX_ROWS, title: 'GPS: next entries', first: /latitude|longitude|gnss|gps|nmea|breitengrad|laengengrad|geoposition|vehicleposition|currentposition|locationdata/i,
+        match: /gnss|gps|nmea|latitude|longitude|breitengrad|laengengrad|geoposition|geo.?coord|vehicleposition|currentposition|carposition|locationdata|positioninfo|positiondata|navigationposition|positioning|ortung|locationinformation/i,
+        not: /seat|sitz|pedal|window|fenster|mirror|spiegel|steering|lenk|wiper|door|tuer|roof|dach|trunk|heck|belt|gurt|headrest|kopfstuetze|lumbar|damper|dampfer|valve|ventil|piston|throttle|camshaft|crank/i },
 ];
 
 /** The member names of a field's data type (structs flattened, a parent's members first), at most two levels deep. */
@@ -103,7 +111,8 @@ function find(file) {
             const fields = db.interfaces[iface].fields || {};
             Object.keys(fields).forEach((name) => {
                 const f = fields[name] || {}, mem = members(db, f.dataRef, 0);
-                const own = g.match.test(name) || g.match.test(iface), inMem = mem.filter((m) => g.match.test(m));
+                if (g.not && (g.not.test(name) || g.not.test(iface))) return;
+                const own = g.match.test(name) || g.match.test(iface), inMem = mem.filter((m) => g.match.test(m) && !(g.not && g.not.test(m)));
                 if (!own && !inMem.length) return;
                 rows.push({ iface, field: name, own, rank: g.first && g.first.test(name) ? 2 : own ? 1 : 0, flags: [f.getter && f.getter.id ? 'get' : '', f.notifier ? 'notify' : ''].filter(Boolean).join(' '), members: own ? mem : inMem });
             });
@@ -118,7 +127,7 @@ let cached = null;
 /** The catalogue's identity (size and date): the cache on disk is only good for the same file. */
 function stamp(file) { try { const st = fs.statSync(file || PATH); return st.size + ':' + Math.round(st.mtimeMs); } catch (e) { return null; } }
 /** What the cache is a cut of: when a group's name, title or pattern changes, the cache is no longer good. */
-const SHAPE = GROUPS.map((g) => g.id + '|' + g.title + '|' + String(g.match) + '|' + String(g.first || '') + '|' + (g.all ? 'all' : '') + (g.skip || 0)).join('||') + '|' + MAX_ROWS;
+const SHAPE = GROUPS.map((g) => g.id + '|' + g.title + '|' + String(g.match) + '|' + String(g.first || '') + '|' + (g.all ? 'all' : '') + (g.skip || 0) + '|' + String(g.not || '')).join('||') + '|' + MAX_ROWS;
 function fromDisk(cacheFile, st) {
     try {
         const c = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));

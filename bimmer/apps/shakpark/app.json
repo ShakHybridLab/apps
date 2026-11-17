@@ -2,7 +2,7 @@
   "id": "shakpark",
   "title": "ShakPark",
   "description": "Caméra avant (en D, sous 15 km/h) et caméra arrière (en marche arrière) dans la fenêtre centrale du thème du cluster",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "vendor": "custom",
   "loggingId": "OAV2",
   "iconGlyph": "SP",
@@ -10,6 +10,7 @@
     "park.js",
     "park_app.js",
     "park_demo.js",
+    "park_frame.js",
     "video_bridge.js",
     "waze_yield.js",
     "cluster_render_client.js"
@@ -43,6 +44,12 @@
       "label": "La caméra prend la place de la carte Waze du cluster",
       "type": "bool",
       "default": true
+    },
+    {
+      "key": "fillWindow",
+      "label": "Remplir la fenêtre (les bords de l'image sont coupés, sans bandes noires)",
+      "type": "bool",
+      "default": false
     },
     {
       "key": "demo",

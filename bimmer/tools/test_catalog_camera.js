@@ -57,4 +57,35 @@ check('un catalogue illisible : les groupes caméra existent, vides, avec l\'err
     const bad = catalog.find(path.join(os.tmpdir(), 'nope-' + Date.now() + '.json'));
     assert(bad.error && bad.groups.some((g) => g.id === 'camera' && g.rows.length === 0));
 });
+// ---- les pages GPS ----
+const dbg = {
+    datatypes: { 'T.Pos': { type: 'struct', members: [{ name: 'latitude' }, { name: 'longitude' }, { name: 'altitude' }] }, 'T.Speed': { type: 'struct', members: [{ name: 'speed' }] } },
+    interfaces: {
+        'de.bmw.infotainment.navigation.PositionService': { fields: { statusCurrentPosition: { dataRef: 'T.Pos', notifier: { id: 1 } }, statusFixQuality: { dataRef: 'T.Pos', notifier: { id: 2 } } } },
+        'de.bmw.infotainment.gnss.GnssData': { fields: { dataGnss: { dataRef: 'T.Pos', getter: { id: 3 }, notifier: { id: 4 } } } },
+        'de.bmw.infotainment.comfort.SeatControl': { fields: { statusSeatPosition: { dataRef: 'T.Speed' } } },
+        'de.bmw.infotainment.vehicle.Vehicle2': { fields: { statusCarSpeed2: { dataRef: 'T.Speed' }, statusWindowPosition: { dataRef: 'T.Speed' } } },
+    },
+};
+const fileg = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'cg-')), 'catalog.json');
+fs.writeFileSync(fileg, JSON.stringify(dbg));
+const catg = catalog.find(fileg);
+const gps = catg.groups.find((g) => g.id === 'gps'), gps2 = catg.groups.find((g) => g.id === 'gps2');
+check('deux pages GPS, sans erreur', () => { assert.strictEqual(catg.error, null); assert(gps && gps2, 'groupes absents'); });
+check('GPS : les interfaces de position et de GNSS y sont ; le siège, la vitre et la vitesse n\'y sont pas', () => {
+    const names = gps.rows.concat(gps2.rows).map((r) => r.iface.split('.').slice(-1)[0] + '.' + r.field);
+    assert(names.indexOf('PositionService.statusCurrentPosition') >= 0, names.join(', '));
+    assert(names.indexOf('GnssData.dataGnss') >= 0, names.join(', '));
+    assert(!names.some((x) => /Seat|Window|CarSpeed/i.test(x)), 'du bruit : ' + names.join(', '));
+});
+check('GPS : le nom qui parle d\'une position vient en tête, les membres latitude et longitude sont montrés', () => {
+    const r = gps.rows[0];
+    assert(/gnss|currentposition/i.test(r.iface + r.field), r.iface + r.field);
+    assert(r.members.indexOf('latitude') >= 0 && r.members.indexOf('longitude') >= 0, r.members.join(','));
+});
+check('GPS : les groupes caméra ne reçoivent rien du GPS, et le GPS rien des caméras', () => {
+    const c = catalog.find(file);
+    assert(c.groups.filter((g) => /^gps/.test(g.id)).every((g) => g.rows.every((r) => !/cameraproxy|ICAM2/i.test(r.iface))));
+    assert(catg.groups.filter((g) => /^camera/.test(g.id)).every((g) => g.rows.length === 0));
+});
 console.log(process.exitCode ? 'catalogue caméra : ÉCHECS' : 'catalogue caméra : ' + n + ' vérifications passent');

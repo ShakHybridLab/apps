@@ -55,3 +55,9 @@ Signaux déclarés : tous déjà acceptés par la voiture (`Vehicle2.statusCarSp
 ## Compiler et tester
 
 Depuis la racine du dépôt : `python3 bimmer/kit/tools/build.py shakpark`, puis `node bimmer/tools/test_park.js`.
+
+## Image dans la fenêtre
+La couche vidéo couvre toute la fenêtre du thème ; l'image est centrée avec des **bandes noires** dans l'image elle-même (`shared/park_frame.js`), donc on ne voit jamais la carte Waze ni le thème derrière. Réglage « Remplir la fenêtre » : plus de bandes, les bords de l'image sont coupés.
+
+## Outil de capture
+ShakPark écrit `/dev/shm/shakpark-capture/request.json` (`{ t, cam }`, `cam` = `front`, `rear` ou `off`, renouvelé toutes les 500 ms ; `off` en mode essai) pour que le service de capture (`shakpark-capture/`, squelette, pas encore installable) ne décode que la caméra voulue.

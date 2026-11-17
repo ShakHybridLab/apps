@@ -105,7 +105,8 @@ function rig(settings) {
         R.renders.push(c);
         return c;
     };
-    R.app = new ParkApp({ id: 'shakpark', now: () => R.t, setting: (k) => settings[k], makeRender: R.cr, frontPath: R.file.front, rearPath: R.file.rear, themesDir: themes });
+    R.app = new ParkApp({ id: 'shakpark', now: () => R.t, setting: (k) => settings[k], makeRender: R.cr, frontPath: R.file.front, rearPath: R.file.rear, themesDir: themes, requestPath: path.join(dir, 'request.json') });
+    R.req = () => { try { return JSON.parse(fs.readFileSync(path.join(dir, 'request.json'), 'utf8')); } catch (e) { return null; } };
     R.write = (cam) => {
         R.seq[cam]++; R.slot[cam] = (R.slot[cam] + 1) % 3;
         const b = Buffer.alloc(64 + 3 * FB, 90);
@@ -241,6 +242,61 @@ check('l\'image de test : 320 x 180, avant et arrière différentes, la barre bl
     assert(!fa.equals(fa2), 'l\'image ne bouge pas');
     assert(a.live(1200) && !a.live(1100 + D.FRAME_MS * 100));
     a.forget(); assert(!a.live(1200));
+});
+// ---- l'image dans toute la fenêtre (park_frame.js) ----
+const PF = require('../shared/park_frame');
+function i420(w, h, y, u, v) { const b = Buffer.alloc(w * h * 3 / 2); b.fill(y, 0, w * h); b.fill(u, w * h, w * h + w * h / 4); b.fill(v, w * h + w * h / 4); return b; }
+check('layerRect : x et y pairs, w multiple de 4, h pair, centré dans la fenêtre ; trop petit : null', () => {
+    const r = PF.layerRect({ x: 87, y: 173, w: 549, h: 410 }, 640);
+    assert(r.x % 2 === 0 && r.y % 2 === 0 && r.w % 4 === 0 && r.h % 2 === 0, JSON.stringify(r));
+    assert(r.x >= 87 && r.y >= 173 && r.x + r.w <= 87 + 549 + 2 && r.y + r.h <= 173 + 410 + 2, JSON.stringify(r));
+    assert.strictEqual(PF.layerRect({ x: 0, y: 0, w: 40, h: 40 }, 640), null);
+    const n = PF.layerRect({ x: 0, y: 0, w: 1000, h: 500 }, 640);
+    assert(n.w <= 640 && Math.abs(n.w / n.h - 2) < 0.05, 'plus étroite, mêmes proportions : ' + JSON.stringify(n));
+});
+check('bandes noires : la fenêtre est pleine, l\'image entière est au centre, le haut et le bas sont noirs', () => {
+    const src = i420(128, 72, 200, 90, 160), dw = 120, dh = 92;       // 16:9 dans une fenêtre presque carrée
+    const out = PF.compose(src, 128, 72, dw, dh, 'bars', null);
+    assert.strictEqual(out.length, dw * dh * 3 / 2);
+    assert.strictEqual(out[0], PF.BLACK_Y, 'le coin haut gauche n\'est pas noir');
+    assert.strictEqual(out[(dh - 1) * dw + 5], PF.BLACK_Y, 'le bas n\'est pas noir');
+    assert.strictEqual(out[Math.floor(dh / 2) * dw + dw / 2], 200, 'le centre n\'est pas l\'image');
+    assert.strictEqual(out[dw * dh], PF.BLACK_C, 'le chroma des bandes');
+    const cy = (dh / 2 >> 1); assert.strictEqual(out[dw * dh + cy * dw + (dw / 4)], 90, 'le chroma U du centre'); assert.strictEqual(out[dw * dh + cy * dw + dw / 2 + (dw / 4)], 160, 'le chroma V du centre');
+});
+check('remplir : aucune bande noire, les côtés de l\'image sont coupés, la proportion du centre est gardée', () => {
+    const src = i420(128, 72, 200, 90, 160), dw = 120, dh = 92;
+    const out = PF.compose(src, 128, 72, dw, dh, 'fill', null);
+    let black = 0; for (let i = 0; i < dw * dh; i++) if (out[i] === PF.BLACK_Y) black++;
+    assert.strictEqual(black, 0, black + ' pixels noirs');
+    const c = PF.cropFor(128, 72, dw, dh); assert(c.w < 128 && c.h === 72 && c.x % 2 === 0 && c.w % 2 === 0, JSON.stringify(c));
+    assert(Math.abs(c.w / c.h - dw / dh) < 0.05, 'proportion ' + c.w / c.h);
+});
+check('fill et bars : une source plus haute que la fenêtre se coupe en haut et en bas ; le tampon est réutilisé', () => {
+    const c = PF.cropFor(72, 128, 120, 92); assert(c.h < 128 && c.w === 72 && c.y % 2 === 0, JSON.stringify(c));
+    const src = i420(128, 72, 200, 90, 160), buf = Buffer.alloc(120 * 92 * 3 / 2);
+    assert.strictEqual(PF.compose(src, 128, 72, 120, 92, 'bars', buf), buf);
+});
+check('l\'appli : la couche couvre toute la fenêtre (bandes noires dans l\'image), et « remplir » change le contenu sans changer la couche', () => {
+    const S = { frontCam: true, rearCam: true, fillWindow: false };
+    const R = rig(S); R.run(1500, 'R', 0, ['rear']);
+    const c = R.renders[0], l = c.layers[Object.keys(c.layers)[0]];
+    assert(l.w > 500 && l.h > 380, 'couche de ' + l.w + 'x' + l.h + ' : pas toute la fenêtre');
+    assert.strictEqual(l.vw, l.w); assert.strictEqual(l.vh, l.h);
+    S.fillWindow = true; const before = c.frames; R.run(600, 'R', 0, ['rear']);
+    assert(c.frames > before, 'plus d\'image après le changement de réglage');
+    assert.strictEqual(Object.keys(c.layers).length, 1, 'une seule couche');
+});
+check('la demande à l\'outil de capture : la caméra voulue, « off » sinon, renouvelée ; rien en mode essai', () => {
+    const S = { frontCam: true, rearCam: true, demo: false };
+    const R = rig(S);
+    R.run(300, 'P', 0, []); assert.strictEqual(R.req().cam, 'off');
+    R.run(1500, 'R', 0, ['rear']); assert.strictEqual(R.req().cam, 'rear');
+    const t1 = R.req().t; R.run(1200, 'R', 0, ['rear']); assert(R.req().t > t1, 'demande non renouvelée');
+    R.run(6000, 'D', 40, ['front']); assert.strictEqual(R.req().cam, 'off');
+    R.run(6000, 'D', 5, ['front']); assert.strictEqual(R.req().cam, 'front');
+    S.demo = true; R.run(600, 'D', 5, []); assert.strictEqual(R.req().cam, 'off');
+    R.app.stop(); assert.strictEqual(R.req().cam, 'off');
 });
 check('les réglages : rearCam à non coupe l\'arrière, frontCam à non coupe l\'avant', () => {
     const R = rig({ frontCam: true, rearCam: false }); R.run(1500, 'R', 0, ['rear']); assert(!R.visible());
