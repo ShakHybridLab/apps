@@ -88,4 +88,28 @@ check('GPS : les groupes caméra ne reçoivent rien du GPS, et le GPS rien des c
     assert(c.groups.filter((g) => /^gps/.test(g.id)).every((g) => g.rows.every((r) => !/cameraproxy|ICAM2/i.test(r.iface))));
     assert(catg.groups.filter((g) => /^camera/.test(g.id)).every((g) => g.rows.length === 0));
 });
+// ---- la page « valeurs possibles » ----
+const dbv = {
+    datatypes: {
+        'T.State': { type: 'struct', members: [{ name: 'application', dataRef: 'T.App' }, { name: 'mode', dataRef: 'T.Mode' }, { name: 'perspective', dataRef: 'T.Persp' }] },
+        'T.App': { type: 'enumeration', enumerators: [{ name: 'REAR', value: 1 }, { name: 'FRONT', value: 2 }] },
+        'T.Mode': { type: 'enum', values: { OFF: 0, ON: 1 } },
+        'T.Persp': { type: 'enumeration', literals: [{ name: 'TOP', id: 3 }] },
+        'T.Type': { type: 'enumeration', enumerators: [{ name: 'CLUSTER', value: 7 }] },
+        'T.Other': { type: 'enumeration', enumerators: [{ name: 'NOPE', value: 9 }] },
+    },
+    interfaces: {
+        'de.bmw.infotainment.video.cameraproxy.ICAM2Proxy': { fields: { currentState: { dataRef: 'T.State', getter: { id: 8 } } }, methods: { clientAttach: { inputs: [{ name: 'type', dataRef: 'T.Type' }] } } },
+        'de.bmw.infotainment.other.Thing': { fields: { x: { dataRef: 'T.Other' } } },
+    },
+};
+const filev = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'cv-')), 'catalog.json');
+fs.writeFileSync(filev, JSON.stringify(dbv));
+const catv = catalog.find(filev), cv = catv.groups.find((g) => g.id === 'camvals');
+check('page « valeurs possibles » : les listes de valeurs des entrées caméra, avec leurs noms et numéros, rien des autres interfaces', () => {
+    assert(cv, 'groupe absent');
+    const all = cv.rows.map((r) => r.members.join(',')).join(' | ');
+    ['REAR=1', 'FRONT=2', 'OFF=0', 'ON=1', 'TOP=3', 'CLUSTER=7'].forEach((x) => assert(all.indexOf(x) >= 0, x + ' absent : ' + all));
+    assert(all.indexOf('NOPE') < 0, 'valeurs d\'une autre interface : ' + all);
+});
 console.log(process.exitCode ? 'catalogue caméra : ÉCHECS' : 'catalogue caméra : ' + n + ' vérifications passent');
