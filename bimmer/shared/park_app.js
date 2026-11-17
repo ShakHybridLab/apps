@@ -23,6 +23,7 @@ const fs = require('fs');
 const path = require('path');
 const vb = require('./video_bridge');
 const { ParkLogic } = require('./park');
+const { DemoFeed } = require('./park_demo');
 
 const FRONT_PATH = process.env.SHAKPARK_FRONT || '/dev/shm/shakpark-front';
 const REAR_PATH = process.env.SHAKPARK_REAR || '/dev/shm/shakpark-rear';
@@ -75,6 +76,7 @@ class ParkApp {
         this.themesDir = deps.themesDir || THEMES_DIR;
         this.logic = new ParkLogic();
         this.feeds = { front: new Feed(deps.frontPath || FRONT_PATH), rear: new Feed(deps.rearPath || REAR_PATH) };
+        this.demos = { front: new DemoFeed('front'), rear: new DemoFeed('rear') };      // le mode essai : une image de test à la place de la caméra
         this.t = { cr: null, ref: 0, rect: null, atlas: null, sentAt: 0, shown: false, lastCam: null };
         this.askAt = 0; this.asking = false;
         this.timer = null;
@@ -164,14 +166,16 @@ class ParkApp {
         if (this.d.waze) this.d.waze.want(view !== 'off');      // la carte Waze du cluster cède sa place vidéo tant que la caméra est voulue
         if (view === 'off') {
             this._hide(); this._ask(false); this.state.live = false;
-            this.feeds.front.forget(); this.feeds.rear.forget();      // pas de fichier gardé ouvert, pas d'image d'hier au prochain départ
+            this.feeds.front.forget(); this.feeds.rear.forget(); this.demos.front.forget(); this.demos.rear.forget();      // pas de fichier gardé ouvert, pas d'image d'hier au prochain départ
             this.t.lastCam = null;
             return;
         }
+        const demo = this.d.setting('demo') === true;
         const other = view === 'front' ? this.feeds.rear : this.feeds.front;
         other.forget();
+        (view === 'front' ? this.demos.rear : this.demos.front).forget();
         if (this.t.lastCam !== view) { this._hide(); this.t.lastCam = view; }    // changement de caméra : on repart d'une fenêtre vide
-        const feed = this.feeds[view];
+        const feed = demo ? this.demos[view] : this.feeds[view];      // mode essai : l'image de test, mêmes règles
         const frame = feed.read(now);
         this.state.live = feed.live(now);
         if (!this.state.live) { this._hide(); this._ask(false); return; }

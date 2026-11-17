@@ -218,6 +218,30 @@ check('de R à D : l\'image change de caméra sans mélange, et au plus 15 image
     assert.strictEqual(R.app.state.view, 'front');
     assert(R.visible());
 });
+check('mode essai : une image de test à la place de la caméra, sans fichier, avec les mêmes règles', () => {
+    const R = rig({ frontCam: true, rearCam: true, demo: true });
+    R.run(1500, 'R', 0, []);             // aucun fichier d'image écrit
+    assert(R.visible() && R.app.state.view === 'rear', 'pas d\'image de test en marche arrière : ' + JSON.stringify(R.app.state));
+    const l = R.renders[0].layers[Object.keys(R.renders[0].layers)[0]];
+    assert.strictEqual(l.klass, 'alert'); assert.strictEqual(l.z, 1000);
+    R.run(5000, 'P', 0, []);
+    assert(!R.visible() && !R.asked(), 'l\'image de test reste en P');
+    const F = rig({ frontCam: true, rearCam: true, demo: true });
+    F.run(1500, 'D', 20, []); assert(!F.visible(), 'l\'image de test à 20 km/h');
+    F.run(1500, 'D', 10, []); assert(F.visible() && F.app.state.view === 'front', 'pas d\'image de test en avant');
+});
+check('l\'image de test : 320 x 180, avant et arrière différentes, la barre blanche bouge, au plus 15 images par seconde', () => {
+    const D = require('../shared/park_demo');
+    const a = new D.DemoFeed('front'), b = new D.DemoFeed('rear');
+    const fa = Buffer.from(a.read(1000)), fb = Buffer.from(b.read(1000));
+    assert.strictEqual(fa.length, 320 * 180 * 3 / 2);
+    assert(!fa.equals(fb), 'avant et arrière identiques');
+    assert.strictEqual(a.read(1010), null, 'plus de 15 images par seconde');
+    const fa2 = Buffer.from(a.read(1100));
+    assert(!fa.equals(fa2), 'l\'image ne bouge pas');
+    assert(a.live(1200) && !a.live(1100 + D.FRAME_MS * 100));
+    a.forget(); assert(!a.live(1200));
+});
 check('les réglages : rearCam à non coupe l\'arrière, frontCam à non coupe l\'avant', () => {
     const R = rig({ frontCam: true, rearCam: false }); R.run(1500, 'R', 0, ['rear']); assert(!R.visible());
     const S = rig({ frontCam: false, rearCam: true }); S.run(1500, 'D', 5, ['front']); assert(!S.visible());

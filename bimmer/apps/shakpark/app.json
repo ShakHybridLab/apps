@@ -9,6 +9,7 @@
   "shared": [
     "park.js",
     "park_app.js",
+    "park_demo.js",
     "video_bridge.js",
     "waze_yield.js",
     "cluster_render_client.js"
@@ -42,6 +43,12 @@
       "label": "La caméra prend la place de la carte Waze du cluster",
       "type": "bool",
       "default": true
+    },
+    {
+      "key": "demo",
+      "label": "Mode essai : une image de test à la place de la caméra (mêmes règles)",
+      "type": "bool",
+      "default": false
     },
     {
       "key": "rearCam",

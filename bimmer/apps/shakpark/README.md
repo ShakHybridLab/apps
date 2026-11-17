@@ -21,11 +21,16 @@ Montre la caméra de la voiture dans la fenêtre centrale d'un thème de ShakThe
 - **Waze passe après la caméra.** L'autoradio ne tient que 2 vidéos à la fois et Waze on cluster en prend déjà deux (cluster et HUD) : la caméra serait refusée. Tant qu'elle est voulue, ShakPark éteint la carte Waze **du cluster** (celle du HUD reste), par le socket de contrôle de Waze on cluster, puis la rallume 3 s après la fin de la caméra. Il ne rallume que ce qu'il a éteint ; un fichier témoin `/dev/shm/shakpark-waze-yielded` fait rallumer la carte au démarrage suivant si l'appli s'est arrêtée entre-temps. Si l'appli Waze tient le socket (sa page est ouverte), il réessaie toutes les 5 s.
 - **RideTube passe en dernier.** Tant que la caméra est affichée, RideTube n'a plus d'image, ni dans le cluster ni sur le HUD (`shared/video_app.js`, `_cameraOn`) ; son image revient après. Son son n'est pas touché.
 
+## Mode essai (sans caméra)
+
+Le réglage **Mode essai** (désactivé par défaut) remplace la caméra par une image de test : un écran bleu « AVANT » ou rouge « ARRIERE », avec des rayures et une barre blanche qui bouge. **Les mêmes règles s'appliquent** (avant en D sous 15 km/h, arrière en R), ainsi que la même fenêtre et les mêmes priorités sur Waze et RideTube. À la voiture, on essaie donc déjà tout sauf la capture : mettre R, rouler à moins de 15 km/h en D, voir la carte Waze du cluster partir puis revenir, voir l'image de RideTube s'effacer. À couper une fois la capture installée.
+
 ## Réglages
 
 - **Caméra avant en avançant sous 15 km/h** (activé)
 - **La caméra prend la place de la carte Waze du cluster** (activé)
 - **Caméra arrière en marche arrière** (activé)
+- **Mode essai : une image de test à la place de la caméra** (désactivé)
 
 ## Ce qui manque : la capture de l'image
 
@@ -41,6 +46,7 @@ L'outil de capture reste à écrire. Il lui faut deux choses que seule la voitur
 - `bimmer/apps/shakpark/` : l'appli (`app.json`, `main.js`).
 - `bimmer/shared/park.js` : les règles (rapport, vitesse, caméra à montrer), sans accès à la voiture.
 - `bimmer/shared/park_app.js` : la lecture des fichiers d'images et le dessin dans la fenêtre du thème.
+- `bimmer/shared/park_demo.js` : l'image de test du mode essai.
 - `bimmer/shared/waze_yield.js` : la carte Waze du cluster cède sa place à la caméra.
 - `bimmer/tools/test_park.js`, `bimmer/tools/test_waze_yield.js` : les tests.
 
