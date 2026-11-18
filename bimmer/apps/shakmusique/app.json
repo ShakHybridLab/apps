@@ -2,13 +2,13 @@
   "id": "shakmusique",
   "title": "Shak Musique",
   "description": "Un lecteur de musique pour la voiture, comme RideTube joue YouTube : cherche un titre ou un artiste, le son sort par le lecteur multimédia de la voiture, avec la pochette, la progression, précédent et suivant. Il faut le service « RideTube service » (Store) et internet dans la voiture ; rien n'est gardé.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "vendor": "custom",
   "loggingId": "OAMU",
   "iconGlyph": "MUS",
   "shared": [
     "music_ctl.js",
-    "music_ui.js"
+    "music_ui.js", "survive.js"
   ],
   "signals": {},
   "screens": [

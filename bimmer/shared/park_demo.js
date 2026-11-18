@@ -70,7 +70,7 @@ class DemoFeed {
         return this.src;
     }
 
-    live(now) { return this.seq !== null && this.seqAt > 0 && now - this.seqAt < LIVE_MS; }
+    live(now) { return this.seq !== null && this.seqAt > 0 && now >= this.seqAt && now - this.seqAt < LIVE_MS; }
     forget() { this.seq = null; this.seqAt = 0; this.lastAt = -Infinity; }
     close() {}
 }

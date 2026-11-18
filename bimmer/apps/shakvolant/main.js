@@ -8,6 +8,7 @@ const SET = require('./probe_sets').shakvolant;
 
 mgu.run({
     start(ctx) {
+        require('./survive').install(ctx.log);       // une erreur que personne n'a rattrapée ne ferme pas l'appli (shared/survive.js)
         try {
             probe.start(ctx, SET);
         } catch (e) {

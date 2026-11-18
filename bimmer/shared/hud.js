@@ -317,6 +317,10 @@ const LAYER_BUDGET = 8;          // cluster-render's limit per client connection
 const MAX_CONN = 4;              // connections a layout may ask for ("conn"): 32 layers service-wide / 8 per connection
 const PIXEL_BYTES = 16 * 1024 * 1024;   // cluster-render's pixel memory for every app's images together (CompositorLimits.pixel_bytes)
 const SHEET_AREA_FRAC = 4;       // the first sheet size limit: 1/4 of the target area (see the header)
+const REFUSED_RETRY_MS = [5000, 15000, 45000];   // after cluster-render refused a layer: the layout is made again after these waits, then left (see _retryRefused)
+const REBUILD_MIN_MS = 400;      // two rebuilds of the layout are at least this far apart (see _rebuild)
+const FAULT_WHOLE = 3;           // an error caught by _guard is logged with its stack this many times for each place...
+const FAULT_QUIET_MS = 10000;    // ...then one line at most this often
 const TICK_MS = 20;              // 50 Hz: shift bar and gauges (20 Hz moved in visible steps, 40 Hz until 0.21.24; owner, Nov 18 2026: "a few more fps"; a frame costs under 1 ms and unchanged uniforms are not sent)
 const PERF_WINDOW_MS = 5000;   // the window the Signals tab's loop timing is counted over
 const CDS_IFACE = 'de.bmw.infotainment.vehicle.CDS';
@@ -672,14 +676,14 @@ class HudApp {
 
         this._setupVehicleData();
         this.layouts.onChange(() => this._rebuild());
-        ctx.settings.onChange((key) => {
+        ctx.settings.onChange((key) => this._guard('setting ' + key, () => {
             // a theme or layout picked anywhere (the page asks first, the kit's All settings list doesn't): no longer stepping aside
             if (['hudLayout', 'inHybrid', 'inSport', 'inEco', 'byMode'].indexOf(key) >= 0 && this.screen.yielded) this.screen.release();
             if (key === 'viewSel') this.viewNow = null;           // a choice made on the page wins over the button's last step
             if (PLACE_KEYS.indexOf(key) >= 0) this._guard('place', () => this._place());
             else if (LIVE_KEYS.indexOf(key) >= 0) this.widgets.forEach((x) => { x.last = null; });
             else if (key !== 'demo') this._rebuild(); else this._status();
-        });
+        }));
     }
 
     /* ---------------- readout slots ---------------- */
@@ -995,9 +999,11 @@ class HudApp {
 
     _wireClientEvents(c, ci) {
         const tag = ci ? ' [connection ' + (ci + 1) + ']' : '';
-        c.on('ready', () => { this.log.info('cluster-render ready' + tag + ' (backend=' + c.backend + ')'); if (ci === 0) this._rebuild(); else this._status(); });
-        c.on('disconnected', () => { this.log.warn('cluster-render disconnected' + tag + ', client will retry'); this._status(); });
-        c.on('layer', (ref, state, reason) => {
+        // every handler runs from the socket's 'data' event: guarded, an error there would be an uncaught one (the kit exits on those)
+        const on = (name, fn) => c.on(name, (...a) => this._guard('cluster-render ' + name, () => fn(...a)));
+        on('ready', () => { this.log.info('cluster-render ready' + tag + ' (backend=' + c.backend + ')'); if (ci === 0) this._rebuild(true); else this._status(); });
+        on('disconnected', () => { this.log.warn('cluster-render disconnected' + tag + ', client will retry'); this._status(); });
+        on('layer', (ref, state, reason) => {
             const key = ci + ':' + ref;
             const old = this.layerStates.get(key);
             const same = old && old.state === state;
@@ -1021,20 +1027,21 @@ class HudApp {
             }
             this._statusSoon();
         });
-        c.on('target', (name, state, holder, reason) => {
+        on('target', (name, state, holder, reason) => {
             if (name !== this.target) return;
             this.targetState = { state, holder, reason };
             this.log.info('target ' + name + tag + ' ' + state + (holder ? ' (holder ' + holder + ')' : '') + (reason ? ': ' + reason : ''));
             this._statusSoon();
         });
-        c.on('refused', (op, ref, reason) => {
+        on('refused', (op, ref, reason) => {
             const w = this._widgetOf(ci, ref);
             this.log.warn('refused ' + op + ' on ' + ref + tag + (w ? ' (' + w + ')' : '') + ': ' + reason);
             if (!this.refused) this.refused = (w || op) + ': ' + reason;   // the first one, until the next rebuild
+            if (op === 'layer' || op === 'asset') this._retryRefused();
             this._statusSoon();
         });
-        c.on('budget', (capKb, maxKb, reason) => this.log.info('budget' + tag + ' ' + capKb + '/' + maxKb + ' kb/s (' + reason + ')'));
-        c.on('status', (text) => {
+        on('budget', (capKb, maxKb, reason) => this.log.info('budget' + tag + ' ' + capKb + '/' + maxKb + ' kb/s (' + reason + ')'));
+        on('status', (text) => {
             this.log.info('cluster-render status: ' + text);
             const ids = sceneIdsOf(text);
             if (!ids) return;
@@ -1067,6 +1074,25 @@ class HudApp {
         this.ci.start();
         if (this.target === 'panel') { this.danger.start(); this.speedLimit.start(); }
         this.ciTimer = setInterval(() => this._guard('cluster info', () => this._shareWithClusterInfo()), 500);
+    }
+
+    /**
+     * cluster-render refused a layer (its 32 layers or its pixel memory, shared by every app, were full at that moment: another app starting or
+     * letting go at the same time): what the layer carries is missing from the screen until the next rebuild, which may not come for the whole
+     * drive. So the layout is made again a little later, REFUSED_RETRY_MS.length times at most, each wait longer; a layout that is refused
+     * every time (too big by itself) is then left as it is, and the count starts again once a layout has gone through whole.
+     */
+    _retryRefused() {
+        const k = this.refusedTries || 0;
+        if (this.refusedT || k >= REFUSED_RETRY_MS.length) return;
+        this.refusedT = setTimeout(() => {
+            this.refusedT = null;
+            if (!this.refused) return;                       // made again meanwhile, and taken whole
+            this.refusedTries = k + 1;
+            this.log.info('a layer was refused (' + this.refused + '): making the layout again, try ' + (k + 1) + ' of ' + REFUSED_RETRY_MS.length);
+            this._guard('refused retry', () => this._rebuild());
+        }, REFUSED_RETRY_MS[k]);
+        if (this.refusedT.unref) this.refusedT.unref();
     }
 
     /** The energy flow replaces the boost or not (see setting("power")), as a string to see when the layout has to be rebuilt. */
@@ -1268,7 +1294,7 @@ class HudApp {
         // theme has one and the setting allows; the layout is rebuilt with the window cut or filled
         const allowed = shows && !!this.windowRect && this.setting('centreWindow') !== false;
         if (allowed && this.ci.wantsWindow()) this.windowAskAt = now;
-        const open = allowed && now - this.windowAskAt < WINDOW_HOLD_MS;
+        const open = allowed && now >= this.windowAskAt && now - this.windowAskAt < WINDOW_HOLD_MS;
         if (open !== this.windowOpen) {
             this.windowOpen = open;
             this.log.info('centre window ' + (open ? 'open: Cluster Centre / Cluster Info draw in it' : 'closed'));
@@ -1383,6 +1409,8 @@ class HudApp {
         try { this.mapWin.release(); } catch (e) { /* exiting anyway */ }
         clearInterval(this.claimTimer);
         clearTimeout(this.statusAskT);
+        clearTimeout(this.rebuildT); this.rebuildT = null;
+        clearTimeout(this.refusedT); this.refusedT = null;
         this.stallTimers.forEach((t) => clearTimeout(t)); this.stallTimers.clear();
         if (this.waze) this._guard('waze stop', () => this.waze.stop());
         this._guard('screen stop', () => this.screen.stop());
@@ -1444,7 +1472,35 @@ class HudApp {
     }
 
     _guard(what, fn) {
-        try { fn(); } catch (e) { this.log.error('hud ' + what + ': ' + (e && e.stack || e)); }
+        try { fn(); } catch (e) { this._fault(what, e); }
+    }
+
+    /**
+     * An error caught by _guard: counted (faultsShown, for the Signals tab: the owner reads the screen, not the log) and logged, whole the first
+     * FAULT_WHOLE times for each `what`, then one line every FAULT_QUIET_MS with the count. A widget that throws on every frame used to write its
+     * stack 50 times a second: the log rotated away in seconds and the processor was busy writing it.
+     */
+    _fault(what, e) {
+        const now = Date.now();
+        const all = this.faults || (this.faults = { n: 0, last: '', at: 0, by: {} });
+        const f = all.by[what] || (all.by[what] = { n: 0, shownAt: 0 });
+        all.n++; all.at = now; f.n++;
+        try { all.last = (what + ': ' + String(e && e.message || e)).slice(0, 160); } catch (x) { all.last = what; }
+        try {
+            if (f.n <= FAULT_WHOLE) this.log.error('hud ' + what + ': ' + (e && e.stack || e));
+            else if (now - f.shownAt >= FAULT_QUIET_MS) this.log.error('hud ' + what + ': ' + String(e && e.message || e) + ' (' + f.n + ' times so far)');
+            else return;
+            f.shownAt = now;
+        } catch (x) { /* the log failed: nothing to throw from here */ }
+    }
+
+    /** { n, last, at }: the errors caught so far in this run (_guard's and, where shared/survive.js is installed, the ones nobody caught), or null when there are none. */
+    faultsShown() {
+        const a = this.faults, s = process.__shakSurvive;
+        const n = (a ? a.n : 0) + (s ? s.n : 0);
+        if (!n) return null;
+        const newest = s && s.n && (!a || s.at >= a.at) ? { last: 'uncaught: ' + s.last, at: s.at } : { last: a.last, at: a.at };
+        return { n, last: newest.last, at: newest.at };
     }
 
     /* ---------------- status line (the center screen's first row) ---------------- */
@@ -1938,7 +1994,7 @@ class HudApp {
     _gSample(d, t) {
         if (!isNum(d.gLong) || Math.abs(d.gLong) > G_BAD || (isNum(d.gLat) && Math.abs(d.gLat) > G_BAD)) return;
         this.gBuf.push([t, isNum(d.gLat) ? d.gLat : 0, d.gLong]);
-        while (this.gBuf.length && t - this.gBuf[0][0] > G_AVG_MS) this.gBuf.shift();
+        while (this.gBuf.length && (t - this.gBuf[0][0] > G_AVG_MS || t < this.gBuf[0][0] || this.gBuf.length > 2000)) this.gBuf.shift();      // (a clock set back: the old samples go at once)
         const n = this.gBuf.length;
         this.gSm = { lat: this.gBuf.reduce((a, s) => a + s[1], 0) / n, long: this.gBuf.reduce((a, s) => a + s[2], 0) / n, at: Date.now() };
     }
@@ -2346,15 +2402,31 @@ class HudApp {
         return p ? [p.lat, p.lon] : [tz.FALLBACK.lat, tz.FALLBACK.lon];
     }
 
-    _resolve(template) { return String(template).replace(/\{\{([a-zA-Z0-9:]+)\}\}/g, (_, t) => this._token(t)); }
+    // (a token's argument can be a negative or a decimal number: "{{tc:-20}}" was left as it stood, and only looked right because the scale's font has
+    // no braces or letters: it drew "-20" in Fahrenheit too)
+    _resolve(template) { return String(template).replace(/\{\{([a-zA-Z0-9:.-]+)\}\}/g, (_, t) => this._token(t)); }
 
     /* ---------------- layers ---------------- */
 
-    _rebuild() {
+    /**
+     * Makes the layout again: every layer dropped, then made anew. At most one every REBUILD_MIN_MS while the app runs: a second one asked
+     * sooner waits for the rest of that time, and several asked meanwhile make one (the last state wins: a rebuild reads everything afresh).
+     * Two rebuilds back to back are what a flicker is made of (a Waze status that hesitates, a danger zone at the edge, a drive mode and a
+     * setting changing together), and each one keeps the car's processor for a while. `now`: at once whatever came before (cluster-render
+     * is back: nothing of ours is on the screen).
+     */
+    _rebuild(now) {
+        const t = Date.now(), since = t - (this.rebuiltAt || 0);
+        if (now !== true && this.started && since >= 0 && since < REBUILD_MIN_MS) {
+            if (!this.rebuildT) this.rebuildT = setTimeout(() => { this.rebuildT = null; this._guard('rebuild later', () => this._rebuild(true)); }, REBUILD_MIN_MS - since);
+            return;
+        }
+        clearTimeout(this.rebuildT); this.rebuildT = null;
+        if (this.client.ready) this.rebuiltAt = t;
         // every connection holds its writes till the whole new layout is made: the drops, the new layers and their first pixels reach
         // cluster-render together (cluster_render_client.js cork), so it has no time to draw the cluster without the theme in between
         const corked = this.clients.filter((c) => typeof c.cork === 'function' && c.cork());
-        try { this._guard('rebuild', () => this._rebuildInner()); } finally { corked.forEach((c) => c.uncork()); }
+        try { this._guard('rebuild', () => this._rebuildInner()); } finally { corked.forEach((c) => { try { c.uncork(); } catch (e) { /* a socket gone meanwhile */ } }); }
         this._status();
     }
 
@@ -2367,6 +2439,7 @@ class HudApp {
         this.pixelBytes = 0;
         this.layerStates.clear();
         this.stallTimers.forEach((t) => clearTimeout(t)); this.stallTimers.clear();
+        if (!this.refused) this.refusedTries = 0;        // the layout before this one went through whole (see _retryRefused)
         this.refused = null;
         clearTimeout(this.statusAskT); this.statusAskT = null;
         this.car.setRedline(this.setting('redline'));
@@ -2613,7 +2686,7 @@ class HudApp {
 
     /** Waze on Cluster says its map is showing (status.json state "showing", fresh), wherever it draws it. Read once a second. */
     _wazeShowing(now) {
-        if (this._wzAt !== undefined && now - this._wzAt < 1000) return this._wz === true;
+        if (this._wzAt !== undefined && now >= this._wzAt && now - this._wzAt < 1000) return this._wz === true;      // (not for as long as a clock set back went back)
         this._wzAt = now;
         let on = false;
         try {
@@ -3113,7 +3186,8 @@ class HudApp {
         this._smoothRpm(now);
         this._smoothSpeed(now);
         this._estStep(now);
-        if (this.config.hideWithWaze === true && this.started && this._layoutName() !== this.activeName) { this._rebuild(); return; }
+        // (a rebuild put off, see _rebuild: the gauges go on meanwhile)
+        if (this.config.hideWithWaze === true && this.started && this._layoutName() !== this.activeName) { this._rebuild(); if (!this.rebuildT) return; }
         // the 0-60 timer only on the car's own data (the demo drive would set a best time)
         if (!this.car.data().demo) this.runs.update(this.car.data().speed, now, this.setting('units') === 'us' ? 'us' : 'metric');
         this._trip(now);

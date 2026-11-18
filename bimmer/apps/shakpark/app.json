@@ -2,7 +2,7 @@
   "id": "shakpark",
   "title": "ShakPark",
   "description": "Caméra avant (en D, sous 15 km/h) et caméra arrière (en marche arrière) dans la fenêtre centrale du thème du cluster",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "vendor": "custom",
   "loggingId": "OAV2",
   "iconGlyph": "SP",
@@ -13,7 +13,7 @@
     "park_frame.js",
     "video_bridge.js",
     "waze_yield.js",
-    "cluster_render_client.js"
+    "cluster_render_client.js", "survive.js"
   ],
   "signals": {
     "de.bmw.infotainment.vehicle.Vehicle2": {

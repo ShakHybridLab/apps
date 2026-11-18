@@ -48,8 +48,10 @@ class Screen {
     }
 
     start() {
-        this.timer = setInterval(() => this.beat(), BEAT_MS);
-        this.beat();
+        // (a timer's error would be an uncaught one: the kit exits on those)
+        const beat = () => { try { this.beat(); } catch (e) { if (!this.beatWarned) { this.beatWarned = true; this.log.warn('screen: ' + (e && e.message || e)); } } };
+        this.timer = setInterval(beat, BEAT_MS);
+        beat();
     }
     stop() { clearInterval(this.timer); this._write(false); }
 

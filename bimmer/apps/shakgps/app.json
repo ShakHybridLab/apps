@@ -2,13 +2,14 @@
   "id": "shakgps",
   "title": "ShakGPS (essai)",
   "description": "Essai : la position GPS de la voiture (latitude, longitude, cap, altitude, qualité, vitesse), pour les alertes de radars et de zones de danger.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "vendor": "custom",
   "loggingId": "OAGP",
   "iconGlyph": "GPS",
   "shared": [
     "signal_probe.js",
-    "probe_sets.js"
+    "probe_sets.js",
+    "survive.js"
   ],
   "signals": {
     "de.bmw.infotainment.GPSData": {

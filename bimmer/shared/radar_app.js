@@ -67,7 +67,7 @@ class RadarApp {
     _ahead(t) {
         if (this.d.enabled && this.d.enabled() === false) { this.why = 'turned off'; return null; }
         if (!this.pos) { this.why = this.raw.posN ? 'position not understood' : 'no position yet'; return null; }
-        if (t - this.pos.at > POS_STALE_MS) { this.why = 'position too old'; return null; }
+        if (t - this.pos.at > POS_STALE_MS || t < this.pos.at) { this.why = 'position too old'; return null; }
         const z = this.d.zones ? this.d.zones.nearest(this.pos.lat, this.pos.lon, WITHIN_M) : null;
         if (!z) { this.trail = []; this.why = 'no zone within ' + (WITHIN_M / 1000) + ' km'; return null; }
         const key = z.lat.toFixed(2) + ',' + z.lon.toFixed(2);

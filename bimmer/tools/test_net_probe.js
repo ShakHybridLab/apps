@@ -104,7 +104,7 @@ check('aucun jeton, identifiant ni secret dans la sonde', () => {
     check('app.json : aucun signal, aucun thème touché, identifiants à part', () => {
         const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', 'shakreseau', 'app.json'), 'utf8'));
         assert.deepStrictEqual(spec.signals, {});
-        assert.deepStrictEqual(spec.shared, ['net_probe.js']);
+        assert.deepStrictEqual(spec.shared, ['net_probe.js', 'survive.js']);
         assert(spec.config.lang === 'fr' && spec.config.readOnly);
         const SETS = require('../shared/probe_sets');
         Object.keys(SETS).concat(['shaktheme', 'shakhud', 'shakpark']).forEach((a) => {

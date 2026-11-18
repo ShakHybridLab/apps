@@ -127,7 +127,7 @@ class Layouts {
     _watch() {
         try { fs.mkdirSync(this.dir); } catch (e) { /* there already, or the data folder is read-only */ }
         try {
-            fs.watch(this.dir, { persistent: false }, () => {
+            const watcher = fs.watch(this.dir, { persistent: false }, () => {
                 // debounce: an rsync push touches several files in quick succession
                 clearTimeout(this._timer);
                 this._timer = setTimeout(() => {
@@ -135,6 +135,9 @@ class Layouts {
                     this.changeListeners.forEach((cb) => { try { cb(); } catch (e) { this.log.warn('layouts listener: ' + e); } });
                 }, 300);
             });
+            // the folder taken away under us (the car wiping the app's data): the watcher says 'error', which nobody listening to would make an
+            // uncaught one (the kit exits on those)
+            watcher.on('error', (e) => { this.log.warn('layouts: no longer watching ' + this.dir + ' (' + (e && e.message || e) + ')'); try { watcher.close(); } catch (x) { /* closed */ } });
         } catch (e) {
             this.log.warn('layouts: cannot watch ' + this.dir + ' (' + e.message + '); a pushed layout shows after an app restart');
         }

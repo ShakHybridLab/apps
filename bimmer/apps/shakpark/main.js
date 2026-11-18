@@ -12,6 +12,7 @@ const { WazeYield } = require('./waze_yield');
 
 mgu.run({
     start(ctx) {
+        require('./survive').install(ctx.log);       // une erreur que personne n'a rattrapée ne ferme pas l'appli (shared/survive.js)
         let app, waze;
         try {
             const cfg = ctx.spec.config || {};

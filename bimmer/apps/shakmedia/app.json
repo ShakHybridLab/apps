@@ -2,13 +2,14 @@
   "id": "shakmedia",
   "title": "ShakMedia (essai)",
   "description": "Essai : ce que la voiture donne de la lecture en cours (titre, artiste, pochette) : les champs du lecteur multimédia.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "vendor": "custom",
   "loggingId": "OAMD",
   "iconGlyph": "MED",
   "shared": [
     "signal_probe.js",
-    "probe_sets.js"
+    "probe_sets.js",
+    "survive.js"
   ],
   "signals": {
     "de.bmw.infotainment.entertainment.mediaplayer.MediaPlayer": {

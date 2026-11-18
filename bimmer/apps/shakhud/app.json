@@ -2,7 +2,7 @@
   "id": "shakhud",
   "title": "ShakHUD",
   "description": "ShakHUD : un HUD pour le pare-brise, le compte-tours M Style (une barre brisée, rouge dans la zone rouge, bleu clair en électrique, verte en recharge), avec la batterie, les autonomies et les températures en bas à droite ; il se cache tout seul quand la carte Waze du HUD est affichée",
-  "version": "0.6.30",
+  "version": "0.6.31",
   "vendor": "custom",
   "loggingId": "OAS1",
   "iconGlyph": "SH",
@@ -41,7 +41,7 @@
     "catalog.js",
     "car_extras.js",
     "bottom_strip.js",
-    "gear_window.js"
+    "gear_window.js", "survive.js"
   ],
   "signals": {
     "de.bmw.infotainment.vehicle.CDS": {

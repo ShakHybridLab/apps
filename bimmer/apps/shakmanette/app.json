@@ -2,13 +2,14 @@
   "id": "shakmanette",
   "title": "ShakManette (essai)",
   "description": "Essai : quel signal répond quand on touche les manettes derrière le volant (clignotants, bouton de l'ordinateur de bord au bout de la manette).",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "vendor": "custom",
   "loggingId": "OAMN",
   "iconGlyph": "MAN",
   "shared": [
     "signal_probe.js",
-    "probe_sets.js"
+    "probe_sets.js",
+    "survive.js"
   ],
   "signals": {
     "de.bmw.body.Light": {

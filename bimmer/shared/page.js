@@ -180,7 +180,7 @@ class Page {
         // the renderer, which kept the car's processor busy (the cluster's gauges and the touch screen lagged behind it, ShakTheme 0.21.17).
         // 'idle' tells the kit's loop that nothing was drawn (the last frame stays up, the display resends it every second).
         const now = Date.now();
-        if (!this.dirty && now - this.drawnAt < REDRAW_MS) return 'idle';
+        if (!this.dirty && now >= this.drawnAt && now - this.drawnAt < REDRAW_MS) return 'idle';
         this.dirty = false; this.drawnAt = now;
         const cv = this.ctx.canvas(W, H);
         if (this.fr) {                                     // "lang": "fr": every text goes through shared/fr.js (accents: tools/bake_accents.py)
@@ -538,7 +538,10 @@ class Page {
             y += rh;
         });
         const pf = pg === 0 && typeof this.hud.perfShown === 'function' ? this.hud.perfShown() : null;
-        note(cv, CX, y + 12, [pf ? 'Loop: ' + pf.perSec + '/s · average ' + pf.avg + ' ms · slowest ' + pf.max + ' ms · longest wait ' + pf.gap + ' ms' : 'Photograph pages 1 and 2 after a drive: they show the last values the car sent.', 'Blue: what the app understood of the value. Read only: nothing here changes the car.']);
+        // errors the app caught and went on from (hud.js _guard, shared/survive.js): on the screen, since the owner reads the screen and not the log
+        const ft = pg === 0 && typeof this.hud.faultsShown === 'function' ? this.hud.faultsShown() : null;
+        note(cv, CX, y + 12, [pf ? 'Loop: ' + pf.perSec + '/s · average ' + pf.avg + ' ms · slowest ' + pf.max + ' ms · longest wait ' + pf.gap + ' ms' : 'Photograph pages 1 and 2 after a drive: they show the last values the car sent.',
+            ft ? 'Errors caught: ' + ft.n + ' · last: ' + String(ft.last).slice(0, 84) : 'Blue: what the app understood of the value. Read only: nothing here changes the car.']);
     }
 
     /** The pages of the Signals tab as small chips at the right of the title ("1/5" ...). */

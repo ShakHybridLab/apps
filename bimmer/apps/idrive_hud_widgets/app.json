@@ -34,7 +34,7 @@
     "map_window.js", "hybrid_tach.js",
     "runs.js",
     "tz.js",
-    "shift_light.js"
+    "shift_light.js", "probes.js", "catalog.js", "car_extras.js", "bottom_strip.js", "gear_window.js", "fr.js"
   ],
   "signals": {
     "de.bmw.infotainment.vehicle.CDS": {

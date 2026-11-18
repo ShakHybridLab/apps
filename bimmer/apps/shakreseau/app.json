@@ -2,12 +2,12 @@
   "id": "shakreseau",
   "title": "ShakReseau (essai)",
   "description": "Essai : une appli peut-elle joindre internet depuis la voiture (Spotify, pochettes) ? Résolution de nom, HTTP, HTTPS, port ouvert, adresses de la voiture. Ne touche à aucun thème.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "vendor": "custom",
   "loggingId": "OARS",
   "iconGlyph": "RES",
   "shared": [
-    "net_probe.js"
+    "net_probe.js", "survive.js"
   ],
   "signals": {},
   "screens": [

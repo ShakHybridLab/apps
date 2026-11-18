@@ -19,7 +19,7 @@ Object.keys(SETS).forEach((id) => {
         const want = {};
         Object.keys(SETS[id].signals).forEach((i) => { want[i] = {}; SETS[id].signals[i].forEach((f) => { want[i][f] = 's'; }); });
         assert.deepStrictEqual(spec.signals, want);
-        assert.deepStrictEqual(spec.shared.slice().sort(), ['probe_sets.js', 'signal_probe.js']);
+        assert.deepStrictEqual(spec.shared.slice().sort(), ['probe_sets.js', 'signal_probe.js', 'survive.js']);
         assert(/readOnly/.test(JSON.stringify(spec.config)) && spec.config.lang === 'fr');
         const main = fs.readFileSync(path.join(ROOT, 'apps', id, 'main.js'), 'utf8');
         assert(main.includes("require('./probe_sets')." + id), 'main.js lit sa ligne de la table');

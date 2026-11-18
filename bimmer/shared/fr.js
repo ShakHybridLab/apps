@@ -133,6 +133,7 @@ const PATTERNS = [
     [/^→ no value \((\d+)\)$/, '→ pas de valeur ($1)'], [/^→ none \((\d+)\)$/, '→ aucune ($1)'],
     [/^(\d+) msg · ([\d.]+)\/s$/, '$1 msg · $2/s'],
     // onglet Signaux : la mesure de la boucle des jauges (hud.js _perfNote)
+    [/^Errors caught: (\d+) · last: (.*)$/, 'Erreurs rattrapées : $1 · dernière : $2'],
     [/^Loop: (\d+)\/s · average ([\d.]+) ms · slowest (\d+) ms · longest wait (\d+) ms$/, 'Boucle : $1/s · moyenne $2 ms · la plus lente $3 ms · attente la plus longue $4 ms'],
     [/^Turn HUD Widgets off so (.*) shows\?$/, 'Éteindre HUD Widgets pour afficher $1 ?'],
     [/^Turn the cluster theme off so (.*) shows\?$/, 'Éteindre le thème du cluster pour afficher $1 ?'],

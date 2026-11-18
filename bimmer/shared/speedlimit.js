@@ -86,9 +86,11 @@ class SpeedLimit {
 
     start() {
         this.stop();
-        this.timer = setInterval(() => this.scan(), SCAN_MS);
+        // (a timer's error would be an uncaught one: the kit exits on those)
+        const scan = () => { try { this.scan(); } catch (e) { if (!this.scanWarned) { this.scanWarned = true; try { this.log.warn('speedlimit: ' + (e && e.message || e)); } catch (x) { /* no log */ } } } };
+        this.timer = setInterval(scan, SCAN_MS);
         if (this.timer.unref) this.timer.unref();
-        this.scan();
+        scan();
     }
 
     stop() {
@@ -116,7 +118,7 @@ class SpeedLimit {
             });
         } catch (e) { best = null; }
         const c = this.car;
-        if (c && this.now() - c.t < CAR_TTL_MS && (!best || c.t > best.t)) best = c;
+        if (c && Math.abs(this.now() - c.t) < CAR_TTL_MS && (!best || c.t > best.t)) best = c;
         const before = this.cur ? this.cur.limit : null, after = best ? best.limit : null;
         this.cur = best;
         if (before !== after) {

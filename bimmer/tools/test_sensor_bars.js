@@ -263,6 +263,15 @@ check('le panneau de M Blade : les barres suivent leurs capteurs, avec la couleu
     assert(visible.hoodY(P.shape[0]) < P.shape[1] && visible.hoodY(P.shape[0] + P.shape[2] * (P.shape[1] - P.y)) < P.y, 'la pointe et le coin haut sous le capot');
     assert.strictEqual(require(path.join(root, 'shared', 'shaders.js')).mpanel.indexOf('uniform vec4 u_pan;') > 0, true);
 });
+check('les jetons à nombre négatif ou décimal sont résolus ({{tc:-20}} : -20 °C, -4 °F ; {{pc:2}} : 2 bar, 29 psi)', () => {
+    const mk = (units) => { const h = Object.create(HudApp.prototype); h.setting = (k) => (k === 'units' ? units : undefined); h.ctx = { settings: { item: () => null, get: () => undefined } }; return h; };
+    assert.strictEqual(mk('metric')._resolve('{{tc:-20}}'), '-20');
+    assert.strictEqual(mk('us')._resolve('{{tc:-20}}'), '-4');
+    assert.strictEqual(mk('us')._resolve('{{tc:15}}'), '59');
+    assert.strictEqual(mk('metric')._resolve('{{pc:2}}'), '2');
+    assert.strictEqual(mk('us')._resolve('{{pc:2}}'), '29');
+    assert.strictEqual(mk('metric')._resolve('{{pc:0.5}}'), '0.5');
+});
 check('aucune vue ne met un widget sur les zones que BMW dessine (ceinture, lettre de rapport) ni dans le trou de la lettre de rapport', () => {
     const visible = require(path.join(root, 'shared', 'visible.js'));
     const on = (w, map, v, sp) => !w.toggle || w.toggle.split('&').every((part) => {

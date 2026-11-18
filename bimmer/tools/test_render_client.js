@@ -83,7 +83,7 @@ check('cork / uncork : une reconstruction part d\'un bloc, dans l\'ordre ; imbri
 check('hud.js : _rebuild retient les écritures de chaque connexion pendant la reconstruction et les relâche même sur une erreur', () => {
     const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
     assert(/const corked = this\.clients\.filter\(\(c\) => typeof c\.cork === 'function' && c\.cork\(\)\);/.test(src));
-    assert(/finally \{ corked\.forEach\(\(c\) => c\.uncork\(\)\); \}/.test(src));
+    assert(/finally \{ corked\.forEach\(\(c\) => \{ try \{ c\.uncork\(\); \} catch/.test(src));
 });
 
 console.log(process.exitCode ? 'render client: FAILED' : 'render client: all ' + n + ' checks pass');

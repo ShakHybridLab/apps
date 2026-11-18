@@ -38,9 +38,11 @@ class Danger {
 
     start() {
         this.stop();
-        this.timer = setInterval(() => this.scan(), SCAN_MS);
+        // (a timer's error would be an uncaught one: the kit exits on those)
+        const scan = () => { try { this.scan(); } catch (e) { if (!this.scanWarned) { this.scanWarned = true; try { this.log.warn('danger: ' + (e && e.message || e)); } catch (x) { /* no log */ } } } };
+        this.timer = setInterval(scan, SCAN_MS);
         if (this.timer.unref) this.timer.unref();
-        this.scan();
+        scan();
     }
 
     stop() {

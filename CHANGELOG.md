@@ -2,6 +2,29 @@
 
 ## 18 novembre 2026
 
+### ShakTheme 0.21.26, ShakHUD 0.6.31, ShakPark 0.2.2, ShakRadar 0.1.1, Shak Musique 0.1.1, ShakReseau 0.1.1, applis d'essai 0.2.1 (ShakGPS 0.1.1) : stabilité et fiabilité (pas encore essayé sur la voiture)
+Demande du propriétaire (18 nov. 2026, 08:18) : « analyse à ton tour les applis pour les optimiser, surtout la stabilité et la fiabilité ». Relecture de tout ce qui tourne tout seul (minuteries, sockets, fichiers), puis essai d'endurance au banc : ShakTheme et ShakHUD construits, 75 à 90 s de changements de vue et de thème quatre fois par seconde pendant que le faux cluster-render coupe, se tait ou ne lit plus. Résultat : aucune erreur, mémoire stable (9 à 10 Mio), boucle à 49 images par seconde, tout revient après chaque panne.
+
+**Une erreur ne ferme plus l'appli.** Le kit journalise une erreur que personne n'a rattrapée puis **sort** ; sur la voiture, une sortie imprévue efface les réglages de l'appli et la deuxième la **désinstalle**. Une seule valeur inattendue dans une minuterie suffisait.
+- **`shared/survive.js`** (nouveau, installé en premier par toutes les applis Shak) : l'erreur est écrite au journal et comptée, **l'appli continue** (elle ne fait que dessiner : l'image suivante repart des données de la voiture). Seulement sur la voiture ; au banc et dans les tests, une erreur reste visible comme avant.
+- Les événements de cluster-render, les changements de réglages et les minuteries de Waze, de la zone de danger, de la limitation, de l'écran partagé et de Cluster Info sont protégés un par un (`shared/hud.js`, `waze.js`, `danger.js`, `speedlimit.js`, `screen.js`, `cluster_info.js`) ; la surveillance du dossier des mises en page écoute ses propres erreurs (`layouts.js`).
+- **Le journal ne se remplit plus** : une jauge qui échoue à chaque image écrivait sa trace 50 fois par seconde ; trois fois entière, puis une ligne toutes les 10 s avec le compte (`_fault`).
+- **Onglet Signaux, page 1** : « Erreurs rattrapées : N · dernière : … » dès qu'il y en a une. Une photo suffit, pas besoin du journal.
+
+**Moins de reconstructions du thème.** Refaire le thème (toutes les couches retirées puis recréées : 20 à 33 ms au banc, bien plus sur la voiture) deux fois de suite, c'est un clignotement.
+- **Au plus une reconstruction toutes les 400 ms** (`_rebuild`, `REBUILD_MIN_MS`) : plusieurs demandes rapprochées (Waze qui hésite, zone de danger en bordure, mode de conduite et réglage ensemble, bouton des vues pressé vite) n'en font qu'une, et la dernière demande est toujours faite. Le retour de cluster-render passe devant.
+- **Couche refusée par cluster-render** (ses 32 couches ou sa mémoire, partagées entre toutes les applis, pleines à ce moment-là) : ce qu'elle porte restait absent jusqu'au prochain changement, parfois tout le trajet. Le thème est maintenant refait 5 s plus tard, puis 15 s, puis 45 s, trois fois au plus (`_retryRefused`).
+
+**La liaison avec cluster-render** (`shared/cluster_render_client.js`) : un service qui prend la connexion sans répondre (15 s sans « hello ») ou qui ne lit plus (plus de 16 Mio en attente dans le socket) reçoit une nouvelle connexion, avec tout l'état rejoué : l'appli n'attend plus pour toujours et ne grossit plus en mémoire. Le bouchon d'une reconstruction est remis à zéro si le socket se ferme au milieu.
+
+**L'horloge de la voiture qui recule** (elle est réglée par la voiture, parfois après le démarrage des applis) : plusieurs temporisations comparaient « maintenant » à une heure notée et se figeaient pour toute la durée du recul. Corrigé : la carte Waze ne reste pas « ouverte » sans carte (`waze.js`), la fenêtre centrale non plus, l'état de Waze est relu (`hud.js`), Cluster Info continue d'écrire ses fichiers (les autres applis auraient cru le thème parti), la limitation lue par la voiture expire, ShakRadar ne garde pas une vieille position, et **ShakPark ne prend pas une vieille image de caméra pour une image en direct** (`park_app.js`).
+
+**Deux défauts trouvés en chemin.**
+- **Les jetons à nombre négatif n'étaient pas lus** : `{{tc:-20}}` (la graduation de la température extérieure du panneau de M Blade) restait tel quel et ne s'affichait « -20 » que parce que la police de la graduation n'a ni lettres ni accolades ; en Fahrenheit il aurait encore affiché -20. Corrigé (`_resolve`).
+- **HUD Widgets ne démarrait plus s'il était reconstruit** : sa liste de fichiers partagés n'avait pas suivi le moteur (six modules manquants : `probes.js`, `catalog.js`, `car_extras.js`, `bottom_strip.js`, `gear_window.js`, `fr.js`). Liste complétée, rien d'autre touché, **version inchangée (0.12.11)**.
+
+Tests : `tools/test_reliability.js` (17 vérifications : survive, garde et journal, espacement des reconstructions, couche refusée, client contre un faux service muet ou sourd, horloge qui recule, et **chaque appli embarque tous les modules que son code charge**), `tools/test_sensor_bars.js` (jetons négatifs et décimaux).
+
 ### ShakTheme 0.21.25, ShakHUD 0.6.30 : 50 images par seconde, les deux jauges de M Blade plus à droite avec Waze (pas encore essayé sur la voiture)
 Demandes du propriétaire (18 nov. 2026, 02:52 et 02:53) : « avec Waze les deux barres, décale-les un tout petit peu à droite, c'est un peu serré », « optimise pour rendre très fluide et stable, augmente un peu les fps, ShakTheme et ShakHUD surtout ».
 - **La boucle des jauges passe de 40 à 50 images par seconde** (`shared/hud.js`, `TICK_MS` 20 ms), pour ShakTheme et ShakHUD. Le régime et la vitesse des barres étaient déjà lissés entre deux messages de la voiture (120 ms et 90 ms) : ils glissent maintenant en pas plus fins. Le coût reste faible : une image prend moins de 1 ms au banc, et depuis 0.21.24 les valeurs inchangées ne sont plus envoyées à cluster-render. Sur la voiture, l'onglet Signaux affiche la cadence réelle (« Boucle : x/s »).

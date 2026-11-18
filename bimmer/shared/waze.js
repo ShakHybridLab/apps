@@ -114,13 +114,23 @@ class Waze {
         return { text: 'Waiting for the map', up: false, ok: true };
     }
 
+    /** _update from a file callback: an error there would be an uncaught one (the kit exits on those), so it is caught and said once. */
+    _safeUpdate(s) {
+        try { this._update(s); } catch (e) {
+            if (!this.pollWarned) { this.pollWarned = true; if (this.log) this.log.warn('waze: status not handled (' + (e && e.message || e) + ')'); }
+        }
+    }
+
     _poll() {
+        if (this.polling) return;            // the last read has not come back (a slow disk): no second one on top of it
+        this.polling = true;
         fs.stat(this.statusPath, (err, st) => {
-            if (err || this.now() - st.mtime.getTime() > STALE_MS) return this._update(null);
+            if (err || this.now() - st.mtime.getTime() > STALE_MS) { this.polling = false; return this._safeUpdate(null); }
             fs.readFile(this.statusPath, 'utf8', (e, txt) => {
+                this.polling = false;
                 let s = null;
                 try { if (!e) { const j = JSON.parse(txt); s = { state: String(j.state || ''), target: j.target == null ? null : String(j.target), raw: rawOf(j), keys: Object.keys(j).join(',') }; } } catch (x) { s = null; }
-                this._update(s);
+                this._safeUpdate(s);
             });
         });
     }
@@ -135,7 +145,8 @@ class Waze {
         if (showing) this.showAt = this.now();
         // gone for good at once: not wanted any more, or the tool says the map is off / unsupported / back on BMW's own map view
         const gone = !this.wanted || (s && (s.state === 'off' || s.state === 'unsupported' || s.target === 'map'));
-        const up = showing || (this.up && !gone && this.now() - this.showAt < DOWN_HOLD_MS);
+        const held = this.now() - this.showAt;        // (a clock set back must not hold the window open for as long as it went back)
+        const up = showing || (this.up && !gone && held >= 0 && held < DOWN_HOLD_MS);
         const text = this.info().text;
         const changed = up !== this.up || text !== this.lastText;
         this.up = up;

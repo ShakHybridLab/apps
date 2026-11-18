@@ -2,7 +2,7 @@
   "id": "shakradar",
   "title": "ShakRadar (essai)",
   "description": "Essai : l'alerte « zone de danger » de ShakTheme à partir de la position GPS de la voiture (GPSData) et de la liste officielle des radars fixes de France (zones de 2 ou 4 km, pas les radars). Lecture seule.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "vendor": "custom",
   "loggingId": "OARD",
   "iconGlyph": "RAD",
@@ -10,7 +10,7 @@
     "gps_pos.js",
     "radar_zones.js",
     "radar_app.js",
-    "signal_probe.js"
+    "signal_probe.js", "survive.js"
   ],
   "signals": {
     "de.bmw.infotainment.GPSData": {

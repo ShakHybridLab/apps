@@ -36,7 +36,10 @@
  * asks the app for anything else. An image layer or asset is kept here
  * whole: what changed since it last went is sent as one update when the
  * socket takes it. A video frame not yet sent is replaced by the next
- * (newest wins).
+ * (newest wins). A service that takes the connection but never answers (no
+ * hello within HELLO_MS) or stops reading (more than BACKLOG_MAX bytes waiting
+ * in the socket) gets a new connection, with the same replay: the client never
+ * waits for ever and never holds more than that in memory.
  */
 'use strict';
 
@@ -50,6 +53,10 @@ const FRAME_T = 0x46;   /* 'F' */
 const MESH_T = 0x4d;    /* 'M' */
 const MAX_DIRTY = 16;
 const BACKOFF_MS = [250, 500, 1000, 2000];
+const HELLO_MS = 15000;                /* connected but no hello from the service for this long: the connection is made again (long: a service still starting answers late, and a connection given up there is work for it) */
+/* Bytes the socket may hold unsent before the connection is made again (a service that stopped reading). Well over the
+ * biggest message there is (a whole 1920x720 image, 5.3 MiB, waits there for a moment after every rebuild). */
+const BACKLOG_MAX = 16 * 1024 * 1024;
 const SET_KEYS = ['klass', 'z', 'x', 'y', 'w', 'h', 'visible', 'exclusive', 'prewarm', 'contend', 'guide_hold',
     'opacity', 'rotate', 'sx', 'sy', 'px', 'py'];
 const MESH_KEYS = ['projection', 'fov', 'ortho_h', 'near', 'far', 'cx', 'cy', 'cz', 'crx', 'cry', 'crz'];
@@ -134,6 +141,8 @@ class ClusterRender extends EventEmitter {
         this.closed = true;
         if (this.timer) clearTimeout(this.timer);
         this.timer = null;
+        if (this.helloTimer) clearTimeout(this.helloTimer);
+        this.helloTimer = null;
         if (this.sock) this.sock.destroy();
         this.sock = null;
         this.ready = false;
@@ -149,6 +158,9 @@ class ClusterRender extends EventEmitter {
         sock.on('connect', () => {
             /* Everything made before now goes in the replay below. */
             this.connected = true;
+            if (this.helloTimer) clearTimeout(this.helloTimer);
+            this.helloTimer = setTimeout(() => { this.helloTimer = null; if (this.sock === sock && !this.ready) sock.destroy(); }, HELLO_MS);
+            if (this.helloTimer.unref) this.helloTimer.unref();
             this._send({ op: 'hello', app: this.app, proto: PROTO });
             /* Assets first, so binds find them; binds and animations once
              * every layer and part is made. */
@@ -177,6 +189,10 @@ class ClusterRender extends EventEmitter {
             this.sock = null;
             this.ready = false;
             this.connected = false;
+            this.corked = 0;
+            this.corkSock = null;
+            if (this.helloTimer) clearTimeout(this.helloTimer);
+            this.helloTimer = null;
             this.pendingFrames.clear();
             if (wasReady) this.emit('disconnected');
             if (this.closed) return;
@@ -210,6 +226,8 @@ class ClusterRender extends EventEmitter {
             this.targets = ev.targets;
             this.ready = true;
             this.backoff = 0;
+            if (this.helloTimer) clearTimeout(this.helloTimer);
+            this.helloTimer = null;
             this._pump();
             this.emit('ready');
         } else if (ev.ev === 'layer') {
@@ -229,7 +247,18 @@ class ClusterRender extends EventEmitter {
 
     _write(m) {
         if (!this.sock || !this.connected) return;
-        if (!this.sock.write(m)) this.blocked = true;
+        if (!this.sock.write(m)) { this.blocked = true; this._backlog(); }
+    }
+
+    /* The service stopped reading: what waits in the socket is let go with the
+     * connection (the 'close' handler connects again and replays the state),
+     * instead of growing until the app is out of memory. Not while corked: a
+     * rebuild's messages wait there on purpose, for a moment. */
+    _backlog() {
+        const s = this.sock;
+        if (!s || this.corked) return;
+        const n = s.bufferSize !== undefined ? s.bufferSize : s.writableLength;
+        if (n > BACKLOG_MAX) { this.stalls = (this.stalls || 0) + 1; s.destroy(); }
     }
 
     /* Writes frames while the socket takes them: image changes first, then
@@ -550,8 +579,8 @@ class ClusterRender extends EventEmitter {
     uncork() {
         if (!this.corked) return;
         this.corked--;
-        if (this.corked === 0) { const s = this.corkSock; this.corkSock = null; if (s) s.uncork(); }
+        if (this.corked === 0) { const s = this.corkSock; this.corkSock = null; if (s) s.uncork(); this._backlog(); }
     }
 }
 
-module.exports = { ClusterRender, DEFAULT_PATH };
+module.exports = { ClusterRender, DEFAULT_PATH, HELLO_MS, BACKLOG_MAX };

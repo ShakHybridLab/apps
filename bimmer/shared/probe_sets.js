@@ -36,7 +36,7 @@ module.exports = {
         },
     },
     shakgps: {
-        title: 'ShakGPS', glyph: 'GPS', logId: 'OAGP', version: '0.1.0',
+        title: 'ShakGPS', glyph: 'GPS', logId: 'OAGP', version: '0.1.1',
         description: "Essai : la position GPS de la voiture (latitude, longitude, cap, altitude, qualité, vitesse), pour les alertes de radars et de zones de danger.",
         note: 'Reste dehors ou roule un peu : les deux lignes doivent se remplir (position, puis cap / altitude / qualité / vitesse). Photographie l\'écran.',
         // le propriétaire a lu ces noms au catalogue (17 nov. 2026, « infotainment.GPSData », lisible et notifié) : le nom complet est celui des

@@ -60,8 +60,9 @@ class ClusterInfo {
     }
 
     start() {
-        this.timer = setInterval(() => this.scan(), SCAN_MS);
-        this.scan();
+        // (a timer's error would be an uncaught one: the kit exits on those)
+        this.timer = setInterval(() => { try { this.scan(); } catch (e) { this._warn('scan', e); } }, SCAN_MS);
+        try { this.scan(); } catch (e) { this._warn('scan', e); }
     }
 
     stop() {
@@ -95,7 +96,7 @@ class ClusterInfo {
             if (!/\.json$/.test(n)) return;
             let j;
             try { j = JSON.parse(fs.readFileSync(path.join(this.dir, n), 'utf8')); } catch (e) { return; }   // half written: next scan
-            if (!j || typeof j.t !== 'number' || t - j.t >= STALE_MS) return;
+            if (!j || typeof j.t !== 'number' || Math.abs(t - j.t) >= STALE_MS) return;
             if (/^wanted(-[\w.-]+)?\.json$/.test(n)) {
                 (Array.isArray(j.values) ? j.values : []).forEach((v) => { want[v] = true; });
             } else if (n !== this.id + '.json') others[n.replace(/\.json$/, '')] = j;
@@ -132,7 +133,8 @@ class ClusterInfo {
             return;
         }
         const t = this.now();
-        if (t - this.wantedAt < 1000 || !this._ensure(this.dir)) return;
+        // (0 <= ... : a clock set back, as the car's can be after the apps started, must not hold the next write for as long as it went back)
+        if ((t >= this.wantedAt && t - this.wantedAt < 1000) || !this._ensure(this.dir)) return;
         this.wantedAt = t;
         const tmp = f + '.tmp';
         try {
@@ -152,7 +154,7 @@ class ClusterInfo {
             if (!/^window-[\w.-]+\.json$/.test(n) || n === 'window-' + this.id + '.json') return;
             let j;
             try { j = JSON.parse(fs.readFileSync(path.join(this.themesDir, n), 'utf8')); } catch (e) { return; }   // half written: next scan
-            if (j && typeof j.t === 'number' && t - j.t < STALE_MS) ask = true;
+            if (j && typeof j.t === 'number' && Math.abs(t - j.t) < STALE_MS) ask = true;
         });
         this.windowAsk = ask;
     }
@@ -234,7 +236,7 @@ class ClusterInfo {
         const open = !!(win && info && info.open === true);
         const map = !!(open && info.map === true);      // a map (Waze) shows in the window: nothing may be drawn over it
         const key = JSON.stringify([win, open, map]);
-        if ((t - this.themeAt < 1000 && key === this.themeKey) || !this._ensure(this.themesDir)) return;
+        if ((t >= this.themeAt && t - this.themeAt < 1000 && key === this.themeKey) || !this._ensure(this.themesDir)) return;
         this.themeAt = t; this.themeKey = key;
         const f = path.join(this.themesDir, 'themes.json'), tmp = f + '.tmp';
         try { fs.writeFileSync(tmp, JSON.stringify({ at: t, app: this.name, window: win, open, map }), { mode: 0o644 }); fs.renameSync(tmp, f); this.themeMarked = true; } catch (e) { this._warn('presence', e); }

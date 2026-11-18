@@ -23,6 +23,7 @@ const SET = require('./probe_sets').%(id)s;
 
 mgu.run({
     start(ctx) {
+        require('./survive').install(ctx.log);       // une erreur que personne n'a rattrapée ne ferme pas l'appli (shared/survive.js)
         try {
             probe.start(ctx, SET);
         } catch (e) {
@@ -36,8 +37,8 @@ for app, s in SETS.items():
     d = os.path.join(ROOT, 'apps', app)
     os.makedirs(d, exist_ok=True)
     spec = {
-        'id': app, 'title': s['title'] + ' (essai)', 'description': s['description'], 'version': s.get('version', '0.2.0'), 'vendor': 'custom',
-        'loggingId': s['logId'], 'iconGlyph': s['glyph'], 'shared': ['signal_probe.js', 'probe_sets.js'],
+        'id': app, 'title': s['title'] + ' (essai)', 'description': s['description'], 'version': s.get('version', '0.2.1'), 'vendor': 'custom',
+        'loggingId': s['logId'], 'iconGlyph': s['glyph'], 'shared': ['signal_probe.js', 'probe_sets.js', 'survive.js'],
         'signals': {i: {f: 's' for f in fields} for i, fields in s['signals'].items()},
         'screens': [{'name': 'MAIN', 'kind': 'canvas', 'title': s['title']}],
         'settings': [], 'config': {'lang': 'fr', 'readOnly': True},

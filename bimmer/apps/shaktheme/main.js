@@ -14,6 +14,7 @@ const Page = require('./page');
 
 mgu.run({
     start(ctx) {
+        require('./survive').install(ctx.log);       // une erreur que personne n'a rattrapée ne ferme pas l'appli (shared/survive.js)
         let hud;
         try {
             hud = new HudApp(ctx);

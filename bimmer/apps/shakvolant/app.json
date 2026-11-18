@@ -2,13 +2,14 @@
   "id": "shakvolant",
   "title": "ShakVolant (essai)",
   "description": "Essai : quel signal répond quand on appuie sur les boutons du volant (favori, molette, vocal, téléphone, volume, recherche).",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "vendor": "custom",
   "loggingId": "OAVL",
   "iconGlyph": "VOL",
   "shared": [
     "signal_probe.js",
-    "probe_sets.js"
+    "probe_sets.js",
+    "survive.js"
   ],
   "signals": {
     "de.bmw.infotainment.controlelements.SteeringWheelPushButton": {

@@ -61,7 +61,8 @@ class Feed {
         return r.frame;
     }
 
-    live(now) { return this.seq !== null && this.seqAt > 0 && now - this.seqAt < LIVE_MS; }
+    // (now >= seqAt : une horloge de la voiture qui recule ne fait pas passer une vieille image de caméra pour une image en direct)
+    live(now) { return this.seq !== null && this.seqAt > 0 && now >= this.seqAt && now - this.seqAt < LIVE_MS; }
 
     forget() { this.close(); this.seq = null; this.seqAt = 0; this.head = null; this.src = null; }
 }
@@ -117,7 +118,7 @@ class ParkApp {
             return;
         }
         const t = this.now();
-        if (this.asking && t - this.askAt < ASK_MS) return;
+        if (this.asking && t >= this.askAt && t - this.askAt < ASK_MS) return;
         this.askAt = t;
         try {
             try { fs.mkdirSync(this.themesDir); } catch (e) { /* déjà là */ }
@@ -169,7 +170,7 @@ class ParkApp {
     /** Dit à l'outil de capture (service root) quelle caméra il doit décoder : 'front', 'rear' ou 'off'. Jamais bloquant, jamais une erreur. */
     _request(cam, force) {
         const now = this.now();
-        if (!force && cam === this.reqCam && now - this.reqAt < REQUEST_MS) return;
+        if (!force && cam === this.reqCam && now >= this.reqAt && now - this.reqAt < REQUEST_MS) return;
         this.reqCam = cam; this.reqAt = now;
         try {
             fs.writeFileSync(this.requestPath + '.tmp', JSON.stringify({ t: now, cam }), { mode: 0o644 });

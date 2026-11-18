@@ -285,7 +285,7 @@ const quiet = { info() {}, warn() {}, error(m, e) { console.log('ERR ' + m, e ||
 
     await check('app.json : aucun signal, les fichiers partagés, identifiants distincts, français', () => {
         const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', 'shakmusique', 'app.json'), 'utf8'));
-        assert.deepStrictEqual(spec.signals, {}); assert.deepStrictEqual(spec.shared, ['music_ctl.js', 'music_ui.js']); assert.strictEqual(spec.config.lang, 'fr');
+        assert.deepStrictEqual(spec.signals, {}); assert.deepStrictEqual(spec.shared, ['music_ctl.js', 'music_ui.js', 'survive.js']); assert.strictEqual(spec.config.lang, 'fr');
         assert(/^[A-Z]{4}$/.test(spec.loggingId) && /^[A-Z]{3}$/.test(spec.iconGlyph));
         fs.readdirSync(path.join(ROOT, 'apps')).filter((a) => a !== 'shakmusique').forEach((a) => {
             const f = path.join(ROOT, 'apps', a, 'app.json'); if (!fs.existsSync(f)) return;
