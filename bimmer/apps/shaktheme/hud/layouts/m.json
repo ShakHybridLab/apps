@@ -451,9 +451,9 @@
       "id": "mgear",
       "type": "text",
       "z": 5,
-      "x": 742,
+      "x": 741,
       "y": 545,
-      "w": 126,
+      "w": 134,
       "h": 60,
       "text": "{{gear}}",
       "font": "m_gear_p",
@@ -1410,24 +1410,24 @@
       "h": 34,
       "color": "dim",
       "toggle": "viewSel=gauges",
-      "sheet": "xs_m",
-      "conn": 3
+      "sheet": "s8",
+      "conn": 1
     },
     {
       "id": "xb_boost",
       "type": "text",
       "z": 5,
-      "x": 824,
+      "x": 820,
       "y": 624,
-      "w": 92,
+      "w": 96,
       "h": 34,
-      "text": "{{boost}}",
+      "text": "{{boostPos}}",
       "font": "m_mid",
       "color": "fg",
       "align": "right",
       "toggle": "viewSel=gauges",
-      "sheet": "xs_m",
-      "conn": 3
+      "sheet": "s8",
+      "conn": 1
     },
     {
       "id": "xb_boost_unit",
@@ -1442,8 +1442,8 @@
       "color": "dim",
       "align": "left",
       "toggle": "viewSel=gauges",
-      "sheet": "xs_m",
-      "conn": 3
+      "sheet": "s8",
+      "conn": 1
     },
     {
       "id": "xb_boost_bar",
@@ -1524,12 +1524,12 @@
       "z": 5,
       "x": 1268,
       "y": 662,
-      "w": 176,
+      "w": 110,
       "h": 8,
       "signal": "coolant",
       "min": 40,
       "max": 130,
-      "segments": 12,
+      "segments": 8,
       "gap": 3,
       "colors": [
         [
@@ -1557,6 +1557,119 @@
       ],
       "toggle": "viewSel=gauges",
       "conn": 3
+    },
+    {
+      "id": "al_card",
+      "type": "box",
+      "z": 4,
+      "x": 824,
+      "y": 166,
+      "w": 272,
+      "h": 78,
+      "fill": [
+        10,
+        10,
+        14,
+        255
+      ],
+      "line": [
+        255,
+        42,
+        42,
+        255
+      ],
+      "border": 3,
+      "radius": 20,
+      "toggle": "danger",
+      "conn": 3
+    },
+    {
+      "id": "al_cam",
+      "type": "icon",
+      "icon": "cam",
+      "z": 5,
+      "x": 838,
+      "y": 181,
+      "w": 48,
+      "h": 48,
+      "color": [
+        255,
+        42,
+        42,
+        255
+      ],
+      "toggle": "danger",
+      "sheet": "s3"
+    },
+    {
+      "id": "al_title",
+      "type": "text",
+      "z": 5,
+      "x": 896,
+      "y": 178,
+      "w": 118,
+      "h": 19,
+      "text": "DANGER",
+      "font": "m_label",
+      "color": [
+        255,
+        42,
+        42,
+        255
+      ],
+      "align": "left",
+      "toggle": "danger",
+      "sheet": "s3"
+    },
+    {
+      "id": "al_dist",
+      "type": "text",
+      "z": 5,
+      "x": 886,
+      "y": 203,
+      "w": 88,
+      "h": 29,
+      "text": "{{dangerDist}}",
+      "font": "m_mid",
+      "color": "fg",
+      "align": "right",
+      "toggle": "danger",
+      "sheet": "s3"
+    },
+    {
+      "id": "al_unit",
+      "type": "text",
+      "z": 5,
+      "x": 978,
+      "y": 202,
+      "w": 40,
+      "h": 36,
+      "text": "{{dangerUnit}}",
+      "font": "m_unit",
+      "color": "dim",
+      "align": "left",
+      "toggle": "danger",
+      "sheet": "s3"
+    },
+    {
+      "id": "al_limit",
+      "type": "text",
+      "z": 5,
+      "x": 1024,
+      "y": 190,
+      "w": 62,
+      "h": 29,
+      "text": "{{dangerLimit}}",
+      "font": "m_tiny",
+      "color": [
+        255,
+        42,
+        42,
+        255
+      ],
+      "align": "center",
+      "toggle": "dangerLimit",
+      "sheet": "s3"
     }
   ]
 }

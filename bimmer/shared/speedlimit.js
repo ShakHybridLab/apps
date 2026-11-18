@@ -56,7 +56,10 @@ function decodeSign(v) {
     const keys = Object.keys(v);
     const inv = keys.find((k) => /^invalidFlag$/i.test(k));
     if (inv !== undefined) { const f = scalar(v[inv]); out.invalid = f === true || f === 1 || (typeof f === 'string' && /^(true|invalid|1)$/i.test(f)); }
-    const key = keys.find((k) => /^displaySpee/i.test(k) && !/suppl|unit|style|symbol|pass|restrict|remain|invalid/i.test(k));
+    const NOT = /suppl|unit|style|symbol|pass|restrict|remain|invalid|overtak|condition|time|distance|count/i;
+    // the field's name was cut on the photo ("displaySpee..."): that one first, else any speed / limit field (a name the photo did not show)
+    let key = keys.find((k) => /^displaySpee/i.test(k) && !NOT.test(k));
+    if (key === undefined) key = keys.find((k) => /speed|limit|geschw|tempo/i.test(k) && !NOT.test(k));
     if (key === undefined) return out;
     out.found = true; out.key = key; out.limit = limitOf(v[key]);
     return out;

@@ -80,11 +80,12 @@ assert.strictEqual(formatLimit(50, true), '30');
 assert.strictEqual(formatLimit(130, true), '80');
 assert.strictEqual(formatLimit(null, false), '');
 
-// the wiring: both apps ship the file, the setting is off by default, the two themes draw the alert
+// the wiring: both apps ship the file, the setting is on by default, the two themes draw the alert
 const read = (f) => JSON.parse(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'));
 ['apps/shaktheme/app.json', 'apps/idrive_hud_widgets/app.json'].forEach((f) => assert(read(f).shared.includes('danger.js'), f + ' ships danger.js'));
 const set = read('apps/shaktheme/app.json').settings.find((s) => s.key === 'dangerAlert');
-assert(set && set.type === 'bool' && set.default === false, 'dangerAlert is a bool, off by default');
+// on by default since ShakTheme 0.21.24 (ShakRadar gives the zones from the car's GPS): nothing shows while no app writes a zone
+assert(set && set.type === 'bool' && set.default === true, 'dangerAlert is a bool, on by default');
 ['mblade', 'navi'].forEach((n) => {
     const L = read('apps/shaktheme/hud/layouts/' + n + '.json');
     const by = (id) => L.widgets.find((w) => w.id === id);
@@ -103,5 +104,32 @@ assert(set && set.type === 'bool' && set.default === false, 'dangerAlert is a bo
     assert(by('al_cam').icon === 'cam' && by('al_ring').icon === 'ring');
 });
 require('../shared/icons').ICONS.cam && require('../shared/icons').ICONS.ring;
+
+// Sport and M have the alert too since ShakTheme 0.21.24 (owner, Nov 18 2026): one card, the limit in red (no ring: two layers less), in a free place
+{
+    const visible = require('../shared/visible');
+    const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+    const on = (w, map, v, sp) => !w.toggle || w.toggle.split('&').every((t) => {
+        const not = t[0] === '!', k = not ? t.slice(1) : t;
+        const val = k === 'mapUp' || k === 'powerOpen' ? map : k === 'powerShut' ? !map : k === 'driveSport' ? sp : k.indexOf('viewSel=') === 0 ? v === k.slice(8) : true;
+        return val !== not;
+    });
+    ['sport', 'm'].forEach((n) => {
+        const L = read('apps/shaktheme/hud/layouts/' + n + '.json'), by = (id) => L.widgets.find((w) => w.id === id);
+        ['al_card', 'al_cam', 'al_title', 'al_dist', 'al_unit', 'al_limit'].forEach((id) => assert(by(id), n + ' has ' + id));
+        assert(by('al_card').type === 'box' && by('al_card').toggle === 'danger', n + ': the card shows with the alert');
+        assert(by('al_limit').toggle === 'dangerLimit' && by('al_dist').text === '{{dangerDist}}', n + ': the distance and the limit');
+        const card = by('al_card');
+        assert(visible.hoodY(card.x) <= card.y && visible.hoodY(card.x + card.w) <= card.y, n + ': the card is under the hood');
+        assert(card.y >= visible.CAMERA[3], n + ': the card is in the camera\'s box');
+        const al = L.widgets.filter((w) => /^al_/.test(w.id));
+        al.filter((w) => w.id !== 'al_card').forEach((w) => assert(w.x >= card.x && w.x + w.w <= card.x + card.w && w.y >= card.y && w.y + w.h <= card.y + card.h, n + ': ' + w.id + ' is outside its card'));
+        [false, true].forEach((map) => [null, 'gauges', 'tyres', 'drive'].forEach((v) => [false, true].forEach((sp) => {
+            L.widgets.filter((o) => !/^al_/.test(o.id) && o.w < 1500 && !o.hole && on(o, map, v, sp)).forEach((o) => {
+                assert(!hit(card, o), n + ' (' + (map ? 'carte, ' : '') + (v || 'aucune vue') + (sp ? ', Sport' : '') + '): the card covers ' + o.id);
+            });
+        })));
+    });
+}
 console.log('danger: ok');
 fs.rmSync ? fs.rmSync(dir, { recursive: true, force: true }) : null;

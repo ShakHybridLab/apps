@@ -370,7 +370,11 @@ class ClusterRender extends EventEmitter {
             m.type = o.type;
         } else if ((l.kind !== 'effect' && l.kind !== 'mesh') || values.length > 4) return;
         if (o.part) m.part = o.part;
-        l.uniforms[(o.part || 0) + ':' + name] = m;
+        const key = (o.part || 0) + ':' + name, prev = l.uniforms[key];
+        /* The layer already holds this value (the service keeps a uniform until it is set again, and the replay on a reconnect sends
+         * l.uniforms): a gauge loop that sets every uniform of every layer at 40 Hz sends only the ones that changed. */
+        if (prev && prev.v === m.v && prev.type === m.type) return;
+        l.uniforms[key] = m;
         this._send(m);
     }
 
@@ -532,6 +536,22 @@ class ClusterRender extends EventEmitter {
     }
 
     status() { this._send({ op: 'status' }); }
+
+    /* Holds every write until uncork(): the messages go out together, in the same order. A theme rebuilt drops its layers and makes new
+     * ones; written one by one, the service could draw a frame between the drops and the new layers (the cluster showed nothing for a
+     * moment: a flicker). Nested calls count; uncork() as many times as cork(). Nothing to do while not connected (nothing is written). */
+    cork() {
+        if (!this.sock || !this.connected) return false;
+        this.corked = (this.corked || 0) + 1;
+        if (this.corked === 1) { this.corkSock = this.sock; this.sock.cork(); }
+        return true;
+    }
+
+    uncork() {
+        if (!this.corked) return;
+        this.corked--;
+        if (this.corked === 0) { const s = this.corkSock; this.corkSock = null; if (s) s.uncork(); }
+    }
 }
 
 module.exports = { ClusterRender, DEFAULT_PATH };

@@ -47,7 +47,9 @@ NAMES.forEach((n) => {
                 const u = by(pre + 'rpm_unit'), c = by(pre + 'charge_note');
                 assert(u && u.text === '{{tachUnit}}' && u.font === 'm_tiny', pre + 'rpm_unit is not the {{tachUnit}} token');
                 assert(c && c.text === '{{chargeNote}}' && c.font === 'm_unit', pre + 'charge_note is missing');
-                assert(c.x + c.w <= 1030 && c.y >= 585, pre + 'charge_note is not left of the foot, under the hexagon');
+                if (!pre) assert(c.x + c.w <= 1030 && c.y >= 585, 'charge_note is not left of the foot, under the hexagon');
+                // with the map up the fuel bar runs under the window up to the foot: CHARGE is in the left column, under the speed
+                else assert(c.x + c.w <= by('backdrop_open').hole[0] - 10 && c.y >= by('o_speed').y + by('o_speed').h, 'o_charge_note is not in the left column under the speed');
             });
             const glyphs = (f) => JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'shaktheme', 'hud', 'fonts', f + '.json'), 'utf8')).glyphs;
             const tiny = glyphs('m_tiny'), unit = glyphs('m_unit');
@@ -76,17 +78,24 @@ NAMES.forEach((n) => {
                 assert(Math.abs(b.g2[0] - b.g1[0]) >= 120 && Math.abs(b.g2[0] - b.g1[0]) <= 140, id + ': oil and battery strips are not 130 px apart');
             });
         });
-        check('mblade: with the map up the window is inside Waze on cluster\'s slot, the hexagon gives way, the fuel is a flat bar right under the window, the strips and the blade moved right but clear of BMW\'s black box', () => {
+        check('mblade: with the map up the window is inside Waze on cluster\'s slot, the hexagon gives way, the fuel is a flat bar right under the window, the strips and the blade moved right, the window centred on the car', () => {
             const o = by('backdrop_open'), n = by('backdrop');
             const win = [o.hole[0] + o.holeInset, o.hole[1] + o.holeInset, o.hole[0] + o.hole[2] - o.holeInset, o.hole[1] + o.hole[3] - o.holeInset];
-            assert(!o.hex, 'no hexagon (and so no tabs) with the map up: the window takes its place');
+            // the hexagon goes to the left column, smaller, with the gear and the speed in it (BMW's own M cluster beside its map, owner's photo of Nov 18
+            // 2026); its tabs stay off (the bottom row and the belt light are there)
+            assert(o.hex && o.hex[2] > 0 && o.hex[2] < 1 && !o.deco, 'a smaller hexagon without its tabs with the map up');
+            assert(o.hex[0] + 570 * o.hex[2] <= win[0], 'the small hexagon runs into the window');
+            ['o_gear', 'o_speed'].forEach((id) => assert(by(id).x >= o.hex[0] && by(id).x + by(id).w <= o.hex[0] + 570 * o.hex[2], id + ' is not in the small hexagon'));
             assert(win[0] >= 416 && win[1] >= 120 && win[2] <= 1504 && win[3] <= 600, 'the window leaves Waze on cluster\'s own slot (x 416..1504, y 120..600): ' + win);
             assert(o.fuelH === true && !n.fuelH, 'the fuel bar must be flat with the map up only');
             const left = 1920 - o.g0[2], right = 1920 - o.g0[1];                 // the flat bar, back in panel px
             assert(left >= win[0] && right <= win[2], 'the fuel bar is wider than the window');
             assert(o.g0[0] >= win[3] + 8 && o.g0[0] + 27 <= by('o_time').y - 20, 'the fuel bar is not right under the window, clear of the bottom row');
             assert(o.g1[0] > n.g1[0] && o.g2[0] > n.g2[0] && o.bl[2] > n.bl[2], 'not moved to the right');
-            assert(win[2] + 10 <= 1050, 'the window runs into the blade, whose base starts near x 1050 (' + win[2] + ')');
+            const base = o.bl[2] + o.bl[3] * (o.bl[1] - o.bl[0]);                // the blade's left edge at its foot
+            assert(win[2] + 10 <= base, 'the window runs into the blade, whose base starts at x ' + Math.round(base) + ' (' + win[2] + ')');
+            // Waze on cluster on the owner's car draws the map in its slot, the car in the middle (x 960): the window is centred on it (photo of Nov 18 2026)
+            assert(Math.abs((win[0] + win[2]) / 2 - 960) <= 2, 'the window is not centred on x 960, where Waze puts the car: ' + win);
             const f = ['o_f_lo', 'o_f_mid', 'o_f_hi', 'o_fuel_icon'].map(by);
             assert(f.every((w) => w && w.toggle === 'mapUp' && w.x >= win[0] - 60 && w.x + w.w <= win[2] + 20), 'fuel scale outside the window\'s span');
             assert(!by('o_f_hi').text || by('o_f_hi').y >= o.g0[0] + 27, 'the scale is not under the bar');
@@ -96,7 +105,8 @@ NAMES.forEach((n) => {
         // where the oil, the electric range and the outside temperature follow the strips
         const VIEWS = [['', '!mapUp', 'backdrop'], ['o_', 'mapUp', 'backdrop_open']];
         check('mblade: the clock and the fuel range share the bottom line (same y), in both views, level with BMW\'s gear letter (its middle on the letter\'s)', () => {
-            VIEWS.forEach(([pre]) => {
+            // (with the map up the range goes with the flat fuel bar under the map: checked below)
+            VIEWS.filter(([pre]) => !pre).forEach(([pre]) => {
                 const ys = [by(pre + 'time'), by(pre + 'range')].map((w) => w.y);
                 assert(ys.every((y) => y === ys[0]), pre + ' y differ: ' + ys.join(', '));
                 assert(Math.abs(ys[0] + 29 / 2 - 683) <= 5, pre + ' the line is not centred on the belt light and the gear letter: y ' + ys[0]);
@@ -125,13 +135,21 @@ NAMES.forEach((n) => {
                 assert(by(pre + 'oil').tempBy === 'oil', pre + ': the oil value does not take its colour');
                 assert(!by(pre + 'oil_icon') && !by(pre + 'ev_icon'), pre + ': an icon is back under the strips (it made the two groups touch)');
             });
-            // the map view follows the strips 30 px right
-            assert(by('o_oil').x - by('oil').x === 30 && by('o_ev_range').x - by('ev_range').x === 30, 'the map view\'s values do not follow the strips');
+            // the map view follows the strips
+            const sx = by('backdrop_open').g1[0] - by('backdrop').g1[0];      // how far the strips moved right with the map up
+            assert(sx > 0 && by('o_oil').x - by('oil').x === sx && by('o_ev_range').x - by('ev_range').x === sx, 'the map view\'s values do not follow the strips (' + sx + ')');
         });
         check('mblade: the coolant (over) and the outside temperature (under) are one table at the far right, same in both views: icons, values and units each in one column', () => {
             const rows = [['cool', 'cool_icon', 'cool_unit'], ['outside', 'ice_icon', 'outside_unit']].map((r) => r.map((i) => by(i)));
             assert(!by('out_icon'), 'the outside temperature has no thermometer (it looks like the coolant\'s: the owner would confuse them)');
-            rows.forEach((r) => r.forEach((w) => assert(!w.toggle || w.toggle === '!viewSel=gauges', w.id + ': the column is the same in both views (the coolant only gives way to its bar in the gauges view)')));
+            // (the coolant gives way to the views' panel: "viewSel=none"; copies show it in the same place with the map up and a view, xb_mc_, and on the bottom row
+            // without the map, xb_vc_, where the fuel range takes its place under the fuel strip; the engine view has it in its panel)
+            rows.forEach((r) => r.forEach((w) => assert(!w.toggle || w.toggle === 'viewSel=none', w.id + ': the column is the same in both views')));
+            ['cool_icon', 'cool', 'cool_unit'].forEach((k) => {
+                const m = by('xb_mc_' + k), v = by('xb_vc_' + k);
+                assert(m && m.x === by(k).x && m.y === by(k).y && m.toggle === 'mapUp&!viewSel=none&!viewSel=gauges', k + ': no copy with the map up and a view');
+                assert(v && v.y >= by('time').y - 3 && v.toggle === '!mapUp&!viewSel=none&!viewSel=gauges', k + ': no copy on the bottom row with a view');
+            });
             assert(by('cool').tempBy === 'coolant' && by('cool_icon').tempBy === 'coolant', 'tempBy missing');
             assert(by('outside').iceBy && by('ice_icon').iceBy && by('ice_icon').icon === 'snow', 'the snowflake and the ice colour are missing');
             assert(rows[0][0].y === by('oil').y, 'the coolant is not on the sensors\' row (the oil\'s)');
@@ -146,6 +164,23 @@ NAMES.forEach((n) => {
                         // the oil is under its strip now: nothing of it is in the right column
             assert(by('o_ev_range_unit').x + by('o_ev_range_unit').w <= by('ice_icon').x - 10, 'the electric range runs into the right column in the map view');
         });
+        check('mblade: each bar keeps its reading next to it (owner, Nov 18 2026): the fuel range under the fuel strip without the map, beside the flat bar with it, under the strip moved right with a view', () => {
+            const n = by('backdrop'), o = by('backdrop_open'), v = by('xb_vback');
+            const low = (g) => g[0] + g[3] * (g[2] - g[1]);            // the strip's left edge at its lower end
+            const mid = (w) => w.x + w.w / 2;
+            // the normal dial: the range on the bottom row, under the fuel strip (it leans right: its lower end is the right one)
+            assert(Math.abs(mid(by('range')) - (low(n.g0) + 13)) <= 90, 'the range is not under the fuel strip');
+            // the map: level with the flat bar, just left of its pump
+            const pump = by('o_fuel_icon'), r = by('o_range'), u = by('o_range_unit');
+            assert(Math.abs((r.y + r.h / 2) - (o.g0[0] + 13.5)) <= 4, 'the range is not level with the flat fuel bar');
+            assert(u.x + u.w <= pump.x - 4 && r.x + r.w <= u.x + 2 && r.x > 520, 'the range is not just left of the bar\'s pump');
+            // a view: the strip moved right of the battery's, its range under it on the oil's row, the normal one hidden
+            const vr = by('xb_vrange');
+            assert(vr && vr.toggle === '!mapUp&!viewSel=none' && vr.y === by('oil').y, 'no range under the moved strip');
+            assert(Math.abs(vr.x + vr.w - 29 - (low(v.g0) + 33)) <= 25, 'the range is not centred under the moved strip');
+            ['range', 'range_icon', 'range_unit'].forEach((k) => assert.strictEqual(by(k).toggle, '!mapUp&viewSel=none', k + ' does not give way with a view'));
+            assert(!by('o_range_icon'), 'the map view has the range\'s icon again (the bar\'s pump is beside it)');
+        });
         check('mblade: nothing shown together overlaps anything else (text and icon boxes), in either view', () => {
             const g = (w) => (w.toggle === 'powerShut' ? '!mapUp' : w.toggle === 'powerOpen' ? 'mapUp' : w.toggle) || '';
             // two widgets never show together when their toggles contradict: "mapUp" and "!mapUp", "driveSport" and "!driveSport", or two different views (viewSel=a, viewSel=b, or !viewSel=a)
@@ -156,9 +191,9 @@ NAMES.forEach((n) => {
                 return kp.indexOf('viewSel=') === 0 && kq.indexOf('viewSel=') === 0 && !np && !nq;
             }));
             // the danger alert (al_), the limit ring (lim_), the 0-100 timer (run_) and the launch cue (ready_, over the drive mode's name) share their places by design: they take turns
-            const own = (w) => /^(al_|lim_|run_|(o_)?ready_)/.test(w.id);
+            const own = (w) => /^(al_|(xb_v)?lim_|run_|(o_)?ready_)/.test(w.id);
             const ws = L.widgets.filter((w) => /^(text|icon)$/.test(w.type) && !own(w));
-            L.widgets.filter((w) => /^(lim_|run_|(o_)?ready_)/.test(w.id)).forEach((a) => ws.forEach((b) => {
+            L.widgets.filter((w) => /^((xb_v)?lim_|run_|(o_)?ready_)/.test(w.id)).forEach((a) => ws.forEach((b) => {
                 if (/ready_/.test(a.id) && /drive_mode$/.test(b.id)) return;      // the launch cue takes the drive mode name's place
                 if (excl(a, b)) return;
                 assert(!(a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y), a.id + ' overlaps ' + b.id);
@@ -239,7 +274,9 @@ NAMES.forEach((n) => {
     });
     check(n + ': no text, icon or emblem in BMW\'s black box or seat-belt light, none under the hood', () => {
         L.widgets.filter((w) => /^(text|icon|emblem|badge|atext)$/.test(w.type)).forEach((w) => {
-            assert(!overlap(w, visible.BLACK_BOX), w.id + ' in the black box');
+            // BMW's black box: only the normal view keeps clear of it (the gear letter's hole, on by default, keeps BMW from drawing it; with the map
+            // up the blade had to move right to centre the window, Nov 18 2026)
+            if (w.toggle !== 'mapUp') assert(!overlap(w, visible.BLACK_BOX), w.id + ' in the black box');
             assert(!overlap(w, visible.BELT), w.id + ' in the seat-belt light');
             const a = w.type === 'emblem' ? w.x + 114 : w.x, b = w.type === 'emblem' ? w.x + 246 : w.x + w.w;    // (the emblem's ink is 132 px wide, centred in its 360 px box)
             assert(visible.hoodY(a) <= w.y + 2 && visible.hoodY(b) <= w.y + 2, w.id + ' under the hood');

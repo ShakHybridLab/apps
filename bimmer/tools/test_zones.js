@@ -515,7 +515,8 @@ check('limit ring and timer: in the four layouts, blank-safe, clear of the map a
         assert.strictEqual(by('lim_ring').icon, 'ring'); assert.strictEqual(by('run_icon').icon, 'stopwatch');
         assert(by('lim_ring').limitBy && by('lim_num').limitBy && by('run_icon').launchBy && by('run_time').launchBy);
         assert.strictEqual(by('lim_num').text, '{{limit}}'); assert.strictEqual(by('run_time').text, '{{launch}}');
-        ['lim_ring', 'lim_num', 'run_icon', 'run_time'].forEach((i) => assert.strictEqual(by(i).toggle, '!mapUp', id + ': ' + i + ' must hide with the map'));
+        // (M Blade's ring also gives way to its view panel: "&viewSel=none", a copy under the panel shows then)
+        ['lim_ring', 'lim_num', 'run_icon', 'run_time'].forEach((i) => assert(by(i).toggle === '!mapUp' || (id === 'mblade' && /^lim_/.test(i) && by(i).toggle === '!mapUp&viewSel=none'), id + ': ' + i + ' must hide with the map'));
         const f = font(by('lim_num').font);
         assert('0123456789'.split('').every((d) => f.glyphs[d]), id + ': the limit number\'s font has no digits');
         assert('0123456789.'.split('').every((d) => font(by('run_time').font).glyphs[d]), id + ': the timer\'s font lacks digits');
@@ -562,7 +563,8 @@ check('limit ring: small, beside the speed digits (Sport, Navi), under the tyre 
         }
         const box = [r.x, r.y, r.x + r.w, r.y + r.h], hit = (w) => w.x < box[2] && w.x + w.w > box[0] && w.y < box[3] && w.y + w.h > box[1];
         L.widgets.forEach((w) => {
-            if (w === r || w === n || SHADERS.indexOf(w.type) >= 0 || w.toggle === 'mapUp' || w.toggle === 'powerOpen' || w.id === 'lim_num' || w.id === 'speed') return;   // the speed's wide box is centred text: the digits' own clearance is checked above
+            if (w === r || w === n || SHADERS.indexOf(w.type) >= 0 || w.toggle === 'mapUp' || w.toggle === 'powerOpen' || w.id === 'lim_num' || w.id === 'speed') return;
+            if (/(^|&)viewSel=none$/.test(r.toggle || '') && /(^|&)(!viewSel=none|viewSel=(?!none)[a-z]+)(&|$)/.test(w.toggle || '')) return;   // M Blade: a view's panel and the ring take turns   // the speed's wide box is centred text: the digits' own clearance is checked above
             assert(!hit(w), id + ': the ring overlaps ' + w.id);
         });
         assert(box[2] <= visible.BLACK_BOX[0] || box[0] >= visible.BLACK_BOX[2] || box[3] <= visible.BLACK_BOX[1] || box[1] >= visible.BLACK_BOX[3], id + ': clear of BMW\'s gear box');

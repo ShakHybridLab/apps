@@ -1274,6 +1274,71 @@ void main() {
     gl_FragColor = c;
 }
 `;
+const MPANEL = `// M Blade's view panel in one cluster-render "effect" layer (GLSL ES 1.00). BMW M's own cluster opens its views (the engine's
+// readings, the tyres...) in a blue panel on the left, in place of the speed scale: the hexagon's shape carried on to the far left (owner's
+// photos of Nov 18 2026). The panel: a band whose two sides are both "<" (the left one ends in a point, the right one follows the hexagon's
+// left side a gap away), flat top and bottom, dark blue lit towards the right, a lighter facet like the hexagon's panels, a thin light line
+// along the top, the bottom and the point. Up to four level bars across it (u_ry), each a thin track with marks (u_div parts), a red end
+// (u_rz) and the level lit in its tone. v_uv (0,0) is the top-left.
+precision mediump float;
+varying vec2 v_uv;
+uniform vec2 u_size;
+uniform vec4 u_pan;    // the point's y, the sides' slope (x per y px), the band's width, the point's x (layer px)
+uniform vec2 u_bx;     // the bars' left and right ends x
+uniform vec4 u_ry;     // each bar's middle y (< 0: no bar)
+uniform vec4 u_v;      // each bar's level 0..1
+uniform vec4 u_rz;     // where each bar's red end starts 0..1 (>= 1: none)
+uniform vec4 u_tone;   // each bar's colour: 0 white, 1 cold blue, 2 warm green, 3 red, 4 dark red, 5 light blue
+uniform float u_div;   // the marks cut each bar in this many parts (2: the ends and the middle)
+
+float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
+vec4 over(vec4 t, vec4 u) {
+    float k = u.a * (1.0 - t.a), a = t.a + k;
+    return vec4((t.rgb * t.a + u.rgb * k) / max(a, 0.0001), a);
+}
+vec3 tone(float t) {
+    if (t < 0.5) return vec3(0.94, 0.96, 1.0);
+    if (t < 1.5) return vec3(0.3, 0.62, 1.0);
+    if (t < 2.5) return vec3(0.2, 0.85, 0.5);
+    if (t < 3.5) return vec3(1.0, 0.16, 0.2);
+    if (t < 4.5) return vec3(0.47, 0.06, 0.09);
+    return vec3(0.31, 0.71, 1.0);
+}
+vec4 bar(vec2 p, float y, float v, float rz, float t, vec4 c) {
+    float dy = abs(p.y - y);
+    if (y < 0.0 || dy > 16.0) return c;
+    float x0 = u_bx.x, x1 = u_bx.y, f = (p.x - x0) / (x1 - x0);
+    float inX = cov(max(x0 - p.x, p.x - x1));
+    vec3 red = vec3(1.0, 0.22, 0.27);
+    c = over(vec4(f >= rz ? red : vec3(0.62, 0.7, 0.9), 0.8 * inX * cov(dy - 1.5)), c);
+    float m = floor(f * u_div + 0.5) / u_div;
+    float xm = x0 + clamp(m, 0.0, 1.0) * (x1 - x0);
+    c = over(vec4(m >= rz ? red : vec3(0.86, 0.9, 1.0), 0.9 * cov(abs(p.x - xm) - 1.2) * cov(abs(p.y - y + 5.0) - 7.0)), c);
+    float xv = x0 + clamp(v, 0.0, 1.0) * (x1 - x0);
+    if (v > 0.002) c = over(vec4(tone(t), cov(max(x0 - p.x, p.x - xv)) * cov(dy - 4.5)), c);
+    return c;
+}
+void main() {
+    vec2 p = v_uv * u_size;
+    float k = u_pan.y, cs = 1.0 / sqrt(1.0 + k * k);
+    float xl = u_pan.w + abs(p.y - u_pan.x) * k;
+    float u = (p.x - xl) / u_pan.z;                                  // 0 on the left side, 1 on the right one
+    float d = max(max(-u, u - 1.0) * u_pan.z * cs, max(1.0 - p.y, p.y - u_size.y + 1.0));
+    float inside = cov(d);
+    if (inside <= 0.0) { gl_FragColor = vec4(0.0); return; }
+    vec4 c = vec4(mix(vec3(0.03, 0.09, 0.27), vec3(0.07, 0.24, 0.6), u * u), 1.0);
+    // a lighter facet along the upper arm, as the hexagon's panels
+    c = over(vec4(0.1, 0.34, 0.8, 0.45 * step(p.y, u_pan.x) * cov(abs(u - 0.7) * u_pan.z * cs - 34.0)), c);
+    // the thin light lines along the top, the bottom and the pointed left side
+    float e = min(min(p.y, u_size.y - p.y), u * u_pan.z * cs);
+    c = over(vec4(0.45, 0.65, 1.0, 0.75 * cov(abs(e - 2.0) - 1.0)), c);
+    c = bar(p, u_ry.x, u_v.x, u_rz.x, u_tone.x, c);
+    c = bar(p, u_ry.y, u_v.y, u_rz.y, u_tone.y, c);
+    c = bar(p, u_ry.z, u_v.z, u_rz.z, u_tone.z, c);
+    c = bar(p, u_ry.w, u_v.w, u_rz.w, u_tone.w, c);
+    gl_FragColor = vec4(c.rgb, c.a * inside);
+}
+`;
 const NAVI = `// The Navi theme in one cluster-render "effect" layer (GLSL ES 1.00), after a photo of a BMW map view: a wide diagonal
 // speed band on the left (an outer white line, a textured blue stripe that is the speed with a white marker across it at the speed,
 // a thin white divider, a purple stripe that fades in from black and is the rev counter: lit up to the rpm, a marker and eight
@@ -1924,6 +1989,7 @@ const ACCENT_LITERALS = {
         '0.02, 0.07, 0.16', '0.07, 0.2, 0.38', '0.06, 0.2, 0.62', '0.15, 0.36, 0.92'],
     mblade: ['0.03, 0.07, 0.19', '0.09, 0.31, 0.7', '0.085, 0.34, 0.79', '0.075, 0.31, 0.72', '0.07, 0.275, 0.66', '0.08, 0.31, 0.74', '0.075, 0.28, 0.68',
         '0.095, 0.32, 0.76', '0.45, 0.6, 1.0', '0.5, 0.7, 1.0', '0.4, 0.62, 1.0', '0.12, 0.3, 0.62', '0.12, 0.34, 0.7', '0.1, 0.3, 0.66', '0.3, 0.78, 1.0'],
+    mpanel: ['0.03, 0.09, 0.27', '0.07, 0.24, 0.6', '0.1, 0.34, 0.8', '0.45, 0.65, 1.0'],
     navi: ['0.016, 0.05, 0.125', '0.026, 0.08, 0.19', '0.014, 0.045, 0.11', '0.03, 0.08, 0.17', '0.1, 0.18, 0.84'],
 };
 const _accented = {};
@@ -1936,4 +2002,4 @@ function accented(type, hue) {
     if (!_accented[key]) _accented[key] = accentSource(base, ACCENT_LITERALS[type], hue);
     return _accented[key];
 }
-module.exports = { slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, navi: NAVI, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, accented, ACCENT_LITERALS };
+module.exports = { slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, mpanel: MPANEL, navi: NAVI, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, accented, ACCENT_LITERALS };

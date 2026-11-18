@@ -9,6 +9,8 @@ const hybridTach = require('../shared/hybrid_tach');
 const { formatLimit } = require('../shared/danger');
 const fr = require('../shared/fr');
 let failed = 0;
+// hidden with the Waze map ("!mapUp"); M Blade's also give way to its view panel ("&viewSel=none": copies under the panel, xb_vlim_, show then)
+const HIDES_WITH_MAP = (w) => w.toggle === '!mapUp' || w.toggle === '!mapUp&viewSel=none';
 function check(name, fn) { try { fn(); console.log('ok   ' + name); } catch (e) { failed++; console.log('FAIL ' + name + ': ' + (e && e.message || e)); } }
 const ROOT = path.join(__dirname, '..');
 const json = (p) => JSON.parse(fs.readFileSync(path.join(ROOT, p), 'utf8'));
@@ -270,7 +272,7 @@ check('hud.js wires the lane assist symbol, the setting exists (off, French) and
     assert(l && l.displaySteeringWheel === 's' && typeof l._optional === 'string');
     ['sport', 'm', 'mblade', 'navi'].forEach((n) => {
         const L = json('apps/shaktheme/hud/layouts/' + n + '.json'), w = L.widgets.find((x) => x.id === 'lim_lane');
-        assert(w && w.icon === 'wheel' && w.laneBy === true && w.toggle === '!mapUp' && !w.alertBy, n + ': lane widget');
+        assert(w && w.icon === 'wheel' && w.laneBy === true && HIDES_WITH_MAP(w) && !w.alertBy, n + ': lane widget');
         assert(w.x >= 0 && w.x + w.w <= 1920 && w.y >= 0 && w.y + w.h <= 660, n + ': lane icon is not clear of the screen');
     });
 });
@@ -301,9 +303,9 @@ check('the four themes carry the next limit ring, its number and the warning tri
         const L = json('apps/shaktheme/hud/layouts/' + n + '.json'), by = (i) => L.widgets.find((w) => w.id === i);
         const r = by('lim_nxt_ring'), t = by('lim_nxt_num'), a = by('lim_alert');
         assert(r && t && a, n + ': widgets missing');
-        assert(r.icon === 'ring' && r.nextBy === true && r.toggle === '!mapUp', n + ': next ring');
-        assert(t.text === '{{nextLimit}}' && t.nextBy === true && t.toggle === '!mapUp', n + ': next number');
-        assert(a.icon === 'warn' && a.alertBy === true && a.toggle === '!mapUp', n + ': alert');
+        assert(r.icon === 'ring' && r.nextBy === true && HIDES_WITH_MAP(r), n + ': next ring');
+        assert(t.text === '{{nextLimit}}' && t.nextBy === true && HIDES_WITH_MAP(t), n + ': next number');
+        assert(a.icon === 'warn' && a.alertBy === true && HIDES_WITH_MAP(a), n + ': alert');
         // on the screen, clear of the cluster's black strip at the bottom (the gear window drops what bites into it)
         [r, t, a].forEach((w) => assert(w.x >= 0 && w.x + w.w <= 1920 && w.y >= 0 && w.y + w.h <= 660, n + ': ' + w.id + ' is not clear of the screen'));
     });

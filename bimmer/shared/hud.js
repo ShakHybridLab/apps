@@ -96,6 +96,10 @@
  *             (the hybrid battery, 0..100 %): [left edge x at the top, top y, bottom y, slope]; "deco" draws the four tabs and the cyan swoosh under the hexagon; "hybridTach" true makes the blade (mblade) or the rev bracket (sdash, with "chgOnBar" true: it also shows the charge) a hybrid rev counter (see hybrid_tach.js; tokens {{tachUnit}}, {{chargeNote}}); "fuelH" true lays the first strip flat: "g0" is then [top y, panel width - right end x, panel width - left end x, 0] (the bar runs from x left to x right, empty at its left); "hole", "holeWhen",
  *             "holeInset", "holeRadius" as fill (the hexagon and the backdrop are cut over the map window); "mapPlace": true on a layer with a
  *             "holeWhen" "mapUp" hole also has Waze on cluster (0.9.107+, map_window.js) draw the map right in that window while it shows
+ *   mpanel    effect layer; M Blade's view panel (shaders.js mpanel), as BMW M's own cluster opens its views on the left: a blue band whose two
+ *             sides are "<", "shape" [x, y of the left point, the sides' slope (x per y px), the band's width] in panel px; up to four level bars
+ *             across it, "bar" [left x, right x] and "rows" [{ y (the bar's middle), signal, min, max, red (where the red end starts, 0..1),
+ *             tone: "temp" | "boost" | "ice" | none }], "div" the marks (2: the ends and the middle)
  *   navi      effect layer; the Navi theme (shaders.js navi): the speed band on the left "band" { tip [x, y], slope (dy per dx), bottom (y),
  *             sep [px, per y] and edge [px, per y] (offsets right of the outer line at y 300), top (y where the purple stripe begins) },
  *             "scale" [y of the top mark, y of 0] (SPEED_SCALE, the marker rides it), the line under the map "line" [x0, y, x of the
@@ -314,6 +318,9 @@ const MAX_CONN = 4;              // connections a layout may ask for ("conn"): 3
 const PIXEL_BYTES = 16 * 1024 * 1024;   // cluster-render's pixel memory for every app's images together (CompositorLimits.pixel_bytes)
 const SHEET_AREA_FRAC = 4;       // the first sheet size limit: 1/4 of the target area (see the header)
 const TICK_MS = 25;              // 40 Hz: shift bar and gauges (was 20 Hz: the bars moved in visible steps; the cluster refreshes faster than that)
+const PERF_WINDOW_MS = 5000;   // the window the Signals tab's loop timing is counted over
+const CDS_IFACE = 'de.bmw.infotainment.vehicle.CDS';
+const RPM_POLL_MS = 250;           // how often the rev counter is read on top of the car's own notifications
 // the electric power estimated from the speed (setting "estPower", the rev bar in electric when nobody gives the real power): the X3 xDrive30e's
 // own figures, rounded. mass kg with a driver, drag = half rho Cd A in N per (m/s)^2, rolling resistance, the drive and recuperation efficiencies,
 // the motor's power in kW (the most it can show), the most it can recover, and the filters of the speed and of the acceleration (ms)
@@ -954,6 +961,10 @@ class HudApp {
                 if (p.id === 'rel') this._guard('relPower', () => this._relSet(v));
             };
         });
+        // the rev counter is told when it changes, which on a car that notifies it rarely (or only the first value) leaves the bar where it was: read it
+        // as well, RPM_POLL_MS apart (the kit re-reads the interface's fields that often; the same values twice change nothing). The Signals tab's
+        // "msg · x/s" beside the rev counter shows how often the car really sends it.
+        if (decl[CDS_IFACE] && decl[CDS_IFACE].statusEngineSpeed2) (extra[CDS_IFACE] = extra[CDS_IFACE] || {}).$pollMs = RPM_POLL_MS;
         this.car = new Car(this.ctx, ['rpm', 'speed', 'temps', 'accel', 'gear', 'torque'], extra);
         this.car.setRedline(this.setting('redline'));
         this.gBuf = [];                  // [t, lat, long] of the last G_AVG_MS
@@ -1630,7 +1641,7 @@ class HudApp {
         if (t.indexOf('{{slot:') >= 0 && w.slot) id = (this.slotSensor(this.activeName, w.slot, this.layoutSlots) || {}).id;
         else if (t.indexOf('{{oil}}') >= 0) id = 'oil';
         else if (t.indexOf('{{coolant}}') >= 0) id = 'coolant';
-        else if (t.indexOf('{{boost}}') >= 0) id = 'boost';
+        else if (t.indexOf('{{boost}}') >= 0 || t.indexOf('{{boostPos}}') >= 0) id = 'boost';
         return this._overLimit(id);
     }
     /**
@@ -2124,6 +2135,9 @@ class HudApp {
             case 'u:speed': return us ? 'MPH' : 'KM/H';
             case 'oil': case 'coolant': { const v = this._raw(tok); return fix(isNum(v) ? (us ? v * 9 / 5 + 32 : v) : v, 0); }
             case 'boost': { const v = this._raw('boost'); return us ? fix(isNum(v) ? v * 14.5038 : v, 1) : fix(v, 2); }
+            // the views' boost readout, beside a bar that starts at 0: a vacuum (the engine unit's reading, below the air's pressure) reads 0.00, as
+            // the bar does, and "-0.35" no longer runs out of its box on the left
+            case 'boostPos': { const v = this._raw('boost'), p = isNum(v) ? Math.max(0, v) : v; return us ? fix(isNum(p) ? p * 14.5038 : p, 1) : fix(p, 2); }
             case 'u:boost': return us ? 'PSI' : 'BAR';
             case 'u:temp': return us ? '°F' : '°C';
             case 'u:speedLc': return us ? 'mph' : 'km/h';
@@ -2243,6 +2257,7 @@ class HudApp {
                 return ((h % 12) || 12) + ':' + pad2(m);
             }
             default:
+                if (tok.indexOf('pc:') === 0) { const v = Number(tok.slice(3)); return us ? String(Math.round(v * 14.5038)) : String(v); }   // a fixed number of bar in the display unit (psi: whole)
                 if (tok.indexOf('tc:') === 0) { const v = Number(tok.slice(3)); return String(Math.round(us ? v * 9 / 5 + 32 : v)); }   // a fixed Celsius number in the display unit
                 if (tok.indexOf('ms:') === 0) { const v = M_SCALE[us ? 'us' : 'metric'][Number(tok.slice(3))]; return v === undefined ? '' : String(v); }   // the M Blade speed scale labels
                 if (tok.indexOf('spd:') === 0) { const v = SPEED_SCALE[us ? 'us' : 'metric'][Number(tok.slice(4))]; return v === undefined ? '' : String(v); }   // speed scale labels
@@ -2336,7 +2351,10 @@ class HudApp {
     /* ---------------- layers ---------------- */
 
     _rebuild() {
-        this._guard('rebuild', () => this._rebuildInner());
+        // every connection holds its writes till the whole new layout is made: the drops, the new layers and their first pixels reach
+        // cluster-render together (cluster_render_client.js cork), so it has no time to draw the cluster without the theme in between
+        const corked = this.clients.filter((c) => typeof c.cork === 'function' && c.cork());
+        try { this._guard('rebuild', () => this._rebuildInner()); } finally { corked.forEach((c) => c.uncork()); }
         this._status();
     }
 
@@ -2674,7 +2692,7 @@ class HudApp {
             c.uniform(ref, 'u_holeR', [this._holeRadius(w)]);
             c.uniform(ref, 'u_strip', w.strip);
             c.uniform(ref, 'u_topEnd', [w.topEnd]);
-            c.uniform(ref, 'u_tint', [this._tint()]);
+            c.uniform(ref, 'u_tint', [this._tint() * (isNum(w.tintScale) ? Math.max(0, w.tintScale) : 1)]);      // a layout's "tintScale": its share of the setting
             c.uniform(ref, 'u_facets', [this._facets()]);
             c.uniform(ref, 'u_slotOff', [this._slotOff()]);
         } else if (w.type === 'mblade') {
@@ -2707,8 +2725,20 @@ class HudApp {
             c.uniform(ref, 'u_red', [0.97, 0.98, 1.0, 0]);
             c.uniform(ref, 'u_hole', this._hole(w));
             c.uniform(ref, 'u_holeR', [this._holeRadius(w)]);
-            c.uniform(ref, 'u_tint', [this._tint()]);
+            c.uniform(ref, 'u_tint', [this._tint() * (isNum(w.tintScale) ? Math.max(0, w.tintScale) : 1)]);      // a layout's "tintScale": its share of the setting
             c.uniform(ref, 'u_facets', [this._facets()]);
+        } else if (w.type === 'mpanel') {
+            // M Blade's view panel (shaders.js mpanel): "shape" [x, y of the point, the sides' slope, the band's width], "bar" [left x, right x],
+            // "rows" [{ y, signal, min, max, red, tone }] (up to four), "div" (marks), all in panel px
+            const sh = w.shape, rows = (w.rows || []).slice(0, 4), pad = (f, d) => [0, 1, 2, 3].map((i) => (rows[i] ? f(rows[i]) : d));
+            c.uniform(ref, 'u_size', [w.w, w.h]);
+            c.uniform(ref, 'u_pan', [sh[1] - w.y, sh[2], sh[3], sh[0] - w.x]);
+            c.uniform(ref, 'u_bx', w.bar ? [w.bar[0] - w.x, w.bar[1] - w.x] : [0, 1]);
+            c.uniform(ref, 'u_ry', pad((r) => r.y - w.y, -1));
+            c.uniform(ref, 'u_rz', pad((r) => (isNum(r.red) ? r.red : 2), 2));
+            c.uniform(ref, 'u_v', [0, 0, 0, 0]);
+            c.uniform(ref, 'u_tone', [0, 0, 0, 0]);
+            c.uniform(ref, 'u_div', [w.div || 2]);
         } else if (w.type === 'navi') {
             const B = w.band, L = w.line, L2 = w.line2;
             c.uniform(ref, 'u_size', [w.w, w.h]);
@@ -2729,7 +2759,7 @@ class HudApp {
             c.uniform(ref, 'u_barR', [w.barR[0], w.barR[1], w.barR[2], 0]);
             c.uniform(ref, 'u_hole', this._hole(w));
             c.uniform(ref, 'u_holeR', [this._holeRadius(w)]);
-            c.uniform(ref, 'u_tint', [this._tint()]);
+            c.uniform(ref, 'u_tint', [this._tint() * (isNum(w.tintScale) ? Math.max(0, w.tintScale) : 1)]);      // a layout's "tintScale": its share of the setting
             c.uniform(ref, 'u_facets', [this._facets()]);
             c.uniform(ref, 'u_slotOff', [this._slotOff()]);
         } else if (w.type === 'mdash') {
@@ -3057,7 +3087,28 @@ class HudApp {
     /** The strength of the facets on that backdrop: the setting "sportFacets" in % (100 = the full pattern, 0 = the plain navy). */
     _facets() { return this.ctx.settings.item('sportFacets') ? Math.min(1, Math.max(0, this.setting('sportFacets') / 100)) : 1; }
 
+    /** One gauge frame, timed (perfShown, for the Signals tab): a frame that takes longer than TICK_MS, or a timer that fires late, is what a flicker or a stutter on the car is made of. */
     _tick() {
+        const t0 = Date.now();
+        try { this._tickBody(); } finally { this._perfNote(t0, Date.now()); }
+    }
+
+    /** The loop's timing over the last 5 s window: frames per second, the average and the slowest frame (ms), and the longest wait between two frame starts (ms). */
+    _perfNote(t0, t1) {
+        const p = this.perf || (this.perf = { n: 0, sum: 0, max: 0, gap: 0, prev: 0, at: t1, shown: null });
+        const dur = t1 - t0;
+        if (p.prev && t0 - p.prev > p.gap) p.gap = t0 - p.prev;
+        p.prev = t0; p.n++; p.sum += dur; if (dur > p.max) p.max = dur;
+        if (t1 - p.at >= PERF_WINDOW_MS) {
+            p.shown = { perSec: Math.round(p.n * 1000 / (t1 - p.at)), avg: Math.round(p.sum / p.n * 10) / 10, max: p.max, gap: p.gap, at: t1 };
+            p.n = 0; p.sum = 0; p.max = 0; p.gap = 0; p.at = t1;
+        }
+    }
+
+    /** { perSec, avg, max, gap, at } of the last full window, or null before the first one. */
+    perfShown() { return this.perf && this.perf.shown ? this.perf.shown : null; }
+
+    _tickBody() {
         const now = Date.now();
         this._smoothRpm(now);
         this._smoothSpeed(now);
@@ -3482,6 +3533,25 @@ class HudApp {
             x.last = key;
             x.c.uniform(x.ref, 'u_v', [v, pk, zone, 0]);
             x.c.uniform(x.ref, 'u_hy', bar === 1 ? [0.3, 0.75, 1.0, 1] : bar === 2 ? [0.2, 0.85, 0.5, 1] : [0, 0, 0, 0]);
+        } else if (w.type === 'mpanel') {
+            // the panel's bars: each row's reading between its min and max, in its tone: "temp" (oil, coolant) blue while cold, green once warm, flashing
+            // red over the warning limit; "boost" light blue; "ice" (the outside) blue under the setting "iceBelow"; else white
+            const rows = (w.rows || []).slice(0, 4), v = [0, 0, 0, 0], tn = [0, 0, 0, 0];
+            const flash = Math.floor(now / WARN_FLASH_MS) % 2 === 0;
+            rows.forEach((r, i) => {
+                const raw = this._raw(r.signal), mn = isNum(r.min) ? r.min : 0, mx = isNum(r.max) ? r.max : 1;
+                v[i] = isNum(raw) && mx !== mn ? Math.round(Math.min(1, Math.max(0, (raw - mn) / (mx - mn))) * 200) / 200 : 0;
+                if (r.tone === 'temp') {
+                    const cold = COLD_BELOW[r.signal] ? this.setting(COLD_BELOW[r.signal]) : 0;
+                    tn[i] = this._overLimit(r.signal) ? (flash ? 3 : 4) : isNum(raw) && isNum(cold) && cold > 0 && raw < cold ? 1 : 2;
+                } else if (r.tone === 'boost') tn[i] = 5;
+                else if (r.tone === 'ice') tn[i] = this._ice(now).on ? 1 : 0;
+            });
+            const key = v.join(',') + '|' + tn.join(',');
+            if (!force && key === x.last) return;
+            x.last = key;
+            x.c.uniform(x.ref, 'u_v', v);
+            x.c.uniform(x.ref, 'u_tone', tn);
         } else if (w.type === 'slantbar' && SENSOR_BAR[w.sensor]) {
             // a sensor's bar ("sensor": oil | coolant | boost, "min" / "max" in C or bar): blue while the oil / the coolant is under its cold limit, green once
             // warm, light blue for the boost, and over the warning limit flashing between the shift red and a dark red (the readouts' colours, "tempBy")

@@ -203,6 +203,13 @@ check('la carte Waze du cluster : la caméra le demande à WazeYield (want vrai 
     R.run(300, 'P', 0, []); R.run(300, 'R', 0, ['rear']); R.run(5000, 'P', 0, []);
     assert.strictEqual(calls[0], false); assert(calls.indexOf(true) > 0, 'jamais demandé'); assert.strictEqual(calls[calls.length - 1], false);
 });
+check('la carte Waze du cluster n\'est pas éteinte sans image de caméra (pas d\'outil de capture : D sous 15 km/h, R, rien ne change)', () => {
+    const calls = [];
+    const R = rig(ON);
+    R.app.d.waze = { want: (on) => calls.push(on) };
+    R.run(3000, 'D', 5, []); R.run(3000, 'R', 0, []); R.run(2000, 'D', 40, []);
+    assert(calls.length > 0 && calls.every((c) => c === false), 'want(true) sans image : ' + calls.filter((c) => c).length + ' fois');
+});
 check('sans thème ouvert : rien n\'est dessiné', () => {
     const R = rig(ON); R.themeUp = false;
     R.run(2000, 'R', 0, ['rear']);

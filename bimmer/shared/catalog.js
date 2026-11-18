@@ -37,6 +37,11 @@ const GROUPS = [
     { id: 'gps2', skip: MAX_ROWS, title: 'GPS: next entries', first: /latitude|longitude|gnss|gps|nmea|breitengrad|laengengrad|geoposition|vehicleposition|currentposition|locationdata/i,
         match: /gnss|gps|nmea|latitude|longitude|breitengrad|laengengrad|geoposition|geo.?coord|vehicleposition|currentposition|carposition|locationdata|positioninfo|positiondata|navigationposition|positioning|ortung|locationinformation/i,
         not: /seat|sitz|pedal|window|fenster|mirror|spiegel|steering|lenk|wiper|door|tuer|roof|dach|trunk|heck|belt|gurt|headrest|kopfstuetze|lumbar|damper|dampfer|valve|ventil|piston|throttle|camshaft|crank/i },
+    // the engine's speed under any other name than CDS.statusEngineSpeed2 (the HUD's rev counter never moves on the owner's car, 18 Nov 2026): names only.
+    // `not` drops the wheels', fans', pumps' and compressors' speeds
+    { id: 'rpm', title: 'Engine speed under other names (the car\'s catalog)', first: /rpm|enginespeed|engine.?speed|drehzahl|crankshaft|kurbelwelle/i,
+        match: /rpm|enginespeed|engine.?speed|drehzahl|crankshaft|kurbelwelle|umdrehung|tachometer|motorspeed|revcounter/i,
+        not: /wheel|rad(?![a-z])|fan|luefter|lüfter|pump|compressor|kompressor|wiper|blower|gebl/i },
 ];
 
 /** The member names of a field's data type (structs flattened, a parent's members first), at most two levels deep. */

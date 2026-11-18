@@ -2,7 +2,7 @@
   "id": "shakpark",
   "title": "ShakPark",
   "description": "Caméra avant (en D, sous 15 km/h) et caméra arrière (en marche arrière) dans la fenêtre centrale du thème du cluster",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "vendor": "custom",
   "loggingId": "OAV2",
   "iconGlyph": "SP",

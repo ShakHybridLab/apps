@@ -67,7 +67,9 @@ check('M Blade asks for it, with a window in the middle of Waze on cluster\'s ow
     const b = L('mblade').widgets.find((w) => w.hole);
     assert(b.mapPlace === true && b.holeWhen === 'mapUp');
     const w = { x: b.hole[0] + b.holeInset, y: b.hole[1] + b.holeInset, w: b.hole[2] - 2 * b.holeInset, h: b.hole[3] - 2 * b.holeInset };
-    assert(w.w >= 480 && w.w <= 680 && w.h >= 380 && w.h <= 480, 'window ' + w.w + 'x' + w.h + ' is not a map window (about 480-680 x 380-480)');
+    assert(w.w >= 440 && w.w <= 680 && w.h >= 380 && w.h <= 480, 'window ' + w.w + 'x' + w.h + ' is not a map window (about 440-680 x 380-480)');
+    // centred on x 960: a Waze on cluster that ignores our window draws its map in its slot, the car in the middle (owner's photo of Nov 18 2026)
+    assert(Math.abs(w.x + w.w / 2 - 960) <= 2, 'the window is not centred on x 960: ' + JSON.stringify(w));
     assert(w.x >= 416 && w.y >= 120 && w.x + w.w <= 1504 && w.y + w.h <= 600, 'the window leaves the slot where Waze on cluster draws its map by default: a Waze that ignores our window would show a sliver of its map');
     assert(w.x > 90, 'the window must clear the hood\'s limit at the left');
     ['sport', 'm'].forEach((n) => {

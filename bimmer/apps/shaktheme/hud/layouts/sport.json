@@ -1352,6 +1352,124 @@
       "sheet": "s11"
     },
     {
+      "id": "al_card",
+      "type": "box",
+      "z": 4,
+      "x": 824,
+      "y": 250,
+      "w": 272,
+      "h": 78,
+      "fill": [
+        10,
+        10,
+        14,
+        255
+      ],
+      "line": [
+        255,
+        42,
+        42,
+        255
+      ],
+      "border": 3,
+      "radius": 20,
+      "toggle": "danger",
+      "conn": 2
+    },
+    {
+      "id": "al_cam",
+      "type": "icon",
+      "icon": "cam",
+      "z": 5,
+      "x": 838,
+      "y": 265,
+      "w": 48,
+      "h": 48,
+      "color": [
+        255,
+        42,
+        42,
+        255
+      ],
+      "toggle": "danger",
+      "sheet": "s10",
+      "conn": 1
+    },
+    {
+      "id": "al_title",
+      "type": "text",
+      "z": 5,
+      "x": 896,
+      "y": 262,
+      "w": 118,
+      "h": 19,
+      "text": "DANGER",
+      "font": "m_label",
+      "color": [
+        255,
+        42,
+        42,
+        255
+      ],
+      "align": "left",
+      "toggle": "danger",
+      "sheet": "s10",
+      "conn": 1
+    },
+    {
+      "id": "al_dist",
+      "type": "text",
+      "z": 5,
+      "x": 886,
+      "y": 287,
+      "w": 88,
+      "h": 29,
+      "text": "{{dangerDist}}",
+      "font": "m_mid",
+      "color": "fg",
+      "align": "right",
+      "toggle": "danger",
+      "sheet": "s10",
+      "conn": 1
+    },
+    {
+      "id": "al_unit",
+      "type": "text",
+      "z": 5,
+      "x": 978,
+      "y": 286,
+      "w": 40,
+      "h": 36,
+      "text": "{{dangerUnit}}",
+      "font": "m_unit",
+      "color": "dim",
+      "align": "left",
+      "toggle": "danger",
+      "sheet": "s10",
+      "conn": 1
+    },
+    {
+      "id": "al_limit",
+      "type": "text",
+      "z": 5,
+      "x": 1024,
+      "y": 274,
+      "w": 62,
+      "h": 29,
+      "text": "{{dangerLimit}}",
+      "font": "m_tiny",
+      "color": [
+        255,
+        42,
+        42,
+        255
+      ],
+      "align": "center",
+      "toggle": "dangerLimit",
+      "sheet": "s10",
+      "conn": 1
+    },
+    {
       "id": "xb_oil_icon",
       "type": "icon",
       "icon": "oilPour",
@@ -1364,7 +1482,7 @@
       "toggle": "viewSel=gauges&!mapUp",
       "sheet": "xs_s",
       "tempBy": "oil",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_oil_bar",
@@ -1398,7 +1516,7 @@
       "align": "right",
       "toggle": "viewSel=gauges&!mapUp",
       "sheet": "xs_s",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_oil_unit",
@@ -1414,7 +1532,7 @@
       "align": "left",
       "toggle": "viewSel=gauges&!mapUp",
       "sheet": "xs_s",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_cool_icon",
@@ -1429,7 +1547,7 @@
       "toggle": "viewSel=gauges&!mapUp",
       "sheet": "xs_s",
       "tempBy": "coolant",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_cool_bar",
@@ -1447,7 +1565,7 @@
       "slant": 14,
       "toggle": "viewSel=gauges&!mapUp",
       "trackColor": "faint",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_cool",
@@ -1463,7 +1581,7 @@
       "align": "right",
       "toggle": "viewSel=gauges&!mapUp",
       "sheet": "xs_s",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_cool_unit",
@@ -1479,7 +1597,7 @@
       "align": "left",
       "toggle": "viewSel=gauges&!mapUp",
       "sheet": "xs_s",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_boost_icon",
@@ -1493,7 +1611,7 @@
       "color": "dim",
       "toggle": "viewSel=gauges&!mapUp",
       "sheet": "xs_s",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_boost_bar",
@@ -1521,13 +1639,13 @@
       "y": 531,
       "w": 100,
       "h": 26,
-      "text": "{{boost}}",
+      "text": "{{boostPos}}",
       "font": "s_val",
       "color": "fg",
       "align": "right",
       "toggle": "viewSel=gauges&!mapUp",
       "sheet": "xs_s",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_boost_unit",
@@ -1543,7 +1661,7 @@
       "align": "left",
       "toggle": "viewSel=gauges&!mapUp",
       "sheet": "xs_s",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_tyu",
@@ -1559,7 +1677,7 @@
       "align": "center",
       "toggle": "viewSel=tyres&!mapUp",
       "sheet": "xs_t",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_typFL",
@@ -1576,7 +1694,7 @@
       "toggle": "viewSel=tyres&!mapUp",
       "sheet": "xs_t",
       "tyreBy": "FL",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_tytFL",
@@ -1592,7 +1710,7 @@
       "align": "center",
       "toggle": "viewSel=tyres&!mapUp",
       "sheet": "xs_t",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_typFR",
@@ -1609,7 +1727,7 @@
       "toggle": "viewSel=tyres&!mapUp",
       "sheet": "xs_t",
       "tyreBy": "FR",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_tytFR",
@@ -1625,7 +1743,7 @@
       "align": "center",
       "toggle": "viewSel=tyres&!mapUp",
       "sheet": "xs_t",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_typRL",
@@ -1642,7 +1760,7 @@
       "toggle": "viewSel=tyres&!mapUp",
       "sheet": "xs_t",
       "tyreBy": "RL",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_tytRL",
@@ -1658,7 +1776,7 @@
       "align": "center",
       "toggle": "viewSel=tyres&!mapUp",
       "sheet": "xs_t",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_typRR",
@@ -1675,7 +1793,7 @@
       "toggle": "viewSel=tyres&!mapUp",
       "sheet": "xs_t",
       "tyreBy": "RR",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_tytRR",
@@ -1691,7 +1809,7 @@
       "align": "center",
       "toggle": "viewSel=tyres&!mapUp",
       "sheet": "xs_t",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_tyic",
@@ -1705,7 +1823,7 @@
       "color": "dim",
       "toggle": "viewSel=tyres&!mapUp",
       "sheet": "xs_t",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_dgg",
@@ -1733,7 +1851,7 @@
       "align": "center",
       "toggle": "viewSel=drive&driveSport&!mapUp",
       "sheet": "xs_dg",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_dgfwd",
@@ -1749,7 +1867,7 @@
       "align": "center",
       "toggle": "viewSel=drive&driveSport&!mapUp",
       "sheet": "xs_dg",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_dr_engine_ic",
@@ -1794,7 +1912,7 @@
       "max": 3,
       "color": "hot",
       "toggle": "viewSel=drive&!driveSport&!mapUp",
-      "conn": 2
+      "conn": 3
     },
     {
       "id": "xb_dr_chassis_ic",

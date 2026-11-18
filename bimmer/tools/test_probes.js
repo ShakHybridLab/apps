@@ -130,7 +130,7 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
     const NPAGES = PAGES.length + catalog.GROUPS.length;
     {   // the power meter's row says what the speed and its slope give next to the car's share: one photo calibrates the scale
         const c = run(0, { pdrive: { quotaImmediateElectricEngineDriveRecuperation: 100 } });
-        assert(c.text.some((t) => t.t === '→ share 100 (scale to confirm) · estimate 23 kW'), 'no estimate beside the share: ' + c.text.map((t) => t.t).filter((t) => /share/.test(t)).join('|'));
+        assert(c.text.some((t) => t.t === '= share 100 (scale to confirm) · estimate 23 kW'), 'no estimate beside the share: ' + c.text.map((t) => t.t).filter((t) => /share/.test(t)).join('|'));
         assert.strictEqual(require('../shared/fr').tr('→ share 100 (scale to confirm) · estimate 23 kW'), '→ part 100 (échelle à confirmer) · estimée 23 kW');
         assert.strictEqual(require('../shared/fr').tr('→ share 100 (scale to confirm) · estimate -12 kW'), '→ part 100 (échelle à confirmer) · estimée -12 kW');
     }
@@ -147,12 +147,12 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
         assert.strictEqual(require('../shared/fr').tr('→ above 100 %: scale to confirm'), '→ au-dessus de 100 % : échelle à confirmer');
         assert.strictEqual(require('../shared/fr').tr('Power meter: cluster (drive and recuperation, %)'), 'Puissance : compteur du tableau de bord (propulsion et récup., %)');
         const live = { rel: { displayActualValuePowerRelativeDrivingElectric: 50, displayActualValuePowerRelativeRecuperation: 0 } };
-        const rows = (c) => c.text.filter((t) => /^→ drive 50 % · recup 0 %/.test(t.t)).map((t) => t.t);
-        run.rel = null; assert.deepStrictEqual(rows(run(0, live)), ['→ drive 50 % · recup 0 % · not used'], 'not used while the bar does not draw from it');
-        run.rel = { kw: 32.4, old: false }; assert.deepStrictEqual(rows(run(0, live)), ['→ drive 50 % · recup 0 % · bar 32 kW'], 'the bar\'s kW beside the reading');
+        const rows = (c) => c.text.filter((t) => /^= drive 50 % · recup 0 %/.test(t.t)).map((t) => t.t);
+        run.rel = null; assert.deepStrictEqual(rows(run(0, live)), ['= drive 50 % · recup 0 % · not used'], 'not used while the bar does not draw from it');
+        run.rel = { kw: 32.4, old: false }; assert.deepStrictEqual(rows(run(0, live)), ['= drive 50 % · recup 0 % · bar 32 kW'], 'the bar\'s kW beside the reading');
         run.rel = null;
         const odd = run(0, { rel: { displayActualValuePowerRelativeDrivingElectric: 300 } }).text.map((t) => t.t);
-        assert(odd.indexOf('→ above 100 %: scale to confirm') >= 0 && !odd.some((t) => /not used|· bar/.test(t)), 'an unknown scale shows alone: ' + odd.join('|'));
+        assert(odd.indexOf('= above 100 %: scale to confirm') >= 0 && !odd.some((t) => /not used|· bar/.test(t)), 'an unknown scale shows alone: ' + odd.join('|'));
     }
     [0, 1].forEach((pg) => [false, true].forEach((fed) => {
         const c = run(pg, fed ? { rpm: 2500, speed: 62, sign: 70, guide: true, cc: { numberDisplayControlCheckControlMessage: 3 } } : null);
@@ -162,7 +162,7 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
         assert(last.y + last.h <= 512, 'page ' + pg + ' rows end at ' + (last.y + last.h) + ', past 512');
         c.text.forEach((t) => assert(t.y <= 512, 'text below the page: ' + t.t));
         assert(c.note && c.note.y + (c.note.n - 1) * 26 + 6 <= 512, 'the note runs past 512: ' + JSON.stringify(c.note));
-        if (fed && pg === 0) assert(c.text.some((t) => /^→ 2500 rpm$/.test(t.t)) && c.text.some((t) => t.t === '→ route: yes'), 'no meaning line');
+        if (fed && pg === 0) assert(c.text.some((t) => /^= 2500 rpm$/.test(t.t)) && c.text.some((t) => t.t === '= route: yes'), 'no meaning line (drawn with "=": the page fonts have no arrow)');
     }));
     // the pages of the car's catalogue: a fixture catalogue in the file's shape (interfaces -> fields -> getter / notifier / dataRef, datatypes)
     {
@@ -217,10 +217,10 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
         '→ share 100 (scale to confirm)': '→ part 100 (échelle à confirmer)', '→ coolant 77 C · oil 76 C': '→ liquide 77 °C · huile 76 °C', '→ oil 76 C': '→ huile 76 °C', '→ wheel on, green': '→ volant allumé, vert', '→ wheel on, yellow, warning': '→ volant allumé, jaune, alerte', '→ wheel off': '→ volant éteint' };
     Object.keys(FR).forEach((k) => assert.strictEqual(fr.tr(k), FR[k], k));
     // the readings: a value that is not clear is never taken for one
-    assert.strictEqual(meaningOf('rpm', 65535), '→ not understood'); assert.strictEqual(meaningOf('rpm', 2499.6), '→ 2500 rpm');
+    assert.strictEqual(meaningOf('rpm', 65535), '→ no value (65535)'); assert.strictEqual(meaningOf('rpm', 2499.6), '→ 2500 rpm');
     // the car's own values, as the owner's Signals tab showed them on 16 Nov 2026 (structs of raw numbers, the scales of kit/runtime/car.js)
     assert.strictEqual(meaningOf('rpm', { actualValueRPMEngineCrankshaft: 0 }), '→ 0 rpm'); assert.strictEqual(meaningOf('rpm', { actualValueRPMEngineCrankshaft: 8000 }), '→ 2000 rpm');
-    assert.strictEqual(meaningOf('rpm', { actualValueRPMEngineCrankshaft: 65535 }), '→ not understood'); assert.strictEqual(meaningOf('rpm', { other: 1 }), '→ not understood');
+    assert.strictEqual(meaningOf('rpm', { actualValueRPMEngineCrankshaft: 65535 }), '→ no value (65535)'); assert.strictEqual(meaningOf('rpm', { other: 1 }), '→ not understood');
     assert.strictEqual(meaningOf('speed', { speedVehicleCentreOfGravity: 130 }), '→ 2 km/h'); assert.strictEqual(meaningOf('speed', { speedVehicleCentreOfGravity: 65535 }), '→ not understood');
     assert.strictEqual(meaningOf('engt', { temperatureEngineDrive: 125, temperatureEngineOilDrive: 124 }), '→ coolant 77 C · oil 76 C');
     assert.strictEqual(meaningOf('engt', { temperatureEngineDrive: 255, temperatureEngineOilDrive: 124 }), '→ oil 76 C'); assert.strictEqual(meaningOf('engt', { temperatureEngineDrive: 255 }), '→ not understood');
@@ -361,5 +361,56 @@ check('signals nobody needs are gone: the services due and the risk class (nothi
         if (f[0] !== '_') assert(code.indexOf(f) >= 0, n + ' declares ' + iface + '.' + f + ' and no code reads it');
     })));
 });
+check('cadence : messages par seconde sur les derniers messages, rien avant deux messages ni quand le dernier est vieux', () => {
+    const p = new Probes(null);
+    assert.strictEqual(p.rate('rpm', 1000), null, 'rien reçu');
+    p.feed('rpm', { actualValueRPMEngineCrankshaft: 100 }, 1000);
+    assert.strictEqual(p.rate('rpm', 1000), null, 'un seul message');
+    for (let i = 1; i <= 4; i++) p.feed('rpm', { actualValueRPMEngineCrankshaft: 100 + i }, 1000 + i * 100);
+    assert.strictEqual(Math.round(p.rate('rpm', 1450) * 10) / 10, 10, '5 messages en 400 ms : 10 par seconde');
+    for (let i = 5; i <= 30; i++) p.feed('rpm', { actualValueRPMEngineCrankshaft: 100 + i }, 1000 + i * 1000);
+    assert.strictEqual(p.get('rpm').ts.length, 10, 'seuls les derniers messages sont gardés');
+    assert.strictEqual(Math.round(p.rate('rpm', 31000) * 10) / 10, 1, 'un par seconde');
+    assert.strictEqual(p.rate('rpm', 31000 + 10001), null, 'le dernier message date de plus de 10 s');
+    assert.strictEqual(p.get('rpm').n, 31);
+});
+check('boucle des jauges : _tick mesure chaque image (durée, attente entre deux images) et donne une fenêtre de 5 s', () => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
+    const i = src.indexOf('    _perfNote(t0, t1) {'), j = src.indexOf('\n    }\n', i);
+    assert(i > 0 && j > i, '_perfNote est introuvable');
+    const H = new Function('PERF_WINDOW_MS', 'return class { ' + src.slice(i, j + 7) + ' perfShown() { return this.perf && this.perf.shown ? this.perf.shown : null; } }')(5000);
+    const h = new H();
+    assert.strictEqual(h.perfShown(), null, 'rien avant la première fenêtre');
+    let t = 10000;
+    for (let k = 0; k < 200; k++) { const gap = k === 100 ? 90 : 25; t += gap; h._perfNote(t, t + (k === 50 ? 21 : 3)); }
+    const s = h.perfShown();
+    assert(s && s.perSec >= 38 && s.perSec <= 42, 'images par seconde : ' + JSON.stringify(s));
+    assert.strictEqual(s.max, 21, 'l\'image la plus lente');
+    assert.strictEqual(s.gap, 90, 'la plus longue attente');
+    assert(s.avg >= 3 && s.avg < 4, 'durée moyenne');
+    assert(/this\._tickBody\(\)/.test(src) && /finally \{ this\._perfNote\(t0, Date\.now\(\)\); \}/.test(src), '_tick passe par _tickBody et note sa durée');
+    assert(/perfShown\(\) \{/.test(src));
+});
+
+check('régime : hud.js le relit toutes les 250 ms en plus des notifications, seulement si l\'appli le déclare ; le kit passe pollMs à l\'abonnement du CDS', () => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
+    assert(/const RPM_POLL_MS = 250;/.test(src));
+    assert(/if \(decl\[CDS_IFACE\] && decl\[CDS_IFACE\]\.statusEngineSpeed2\) \(extra\[CDS_IFACE\] = extra\[CDS_IFACE\] \|\| \{\}\)\.\$pollMs = RPM_POLL_MS;/.test(src), 'la relecture est liée à la déclaration du signal');
+    ['shaktheme', 'shakhud'].forEach((a) => {
+        const spec = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', a, 'app.json'), 'utf8'));
+        assert(spec.signals['de.bmw.infotainment.vehicle.CDS'].statusEngineSpeed2, a + ' déclare le régime');
+    });
+    // le kit : un $pollMs d'un autre champ du CDS arrive à watch() comme option de l'interface
+    const Car = require('../kit/runtime/car.js');
+    const seen = {};
+    const ctx = { log: { info() {}, warn() {} }, spec: { config: {} }, settings: { get: () => 'off' },
+        signals: { watch: (iface, inst, h, log, opts) => { seen[iface] = { fields: Object.keys(h), opts }; return Promise.resolve({ available: false }); } } };
+    const car = new Car(ctx, ['rpm', 'temps'], { 'de.bmw.infotainment.vehicle.CDS': { $pollMs: 250 } });
+    const cds = seen['de.bmw.infotainment.vehicle.CDS'];
+    assert(cds && cds.opts && cds.opts.pollMs === 250, 'pollMs 250 sur le CDS : ' + JSON.stringify(cds));
+    assert(cds.fields.indexOf('statusEngineSpeed2') >= 0 && cds.fields.indexOf('$pollMs') < 0, 'le régime est surveillé, $pollMs n\'est pas un champ');
+    assert.strictEqual(typeof car.live, 'object');
+});
+
 console.log(failed ? failed + ' FAILED' : 'probes: all checks pass');
 process.exit(failed ? 1 : 0);

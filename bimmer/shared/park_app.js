@@ -183,8 +183,11 @@ class ParkApp {
         const view = this.logic.view(now, { front: this.d.setting('frontCam') === true, rear: this.d.setting('rearCam') === true });
         this.state.view = view;
         this._request(this.d.setting('demo') === true ? 'off' : view);      // l'outil de capture n'ouvre que la caméra voulue (rien en mode essai)
-        if (this.d.waze) this.d.waze.want(view !== 'off');      // la carte Waze du cluster cède sa place vidéo tant que la caméra est voulue
+        // la carte Waze du cluster ne cède sa place vidéo que pendant qu'une image de caméra est là (plus bas). Avant (ShakPark 0.2.0), elle
+        // était éteinte dès que la caméra était VOULUE : en D sous 14 km/h, à chaque feu rouge, même sans outil de capture installé (donc sans
+        // aucune image), et rallumée 3 s après 15 km/h. La carte disparaissait et revenait, le thème refermait et rouvrait sa fenêtre : ça clignotait.
         if (view === 'off') {
+            if (this.d.waze) this.d.waze.want(false);
             this._hide(); this._ask(false); this.state.live = false;
             this.feeds.front.forget(); this.feeds.rear.forget(); this.demos.front.forget(); this.demos.rear.forget();      // pas de fichier gardé ouvert, pas d'image d'hier au prochain départ
             this.t.lastCam = null;
@@ -198,6 +201,7 @@ class ParkApp {
         const feed = demo ? this.demos[view] : this.feeds[view];      // mode essai : l'image de test, mêmes règles
         const frame = feed.read(now);
         this.state.live = feed.live(now);
+        if (this.d.waze) this.d.waze.want(this.state.live);
         if (!this.state.live) { this._hide(); this._ask(false); return; }
         this._ask(true);
         this.state.panel = this._draw(feed, frame);

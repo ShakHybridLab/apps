@@ -33,6 +33,7 @@ const TYPES = {
     mdash: [],
     sdash: ['geo', 'k', 'band', 'ticks', 'fuelSeg', 'oilSeg', 'strip', 'topEnd'],
     mblade: ['bl', 'br', 'bx', 'scale', 'g0', 'g1', 'g2'],
+    mpanel: ['shape'],
     navi: ['band', 'line', 'barL', 'barR'],
     mtach: ['side', 'y0', 'y8', 'ym', 'xm', 'kTop', 'kBot', 'wBot', 'wTop'],
     icon: ['icon'],

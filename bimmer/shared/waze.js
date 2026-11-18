@@ -46,6 +46,10 @@ const POLL_MS = 1000;
 const STALE_MS = 10000;          // a status file older than this: the service isn't running
 const RETRY_MS = 5000;           // between two sends (busy, error, or waiting for the status to show the switch)
 const LINGER_MS = 800;           // how long we stay connected after the command (its answer, then close)
+// the map stays "up" this long after the status file last said "showing": a short "frozen" (the phone's stream stalls), a file read half
+// written, or a late rewrite no longer closes the theme's window and opens it again a second later (each is a whole rebuild of the theme's
+// layers on the cluster: the owner saw the themes flicker). Turning the map off (the setting, "off", the map sent back to BMW's view) is at once.
+const DOWN_HOLD_MS = 4000;
 
 class Waze {
     /**
@@ -68,6 +72,8 @@ class Waze {
         this.moved = false;          // we put it on the panel (so we put it back)
         try { this.moved = JSON.parse(fs.readFileSync(this.memo, 'utf8')).moved === true; } catch (e) { /* first run */ }
         this.lastText = null;
+        this.now = opts.now || Date.now;
+        this.showAt = 0;             // when the status file last said "showing" on the panel
     }
 
     start() {
@@ -110,7 +116,7 @@ class Waze {
 
     _poll() {
         fs.stat(this.statusPath, (err, st) => {
-            if (err || Date.now() - st.mtime.getTime() > STALE_MS) return this._update(null);
+            if (err || this.now() - st.mtime.getTime() > STALE_MS) return this._update(null);
             fs.readFile(this.statusPath, 'utf8', (e, txt) => {
                 let s = null;
                 try { if (!e) { const j = JSON.parse(txt); s = { state: String(j.state || ''), target: j.target == null ? null : String(j.target), raw: rawOf(j), keys: Object.keys(j).join(',') }; } } catch (x) { s = null; }
@@ -125,7 +131,11 @@ class Waze {
         if (keys !== this.lastKeys) { this.lastKeys = keys; if (s && this.log) this.log.info('Waze on cluster status file: ' + s.raw); }
         if (s && s.target === 'map' && !this.wanted && this.moved) this._setMoved(false);   // it's back
         if (s && s.target === 'panel' && this.problem) this.problem = null;
-        const up = !!(this.wanted && s && s.target === 'panel' && s.state === 'showing');
+        const showing = !!(this.wanted && s && s.target === 'panel' && s.state === 'showing');
+        if (showing) this.showAt = this.now();
+        // gone for good at once: not wanted any more, or the tool says the map is off / unsupported / back on BMW's own map view
+        const gone = !this.wanted || (s && (s.state === 'off' || s.state === 'unsupported' || s.target === 'map'));
+        const up = showing || (this.up && !gone && this.now() - this.showAt < DOWN_HOLD_MS);
         const text = this.info().text;
         const changed = up !== this.up || text !== this.lastText;
         this.up = up;
@@ -180,3 +190,4 @@ class Waze {
 
 Waze.rawOf = rawOf;
 module.exports = Waze;
+module.exports.DOWN_HOLD_MS = DOWN_HOLD_MS;

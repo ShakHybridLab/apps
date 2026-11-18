@@ -51,7 +51,7 @@ const EXACT = {
     "Speed cameras and road hazards (the car's catalog)": 'Radars et dangers sur la route (catalogue de la voiture)',
     'Cameras: CameraProxy and ICAM2Proxy': 'Caméras : CameraProxy et ICAM2Proxy',
     'Cameras: next entries': 'Caméras : suite',
-    'GPS: where the car is': 'GPS : où est la voiture',
+    'GPS: where the car is': 'GPS : où est la voiture', 'Engine speed under other names (the car\'s catalog)': "Régime moteur sous d'autres noms (catalogue de la voiture)",
     'GPS: next entries': 'GPS : suite',
     'Signals in the car\'s catalog': 'Signaux du catalogue de la voiture',
     'Catalog not readable': 'Catalogue illisible', "Nothing found in the car's catalog": 'Rien dans le catalogue de la voiture',
@@ -68,8 +68,8 @@ const EXACT = {
     'Window open: Cluster Centre / Cluster Info draw in it': 'Fenêtre ouverte : Cluster Centre / Cluster Info y dessinent',
     'Asked for, opening': 'Demandée, ouverture en cours', 'Closed (nothing asks for it)': 'Fermée (personne ne la demande)',
     'Danger zone alert (M Blade and Navi)': 'Alerte zone de danger (M Blade et Navi)',
-    'Nothing to show: it needs an app that tells it where a zone is (danger-<app>.json in /dev/shm/cluster-themes).':
-        "Rien à afficher : il faut une appli qui indique où est la zone (danger-<appli>.json dans /dev/shm/cluster-themes).",
+    'Nothing to show: no zone near, or no app gives the zones (ShakRadar, from the car\'s GPS).':
+        "Rien à afficher : pas de zone proche, ou aucune appli ne donne les zones (ShakRadar, avec le GPS de la voiture).",
     'On: Sport, M, M Blade and Navi open a window in the middle and Waze on Cluster draws its map in it, above':
         'Activé : Sport, M, M Blade et Navi ouvrent une fenêtre au milieu et Waze on Cluster y dessine sa carte, par-dessus',
     "BMW's own map view, so nothing shows twice. When the map goes away the theme fills back in.":
@@ -130,6 +130,10 @@ const PATTERNS = [
     [/^Waiting: (.*) is stuck \((\d+) s\)$/, 'En attente : $1 est bloqué ($2 s)'],
     [/^Error: (.*)$/, 'Erreur : $1'], [/^Refused: (.*)$/, 'Refusé : $1'], [/^Read refused: (.*)$/, 'Lecture refusée : $1'],
     [/^(\d+) of (\d+) read$/, '$1 sur $2 lus'],
+    [/^→ no value \((\d+)\)$/, '→ pas de valeur ($1)'], [/^→ none \((\d+)\)$/, '→ aucune ($1)'],
+    [/^(\d+) msg · ([\d.]+)\/s$/, '$1 msg · $2/s'],
+    // onglet Signaux : la mesure de la boucle des jauges (hud.js _perfNote)
+    [/^Loop: (\d+)\/s · average ([\d.]+) ms · slowest (\d+) ms · longest wait (\d+) ms$/, 'Boucle : $1/s · moyenne $2 ms · la plus lente $3 ms · attente la plus longue $4 ms'],
     [/^Turn HUD Widgets off so (.*) shows\?$/, 'Éteindre HUD Widgets pour afficher $1 ?'],
     [/^Turn the cluster theme off so (.*) shows\?$/, 'Éteindre le thème du cluster pour afficher $1 ?'],
     [/^Show (.*) on the HUD anyway\?$/, 'Afficher $1 sur le HUD quand même ?'],

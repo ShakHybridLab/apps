@@ -37,11 +37,12 @@ THEMES.forEach((name) => {
     const xb = L.widgets.filter((w) => w.id.startsWith('xb_'));
     check(name + ' : des widgets "xb_", chacun dans sa vue (jauges, pneus ou conduite), rien de permanent, ids uniques', () => {
         assert(xb.length >= (name === 'm' ? 6 : 14), 'trop peu de widgets xb_ : ' + xb.length);
-        xb.forEach((w) => assert(/^viewSel=(gauges|tyres|drive&!?driveSport)(&!mapUp)?$/.test(w.toggle), w.id + ' : bascule ' + w.toggle));
+        // (M Blade : le fond, la jauge d'essence à droite et la limitation sous le panneau des vues valent pour toutes les vues, carte fermée : "!mapUp&!viewSel=none")
+        xb.forEach((w) => assert(/^viewSel=(gauges|tyres|drive&!?driveSport)(&!?mapUp)?$/.test(w.toggle) || (name === 'mblade' && /^(!mapUp&!viewSel=none|(!?mapUp)&!viewSel=none&!viewSel=gauges)$/.test(w.toggle)), w.id + ' : bascule ' + w.toggle));
         assert(xb.some((w) => /^viewSel=gauges/.test(w.toggle)), 'pas de vue jauges');
         assert.strictEqual(xb.some((w) => /^viewSel=tyres/.test(w.toggle)), name !== 'm', 'les pneus : M a déjà son bloc, les autres ont une vue');
         assert.deepStrictEqual(HudApp.viewsOf(L.widgets), name === 'm' ? ['gauges'] : ['gauges', 'tyres', 'drive'], 'les vues du thème (M a déjà ses réglages de modes dans son tableau)');
-        if (name !== 'sport') assert(xb.some((w) => w.toggle === 'viewSel=gauges'), 'au moins une barre reste carte ouverte');
+        if (name !== 'sport') assert(xb.some((w) => w.toggle === 'viewSel=gauges' || w.toggle === 'viewSel=gauges&mapUp'), 'au moins une barre reste carte ouverte');
         const ids = L.widgets.map((w) => w.id);
         assert.strictEqual(new Set(ids).size, ids.length, 'identifiant en double');
     });
@@ -54,9 +55,17 @@ THEMES.forEach((name) => {
         assert(xb.some((w) => w.type === 'icon' && w.icon === 'tyre'), 'la roue');
     });
     check(name + ' : les barres : turbo et liquide partout, l\'huile là où le thème n\'a pas déjà la sienne', () => {
-        const bars = xb.filter((w) => w.type === 'slantbar' || w.type === 'meter');
-        const sig = bars.map((w) => w.sensor || w.signal).sort();
-        assert.deepStrictEqual(sig, name === 'mblade' ? ['boost', 'coolant'] : ['boost', 'coolant', 'oil'], 'capteurs : ' + sig);
+        // (M Blade has each view twice: right of the blade with the map closed, in the left column with the map up: the map-up copy is "&mapUp")
+        // (M Blade : carte fermée, les barres sont dans le panneau des vues à gauche, "rows" de xb_vpan_g, comme le combiné M de BMW ; carte ouverte,
+        // le turbo et le liquide en barres inclinées à droite, "&mapUp")
+        const bars = xb.filter((w) => (w.type === 'slantbar' || w.type === 'meter') && !/(^|&)mapUp$/.test(w.toggle));
+        const sig = name === 'mblade' ? xb.find((w) => w.id === 'xb_vpan_g').rows.map((r) => r.signal).sort() : bars.map((w) => w.sensor || w.signal).sort();
+        if (name === 'mblade') {
+            assert.deepStrictEqual(bars, [], 'carte fermée : les barres sont dans le panneau');
+            assert.deepStrictEqual(xb.filter((w) => w.type === 'slantbar' && /(^|&)mapUp$/.test(w.toggle)).map((w) => w.sensor).sort(), ['boost', 'coolant'], 'carte ouverte : le turbo et le liquide');
+            xb.find((w) => w.id === 'xb_vpan_g').rows.forEach((r) => assert(r.max > r.min && r.y > 0, r.signal + ' : bornes'));
+        }
+        assert.deepStrictEqual(sig, name === 'mblade' ? ['ambient', 'boost', 'coolant', 'oil'] : ['boost', 'coolant', 'oil'], 'capteurs : ' + sig);
         bars.forEach((w) => {
             assert(w.min !== undefined && w.max > w.min, w.id + ' : bornes');
             if (w.type === 'slantbar') assert(w.sensor === w.signal, w.id + ' : "sensor" et "signal" vont ensemble (le validateur veut "signal")');
@@ -66,29 +75,47 @@ THEMES.forEach((name) => {
         const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
         const on = (w, map, view, sport) => !w.toggle || w.toggle.split('&').every((t) => {
             const not = t.charAt(0) === '!', k = not ? t.slice(1) : t;
-            const v = k === 'mapUp' || k === 'powerOpen' ? map : k === 'powerShut' ? !map : k === 'driveSport' ? sport : k.indexOf('viewSel=') === 0 ? k.slice(8) === view : true;
+            const v = k === 'mapUp' || k === 'powerOpen' ? map : k === 'powerShut' ? !map : k === 'driveSport' ? sport : k.indexOf('viewSel=') === 0 ? k.slice(8) === (view || 'none') : true;
             return not ? !v : v;
         });
         const box = (w) => w.type === 'text' || w.type === 'icon' || w.type === 'slantbar' || w.type === 'meter' || w.type === 'gmeter' || w.type === 'segbar';
         [false, true].forEach((map) => [['gauges', false], ['tyres', false], ['drive', true], ['drive', false]].forEach(([view, sport]) => {
-            const mine = xb.filter((w) => on(w, map, view, sport));
+            const mine = xb.filter((w) => on(w, map, view, sport) && w.type !== 'mblade');      // (M Blade's backdrop for the views, xb_vback: the whole panel)
+            // M Blade's view panel (mpanel) is a band whose sides are "<": a box hits it when one of its corners or its middle is inside the band
+            const inPanel = (p, w) => [[w.x, w.y], [w.x + w.w, w.y], [w.x, w.y + w.h], [w.x + w.w, w.y + w.h], [w.x + w.w / 2, w.y + w.h / 2]].some(([x, y]) => {
+                const xl = p.shape[0] + p.shape[2] * Math.abs(y - p.shape[1]);
+                return y > p.y && y < p.y + p.h && x > xl && x < xl + p.shape[3];
+            });
             mine.forEach((a) => L.widgets.filter((o) => !o.id.startsWith('xb_') && box(o) && on(o, map, view, sport)).forEach((o) => {
-                assert(!hit(a, o), a.id + ' recouvre ' + o.id + ' (vue ' + view + (sport ? ', Sport' : '') + (map ? ', carte ouverte' : '') + ')');
+                assert(a.type === 'mpanel' ? !inPanel(a, o) : !hit(a, o), a.id + ' recouvre ' + o.id + ' (vue ' + view + (sport ? ', Sport' : '') + (map ? ', carte ouverte' : '') + ')');
             }));
-            mine.forEach((a, i) => mine.slice(i + 1).forEach((b) => {
+            mine.filter((w) => w.type !== 'mpanel').forEach((a, i, m) => m.slice(i + 1).forEach((b) => {
                 if (a.type === 'text' || b.type === 'text' || a.type === 'icon' || b.type === 'icon' || a.type === 'gmeter' || b.type === 'gmeter') assert(!hit(a, b) || a.id.replace(/_[a-z]+$/, '') === b.id.replace(/_[a-z]+$/, '') && (a.type === 'segbar' || b.type === 'segbar') === false, a.id + ' recouvre ' + b.id + ' (vue ' + view + ')');
             }));
         }));
     });
     // la vue « Conduite » : en Sport le G-mètre et deux lectures, hors Sport quatre rangées (icône, nom du réglage), avec leur trait de trois crans sauf M Blade
     if (name !== 'm') check(name + ' : la vue Conduite : G-mètre et lectures en Sport, les quatre réglages des modes sinon', () => {
-        const g = xb.filter((w) => /driveSport$|driveSport&/.test(w.toggle) && !/!driveSport/.test(w.toggle)), r = xb.filter((w) => /!driveSport/.test(w.toggle));
+        const mine = (w) => !/(^|&)mapUp$/.test(w.toggle) && w.type !== 'mpanel';       // the view with the map closed (M Blade's panel apart); M Blade's map-up copy is checked the same way below
+        const g = xb.filter((w) => mine(w) && /driveSport$|driveSport&/.test(w.toggle) && !/!driveSport/.test(w.toggle)), r = xb.filter((w) => mine(w) && /!driveSport/.test(w.toggle));
+        if (name === 'mblade') {
+            const up = (w) => /(^|&)mapUp$/.test(w.toggle);
+            const g2 = xb.filter((w) => up(w) && /driveSport/.test(w.toggle) && !/!driveSport/.test(w.toggle)), r2 = xb.filter((w) => up(w) && /!driveSport/.test(w.toggle));
+            assert.deepStrictEqual(g2.map((w) => w.type).sort(), g.map((w) => w.type).sort(), 'carte ouverte : le même G-mètre');
+            assert.deepStrictEqual(r2.map((w) => w.text || w.icon).sort(), r.map((w) => w.text || w.icon).sort(), 'carte ouverte : les mêmes réglages');
+        }
         assert.deepStrictEqual(g.map((w) => w.type).sort(), ['gmeter', 'text', 'text']);
         assert.deepStrictEqual(g.filter((w) => w.type === 'text').map((w) => w.text).sort(), ['{{gFwd}}', '{{gSide}}']);
         assert.deepStrictEqual(r.filter((w) => w.type === 'text').map((w) => w.text).sort(), ['{{setup:chassis}}', '{{setup:engine}}', '{{setup:gearbox}}', '{{setup:steering}}']);
         assert.strictEqual(r.filter((w) => w.type === 'icon').length, 4);
         const bars = r.filter((w) => w.type === 'segbar');
-        assert.strictEqual(bars.length, name === 'mblade' ? 0 : 4, 'les traits : M Blade n\'a plus de couche pour eux');
+        assert.strictEqual(bars.length, name === 'mblade' ? 0 : 4, 'les traits : M Blade les a dans son panneau');
+        if (name === 'mblade') {
+            const p = xb.find((w) => w.id === 'xb_vpan_dr');
+            assert(p && p.type === 'mpanel' && p.div === 3 && p.toggle === 'viewSel=drive&!driveSport&!mapUp', 'le panneau des réglages');
+            assert.deepStrictEqual(p.rows.map((x) => x.signal), ['setupLevel:engine', 'setupLevel:chassis', 'setupLevel:steering', 'setupLevel:gearbox']);
+            p.rows.forEach((x) => assert(x.min === 0 && x.max === 3, x.signal + ' : trois crans'));
+        }
         bars.forEach((b) => assert(/^setupLevel:(engine|chassis|steering|gearbox)$/.test(b.signal) && b.max === 3, b.id));
         // les fontes du thème ont les lettres des textes
         const font = (n) => JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'hud', 'fonts', n + '.json'), 'utf8'));
@@ -206,5 +233,54 @@ check('la barre de capteur : rien n\'est renvoyé si rien n\'a changé (sauf for
 });
 
 fs.rmSync && fs.rmSync(tmp, { recursive: true, force: true });
+// dans CHAQUE vue (et carte ouverte ou non), aucun widget sous le voyant de ceinture ni sous la lettre de rapport de BMW : la fenêtre du rapport
+// efface ce qui y passe (la barre du liquide de M, 176 px, y mordait : elle n'apparaissait jamais, 18 nov. 2026)
+// le panneau des vues de M Blade (mpanel) : chaque rangée sa valeur entre min et max, son ton (froid, chaud, au-delà de la limite, turbo, gel)
+check('le panneau de M Blade : les barres suivent leurs capteurs, avec la couleur de chacun, et rien n\'est renvoyé si rien n\'a changé', () => {
+    const P = layout('mblade').widgets.find((w) => w.id === 'xb_vpan_g');
+    const go = (vals, over, ice, now, x) => {
+        const calls = [];
+        x = x || { w: P, ref: 1, last: '', c: { uniform: (r, nm, v) => calls.push([nm, v]) } };
+        x.c.uniform = (r, nm, v) => calls.push([nm, v]);
+        const fake = { _raw: (k) => vals[k], _overLimit: (k) => (over === k ? k : null), setting: (k) => ({ oilCold: 75, coolantCold: 70 })[k],
+            _ice: () => ({ on: !!ice }) };
+        HudApp.prototype._update.call(fake, x, now || 0, false);
+        const get = (nm) => (calls.find((c) => c[0] === nm) || [])[1];
+        return { v: get('u_v'), t: get('u_tone'), x };
+    };
+    const r = go({ boost: 1, oil: 60, coolant: 95, ambient: 15 });
+    assert(same(r.v, [0.5, 0.1, 0.45, 0.5]), 'niveaux : ' + r.v);
+    assert(same(r.t, [5, 1, 2, 0]), 'tons (turbo, huile froide, liquide chaud, extérieur) : ' + r.t);
+    assert(same(go({ boost: 1, oil: 60, coolant: 95, ambient: 1 }, null, true).t, [5, 1, 2, 1]), 'le gel : bleu');
+    const seen = new Set();
+    for (let t = 0; t < 2000; t += 50) seen.add(go({ boost: 1, oil: 140, coolant: 95, ambient: 15 }, 'oil', false, t).t[1]);
+    assert.deepStrictEqual([...seen].sort(), [3, 4], 'au-delà de la limite : rouge et rouge sombre en alternance');
+    const once = go({ boost: 1, oil: 60, coolant: 95, ambient: 15 });
+    assert.strictEqual(go({ boost: 1, oil: 60, coolant: 95, ambient: 15 }, null, false, 0, once.x).v, undefined, 'renvoyé sans changement');
+    // la forme : le panneau prolonge l'hexagone (mêmes haut et bas), sa pointe à gauche, dans la partie visible
+    const visible = require(path.join(root, 'shared', 'visible.js'));
+    assert(P.y === 167 && P.y + P.h === 589, 'le haut et le bas de l\'hexagone');
+    assert(visible.hoodY(P.shape[0]) < P.shape[1] && visible.hoodY(P.shape[0] + P.shape[2] * (P.shape[1] - P.y)) < P.y, 'la pointe et le coin haut sous le capot');
+    assert.strictEqual(require(path.join(root, 'shared', 'shaders.js')).mpanel.indexOf('uniform vec4 u_pan;') > 0, true);
+});
+check('aucune vue ne met un widget sur les zones que BMW dessine (ceinture, lettre de rapport) ni dans le trou de la lettre de rapport', () => {
+    const visible = require(path.join(root, 'shared', 'visible.js'));
+    const on = (w, map, v, sp) => !w.toggle || w.toggle.split('&').every((part) => {
+        const neg = part[0] === '!', k = neg ? part.slice(1) : part;
+        const val = k.indexOf('viewSel=') === 0 ? (v || 'none') === k.slice(8) : k === 'driveSport' ? sp : k === 'mapUp' ? map : true;
+        return val !== neg;
+    });
+    const bad = [];
+    THEMES.forEach((name) => [false, true].forEach((map) => [[null, false], ['gauges', false], ['tyres', false], ['drive', true], ['drive', false]].forEach(([v, sp]) => {
+        const ws = layout(name).widgets.filter((w) => on(w, map, v, sp) && !(w.w >= 1500));
+        visible.check(ws, 'panel').filter((m) => !/under the hood/.test(m)).forEach((m) => bad.push(name + ' ' + (v || 'aucune') + (map ? ' carte' : '') + ' : ' + m));
+        // et le trou de la lettre de rapport (taille par défaut) : une barre qui y mord est retirée par le moteur, un texte ou une icône poussé de 6 px au plus
+        const hole = require(path.join(root, 'shared', 'gear_window.js')).pick('auto', name);
+        ws.filter((w) => w.id.indexOf('xb_') === 0 && w.x < hole.x + hole.w && hole.x < w.x + w.w && w.y < hole.y + hole.h && hole.y < w.y + w.h)
+            .forEach((w) => bad.push(name + ' ' + (v || 'aucune') + (map ? ' carte' : '') + ' : ' + w.id + ' dans le trou de la lettre de rapport x ' + hole.x + '..' + (hole.x + hole.w)));
+    })));
+    assert.deepStrictEqual(bad, []);
+});
+
 console.log(failed ? failed + ' FAILED' : 'sensor bars: ' + n + ' checks pass');
 if (failed) process.exitCode = 1;

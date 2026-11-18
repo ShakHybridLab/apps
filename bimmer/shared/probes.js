@@ -56,6 +56,8 @@ const LOG_FIRST = 12;         // distinct values of each that go to the log, the
 const LOG_EVERY_MS = 60000;
 const STUCK_MS = 8000;        // a native step this long without an end is shown as stuck (they normally take well under a second)
 const CLIP = 500;
+const RATE_KEEP = 10;          // the arrival times kept for each, to tell how often the car sends it
+const RATE_STALE_MS = 10000;   // a signal whose last message is older than this has no rate now
 
 /** A value on one line ("key=value key=value ..."), long values cut. */
 function rawOf(v) {
@@ -125,7 +127,13 @@ function meaningOf(id, v) {
     const yn = (b, w) => b === null ? null : w + ': ' + (b ? 'yes' : 'no');
     let t = null;
     switch (id) {
-    case 'rpm': { const n = unitOf(v, 'rpm', 0, 9999); t = n === null ? null : n + ' rpm'; break; }
+    case 'rpm': {
+        // 65535 is the car's "no value": said as such (a rev counter that never moves on the HUD: is it this, or nothing at all?)
+        const n = unitOf(v, 'rpm', 0, 9999), k = v && typeof v === 'object' ? Object.keys(v).find((x) => RAW.rpm.re.test(x)) : undefined;
+        const raw = k === undefined ? Extras.scalar(v) : Extras.scalar(v[k]);
+        t = n !== null ? n + ' rpm' : raw === RAW.rpm.invalid ? 'no value (65535)' : null;
+        break;
+    }
     case 'speed': { const n = unitOf(v, 'speed', 0, 400); t = n === null ? null : n + ' km/h'; break; }
     case 'engt': {
         const c = unitOf(v, 'coolant', -40, 215), o = unitOf(v, 'oil', -40, 215);
@@ -178,6 +186,7 @@ class Probes {
         const raw = rawOf(v) || '(empty)';
         const p = this.by[id] || (this.by[id] = { at: 0, n: 0, vals: [], logs: 0, logAt: 0, last: null });
         p.at = now; p.n++; p.last = v;
+        p.ts = p.ts || []; p.ts.push(now); if (p.ts.length > RATE_KEEP) p.ts.shift();
         if (p.vals[0] === raw) return false;
         p.vals.unshift(raw);
         if (p.vals.length > KEEP) p.vals.length = KEEP;
@@ -189,6 +198,14 @@ class Probes {
     }
     /** { at, n, vals } of probe `id`, or null when it has not been heard. */
     get(id) { return this.by[id] || null; }
+    /** Messages per second over the last few arrivals of probe `id` (the car sends the rev counter often, a temperature rarely); null before two messages or when the last one is old. */
+    rate(id, now) {
+        const p = this.by[id];
+        if (!p || !p.ts || p.ts.length < 2) return null;
+        const t = p.ts, span = t[t.length - 1] - t[0];
+        if ((now || Date.now()) - t[t.length - 1] > RATE_STALE_MS) return null;
+        return span > 0 ? (t.length - 1) * 1000 / span : null;
+    }
     /** How many have been heard at least once. */
     heard() { return SHOWN.filter((id) => this.by[id] && this.by[id].n > 0).length; }
 }

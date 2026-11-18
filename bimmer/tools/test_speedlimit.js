@@ -87,4 +87,12 @@ check('hud.js lit le signal de la voiture seulement si l\'appli le déclare, et 
     assert(!(hudApp.signals && hudApp.signals['de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl']), 'ShakHUD n\'a pas de bague de limitation : pas besoin du signal');
 });
 
+check('decodeSign : sans champ « displaySpee... », un autre champ de vitesse ou de limite est pris ; jamais l\'unité, le dépassement ni un panneau additionnel', () => {
+    const { decodeSign } = require('../shared/speedlimit');
+    assert.deepStrictEqual([decodeSign({ speedLimitValue: { value: 90 } }).limit, decodeSign({ limitSpeed: 'SPEED_LIMIT_70' }).limit], [90, 70]);
+    const d = decodeSign({ speedLimitUnit: 1, noPassingRestriction: 1, supplementarySign: 3 });
+    assert(!d.found && d.limit === null, JSON.stringify(d));
+    assert.strictEqual(decodeSign({ displaySpeedLimitValue: 50, speedLimitUnit: 1 }).key, 'displaySpeedLimitValue', 'le nom de la photo d\'abord');
+});
+
 console.log(bad ? bad + ' FAILED' : 'speedlimit: ' + n + ' checks pass');

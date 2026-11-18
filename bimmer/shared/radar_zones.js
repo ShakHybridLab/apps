@@ -8,8 +8,8 @@
  * in 450 m" alert counts down to zero. It knows nothing about the direction of travel or the road: a zone on a road
  * running beside yours counts as well.
  *
- * NOT WIRED YET. The app has no position of the car (shared/danger.js says why); once a source gives one, its code calls
- * nearest() and feeds the alert. Not listed in any app.json "shared" until then, so nothing of this ships to the car.
+ * Used by ShakRadar (shared/radar_app.js): the car's GPS position (GPSData, shared/gps_pos.js) goes in, the nearest zone feeds the
+ * danger zone alert of ShakTheme (shared/danger.js) through its file.
  * Plain JS, no dependencies; Node 8. Written for this fork (MIT). The data is under the Licence Ouverte 2.0 (data/README.md).
  */
 const fs = require('fs');

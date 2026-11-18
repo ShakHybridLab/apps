@@ -71,7 +71,8 @@ def danger_alert(x, y, h):
     k = {'toggle': 'danger'}
     W.append(icon('al_cam', 'cam', x + 14, y + round((h - 48) / 2.0), 48, 48, RED, 1, **k))
     W.append(text('al_title', x + 72, y + top, 130, 19, 'DANGER', 'm_label', RED, 'left', 1, **k))
-    W.append(text('al_dist', x + 72, y + top + 25, 78, 29, '{{dangerDist}}', 'm_mid', 'fg', 'right', 1, **k))
+    # three digits ("850") need 87 px in m_mid: a 78 px box cut the first one in half (850 read 350, bench Nov 18 2026); same right edge, and clear of the camera's box (x + 62)
+    W.append(text('al_dist', x + 62, y + top + 25, 88, 29, '{{dangerDist}}', 'm_mid', 'fg', 'right', 1, **k))
     W.append(text('al_unit', x + 154, y + top + 24, 42, 36, '{{dangerUnit}}', 'm_unit', 'dim', 'left', 1, **k))
     W.append(icon('al_ring', 'ring', x + 196, y + round((h - 64) / 2.0), 64, 64, RED, 1, toggle='dangerLimit'))
     W.append(text('al_limit', x + 196, y + round((h - 29) / 2.0), 64, 29, '{{dangerLimit}}', 'm_tiny', 'fg', 'center', 1, toggle='dangerLimit'))
@@ -170,8 +171,9 @@ def strip_x(g, y):
     return g[0] + g[3] * (y - g[1])
 
 
-def mb_blade(pre, tog, T, s):
-    """The rpm labels 0..7 and their unit along a blade placed by T (design x, y -> panel x, y) at scale s."""
+def mb_blade(pre, tog, T, s, charge=None):
+    """The rpm labels 0..7 and their unit along a blade placed by T (design x, y -> panel x, y) at scale s. charge: where the CHARGE note goes
+    (its box's right end and its top), when not left of the foot."""
     W = []
     for k in range(8):
         y = RPM_Y0 - k * (RPM_Y0 - RPM_Y7) / 7.0
@@ -182,7 +184,7 @@ def mb_blade(pre, tog, T, s):
     # the unit says what the marks mean: rpm, or kW x 10 while the battery alone drives (the hybrid rev counter, hud.js)
     W.append(text(pre + 'rpm_unit', round(ux - 85), round(uy), 170, 29, '{{tachUnit}}', 'm_tiny', 'fg', 'center', 1, toggle=tog))
     # CHARGE left of the foot while the battery charges (the foot itself fills green in the shader)
-    cx, cy = T(1020, 604)
+    cx, cy = T(1020, 604) if charge is None else (charge[0], charge[1] + 15)
     W.append(text(pre + 'charge_note', round(cx - 110), round(cy - 15), 110, 30, '{{chargeNote}}', 'm_unit', 'fg', 'right', 1, toggle=tog))
     return W
 
@@ -266,7 +268,9 @@ def mb_side_block():
 
 def mblade():
     W = []
-    base = {'type': 'mblade', 'class': 'content', 'z': 1, 'x': 0, 'y': 0, 'w': 1920, 'h': 720, 'rpmMax': 7000, 'hybridTach': True}
+    # tintScale: the backdrop is nearly black like BMW's own M cluster (owner's photo of Nov 18 2026: "it must look like this as much as possible"),
+    # a hint of the blue and the faint lines left; the setting "sportTint" still scales it (0: black)
+    base = {'type': 'mblade', 'class': 'content', 'z': 1, 'x': 0, 'y': 0, 'w': 1920, 'h': 720, 'rpmMax': 7000, 'hybridTach': True, 'tintScale': 0.2}
     # ---- the normal view: the photo's own geometry, the central group DX px left
     SP = [610, 125, 500, 322]                    # speed line: cap left end, knee
     SQ = [663, 606, 52]                          # bottom end, cap length
@@ -283,21 +287,32 @@ def mblade():
     # gives way (no room beside a window this wide); the gear and the speed take the left column, the blade and the two strips stay on the
     # right a little further right than the normal view (the blade's "4" is the limit: BMW's black box starts at x 1406), the fuel as a
     # flat bar under the window
-    HB = 18                                       # the blade is this far right of the normal view (its "4" is the limit: BMW's black box)
-    SX = 30                                       # the two strips (and the oil / electric range / outside under them)
-    WIN = [446, 128, 582, 450]                    # the window (x, y, w, h): inside Waze's slot, clear of the shift light above and the blade at the right
-    LX = 84                                       # the gear's box in the left column (the hood's limit is x 80 at y 167)
+    # The window is centred on the slot's middle (x 960), where Waze puts the car: Waze on cluster on the owner's car does not take our window
+    # (mapPlace) and draws the map in its slot, so a window left of the middle showed the car at its right edge (photo of Nov 18 2026). To make
+    # the room the blade moves 130 px further right than the normal view (BMW's black box, its old limit, is gone since the gear hole; the oil
+    # strip's numbers are the new one), and the window is 450 px wide
+    HB = 148                                      # the blade is this far right of the normal view
+    SX = 40                                       # the two strips (and the oil / electric range under them): clear of the blade's numbers
+    WIN = [735, 128, 450, 450]                    # the window (x, y, w, h): centred on x 960, inside Waze's slot, clear of the shift light and the blade
+    LX = 262                                      # the gear's box in the left column, centred between the hood's limit (x 80) and the window
+    # the left column takes the hexagon, smaller, with the gear letter and the speed in its void, as BMW's own M cluster does beside its map
+    # (owner's photo of Nov 18 2026: there the map is on the left and the hexagon in the middle; Waze puts the car in the middle, so here the
+    # map is in the middle and the hexagon on the left). HS: its scale; HX, HY: where its design point (612, 167) lands
+    HS = 0.85
+    HX, HY = round(400 - 283 * HS), 179
+    hx = lambda x: round(HX + (x - 612 - DX) * HS)      # a point of the normal view's hexagon, in the map view's
+    hy = lambda y: round(HY + (y - 167) * HS)
     INS = 10
-    FB = [462, 962, 598]                          # the flat fuel bar: left end x, right end x, top y (27 thick), under the window
+    FB = [WIN[0] + 16, WIN[0] + WIN[2] - 16, 598]   # the flat fuel bar: left end x, right end x, top y (27 thick), under the window
     G1o = [G1[0] + SX, G1[1], G1[2], G1[3]]
     G2o = [G2[0] + SX, G2[1], G2[2], G2[3]]
     G0o = [FB[2], 1920 - FB[1], 1920 - FB[0], 0]  # the first strip, lying flat: in the frame the shader turns it into
     W.append(dict(base, id='backdrop_open', toggle='mapUp',
                   bl=[137, 560, 1333 + DX + HB, -0.558], br=[1487 + DX + HB, -0.605, 13, 130],
-                  bx=[1.0, 1245 + DX + HB, 992, 0],
+                  bx=[1.0, 1245 + DX + HB, 992 + HB - 18, 0],
                   scale=[RPM_Y7, RPM_Y0], g0=G0o, g1=G1o, g2=G2o, fuelH=True,
                   hole=[WIN[0] - INS, WIN[1] - INS, WIN[2] + 2 * INS, WIN[3] + 2 * INS], holeWhen='mapUp', holeInset=INS, holeRadius=14,
-                  mapPlace=True))
+                  hex=[HX, HY, HS, 0], mapPlace=True))
     W.append(shiftlight(750, 32))          # where BMW's own shift light sits (x 750..1170), as on the M and Sport themes
     # the speed scale: nine labels left of the line (photo: right edge 22 px before the line), the unit above its cap
     for i, y in enumerate(SPD_Y):
@@ -316,15 +331,18 @@ def mblade():
     # (its name stays white: it sits on the hexagon's tab, which already takes the mode's colour)
     W.append(text('drive_mode', 851, 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='!mapUp', readyHides=True))
     W.extend(tab_cue(851 + 100, '', '!mapUp', PLAIN))
-    W.append(text('o_gear', LX, 291, 280, 101, '{{stage}}', 'm_gear', align='center', toggle='mapUp'))
-    W.append(text('o_speed', LX + 10, 449, 170, 40, '{{speed}}', 'm_spd', 'fg', 'right', toggle='mapUp'))
-    W.append(text('o_speed_unit', LX + 190, 461, 80, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'left', toggle='mapUp'))
-    W.append(text('o_power', LX + 15, 528, 120, 29, '{{powerKw}}', 'm_mid', 'fg', 'right', 1, toggle='powerOpen'))
-    W.append(text('o_power_unit', LX + 141, 528, 50, 36, 'kW', 'm_unit', 'dim', 'left', 1, toggle='powerOpen'))
+    # in the small hexagon's void, as in the normal view's (the same boxes, moved and scaled with it; the fonts keep their size)
+    gx, gw = hx(725), round(280 * HS)
+    W.append(text('o_gear', gx, hy(291), gw, 101, '{{stage}}', 'm_gear', align='center', toggle='mapUp'))
+    W.append(text('o_speed', hx(735) - 20, hy(449), 170, 40, '{{speed}}', 'm_spd', 'fg', 'right', toggle='mapUp'))
+    W.append(text('o_speed_unit', hx(735) + 156, hy(449) + 12, 80, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'left', toggle='mapUp'))
+    W.append(text('o_power', hx(735) - 15, hy(528), 120, 29, '{{powerKw}}', 'm_mid', 'fg', 'right', 1, toggle='powerOpen'))
+    W.append(text('o_power_unit', hx(735) + 111, hy(528), 50, 36, 'kW', 'm_unit', 'dim', 'left', 1, toggle='powerOpen'))
     W.append(text('o_drive_mode', 860, 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='mapUp', readyHides=True))
     W.extend(tab_cue(960, 'o_', 'mapUp', PLAIN))
     W.extend(mb_blade('', '!mapUp', lambda x, y: (x + DX, y), 1.0))
-    W.extend(mb_blade('o_', 'mapUp', lambda x, y: (x + DX + HB, y), 1.0))
+    # with the map up the foot is right of the window and the fuel bar runs under it: CHARGE goes in the left column, under the speed
+    W.extend(mb_blade('o_', 'mapUp', lambda x, y: (x + DX + HB, y), 1.0, charge=(hx(735) + 150, hy(528) + 36)))
     # the strips' numbers: fuel on the left; on the right the oil temperature (50 / 100 / 150) and the battery (0 / 50 / 100 %)
     W.extend(mb_fuel('', '!mapUp', G0))
     W.extend(mb_right_strip('', '!mapUp', G1, 'o', '{{tc:150}}', '{{tc:100}}', '{{tc:50}}', '{{u:temp}}', 'oilcan', 30))
@@ -337,6 +355,12 @@ def mblade():
     for pre, tog, y in (('', '!mapUp', ROW), ('o_', 'mapUp', ROW_O)):
         W.append(text(pre + 'time', 40, y, 130, 29, '{{time}}', 'm_mid', 'fg', 'right', toggle=tog))
         W.append(text(pre + 'ampm', 176, y + 3, 53, 32, '{{ampmLc}}', 'm_tiny', 'dim', toggle=tog))
+        if pre:
+            # with the map up the range goes with its bar (owner, Nov 18 2026: "a bar does not move without its reading"): level with the flat
+            # fuel bar, left of its pump (the bar's own icon), clear of the small hexagon (it ends y 537) and of BMW's belt light (y 663)
+            W.append(text(pre + 'range', FB[0] - 42 - 8 - 34 - 4 - 112, FB[2] + 1, 112, 29, '{{rangeTotal}}', 'm_mid', 'fg', 'right', 1, toggle=tog))
+            W.append(text(pre + 'range_unit', FB[0] - 42 - 8 - 34, FB[2] + 4, 34, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1, toggle=tog))
+            continue
         W.append(icon(pre + 'range_icon', 'fuelBolt', 313, y - 3, 29, 34, 'fg', 1, toggle=tog))
         W.append(text(pre + 'range', 348, y, 112, 29, '{{rangeTotal}}', 'm_mid', 'fg', 'right', 1, toggle=tog))
         W.append(text(pre + 'range_unit', 466, y + 3, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1, toggle=tog))
@@ -362,10 +386,12 @@ def mblade():
                   "y 663..700); a row of sensors just above (y 622): the oil temperature and the electric range, each centred under its strip, "
                   "and the coolant temperature at the far right over the outside one. Waze's map normally sits at "
                   "the centred 1088x480 of the panel; Waze on the cluster 0.9.107 or later takes a window from shared/map_window.js "
-                  "(map_window.txt) and this layout asks for a window in the middle of that slot (x 446..1028, y 128..586) when "
-                  "'Show Waze map inside the theme' is on. The theme is then rebuilt (backdrop_open and the o_ readouts): no hexagon (the "
-                  "gear, the speed and the power move to a column at the left of the window), the blade (18 px) and the strips (30 px, with the oil, electric range and outside temperature under them) move to the right so nothing is tight against the map, the speed scale gives way to the map "
-                  "and the vertical fuel strip becomes a flat bar under the map (pump icon, 0 / 1/2 / 1). "
+                  "(map_window.txt) and this layout asks for a window centred on the slot's middle, where Waze puts the car (x 735..1185, y 128..578) when "
+                  "'Show Waze map inside the theme' is on. The theme is then rebuilt (backdrop_open and the o_ readouts): the hexagon smaller at the left with "
+                  "the gear and the speed in its void, the blade and the strips (with the oil and electric range under them) to the right, the speed scale gives way to the map "
+                  "and the vertical fuel strip becomes a flat bar under the map (pump icon, 0 / 1/2 / 1) with the fuel range beside it. Without the map a view "
+                  "(tools/add_sensor_bars.py) opens in a blue panel on the left in place of the speed scale, the hexagon carried on to a point (mpanel), "
+                  "the fuel strip right of the battery's with its range under it. "
                   "Nothing is drawn under the map. Clear of the black box BMW draws at x 1406..1597, y 322..440. Widget reference: "
                   "shared/hud.js header.",
         'widgets': W,

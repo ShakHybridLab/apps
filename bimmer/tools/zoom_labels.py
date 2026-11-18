@@ -50,10 +50,11 @@ def hood_y(x):
 
 
 def fits(x, y, w, h):
-    """The box on the panel, clear of BMW's black box and seat-belt light, not under the hood (as tools/test_mblade_navi.js asks)."""
+    """The box on the panel, clear of BMW's seat-belt light, not under the hood (as tools/test_mblade_navi.js asks). BMW's black box is no
+    longer one (shared/visible.js: the gear letter's hole, on by default, keeps BMW from drawing it); BLACK_BOX stays for the record."""
     if x < 0 or y < 0 or x + w > 1920 or y + h > 720:
         return False
-    for r in (BLACK_BOX, BELT):
+    for r in (BELT,):
         if x < r[2] and x + w > r[0] and y < r[3] and y + h > r[1]:
             return False
     return hood_y(x) <= y + 2 and hood_y(x + w) <= y + 2

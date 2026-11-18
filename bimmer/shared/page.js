@@ -489,7 +489,7 @@ class Page {
         // the danger zone alert (M Blade and Navi, danger.js): shows only while another app says a zone is ahead
         y = this.toggleRow(cv, CX, y, w, 'Danger zone alert (M Blade and Navi)', 'dangerAlert');
         const dz = this.hud.danger ? this.hud.danger.state() : null;
-        note(cv, CX, y + 8, [dz && dz.on ? 'Showing a zone ' + Math.round(dz.distM) + ' m ahead (from ' + dz.app + ')' : 'Nothing to show: it needs an app that tells it where a zone is (danger-<app>.json in /dev/shm/cluster-themes).']);
+        note(cv, CX, y + 8, [dz && dz.on ? 'Showing a zone ' + Math.round(dz.distM) + ' m ahead (from ' + dz.app + ')' : 'Nothing to show: no zone near, or no app gives the zones (ShakRadar, from the car\'s GPS).']);
         y += 20;
         note(cv, CX, y + 22 - (rows > 1 ? 10 : 0), [
             'On: Sport, M, M Blade and Navi open a window in the middle and Waze on Cluster draws its map in it, above',
@@ -516,12 +516,19 @@ class Page {
             glass(cv, CX, y, CW, rh - 4, false);
             cv.circle(CX + 18, y + (rh - 4) / 2, 5, fresh ? C.live : d ? C.off : '#ffffff22');      // green: heard in the last 5 seconds
             cv.text(p.name, CX + 34, y + 19, 15, C.text, { literal: true });
+            // how many messages the car has sent for it and how often now: a rev counter that arrives once a second shows as steps whatever the app does
+            if (d && d.n) {
+                const rate = pr && typeof pr.rate === 'function' ? pr.rate(p.id, now) : null;
+                const t = d.n + ' msg' + (rate === null ? '' : ' · ' + (Math.round(rate * 10) / 10) + '/s'), tx = CX + 34 + cv.textWidth(p.name, 15, { literal: true }) + 16;
+                if (tx + cv.textWidth(t, 12, { literal: true }) < CX + 462) cv.text(t, tx, y + 19, 12, C.label, { literal: true });
+            }
             let mean = d && d.n ? probes.meaningOf(p.id, d.last) : '';
             // the car's power share next to the power the speed and its slope give (hud.js _estPower): one photo of this page while accelerating says what the share means
             if (p.id === 'pdrive' && mean && typeof this.hud._estPower === 'function') { const e = this.hud._estPower(); if (e && typeof e.kw === 'number') mean += ' · estimate ' + Math.round(e.kw) + ' kW'; }
             // the cluster's power meter: whether the rev bar uses it now ("not used" while it has only ever read 0, or is off or stale: the estimate draws then)
             if (p.id === 'rel' && mean && !/not understood$|scale to confirm$/.test(mean) && typeof this.hud._relPower === 'function') { const r = this.hud._relPower(); mean += r && typeof r.kw === 'number' ? ' · bar ' + Math.round(r.kw) + ' kW' : ' · not used'; }
-            if (mean) cv.text(mean, CX + 34, y + rh - 11, 13, /not understood$/.test(mean) ? C.label : C.blueHi);
+            // the page fonts have no arrow (a box was drawn): "= 900 tr/min" instead of "→ 900 rpm", translated first (fr.js knows the arrow lines)
+            if (mean) cv.text((this.fr ? fr.tr(mean) : mean).replace(/^→ /, '= '), CX + 34, y + rh - 11, 13, /not understood$/.test(mean) ? C.label : C.blueHi, { literal: true });
             const vx = CX + 470, room = CR - 12 - vx, got = d && d.vals.length;
             const fit = (t, w) => { while (t.length > 1 && cv.textWidth(t, 12, { literal: true }) > w) t = t.slice(0, -2) + '…'; return t; };
             const sub = (this.hud.car && this.hud.car.subs || []).find((s) => s && s.iface === p.iface);
@@ -530,12 +537,13 @@ class Page {
             cv.text(v, vx, y + (rh - 4) / 2 + 4, 12, got ? C.dim : C.label, { literal: true });
             y += rh;
         });
-        note(cv, CX, y + 12, ['Photograph pages 1 and 2 after a drive: they show the last values the car sent.', 'Blue: what the app understood of the value. Read only: nothing here changes the car.']);
+        const pf = pg === 0 && typeof this.hud.perfShown === 'function' ? this.hud.perfShown() : null;
+        note(cv, CX, y + 12, [pf ? 'Loop: ' + pf.perSec + '/s · average ' + pf.avg + ' ms · slowest ' + pf.max + ' ms · longest wait ' + pf.gap + ' ms' : 'Photograph pages 1 and 2 after a drive: they show the last values the car sent.', 'Blue: what the app understood of the value. Read only: nothing here changes the car.']);
     }
 
     /** The pages of the Signals tab as small chips at the right of the title ("1/5" ...). */
     sigChips(cv, pg, np) {
-        const w = cv.textWidth('1/' + np, 13, { font: 'bold', literal: true }) + 18;
+        const w = cv.textWidth(np + '/' + np, 13, { font: 'bold', literal: true }) + 18;      // the widest label ("13/13"), so the last chip stays on the page
         let px = CR - np * (w + 6);
         for (let i = 0; i < np; i++) { const t = (i + 1) + '/' + np, k = i; px += miniChip(cv, px, 48, t, pg === i, () => { this.sigPage = k; this.kick(); }, 'sigpage:' + k) + 6; }
     }

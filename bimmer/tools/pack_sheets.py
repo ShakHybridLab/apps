@@ -36,7 +36,7 @@ def shown(w, mapup, view=None, sport=False):
         neg = part.startswith('!')
         k = part[1:] if neg else part
         if k.startswith('viewSel='):
-            on = view == k[len('viewSel='):]
+            on = (view or 'none') == k[len('viewSel='):]      # None: no view (the setting's "none")
         elif k == 'driveSport':
             on = sport
         else:
