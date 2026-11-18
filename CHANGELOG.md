@@ -2,6 +2,9 @@
 
 ## 18 novembre 2026
 
+### ShakTheme 0.21.27 : Sport avec Waze, l'essence à la place du turbo (pas encore essayé sur la voiture)
+Demande du propriétaire (18 nov. 2026, 09:37) : « remplace bar par l'essence ». Avec la carte Waze, les deux jauges inclinées de Sport (essence, batterie) cèdent leur place à la vitesse et au rapport ; le bandeau du bas montrait le turbo (« 1.10 BAR ») et la batterie (« 68 % »). Carte ouverte, **le niveau d'essence en %** (pompe, rouge en réserve) prend la place du turbo (et de la puissance en kW), en miroir de la batterie ; sans Waze rien ne change (`apps/shaktheme/hud/layouts/sport.json` : `o_fuel*`, le turbo en `boostShown&!mapUp`, la puissance en `powerShut`). Test : `tools/test_power.js`.
+
 ### ShakTheme 0.21.26, ShakHUD 0.6.31, ShakPark 0.2.2, ShakRadar 0.1.1, Shak Musique 0.1.1, ShakReseau 0.1.1, applis d'essai 0.2.1 (ShakGPS 0.1.1) : stabilité et fiabilité (pas encore essayé sur la voiture)
 Demande du propriétaire (18 nov. 2026, 08:18) : « analyse à ton tour les applis pour les optimiser, surtout la stabilité et la fiabilité ». Relecture de tout ce qui tourne tout seul (minuteries, sockets, fichiers), puis essai d'endurance au banc : ShakTheme et ShakHUD construits, 75 à 90 s de changements de vue et de thème quatre fois par seconde pendant que le faux cluster-render coupe, se tait ou ne lit plus. Résultat : aucune erreur, mémoire stable (9 à 10 Mio), boucle à 49 images par seconde, tout revient après chaque panne.
 

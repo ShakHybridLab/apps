@@ -65,8 +65,12 @@ now += 1100; ci.wantPower(true); assert.ok(fs.existsSync(wf)); ci.stop(); assert
 const sport = JSON.parse(fs.readFileSync(path.join(__dirname, '../apps/shaktheme/hud/layouts/sport.json'), 'utf8'));
 const byId = (id) => sport.widgets.find((x) => x.id === id);
 const geo = (x) => [x.x, x.y, x.w, x.h, x.z].join(',');
-assert.strictEqual(byId('boost').toggle, 'boostShown'); assert.strictEqual(byId('boost_unit').toggle, 'boostShown');
-assert.strictEqual(byId('power').toggle, 'power'); assert.strictEqual(byId('power_unit').toggle, 'power');
+// (with the Waze map up the fuel level takes their place in the strip: Sport's fuel gauge gives way to the map, owner Nov 18 2026)
+assert.strictEqual(byId('boost').toggle, 'boostShown&!mapUp'); assert.strictEqual(byId('boost_unit').toggle, 'boostShown&!mapUp');
+assert.strictEqual(byId('power').toggle, 'powerShut'); assert.strictEqual(byId('power_unit').toggle, 'powerShut');
+['o_fuel_icon', 'o_fuel', 'o_fuel_unit'].forEach((id) => assert.strictEqual(byId(id).toggle, 'mapUp', id));
+assert.strictEqual(byId('o_fuel').text, '{{fuelPct}}'); assert.strictEqual(byId('o_fuel').lowWhen, 'fuel'); assert.strictEqual(byId('o_fuel_icon').icon, 'fuelPump');
+assert.ok(byId('o_fuel_unit').x + byId('o_fuel_unit').w <= 960 - 30 && 960 - (byId('o_fuel_unit').x + byId('o_fuel_unit').w) === byId('therm').x - 960, 'the fuel mirrors the battery about the middle');
 assert.strictEqual(geo(byId('power')), geo(byId('boost')), 'the power sits where the boost sat');
 assert.strictEqual(geo(byId('power_unit')), geo(byId('boost_unit')));
 assert.strictEqual(byId('power').text, '{{powerKw}}'); assert.strictEqual(byId('power_unit').text, 'kW');
