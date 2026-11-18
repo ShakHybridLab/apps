@@ -372,7 +372,7 @@ class ClusterRender extends EventEmitter {
         if (o.part) m.part = o.part;
         const key = (o.part || 0) + ':' + name, prev = l.uniforms[key];
         /* The layer already holds this value (the service keeps a uniform until it is set again, and the replay on a reconnect sends
-         * l.uniforms): a gauge loop that sets every uniform of every layer at 40 Hz sends only the ones that changed. */
+         * l.uniforms): a gauge loop that sets every uniform of every layer at 50 Hz sends only the ones that changed. */
         if (prev && prev.v === m.v && prev.type === m.type) return;
         l.uniforms[key] = m;
         this._send(m);

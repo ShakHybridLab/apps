@@ -1,5 +1,13 @@
 # Modifications par rapport aux projets d'origine
 
+## 18 novembre 2026
+
+### ShakTheme 0.21.25, ShakHUD 0.6.30 : 50 images par seconde, les deux jauges de M Blade plus à droite avec Waze (pas encore essayé sur la voiture)
+Demandes du propriétaire (18 nov. 2026, 02:52 et 02:53) : « avec Waze les deux barres, décale-les un tout petit peu à droite, c'est un peu serré », « optimise pour rendre très fluide et stable, augmente un peu les fps, ShakTheme et ShakHUD surtout ».
+- **La boucle des jauges passe de 40 à 50 images par seconde** (`shared/hud.js`, `TICK_MS` 20 ms), pour ShakTheme et ShakHUD. Le régime et la vitesse des barres étaient déjà lissés entre deux messages de la voiture (120 ms et 90 ms) : ils glissent maintenant en pas plus fins. Le coût reste faible : une image prend moins de 1 ms au banc, et depuis 0.21.24 les valeurs inchangées ne sont plus envoyées à cluster-render. Sur la voiture, l'onglet Signaux affiche la cadence réelle (« Boucle : x/s »).
+- Les autres applis (ShakPark, ShakRadar, les applis d'essai) n'ont pas de boucle d'affichage rapide à accélérer : rien n'y est changé.
+- **M Blade avec Waze : les jauges d'huile et de batterie 32 px plus à droite** (`tools/gen_mblade_navi.py`, `SX` 72), leurs chiffres ne collent plus à ceux de la lame ; l'huile et l'autonomie électrique suivent dessous, sans toucher la colonne du liquide.
+
 ## 17 novembre 2026
 
 ### ShakTheme 0.21.24, ShakHUD 0.6.29, ShakPark 0.2.1, ShakRadar 0.1.0 : M Blade comme le combiné M de BMW, l'alerte radar dans les 4 thèmes, les 4 thèmes vérifiés, moins de clignotements, le GPS de la voiture (pas encore essayé sur la voiture)

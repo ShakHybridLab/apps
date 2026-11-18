@@ -292,7 +292,7 @@ def mblade():
     # the room the blade moves 130 px further right than the normal view (BMW's black box, its old limit, is gone since the gear hole; the oil
     # strip's numbers are the new one), and the window is 450 px wide
     HB = 148                                      # the blade is this far right of the normal view
-    SX = 40                                       # the two strips (and the oil / electric range under them): clear of the blade's numbers
+    SX = 72                                       # the two strips (and the oil / electric range under them): clear of the blade's numbers (40 was tight, owner Nov 18 2026), the electric range still clear of the coolant's column
     WIN = [735, 128, 450, 450]                    # the window (x, y, w, h): centred on x 960, inside Waze's slot, clear of the shift light and the blade
     LX = 262                                      # the gear's box in the left column, centred between the hood's limit (x 80) and the window
     # the left column takes the hexagon, smaller, with the gear letter and the speed in its void, as BMW's own M cluster does beside its map

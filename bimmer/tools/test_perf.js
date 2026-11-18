@@ -167,9 +167,9 @@ check('vitesse des barres : le balayage de démarrage garde la main, le régime 
     h._sweepF = () => 0;
     assert.strictEqual(h._barRaw('rpm'), 3000);
 });
-check('hud.js : la boucle des jauges est à 40 Hz', () => {
+check('hud.js : la boucle des jauges est à 50 Hz', () => {
     const m = /const TICK_MS = (\d+);/.exec(hudSrc);
-    assert(m && Number(m[1]) <= 25, 'TICK_MS : ' + (m && m[1]));
+    assert(m && Number(m[1]) <= 20 && Number(m[1]) >= 16, 'TICK_MS : ' + (m && m[1]));
     assert(/this\._smoothSpeed\(now\);/.test(hudSrc), '_smoothSpeed n\'est pas appelé dans _tick');
 });
 
