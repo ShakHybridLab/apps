@@ -22,7 +22,8 @@ const WITHIN_M = 2000;          // the alert starts this far from a zone's edge
 const POS_STALE_MS = 5000;      // a position older than this is no position
 const WRITE_MS = 1000;          // danger.js counts a file older than 3 s as gone
 const AWAY_M = 30;              // moved this much farther from the zone's centre (over the last positions): going away from it
-const TRAIL = 6;                // positions kept to tell coming from going
+const TRAIL = 6;
+const MOVE_M = 8;               // the car moved this far: a heading can be read from it                // positions kept to tell coming from going
 
 class RadarApp {
     /** deps: { zones (a RadarZones), now(), dir, log, enabled() } */
@@ -33,6 +34,7 @@ class RadarApp {
         this.file = deps.file || FILE;          // (ShakTheme writes its own file: ShakRadar, if it is still installed, keeps its own)
         this.app = deps.app || 'ShakRadar';
         this.pos = null;             // { lat, lon, how, at }
+        this.from = null; this.heading = null;      // see position()
         this.ext = null;             // gps.extended() of the last GPSPositionExtendedCAN
         this.raw = { pos: null, ext: null, posN: 0, extN: 0, posAt: 0, extAt: 0 };
         this.trail = [];             // [{ key (zone), centreM, at }]
@@ -49,7 +51,14 @@ class RadarApp {
         // `everyMs` (ShakTheme: 2 s): the car sends a position every second, a zone is 2 km wide: one in two is enough, the others cost nothing
         if (this.d.everyMs && this.pos && t >= this.pos.at && t - this.pos.at < this.d.everyMs) return;
         const p = gps.position(v);
-        if (p) this.pos = { lat: p.lat, lon: p.lon, how: p.how, at: t };
+        if (!p) return;
+        // the car's heading, from its own movement (two positions MOVE_M apart): it tells the car's road from the other carriageway or a crossing road
+        if (!this.from) this.from = p;
+        else {
+            const dy = (p.lat - this.from.lat) * 110540, dx = (p.lon - this.from.lon) * 111320 * Math.cos(p.lat * Math.PI / 180);
+            if (dx * dx + dy * dy >= MOVE_M * MOVE_M) { this.heading = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360; this.from = p; }
+        }
+        this.pos = { lat: p.lat, lon: p.lon, how: p.how, at: t };
     }
 
     /** A GPSPositionExtendedCAN value. */
@@ -72,7 +81,7 @@ class RadarApp {
         if (this.d.enabled && this.d.enabled() === false) { this.why = 'turned off'; return null; }
         if (!this.pos) { this.why = this.raw.posN ? 'position not understood' : 'no position yet'; return null; }
         if (t - this.pos.at > POS_STALE_MS || t < this.pos.at) { this.why = 'position too old'; return null; }
-        const z = this.d.zones ? this.d.zones.nearest(this.pos.lat, this.pos.lon, WITHIN_M) : null;
+        const z = this.d.zones ? this.d.zones.nearest(this.pos.lat, this.pos.lon, WITHIN_M, this.heading) : null;
         if (!z) { this.trail = []; this.why = 'no zone within ' + (WITHIN_M / 1000) + ' km'; return null; }
         const key = z.lat.toFixed(2) + ',' + z.lon.toFixed(2);
         if (this.trail.length && this.trail[this.trail.length - 1].key !== key) this.trail = [];
