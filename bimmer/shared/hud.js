@@ -325,6 +325,19 @@ const FAULT_QUIET_MS = 10000;    // ...then one line at most this often
 const TICK_MS = 20;              // 50 Hz: shift bar and gauges (20 Hz moved in visible steps, 40 Hz until 0.21.24; owner, Nov 18 2026: "a few more fps"; a frame costs under 1 ms and unchanged uniforms are not sent)
 const PERF_WINDOW_MS = 5000;   // the window the Signals tab's loop timing is counted over
 const CDS_IFACE = 'de.bmw.infotainment.vehicle.CDS';
+/**
+ * The engine's speed in DisplayDataServer.functionalLibraryData (member "rpm", whole rpm: 900 at idle on the owner's car, 19 Nov 2026), or null: not a
+ * number, the invalid values (0xFFFF and up) or out of an engine's range.
+ */
+function rpmAltOf(v) {
+    if (!v || typeof v !== 'object') return null;
+    const k = Object.keys(v).find((n) => /^rpm$/i.test(n));
+    const n = k === undefined ? NaN : Number(v[k]);
+    return isFinite(n) && n >= 0 && n <= 12000 ? n : null;
+}
+// The cluster's power meter was read every 2 s (as eroobeeroo's apps do): the hybrid rev bar then jumped up and fell away in one step, "pas fluide"
+// on the owner's car (19 Nov 2026). Read as often as the rev counter, the bar follows the pedal.
+const REL_POLL_MS = 250;
 const RPM_POLL_MS = 250;           // how often the rev counter is read on top of the car's own notifications
 // the electric power estimated from the speed (setting "estPower", the rev bar in electric when nobody gives the real power): the X3 xDrive30e's
 // own figures, rounded. mass kg with a driver, drag = half rho Cd A in N per (m/s)^2, rolling resistance, the drive and recuperation efficiencies,
@@ -953,7 +966,9 @@ class HudApp {
             if (!decl[p.iface] || !decl[p.iface][p.field]) return;
             const group = (extra[p.iface] = extra[p.iface] || {}), prev = group[p.field];
             // the cluster's power meter is not told again while it holds one value: read it every 2 s (eroobeeroo's apps do the same)
-            if (p.id === 'rel') group.$pollMs = 2000;
+            if (p.id === 'rel') group.$pollMs = REL_POLL_MS;
+            // the second source of the rev counter is told about every 2.5 s on the owner's car (0.4 msg/s): read it as often as the first one
+            if (p.id === 'rpm2') group.$pollMs = RPM_POLL_MS;
             group[p.field] = (v) => {
                 if (prev) prev(v);
                 this.probes.feed(p.id, v);
@@ -964,6 +979,7 @@ class HudApp {
                 if (p.id === 'wheel') this._guard('lane', () => this._laneSet(v));
                 if (p.id === 'pdrive' || p.id === 'pdrive2') this._guard('carPower', () => this._carPowerSet(v));
                 if (p.id === 'rel') this._guard('relPower', () => this._relSet(v));
+                if (p.id === 'rpm2') this._guard('rpm2', () => { const n = rpmAltOf(v); if (n !== null && this.car && this.car.feedRpmAlt) this.car.feedRpmAlt(n); });
             };
         });
         // the rev counter is told when it changes, which on a car that notifies it rarely (or only the first value) leaves the bar where it was: read it

@@ -79,12 +79,14 @@ check('SpeedLimit : le panneau lu par la caméra de la voiture passe devant le f
 check('hud.js lit le signal de la voiture seulement si l\'appli le déclare, et ShakTheme le déclare', () => {
     const hud = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
     const probes = fs.readFileSync(path.join(__dirname, '..', 'shared', 'probes.js'), 'utf8');       // les noms des signaux sont dans la table de probes.js (depuis la 0.21.0)
-    ['TrafficSignDisplayControl', 'displaySpeedLimitAndNoPassingRestriction', 'de.bmw.infotainment.fasus.FASuS', 'statusNextSpeedLimitRecognition'].forEach((s) => assert(probes.includes(s), 'probes.js : ' + s));
+    // (19 nov. 2026 : le service des panneaux ne répond pas sur la voiture du propriétaire et la limitation de BMW vient de sa carte, pas lisible :
+    // le signal n'est plus dans la table ni déclaré ; le code qui le lisait reste, sans rien pour l'alimenter. La limitation vient de ShakLimites.)
+    assert(!/id: 'sign'/.test(probes) && !/id: 'next'/.test(probes), 'probes.js : les panneaux sont revenus dans la table');
     ["this._carSign(p.id, v)", 'this.speedLimit.feed(d.limit'].forEach((s) => assert(hud.includes(s), 'hud.js : ' + s));
     assert(/const decl = \(this\.ctx\.spec && this\.ctx\.spec\.signals\) \|\| \{\};/.test(hud), 'garde : seulement si l\'appli déclare les signaux (HUD Widgets ne les a pas)');
     const app = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'shaktheme', 'app.json'), 'utf8'));
-    assert.strictEqual(app.signals['de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl'].displaySpeedLimitAndNoPassingRestriction, 's');
-    assert.strictEqual(app.signals['de.bmw.infotainment.fasus.FASuS'].statusNextSpeedLimitRecognition, 'rs');
+    assert(!app.signals['de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl'], 'ShakTheme déclare encore les panneaux');
+    assert(!app.signals['de.bmw.infotainment.fasus.FASuS'].statusNextSpeedLimitRecognition, 'ShakTheme déclare encore la prochaine limite');
     const hudApp = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'shakhud', 'app.json'), 'utf8'));
     assert(!(hudApp.signals && hudApp.signals['de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl']), 'ShakHUD n\'a pas de bague de limitation : pas besoin du signal');
 });

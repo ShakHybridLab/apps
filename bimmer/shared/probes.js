@@ -29,16 +29,11 @@ const PROBES = [
     { id: 'rpm', iface: CDS, field: 'statusEngineSpeed2', name: 'Engine speed (rev counter)' },
     { id: 'engt', iface: CDS, field: 'statusEngineTemperature', name: 'Engine temperatures (oil, coolant)' },
     { id: 'speed', iface: VEHICLE2, field: 'statusCarSpeed2', name: 'Car speed' },
-    { id: 'sign', iface: SIGN, field: 'displaySpeedLimitAndNoPassingRestriction', name: 'Road sign read by the camera' },
-    { id: 'next', iface: FAS, field: 'statusNextSpeedLimitRecognition', name: 'Next limit read by the camera' },
     { id: 'fas', iface: FAS, field: 'statusIDriveFAS', name: 'Driver assistance: lane warnings' },
     { id: 'fasx', iface: FAS, field: 'statusIDriveFASExtended', name: 'Driver assistance: steering wheel light' },
-    { id: 'wheel', iface: LATERAL, field: 'displaySteeringWheel', name: 'Lane assist: steering wheel symbol' },
     // the stock cluster's own power meter (a percentage of drive and of recuperation): the name is already declared by the Cluster apps installed on the
     // owner's car, so the car accepts it; hud.js draws the hybrid rev bar from it (_relPower) when eDrive Live shares no power
     { id: 'rel', iface: EFF, field: 'statusPowerRelativHybrid', name: 'Power meter: cluster (drive and recuperation, %)' },
-    { id: 'pdrive', iface: EFF, field: 'displayPowerDrive', name: 'Power meter: drive and recuperation' },
-    { id: 'pdrive2', iface: EFF, field: 'displayPowerDrive2', name: 'Power meter: second reading' },
     { id: 'pdist', iface: KOMBI, field: 'statusDisplayElectricalPowerDistribution', name: 'Electric power: drive and air conditioning' },
     { id: 'erange', iface: KOMBI, field: 'displayRangeElectricVehicle', name: 'Electric range (cluster)' },
     { id: 'cc', iface: KOMBI, field: 'statusActiveCCMessage', name: 'Check control message showing' },
@@ -48,7 +43,6 @@ const PROBES = [
     { id: 'rpm2', iface: DDS, field: 'functionalLibraryData', name: 'Engine speed: second source (display data)' },
     // and the electric motor's speed (the car's catalog: displaySportPowertrain has displaySportRpmEmachine; accepted, the Cluster apps declare it): the
     // owner asked for a rev counter that also moves on electric drive (19 Nov 2026). On this plug-in hybrid the motor sits in the gearbox, on the engine's shaft
-    { id: 'rpme', iface: FES, field: 'displaySportPowertrain', name: 'Electric motor speed' },
 ];
 // NOT DECLARED in app.json since ShakTheme 0.21.13: the car's app manager refused 0.21.12 ("UPDATE_FAILED", the previous version kept) and
 // this was the one signal declared since the last version the owner had installed. Re-add it (with the flags of the car's catalog) only when
@@ -59,7 +53,7 @@ const PROBES = [
 const GUIDE = { id: 'guide', iface: CARPLAY, field: 'projectedGuidanceActive', name: 'CarPlay guidance active (route)' };
 const SHOWN = PROBES.map((p) => p.id);
 // the Signals tab's two pages (ids; 'guide' is the one probe above): the engine and the energy first, then the road signs and the assistance
-const PAGES = [['rpm', 'engt', 'speed', 'rel', 'pdrive', 'pdrive2', 'pdist', 'erange', 'guide'], ['rpm2', 'rpme', 'sign', 'next', 'fas', 'fasx', 'wheel', 'cc']];
+const PAGES = [['rpm', 'rpm2', 'engt', 'speed', 'rel', 'pdist', 'erange', 'guide'], ['fas', 'fasx', 'cc']];
 const KEEP = 3;               // distinct values kept for each (the page shows the newest first)
 const LOG_FIRST = 12;         // distinct values of each that go to the log, then one a minute at most
 const LOG_EVERY_MS = 60000;

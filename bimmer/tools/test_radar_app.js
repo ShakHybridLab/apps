@@ -110,16 +110,12 @@ check('le fichier écrit est celui que lit l\'alerte du thème (danger.js), avec
     R.app.stop(); assert.strictEqual(R.read(), null, 'arrêtée : le fichier part');
 });
 check('l\'appli : GPSData seul (déclaré à part, comme ShakGPS), ses fichiers partagés existent, la liste des zones est celle de data/', () => {
-    const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', 'shakradar', 'app.json'), 'utf8'));
-    assert.deepStrictEqual(Object.keys(spec.signals), ['de.bmw.infotainment.GPSData']);
+    // (ShakRadar, l'appli à part, a été supprimée le 19 nov. 2026 : l'alerte est dans ShakTheme)
+    assert(!fs.existsSync(path.join(ROOT, 'apps', 'shakradar')), 'ShakRadar est revenue');
+    const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', 'shaktheme', 'app.json'), 'utf8'));
     assert.strictEqual(spec.signals['de.bmw.infotainment.GPSData'].GPSPositionCAN, 's');
-    spec.shared.forEach((f) => assert(fs.existsSync(path.join(ROOT, 'shared', f)), f));
-    assert.strictEqual(fs.readFileSync(path.join(ROOT, 'apps', 'shakradar', 'zones', 'radars_fr_zones.json'), 'utf8'), fs.readFileSync(path.join(ROOT, 'data', 'radars_fr_zones.json'), 'utf8'));
-    assert(spec.config.lang === 'fr' && spec.config.readOnly);
-    ['shaktheme', 'shakhud', 'shakpark', 'shakgps', 'shakmusique', 'shakreseau'].forEach((a) => {
-        const o = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', a, 'app.json'), 'utf8'));
-        assert(o.loggingId !== spec.loggingId && o.iconGlyph !== spec.iconGlyph, a);
-    });
+    ['radar_app.js', 'radar_zones.js', 'gps_pos.js', 'danger.js'].forEach((f) => { assert(spec.shared.includes(f), f + ' pas livré'); assert(fs.existsSync(path.join(ROOT, 'shared', f)), f); });
+    assert.strictEqual(fs.readFileSync(path.join(ROOT, 'apps', 'shaktheme', 'zones', 'radars_fr_zones.json'), 'utf8'), fs.readFileSync(path.join(ROOT, 'data', 'radars_fr_zones.json'), 'utf8'));
 });
 // la photo de ShakGPS du 19 nov. 2026 : la voiture écrit sa position en millisecondes d'arc autour de 2^31, l'altitude et la vitesse autour de 32768
 {

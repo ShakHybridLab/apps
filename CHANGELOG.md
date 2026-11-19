@@ -2,6 +2,18 @@
 
 ## 19 novembre 2026
 
+### Ménage : sept applis d'essai supprimées, les signaux muets retirés (même envoi que ShakTheme 0.21.44 et ShakHUD 0.6.37)
+Demande du propriétaire : « supprime aussi les signaux qui nous servent plus dans l'appli et les applis qui nous servent plus » ; il a choisi la liste.
+- **Applis supprimées** (`bimmer/apps/`) : ShakManette et ShakVolant (touche BC trouvée), ShakGPS et ShakRadar (l'alerte est dans ShakTheme), ShakConso, ShakMedia, ShakReseau, avec `shared/net_probe.js` et son contrôle. Restent : ShakTheme, ShakHUD, ShakPark, ShakLimites, Shak Musique, RideTube, HUD Widgets. `shared/signal_probe.js`, `shared/probe_sets.js` et `tools/make_probe_apps.py` restent pour refaire une appli d'essai. La fabrication (`.github/workflows/limites.yml`) n'écrit plus les zones dans ShakRadar.
+- **Signaux retirés de ShakTheme et ShakHUD** (muets sur sa voiture, photos du 19 nov.) : `TrafficSignDisplayControl.displaySpeedLimitAndNoPassingRestriction` et `DisplayDriverAssistanceLateralCoordinated.displaySteeringWheel` (« la voiture ne répond pas »), `FASuS.statusNextSpeedLimitRecognition` (lecture refusée), `FES.displaySportPowertrain` (65535), `Efficiencytainment2.displayPowerDrive` et `displayPowerDrive2` (remplacés par `statusPowerRelativHybrid`). Leurs lignes quittent l'onglet Signaux (page 1 : régime, seconde source, températures, vitesse, puissance… ; page 2 : aides à la conduite, message d'alerte). Leurs réglages aussi : « Prochaine limite lue par la caméra », « Volant de l'assistance de voie », « Puissance du moteur électrique lue dans la voiture ». Le code qui les lisait reste, sans rien pour l'alimenter. La bague de limitation s'appelle « donnée par ShakLimites ».
+
+### ShakTheme 0.21.44, ShakHUD 0.6.37 : le compte-tours lit la seconde source quand la première reste à 0 (pas encore essayé sur la voiture)
+Photo du 19 nov. à 20 h 03 (ShakHUD 0.6.36, onglet Signaux page 2) : `DisplayDataServer.functionalLibraryData` donne `rpm` = 900 (548 messages, 0,4 par seconde), alors que `CDS.statusEngineSpeed2` reste à 0. Le régime du moteur électrique (`displaySportRpmEmachine`) vaut 65535, « pas de valeur », un seul message : pas utilisable à l'arrêt.
+- `kit/runtime/car.js` : `feedRpmAlt(n)`. Tant que la première source dit 0 ou rien, le compte-tours montre la seconde ; un 0 de la première ne l'écrase pas pendant 3 s après une lecture de la seconde ; dès que la première donne une vraie valeur, elle reprend la main (une voiture où elle marche ne change pas).
+- `shared/hud.js` : lit le membre `rpm` (`rpmAltOf`, 0 à 12 000) et relit le signal toutes les 250 ms comme la première source, car la voiture ne l'annonce qu'une fois toutes les 2,5 s.
+- **Barre de puissance du compte-tours, plus fluide** : le propriétaire, après avoir roulé : « il monte pas progressivement, il monte d'un coup et disparaît d'un coup ». Le compteur de puissance du tableau de bord (`statusPowerRelativHybrid`) n'était relu que toutes les 2 s : il l'est toutes les 250 ms (`REL_POLL_MS`), comme le régime.
+- `tools/test_rpm_alt.js` (4 contrôles). À confirmer sur la voiture : que 900 était bien le ralenti du thermique, et que la valeur suit le régime.
+
 ### ShakTheme 0.21.43, ShakHUD 0.6.36 : le régime du moteur électrique dans l'onglet Signaux (pas encore essayé sur la voiture)
 Demande du propriétaire : un compte-tours qui marche en électrique comme en thermique. Sa voiture nomme le régime de la machine électrique (`FES.displaySportPowertrain`, membre `displaySportRpmEmachine`, « notify », déjà accepté : les applis Cluster le déclarent). Les deux applis le déclarent et l'onglet Signaux, page 2, le montre en deuxième ligne, sous la seconde source du régime thermique, valeur brute. Rien n'est encore dessiné avec.
 

@@ -12,7 +12,8 @@ const app = (n) => JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps',
 const theme = app('shaktheme'), hud = app('shakhud');
 
 // "get notify" in the catalog photos is "rs", "notify" alone "s" (a notifier without getter)
-const FLAGS = { rpm: 'rs', engt: 'rs', speed: 'rs', sign: 's', next: 'rs', fas: 'rs', fasx: 'rs', wheel: 's', rel: 'rs', pdrive: 's', pdrive2: 's', pdist: 'rs', erange: 'rs', cc: 'rs', rpm2: 'rs', rpme: 's' };
+// (sign, next, wheel, pdrive, pdrive2 and rpme left the list on 19 Nov 2026: dead on the owner's car)
+const FLAGS = { rpm: 'rs', engt: 'rs', speed: 'rs', fas: 'rs', fasx: 'rs', rel: 'rs', pdist: 'rs', erange: 'rs', cc: 'rs', rpm2: 'rs' };
 
 check('every probe is declared in ShakTheme\'s app.json with the flags the catalog lists (a signal the car does not have breaks the installation)', () => {
     assert.deepStrictEqual(PROBES.map((p) => p.id).sort(), Object.keys(FLAGS).sort(), 'the probes are not the ones listed here');
@@ -27,7 +28,7 @@ const OWN = ['rpm', 'engt', 'speed'];
 // and the cluster's power meter (the electric motor's share, for the hybrid rev counter without eDrive Live: setting carPower, car_extras.js)
 // and its electric range (the plug-in hybrid's own figure, KombiIF displayRangeElectricVehicle, which ShakHUD's widgets read already)
 // and the engine's speed under its other name (rpm2): the HUD's rev counter is the one that never moves on the owner's car
-const HUD_ASKS = OWN.concat(['rel', 'pdrive', 'pdrive2', 'erange', 'rpm2', 'rpme']);
+const HUD_ASKS = OWN.concat(['rel', 'erange', 'rpm2']);
 check('ShakHUD declares only what the app draws from (it asks for no signal it does not use)', () => {
     PROBES.forEach((p) => {
         const has = !!(hud.signals && hud.signals[p.iface] && hud.signals[p.iface][p.field]);
@@ -129,12 +130,6 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
         return calls;
     };
     const NPAGES = PAGES.length + catalog.GROUPS.length;
-    {   // the power meter's row says what the speed and its slope give next to the car's share: one photo calibrates the scale
-        const c = run(0, { pdrive: { quotaImmediateElectricEngineDriveRecuperation: 100 } });
-        assert(c.text.some((t) => t.t === '= share 100 (scale to confirm) · estimate 23 kW'), 'no estimate beside the share: ' + c.text.map((t) => t.t).filter((t) => /share/.test(t)).join('|'));
-        assert.strictEqual(require('../shared/fr').tr('→ share 100 (scale to confirm) · estimate 23 kW'), '→ part 100 (échelle à confirmer) · estimée 23 kW');
-        assert.strictEqual(require('../shared/fr').tr('→ share 100 (scale to confirm) · estimate -12 kW'), '→ part 100 (échelle à confirmer) · estimée -12 kW');
-    }
     {   // the cluster's own power meter: its row says what the app read, and whether the rev bar draws from it
         assert.strictEqual(meaningOf('rel', { displayActualValuePowerRelativeDrivingElectric: 40, displayActualValuePowerRelativeRecuperation: 0 }), '→ drive 40 % · recup 0 %');
         assert.strictEqual(meaningOf('rel', { displayActualValuePowerRelativeRecuperation: 25 }), '→ drive - % · recup 25 %');

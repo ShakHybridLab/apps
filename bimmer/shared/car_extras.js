@@ -17,7 +17,7 @@ const { limitOf } = require('./speedlimit');
 const EV_MAX_KW = 80;            // the electric motor of a 30e: 82 kW (the share is of what the motor can give)
 const NEXT_TTL_MS = 20000;       // the next limit is told once (a notifier): it counts this long, then goes
 const POWER_TTL_MS = 20000;      // the motor's share is told when it changes: it counts this long
-const REL_TTL_MS = 6000;         // the cluster's power meter is re-read every 2 s (hud.js): a reading counts this long
+const REL_TTL_MS = 6000;         // the cluster's power meter is re-read four times a second (hud.js REL_POLL_MS): a reading counts this long
 const REL_RECUP_KW = 60;         // 100 % of recuperation = a full green bar (hybrid_tach CHARGE_KW)
 
 function scalar(x) {

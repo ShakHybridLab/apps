@@ -265,11 +265,9 @@ check('estimated electric power on simulated drives: a plausible consumption (to
 check('hud.js wires the lane assist symbol, the setting exists (off, French) and the signal is declared optional', () => {
     assert(/p\.id === 'wheel'\) this\._guard\('lane', \(\) => this\._laneSet\(v\)\)/.test(hudSrc), 'not wired');
     assert(/w\.laneBy\) \{ const ln = this\._laneNow\(\)/.test(hudSrc), 'the flag is not used');
-    const it = theme.settings.find((x) => x.key === 'carLane');
-    assert(it && it.type === 'bool' && it.default === false && /[éèàç ]/.test(it.label), 'setting');
-    assert(!hud.settings.find((x) => x.key === 'carLane'), 'ShakHUD has no lane icon');
-    const l = theme.signals['de.bmw.dass.driverassistanceapplications.DisplayDriverAssistanceLateralCoordinated'];
-    assert(l && l.displaySteeringWheel === 's' && typeof l._optional === 'string');
+    // the signal and its setting are gone since 19 Nov 2026 (the service does not answer on the owner's car): the code stays, unfed, nothing shows
+    assert(!theme.settings.find((x) => x.key === 'carLane') && !hud.settings.find((x) => x.key === 'carLane'), 'the setting of a signal nobody declares');
+    assert(!theme.signals['de.bmw.dass.driverassistanceapplications.DisplayDriverAssistanceLateralCoordinated'], 'still declared');
     ['sport', 'm', 'mblade', 'navi'].forEach((n) => {
         const L = json('apps/shaktheme/hud/layouts/' + n + '.json'), w = L.widgets.find((x) => x.id === 'lim_lane');
         assert(w && w.icon === 'wheel' && w.laneBy === true && HIDES_WITH_MAP(w) && !w.alertBy, n + ': lane widget');
@@ -278,21 +276,23 @@ check('hud.js wires the lane assist symbol, the setting exists (off, French) and
 });
 check('hud.js wires the three readings and the live icon path takes the two new flags', () => {
     assert(/p\.id === 'next'\) this\._guard\('nextLimit'/.test(hudSrc) && /p\.id === 'cc'\) this\._guard\('carAlert'/.test(hudSrc) && /p\.id === 'pdrive' \|\| p\.id === 'pdrive2'\) this\._guard\('carPower'/.test(hudSrc));
-    assert(/p\.id === 'rel'\) this\._guard\('relPower'/.test(hudSrc) && /p\.id === 'rel'\) group\.\$pollMs = 2000/.test(hudSrc), 'the cluster\'s meter is not wired or not polled');
+    assert(/p\.id === 'rel'\) this\._guard\('relPower'/.test(hudSrc) && /p\.id === 'rel'\) group\.\$pollMs = REL_POLL_MS/.test(hudSrc) && /const REL_POLL_MS = 250;/.test(hudSrc), 'the cluster\'s meter is not wired or not polled');
     assert(/w\.evShareBy \|\| w\.nextBy \|\| w\.alertBy \|\| w\.laneBy \|\| w\.readyBy/.test(hudSrc), 'the icons would always show');
     assert(/case 'nextLimit':/.test(hudSrc));
     assert(/_hybridTach\(w, rpm\) \{[\s\S]*?_relPower\(\)[\s\S]*?_carPower\(\)/.test(hudSrc), '_hybridTach does not use the car\'s own power');
 });
 check('settings: nextLimit on, carAlert off, carPower off in ShakTheme, carPower off in ShakHUD, all in French', () => {
     const get = (a, k) => a.settings.find((x) => x.key === k);
-    assert(get(theme, 'nextLimit').default === true && get(theme, 'carAlert').default === false && get(theme, 'carPower').default === false);
-    assert(get(hud, 'carPower').default === false && !get(hud, 'carAlert') && !get(hud, 'nextLimit'));
-    ['nextLimit', 'carAlert', 'carPower'].forEach((k) => { assert.strictEqual(get(theme, k).type, 'bool'); assert(/[éèàç ]/.test(get(theme, k).label) && !/^Show /.test(get(theme, k).label), k + ': label not French'); });
+    // nextLimit and carPower went with their signals (19 Nov 2026: read refused, and the cluster's own meter replaces the share)
+    assert(get(theme, 'carAlert').default === false && !get(theme, 'nextLimit') && !get(theme, 'carPower'));
+    assert(!get(hud, 'carPower') && !get(hud, 'carAlert') && !get(hud, 'nextLimit'));
+    ['carAlert'].forEach((k) => { assert.strictEqual(get(theme, k).type, 'bool'); assert(/[éèàç ]/.test(get(theme, k).label) && !/^Show /.test(get(theme, k).label), k + ': label not French'); });
 });
 check('the power meter signals are declared by both apps (optional: a wrong name must not stop the installation), the new file ships with both', () => {
     [theme, hud].forEach((a, i) => {
         const e = a.signals['de.bmw.infotainment.drivingexcitement.Efficiencytainment2'];
-        assert(e && e.displayPowerDrive === 's' && e.displayPowerDrive2 === 's' && typeof e._optional === 'string', ['ShakTheme', 'ShakHUD'][i] + ': Efficiencytainment2');
+        // the cluster's own meter alone since 19 Nov 2026 (displayPowerDrive and displayPowerDrive2, a share of unknown scale, are no longer declared)
+        assert(e && e.statusPowerRelativHybrid === 'rs' && !e.displayPowerDrive && !e.displayPowerDrive2 && typeof e._optional === 'string', ['ShakTheme', 'ShakHUD'][i] + ': Efficiencytainment2');
         assert(a.shared.indexOf('car_extras.js') >= 0 || JSON.stringify(a).indexOf('"car_extras.js"') >= 0, 'car_extras.js is not shipped');
     });
 });

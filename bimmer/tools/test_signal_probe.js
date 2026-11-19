@@ -13,7 +13,9 @@ let failed = 0, n = 0;
 function check(name, fn) { try { fn(); n++; } catch (e) { failed++; console.log('FAIL ' + name + ': ' + (e && e.stack || e)); } }
 const ROOT = path.join(__dirname, '..');
 
-Object.keys(SETS).forEach((id) => {
+// (les applis d'essai ont été supprimées le 19 nov. 2026, leur travail fait ; la table et tools/make_probe_apps.py restent pour en refaire une :
+// le contrôle ne porte que sur celles qui existent)
+Object.keys(SETS).filter((id) => fs.existsSync(path.join(__dirname, '..', 'apps', id))).forEach((id) => {
     check(id + ' : app.json déclare les noms de la table, en "s", et rien d\'autre ; main.js et shared sont livrés', () => {
         const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', id, 'app.json'), 'utf8'));
         const want = {};

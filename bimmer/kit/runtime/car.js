@@ -18,6 +18,7 @@
  */
 const Sim = require('./sim');
 
+const RPM_ALT_MS = 3000;          // the second source of the rev counter counts this long after its last reading
 const SCALE = {
     rpm: { factor: 0.25, offset: 0, invalid: 65535 },
     speed: { factor: 0.015625, offset: 0, invalid: 65535 },
@@ -124,7 +125,25 @@ class Car {
         };
         const watches = {};
         const add = (iface, field, fn) => { (watches[iface] = watches[iface] || {})[field] = fn; };
-        if (groups.includes('rpm')) add('de.bmw.infotainment.vehicle.CDS', 'statusEngineSpeed2', (v) => put('rpm', sc('rpm', v.actualValueRPMEngineCrankshaft), true));
+        // A second source for the rev counter (feedRpmAlt, below): on the owner's plug-in hybrid CDS.statusEngineSpeed2 arrives four times a second but
+        // holds 0 with the engine running (19 Nov 2026). While the other source says the engine turns, a 0 from here is not shown; any real value from
+        // here wins again.
+        this.rpmAlt = null;              // { v, at } the other source's last reading
+        this.rpmFromAlt = false;
+        if (groups.includes('rpm')) add('de.bmw.infotainment.vehicle.CDS', 'statusEngineSpeed2', (v) => {
+            const r = sc('rpm', v.actualValueRPMEngineCrankshaft);
+            if (r === null) return;
+            const alt = this.rpmAlt, now = Date.now();
+            if (!(r > 0) && alt && alt.v > 0 && now >= alt.at && now - alt.at < RPM_ALT_MS) return;
+            if (r > 0) this.rpmFromAlt = false;
+            put('rpm', r, true);
+        });
+        /** The engine's speed from another signal (rpm, already in its unit): shown while the car's own reading holds 0 or nothing. */
+        this.feedRpmAlt = (n) => {
+            if (typeof n !== 'number' || !isFinite(n) || n < 0 || n > 12000) return;
+            this.rpmAlt = { v: n, at: Date.now() };
+            if (this.rpmFromAlt || !(this.live.rpm > 0)) { this.rpmFromAlt = true; put('rpm', n, true); }
+        };
         if (groups.includes('temps')) add('de.bmw.infotainment.vehicle.CDS', 'statusEngineTemperature', (v) => { put('coolant', sc('temp', v.temperatureEngineDrive)); put('oil', sc('temp', v.temperatureEngineOilDrive)); });
         if (groups.includes('speed')) add('de.bmw.infotainment.vehicle.Vehicle2', 'statusCarSpeed2', (v) => put('speed', sc('speed', v.speedVehicleCentreOfGravity), true));
         if (groups.includes('accel')) {

@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.21.43",
+  "version": "0.21.44",
   "vendor": "custom",
   "startType": "autostart",
   "loggingId": "OAC1",
@@ -63,8 +63,7 @@
     "de.bmw.infotainment.drivingexcitement.FES": {
       "statusSwitchDriveDynamicSport2": "rs",
       "statusActualValueTorque2": "rs",
-      "statusFESVehicleDynamicSwitchHMI": "rs",
-      "displaySportPowertrain": "s"
+      "statusFESVehicleDynamicSwitchHMI": "rs"
     },
     "de.bmw.infrastructure.VehicleInformation": {
       "statusGearboxDrive": "s",
@@ -102,24 +101,13 @@
     "de.bmw.infrastructure.EnvironmentalInformation": {
       "ExteriorTemperature": "s"
     },
-    "de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl": {
-      "displaySpeedLimitAndNoPassingRestriction": "s",
-      "_optional": "the speed limit the car's camera has read, the one BMW's own cluster shows (a notifier without getter, listed on the owner's car); feeds the limit ring"
-    },
     "de.bmw.infotainment.fasus.FASuS": {
-      "statusNextSpeedLimitRecognition": "rs",
       "statusIDriveFAS": "rs",
       "statusIDriveFASExtended": "rs",
       "_optional": "the next limit the camera recognised (nextClassLimitSpeed, nextWithdrawalLimitSpeed) and the driver assistance's lane warnings and steering wheel light: only read, shown on the Signals tab, until a drive shows what they mean"
     },
-    "de.bmw.dass.driverassistanceapplications.DisplayDriverAssistanceLateralCoordinated": {
-      "displaySteeringWheel": "s",
-      "_optional": "the lane assist's steering wheel symbol (displayLateralWarning, steeringWheelDisplay, steeringWheelColor, steeringWheelAnimation, handsOnSymbol): a notifier without getter, read and shown on the Signals tab, and drawn by the lane icon of the themes (setting carLane)"
-    },
     "de.bmw.infotainment.drivingexcitement.Efficiencytainment2": {
       "statusPowerRelativHybrid": "rs",
-      "displayPowerDrive": "s",
-      "displayPowerDrive2": "s",
       "_optional": "the cluster's own relative power meter (statusPowerRelativHybrid: drive and recuperation in %, a name the Cluster apps installed on the car declare too) draws the hybrid rev bar; the two displayPowerDrive notifiers only read, shown on the Signals tab (quotaImmediateElectricEngineDriveRecuperation): notifiers without getter, only read, shown on the Signals tab"
     }
   },
@@ -1258,13 +1246,7 @@
     },
     {
       "key": "limitRing",
-      "label": "Bague de limitation de vitesse (lue par la caméra de la voiture ou donnée par une appli)",
-      "type": "bool",
-      "default": true
-    },
-    {
-      "key": "nextLimit",
-      "label": "Prochaine limite lue par la caméra, sous l'anneau de limite",
+      "label": "Bague de limitation de vitesse (donnée par ShakLimites)",
       "type": "bool",
       "default": true
     },
@@ -1275,22 +1257,10 @@
       "default": false
     },
     {
-      "key": "carLane",
-      "label": "Volant de l'assistance de voie, dans la couleur de la voiture (essai)",
-      "type": "bool",
-      "default": false
-    },
-    {
       "key": "relPower",
       "label": "Puissance lue sur le compteur d'origine du tableau de bord (en %) : la barre des tours hybride en part sans eDrive Live",
       "type": "bool",
       "default": true
-    },
-    {
-      "key": "carPower",
-      "label": "Puissance du moteur électrique lue dans la voiture, sans eDrive Live (essai)",
-      "type": "bool",
-      "default": false
     },
     {
       "key": "estPower",
