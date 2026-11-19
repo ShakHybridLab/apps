@@ -12,6 +12,9 @@ const fs = require('fs');
 
 const PATH = process.env.SOMEIP_CATALOG || '/etc/oap/someip/someip-interfaces.json';
 const MAX_ROWS = 8;            // rows on a page of the Signals tab
+// "BC" as a word of a camelCase name (statusBCButton, operationBC): capitals only, so it cannot be one regex with the others (they ignore case)
+const BC_WORD = /(^|[a-z_.])BC(?=[A-Z_]|$)/;
+const withBC = (re) => ({ test: (s) => re.test(s) || BC_WORD.test(s), toString: () => String(re) + '+BC' });
 const GROUPS = [
     { id: 'buttons', title: 'Steering wheel and stalk buttons (the car\'s catalog)', match: /taste|button|mfl|multifunction|lenkrad|lenkstock|steeringwheel|stalk|keypad|wheelkey|swc|paddle|thumbwheel/i },
     { id: 'media', title: 'Media: what is playing (the car\'s catalog)', match: /media|titel|title|artist|interpret|album|trackname|currenttrack|nowplaying|audiosource|playback|metadata|radiotext/i },
@@ -41,7 +44,11 @@ const GROUPS = [
     // `not` drops the wheels', fans', pumps' and compressors' speeds
     { id: 'rpm', title: 'Engine speed under other names (the car\'s catalog)', first: /rpm|enginespeed|engine.?speed|drehzahl|crankshaft|kurbelwelle/i,
         match: /rpm|enginespeed|engine.?speed|drehzahl|crankshaft|kurbelwelle|umdrehung|tachometer|motorspeed|revcounter/i,
-        not: /wheel|rad(?![a-z])|fan|luefter|lüfter|pump|compressor|kompressor|wiper|blower|gebl/i },
+        not: /wheel|rad(?![a-z])|fan|luefter|lüfter|pump|compressor|kompressor|wiper|blower|gebl/i },    // the BC button at the end of the indicator stalk (the owner wants it to step through the views, 19 Nov 2026): it is not among the steering
+    // wheel's buttons (ShakVolant: nothing moves when it is pressed) and no name of the `buttons` group speaks of it. Names only: the on-board computer
+    // it steps through, and the stalk itself (indicators, high beam), over two pages
+    { id: 'bc', title: 'BC button, on-board computer and stalk (the car\'s catalog)', first: withBC(/bordcomputer|board.?computer|tripcomputer|trip.?computer|reisecomputer|bcbutton|bctaste|turnindicator|steeringcolumn|columnswitch|szl|lenkstock/i), match: withBC(/bordcomputer|board.?computer|tripcomputer|trip.?computer|reisecomputer|bcbutton|bctaste|onboardinfo|tripinfo|tripdata|traveldata|turnindicator|turn.?signal|blinker|fahrtrichtung|steeringcolumn|columnswitch|column.?stalk|szl|lenkstock|lever|hebel|highbeam|fernlicht|lichthupe|flasher/i), not: /seat|sitz|gear|gang|wahlhebel|selector|parkbrake|handbrake|door|tuer|window|fenster/i },
+    { id: 'bc2', skip: MAX_ROWS, title: 'BC button and stalk: next entries', first: withBC(/bordcomputer|board.?computer|tripcomputer|trip.?computer|reisecomputer|bcbutton|bctaste|turnindicator|steeringcolumn|columnswitch|szl|lenkstock/i), match: withBC(/bordcomputer|board.?computer|tripcomputer|trip.?computer|reisecomputer|bcbutton|bctaste|onboardinfo|tripinfo|tripdata|traveldata|turnindicator|turn.?signal|blinker|fahrtrichtung|steeringcolumn|columnswitch|column.?stalk|szl|lenkstock|lever|hebel|highbeam|fernlicht|lichthupe|flasher/i), not: /seat|sitz|gear|gang|wahlhebel|selector|parkbrake|handbrake|door|tuer|window|fenster/i },
 ];
 
 /** The member names of a field's data type (structs flattened, a parent's members first), at most two levels deep. */

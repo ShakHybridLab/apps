@@ -2,6 +2,9 @@
 
 ## 19 novembre 2026
 
+### ShakTheme 0.21.39 : le catalogue de la voiture cherche la touche BC et le commodo (pas encore essayé sur la voiture)
+Le propriétaire veut faire défiler les vues avec la touche BC du commodo des clignotants. Essai du 19 nov. dans ShakVolant : `SteeringWheelPushButton` est disponible (volume, commande vocale, molette appui et rotation, piste, téléphone) mais rien ne bouge quand il appuie sur BC, et la page « Boutons » du catalogue ne la nomme pas. L'onglet Signaux gagne deux pages à la fin (14 et 15 sur 15) : « Touche BC, ordinateur de bord et commodo », les noms du catalogue qui parlent de l'ordinateur de bord, de « BC » en majuscules dans un nom, du commodo, des clignotants et des appels de phares (`shared/catalog.js`, groupes `bc` et `bc2`). Des noms seulement : pour voir une valeur en direct il faut déclarer le signal, et la voiture refuse l'installation si le nom n'est pas dans son catalogue.
+
 ### ShakTheme 0.21.38, ShakRadar 0.1.8 : l'alerte s'arrête quand la voiture s'éloigne de la zone, même au pas (pas encore essayé sur la voiture)
 Premier essai du propriétaire (19 nov., 19 h 10, bouchon vers Bagnolet) : « je suis de l'autre côté, quand même danger, et les mètres augmentent ». La règle « zone derrière » ne comptait que les 6 dernières secondes : il fallait s'éloigner de 30 m en 6 s (18 km/h), ce qu'un bouchon ne fait pas. `shared/radar_app.js` retient maintenant le plus près que la voiture a été du centre de la zone : 30 m de plus que ce minimum, et l'alerte s'arrête, à n'importe quelle vitesse. Elle revient si la voiture se rapproche de nouveau. Autre constat du même essai, pas un défaut de code : le réglage « Alerte zone de danger » était resté éteint sur sa voiture (valeur gardée d'une ancienne version), il est dans l'onglet Carte.
 
