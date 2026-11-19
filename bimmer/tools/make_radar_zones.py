@@ -29,8 +29,8 @@ Sortie par défaut : data/radars_fr_zones.json. Données des routes © les contr
 import csv, io, json, math, os, sys, time, urllib.request
 
 CELL = 0.002            # degrés : l'arrondi du centre d'une zone
-RADIUS = 400           # mètres autour du centre
-RADIUS_WIDE = 500      # limite de 110 ou plus : autoroute
+RADIUS = 137           # mètres autour du centre
+RADIUS_WIDE = 700      # limite de 110 ou plus : autoroute
 RADIUS_TOWN = 300       # limite de 50 ou moins : en ville
 WIDE_FROM, TOWN_TO = 110, 50
 SAME_M = 150.0          # un radar d'OpenStreetMap à moins de ça d'un radar officiel : c'est le même
