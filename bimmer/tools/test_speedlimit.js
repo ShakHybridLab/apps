@@ -59,7 +59,7 @@ check('SpeedLimit : la voiture donne la limite, elle s\'efface avec « pas de pa
     assert.deepStrictEqual(seen, [50, 80, null, 30, null]);
 });
 
-check('SpeedLimit : un fichier d\'une autre appli plus récent passe devant la voiture, et le plus ancien non', () => {
+check('SpeedLimit : le panneau lu par la caméra de la voiture passe devant le fichier d\'une autre appli (une carte, réécrite chaque seconde) ; sans lui, le fichier', () => {
     const fsx = require('fs'), os = require('os');
     const dir = fsx.mkdtempSync(path.join(os.tmpdir(), 'sl-'));
     let t = 5000000;
@@ -68,9 +68,11 @@ check('SpeedLimit : un fichier d\'une autre appli plus récent passe devant la v
     t += 1000;
     fsx.writeFileSync(path.join(dir, 'speedlimit-test.json'), JSON.stringify({ t, app: 'test', limit: 70 }));
     sl.scan();
-    assert.strictEqual(sl.limit(), 70, 'le fichier est plus récent');
+    assert.strictEqual(sl.limit(), 50, 'la caméra passe devant un fichier plus récent');
     t += 2000; sl.feed(90, 'car');
-    assert.strictEqual(sl.limit(), 90, 'la voiture est plus récente');
+    assert.strictEqual(sl.limit(), 90);
+    sl.feed(null); fsx.writeFileSync(path.join(dir, 'speedlimit-test.json'), JSON.stringify({ t, app: 'test', limit: 70 })); sl.scan();
+    assert.strictEqual(sl.limit(), 70, 'plus de panneau de la caméra : le fichier');
     fsx.rmSync ? fsx.rmSync(dir, { recursive: true, force: true }) : null;
 });
 

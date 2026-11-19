@@ -118,7 +118,9 @@ class SpeedLimit {
             });
         } catch (e) { best = null; }
         const c = this.car;
-        if (c && Math.abs(this.now() - c.t) < CAR_TTL_MS && (!best || c.t > best.t)) best = c;
+        // the sign the car's camera read comes first while it counts: a map (ShakLimites) knows no road works and no temporary limit, and rewrites
+        // its file every second (it would always be the newest)
+        if (c && Math.abs(this.now() - c.t) < CAR_TTL_MS) best = c;
         const before = this.cur ? this.cur.limit : null, after = best ? best.limit : null;
         this.cur = best;
         if (before !== after) {
