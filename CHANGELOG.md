@@ -2,6 +2,9 @@
 
 ## 19 novembre 2026
 
+### ShakTheme 0.21.42, ShakHUD 0.6.35 : la seconde source du régime moteur dans l'onglet Signaux (pas encore essayé sur la voiture)
+Le compte-tours du HUD ne bouge pas : `CDS.statusEngineSpeed2` arrive (6 220 messages, 4 par seconde) mais vaut 0, et le propriétaire dit que c'est pareil moteur thermique allumé. Le catalogue de sa voiture (photo du 19 nov., page 13) nomme une autre source : `DisplayDataServer.functionalLibraryData`, membre `rpm`, déjà accepté sur sa voiture (les applis Cluster installées le déclarent). Les deux applis le déclarent (« rs », optionnel) et l'onglet Signaux, **page 2, première ligne**, « Régime moteur : seconde source », montre la valeur brute du membre `rpm`. Rien n'est encore dessiné avec : il faut voir ce qu'elle vaut moteur allumé (échelle inconnue) avant de brancher le compte-tours dessus.
+
 ### ShakTheme 0.21.41 : la touche BC du commodo fait défiler les vues (pas encore essayé sur la voiture)
 Demande du propriétaire. Essai du 19 nov. à 19 h 40 dans ShakManette : `de.bmw.body.Light` `IndicatorSteeringColumn` donne `operationColumnStalks` = 64 pendant l'appui sur BC et 0 au relâcher. ShakTheme écoute ce signal (`shared/bc_button.js`, déclaré « s » et optionnel, ajouté à `tools/car_accepted_signals.json`) : chaque appui appelle `hud.nextView()`, qui existait sans rien pour l'appeler (aucune vue, puis les vues du thème l'une après l'autre, puis aucune). Un appui = le passage de « sans 64 » à « avec 64 » ; la valeur répétée par la voiture, une touche tenue au démarrage et deux appuis à moins de 250 ms ne comptent pas. Réglage « Touche BC du commodo : vue suivante » (allumé), onglet Affichage. Lecture seule : la voiture change aussi son propre ordinateur de bord à chaque appui. `tools/test_bc_button.js` (4 contrôles).
 

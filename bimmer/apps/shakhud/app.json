@@ -2,7 +2,7 @@
   "id": "shakhud",
   "title": "ShakHUD",
   "description": "ShakHUD : un HUD pour le pare-brise, le compte-tours M Style (une barre brisée, rouge dans la zone rouge, bleu clair en électrique, verte en recharge), avec la batterie, les autonomies et les températures en bas à droite ; il se cache tout seul quand la carte Waze du HUD est affichée",
-  "version": "0.6.34",
+  "version": "0.6.35",
   "vendor": "custom",
   "startType": "autostart",
   "loggingId": "OAS1",
@@ -45,6 +45,7 @@
     "gear_window.js", "survive.js"
   ],
   "signals": {
+    "de.bmw.infotainment.displaydataserver.DisplayDataServer": {"functionalLibraryData": "rs", "_optional": "le régime moteur sous son autre nom (membre rpm, catalogue de la voiture, 19 nov. 2026) : affiché dans l'onglet Signaux en attendant de savoir ce qu'il vaut moteur allumé"},
     "de.bmw.infotainment.vehicle.CDS": {
       "statusEngineSpeed2": "rs",
       "statusEngineTemperature": "rs"

@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.21.41",
+  "version": "0.21.42",
   "vendor": "custom",
   "startType": "autostart",
   "loggingId": "OAC1",
@@ -48,6 +48,7 @@
   "signals": {
     "de.bmw.body.Light": {"IndicatorSteeringColumn": "s", "_optional": "le commodo des clignotants : la touche BC au bout fait passer à la vue suivante (operationColumnStalks vaut 64 pendant l'appui, vu sur la voiture du propriétaire avec ShakManette, photo du 19 nov. 2026)"},
     "de.bmw.infotainment.GPSData": {"GPSPositionCAN": "s", "_optional": "la position GPS de la voiture, pour l'alerte zone de danger (vue acceptée et disponible sur la voiture du propriétaire avec ShakGPS, photo du 19 nov. 2026)"},
+    "de.bmw.infotainment.displaydataserver.DisplayDataServer": {"functionalLibraryData": "rs", "_optional": "le régime moteur sous son autre nom (membre rpm, catalogue de la voiture, 19 nov. 2026) : affiché dans l'onglet Signaux en attendant de savoir ce qu'il vaut moteur allumé"},
     "de.bmw.infotainment.vehicle.CDS": {
       "statusEngineSpeed2": "rs",
       "statusEngineTemperature": "rs"

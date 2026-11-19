@@ -21,6 +21,7 @@ const SIGN = 'de.bmw.dass.driverassistanceapplications.TrafficSignDisplayControl
 const CDS = 'de.bmw.infotainment.vehicle.CDS';
 const VEHICLE2 = 'de.bmw.infotainment.vehicle.Vehicle2';
 const CARPLAY = 'de.bmw.infotainment.a4a.carplay.CarPlayManager';
+const DDS = 'de.bmw.infotainment.displaydataserver.DisplayDataServer';
 
 const PROBES = [
     // the three the app itself draws from (kit/runtime/car.js): listed first, to see whether the car sends the rev counter's value at all and what it holds
@@ -40,6 +41,10 @@ const PROBES = [
     { id: 'pdist', iface: KOMBI, field: 'statusDisplayElectricalPowerDistribution', name: 'Electric power: drive and air conditioning' },
     { id: 'erange', iface: KOMBI, field: 'displayRangeElectricVehicle', name: 'Electric range (cluster)' },
     { id: 'cc', iface: KOMBI, field: 'statusActiveCCMessage', name: 'Check control message showing' },
+    // the engine's speed under its other name (the car's catalog, photo of 19 Nov 2026: functionalLibraryData has a member "rpm"; the name is accepted,
+    // the Cluster apps installed on the owner's car declare it). CDS.statusEngineSpeed2 stays at 0 on his car, the HUD's rev counter never moves: this
+    // line shows what the other one holds with the engine running, before the rev counter is drawn from it
+    { id: 'rpm2', iface: DDS, field: 'functionalLibraryData', name: 'Engine speed: second source (display data)' },
 ];
 // NOT DECLARED in app.json since ShakTheme 0.21.13: the car's app manager refused 0.21.12 ("UPDATE_FAILED", the previous version kept) and
 // this was the one signal declared since the last version the owner had installed. Re-add it (with the flags of the car's catalog) only when
@@ -50,7 +55,7 @@ const PROBES = [
 const GUIDE = { id: 'guide', iface: CARPLAY, field: 'projectedGuidanceActive', name: 'CarPlay guidance active (route)' };
 const SHOWN = PROBES.map((p) => p.id);
 // the Signals tab's two pages (ids; 'guide' is the one probe above): the engine and the energy first, then the road signs and the assistance
-const PAGES = [['rpm', 'engt', 'speed', 'rel', 'pdrive', 'pdrive2', 'pdist', 'erange', 'guide'], ['sign', 'next', 'fas', 'fasx', 'wheel', 'cc']];
+const PAGES = [['rpm', 'engt', 'speed', 'rel', 'pdrive', 'pdrive2', 'pdist', 'erange', 'guide'], ['rpm2', 'sign', 'next', 'fas', 'fasx', 'wheel', 'cc']];
 const KEEP = 3;               // distinct values kept for each (the page shows the newest first)
 const LOG_FIRST = 12;         // distinct values of each that go to the log, then one a minute at most
 const LOG_EVERY_MS = 60000;
@@ -138,6 +143,13 @@ function meaningOf(id, v) {
     case 'engt': {
         const c = unitOf(v, 'coolant', -40, 215), o = unitOf(v, 'oil', -40, 215);
         t = c === null && o === null ? null : (c === null ? '' : 'coolant ' + c + ' C') + (c !== null && o !== null ? ' · ' : '') + (o === null ? '' : 'oil ' + o + ' C');
+        break;
+    }
+    case 'rpm2': {
+        // the member named rpm as the car sends it (its scale is not known yet: shown raw), then the other members that speak of a speed of rotation
+        const keys = v && typeof v === 'object' ? Object.keys(v) : [];
+        const k = keys.find((n) => /^rpm$/i.test(n)) || keys.find((n) => /rpm|enginespeed|drehzahl/i.test(n));
+        t = k === undefined ? null : k + ' ' + (typeof v[k] === 'object' ? JSON.stringify(v[k]).slice(0, 40) : v[k]) + ' (raw)';
         break;
     }
     case 'sign': { const n = limitOf(v); t = n === null ? 'no limit read' : 'limit ' + n; break; }
