@@ -4,6 +4,7 @@
   "description": "La limitation de vitesse de la route d'après une carte (OpenStreetMap) et le GPS de la voiture, pour les voitures dont la caméra ne lit pas les panneaux. Elle s'affiche dans le rond de limitation de ShakTheme. Grandes routes seulement ; ne connaît ni les travaux ni les limites temporaires.",
   "version": "0.1.0",
   "vendor": "custom",
+  "startType": "autostart",
   "loggingId": "OALM",
   "iconGlyph": "LIM",
   "shared": ["gps_pos.js", "limits_map.js", "limits_app.js", "survive.js"],

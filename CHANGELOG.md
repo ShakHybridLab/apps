@@ -2,6 +2,9 @@
 
 ## 19 novembre 2026
 
+### ShakTheme 0.21.31, ShakHUD 0.6.34 et ShakLimites démarrent avec la voiture (pas encore essayé sur la voiture)
+Demande du propriétaire (19 nov. 2026, 12:54) : « que ça démarre sans avoir à ouvrir l'appli ». Le kit d'eroobeeroo sait le demander au Store (`"startType": "autostart"` dans `app.json`, écrit `mguAppStartType` dans le paquet : c'est ainsi que Cluster Layouts, Cluster Centre et Cluster Info démarrent sur la voiture) ; le kit de bimmer ne le savait pas. Repris tel quel dans `bimmer/kit/tools/build.py`, et ShakLimites, ShakTheme et ShakHUD le demandent (« je veux ShakTheme aussi et ShakHUD », 12:55). Les autres applis ne changent pas.
+
 ### ShakLimites : l'Île-de-France en détail (carte à refaire sur GitHub)
 Demande du propriétaire (19 nov. 2026, 12:51) : « c'est possible d'optimiser surtout pour l'Île-de-France ? » Première carte (France, grandes routes) : 623 445 tronçons, 172 979 km, 10 Mo, appli de 9,8 Mo. Dans l'Île-de-France (de 1,44 à 3,56 E, de 48,10 à 49,25 N) la fabrication ajoute maintenant **les petites routes et les rues** qui portent une limitation (tertiaires, non classées, résidentielles, zones de rencontre : les zones 30 de Paris et de la petite couronne) ; ailleurs, toujours les grandes routes seulement (`.github/workflows/limites.yml`, `tools/build_limits.py` qui accepte plusieurs entrées). Quand la carte change, **la fabrication monte toute seule la version de ShakLimites** pour que la voiture propose la mise à jour ; son journal part même si la carte n'a pas changé ou si elle a échoué.
 
