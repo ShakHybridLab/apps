@@ -1,0 +1,35 @@
+{
+  "id": "shakconso",
+  "title": "ShakConso (essai)",
+  "description": "Essai : ce que l'ordinateur de bord donne à une appli (consommation et vitesse moyennes, distance et durée du trajet, données électriques).",
+  "version": "0.3.0",
+  "vendor": "custom",
+  "loggingId": "OACN",
+  "iconGlyph": "CNS",
+  "shared": [
+    "signal_probe.js",
+    "probe_sets.js",
+    "survive.js"
+  ],
+  "signals": {
+    "de.bmw.infotainment.KombiIF": {
+      "statusBordcomputerAverage": "s",
+      "statusBordcomputerTravelData": "s",
+      "statusBordcomputerElectricData": "s",
+      "statusConsumptionAverageElectricVehicle": "s",
+      "statusBordcomputerStatus2": "s"
+    }
+  },
+  "screens": [
+    {
+      "name": "MAIN",
+      "kind": "canvas",
+      "title": "ShakConso"
+    }
+  ],
+  "settings": [],
+  "config": {
+    "lang": "fr",
+    "readOnly": true
+  }
+}

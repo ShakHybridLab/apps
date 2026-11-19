@@ -596,7 +596,9 @@ class Page {
         g.rows.forEach((r) => {
             glass(cv, CX, y, CW, rh - 4, false);
             const flags = r.flags, fw = cv.textWidth(flags, 12, { literal: true });
-            cv.text(fit(r.iface.split('.').slice(-2).join('.') + ' · ' + r.field, CW - 44 - fw - 20, 15), CX + 18, y + 19, 15, C.text, { literal: true });
+            // the interface's whole name (without "de.bmw."): an app can only declare a signal by its whole name, and the last two parts alone did not give it
+            // (19 Nov 2026: carlifemp.CarLifeMp, the media's title, could not be tried for want of the rest)
+            cv.text(fit(r.iface.replace(/^de\.bmw\./, '') + ' · ' + r.field, CW - 44 - fw - 20, 15), CX + 18, y + 19, 15, C.text, { literal: true });
             cv.text(flags, CR - 12 - fw, y + 19, 12, C.blueHi, { literal: true });
             if (r.members.length) cv.text(fit(r.members.join(', '), CW - 36, 13), CX + 18, y + rh - 11, 13, C.label, { literal: true });
             y += rh;

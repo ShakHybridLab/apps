@@ -64,8 +64,12 @@ CLUSTER_FONTS = [
     ('m_spd', 'Orbitron[wght].ttf', 50, DIGITS + '-', 0, 'Black', {'0': 'O'}),     # M Blade's small speed under the gear, as the photo has it
     ('m_mid', 'Orbitron[wght].ttf', 34, DIGITS + ':+-.', 0, 'Bold', {'0': 'O'}),
     ('m_tyre', 'Orbitron[wght].ttf', 25, DIGITS + '.-', 0, 'Bold', {'0': 'O'}),
+    ('r_val', 'Orbitron[wght].ttf', 24, DIGITS + ':+-.', 0, 'Bold', {'0': 'O'}),   # the value inside one of Sport's round gauges (71 px across)
     ('m_unit', 'Barlow-Medium.ttf', 30, LOWER + UPPER + '°/-.'),
     ('m_label', 'Orbitron[wght].ttf', 20, UPPER + ' -', 0, 'Bold'),
+    # the names of the rows in M Blade's views, written out in full with their accents (the owner, 19 Nov 2026: "naturel, pas de langage court")
+    ('m_name', 'Barlow-Medium.ttf', 22, UPPER + LOWER + " -'éèêàçùôî"),
+    ('m_name_s', 'Barlow-Medium.ttf', 18, UPPER + LOWER + " -'éèêàçùôî"),      # the same, small: the two-line names under Sport's round gauges
     ('m_tiny', 'Barlow-Medium.ttf', 26, LOWER + DIGITS + 'CFW./ -°%'),
     ('m_badge', 'Barlow-Medium.ttf', 26, UPPER + LOWER + DIGITS + ' -'),
     ('mode', 'Barlow-Medium.ttf', 22, UPPER + LOWER + DIGITS + ' -'),   # the drive mode, small, bottom right of every theme ({{modeName}})

@@ -307,6 +307,8 @@ const CLAIM_MS = 1000;
 
 const BOOST_SCALE = { factor: 0.01, offset: 0, invalid: 255 }; // see header comment
 // the widget types drawn as pixels (image layers, packed into sheets unless "own": true); the rest are shaders
+// the effect layers the views' readings sit on: M Blade's panel, Navi's card, Sport's round gauges (the same rows, the same tyres' view)
+const VIEW_PANEL = { mpanel: true, vcard: true, sring: true, nline: true, mblades: true };
 const BACKDROP_TYPES = { sdash: true, mdash: true, mblade: true, navi: true };   // the shaders that read u_rect / u_org (a piece of the picture)
 const IMAGE_TYPES = { text: true, scale: true, stripe: true, badge: true, gridlabels: true, icon: true, emblem: true, swatchimg: true };
 const STATUS_ASK_MS = 2000;      // after a rebuild: ask cluster-render for its own status text
@@ -388,7 +390,7 @@ const WARN_FLASH_MS = 300;
 const SENSOR_BAR = { oil: true, coolant: true, boost: [79, 180, 255, 255] };
 // The views a theme shows one at a time in place of its empty slot ("viewSel=<name>" in a widget's toggle; the setting "viewSel" picks one by hand, and the
 // button behind the steering wheel steps through them, nextView()): in the order they come, and the last press goes back to none (the theme as it was).
-const VIEW_ORDER = ['gauges', 'tyres', 'drive', 'conso', 'media'];
+const VIEW_ORDER = ['gauges', 'tyres', 'drive', 'electric', 'conso', 'media'];
 /** The views of `widgets` (those whose toggle has "viewSel=<name>"), in VIEW_ORDER. */
 const viewsOf = (widgets) => {
     const seen = {};
@@ -484,6 +486,8 @@ const SETUP = {
     // the car reports only that an Individual setup is on, not what each part is set to (no signal found yet)
     individual: { engine: 'INDIVIDUAL', chassis: 'INDIVIDUAL', steering: 'INDIVIDUAL', gearbox: 'INDIVIDUAL' },
 };
+// the same in French, in capitals without accents (the labels' fonts have the capitals only): the owner's apps are in French
+const SETUP_FR = { ELECTRIC: 'ELECTRIQUE', COMFORT: 'CONFORT', HYBRID: 'HYBRIDE', EFFICIENT: 'EFFICIENT', SPORT: 'SPORT', 'SPORT PLUS': 'SPORT PLUS', INDIVIDUAL: 'INDIVIDUEL' };
 const SETUP_LEVEL = { EFFICIENT: 1, COMFORT: 1, HYBRID: 1, ELECTRIC: 1, SPORT: 2, 'SPORT PLUS': 3, INDIVIDUAL: 0 };
 
 function driveModeOf(raw) {
@@ -2115,6 +2119,8 @@ class HudApp {
             return isNum(shared) ? shared : this.car.data().demo ? 64 : null;
         }
         if (name === 'evRange') return this._evRangeNow();
+        // the electric view (19 Nov 2026): the motor's power as two readings, what it gives (evPower) and what it takes back (evRecup), in kW
+        if (name === 'evPower' || name === 'evRecup') { const kw = this._evKw(); return kw === null ? null : name === 'evPower' ? Math.max(0, kw) : Math.max(0, -kw); }
         if (name === 'fuel' || name === 'range' || name === 'ambient') {
             // the kit's demo drive has none of these: made-up but steady values while it runs
             const demo = this.car.data().demo;
@@ -2178,6 +2184,16 @@ class HudApp {
         let best = null;
         labels.forEach((i) => { if (i <= pos + 1e-6) best = i; });
         return best;
+    }
+
+    /**
+     * The electric motor's power now in kW, negative while it charges the battery (recuperation), or null: what eDrive Live shares, else the
+     * stock cluster's own power meter, else the estimate (the same order as the hybrid rev bar, _hybridTach).
+     */
+    _evKw() {
+        const shared = this.ci && this.ci.sharedPower ? this.ci.sharedPower() : null, rel = !shared ? this._relPower() : null;
+        const est = !shared && !rel ? this._estPower() : null, pw = shared || rel || est;
+        return pw && !pw.old && isNum(pw.kw) ? pw.kw : null;
     }
 
     /** The setup rows for the drive mode now, or null before the car has said. */
@@ -2274,6 +2290,7 @@ class HudApp {
             case 'evShareUnit': return isNum(this._evShare()) ? '%' : '';
             case 'launchUnit': return isNum(this._launchTime(Date.now())) ? 's' : '';
             case 'hvSoc': { const v = this._raw('hvSoc'); return isNum(v) ? String(Math.round(v)) : '--'; }
+            case 'evPower': case 'evRecup': { const v = this._raw(tok); return isNum(v) ? String(Math.round(v)) : '--'; }
             case 'evRange': { const v = this._raw('evRange'); return isNum(v) ? String(Math.round(us ? v * 0.621371 : v)) : '--'; }
             case 'fuelPct': { const v = this._raw('fuel'); return isNum(v) ? String(Math.round(v * 100)) : '--'; }
             case 'ambientN': { const v = this._raw('ambient'); return isNum(v) ? String(Math.round(us ? v * 9 / 5 + 32 : v)) : '--'; }
@@ -2347,7 +2364,7 @@ class HudApp {
                 if (tok.indexOf('ms:') === 0) { const v = M_SCALE[us ? 'us' : 'metric'][Number(tok.slice(3))]; return v === undefined ? '' : String(v); }   // the M Blade speed scale labels
                 if (tok.indexOf('spd:') === 0) { const v = SPEED_SCALE[us ? 'us' : 'metric'][Number(tok.slice(4))]; return v === undefined ? '' : String(v); }   // speed scale labels
                 if (tok.indexOf('temp:') === 0) { const c = Number(tok.slice(5)); return isNum(c) ? String(us ? Math.round((c * 9 / 5 + 32) / 10) * 10 : Math.round(c)) : '--'; }   // gauge labels: °F to the 10
-                if (tok.indexOf('setup:') === 0) { const s = this._setup(); return s ? s[tok.slice(6)] || '' : '--'; }
+                if (tok.indexOf('setup:') === 0) { const s = this._setup(), v = s ? s[tok.slice(6)] || '' : '--'; return this.config.lang === 'fr' ? SETUP_FR[v] || v : v; }
                 if (tok.indexOf('signal:') === 0) { const v = this._raw(tok.slice(7)); return isNum(v) ? (Math.round(v * 10) / 10).toString() : '--'; }
                 return '{{' + tok + '}}';
         }
@@ -2901,18 +2918,35 @@ class HudApp {
             c.uniform(ref, 'u_holeR', [this._holeRadius(w)]);
             c.uniform(ref, 'u_tint', [this._tint() * (isNum(w.tintScale) ? Math.max(0, w.tintScale) : 1)]);      // a layout's "tintScale": its share of the setting
             c.uniform(ref, 'u_facets', [this._facets()]);
-        } else if (w.type === 'mpanel') {
+        } else if (VIEW_PANEL[w.type]) {
             // M Blade's view panel (shaders.js mpanel): "shape" [x, y of the point, the sides' slope, the band's width], "bar" [left x, right x],
             // "rows" [{ y, signal, min, max, red, tone }] (up to four), "div" (marks), all in panel px
-            const sh = w.shape, rows = (w.rows || []).slice(0, 4), pad = (f, d) => [0, 1, 2, 3].map((i) => (rows[i] ? f(rows[i]) : d));
+            // The other themes' card (shaders.js vcard) takes the same rows, bars and tyres; in place of "shape": "card" [skew, corner radius, accent bar
+            // width], "glass" and "edge" (two colours, 0..1). Both: "lean" (the bars', 0.5) and "rule" (the line between rows, px above a bar: 47).
+            const sh = w.shape || [0, 0, 0, 1], rows = (w.rows || []).slice(0, 4), pad = (f, d) => [0, 1, 2, 3].map((i) => (rows[i] ? f(rows[i]) : d));
             c.uniform(ref, 'u_size', [w.w, w.h]);
             c.uniform(ref, 'u_pan', [sh[1] - w.y, sh[2], sh[3], sh[0] - w.x]);
+            c.uniform(ref, 'u_lean', [isNum(w.lean) ? w.lean : 0.5]);
+            c.uniform(ref, 'u_rule', [isNum(w.rule) ? w.rule : 47]);
+            if (w.type === 'vcard' || w.type === 'sring' || w.type === 'nline') {     // (nline, Navi's thin lines: "card" is [the step's x, its height, 0])       // (sring, Sport's round gauges: "card" is [radius, thickness, the tyres' frame's cut corner])
+                c.uniform(ref, 'u_card', w.card || [0, 16, 0]);
+                c.uniform(ref, 'u_ca', w.glass || [0.03, 0.09, 0.27]);
+                c.uniform(ref, 'u_cb', w.edge || [0.45, 0.65, 1.0]);
+            }
             c.uniform(ref, 'u_bx', w.bar ? [w.bar[0] - w.x, w.bar[1] - w.x] : [0, 1]);
             c.uniform(ref, 'u_ry', pad((r) => r.y - w.y, -1));
             c.uniform(ref, 'u_rz', pad((r) => (isNum(r.red) ? r.red : 2), 2));
             c.uniform(ref, 'u_v', [0, 0, 0, 0]);
             c.uniform(ref, 'u_tone', [0, 0, 0, 0]);
             c.uniform(ref, 'u_div', [w.div || 2]);
+            // "seg": each bar's segments (24); "mode": "tyres" draws the car from above with "tiles" [left x, right x, front y, rear y] (the plates' middles)
+            c.uniform(ref, 'u_seg', [w.seg || 24]);
+            c.uniform(ref, 'u_mode', [w.mode === 'tyres' ? 1 : 0]);
+            c.uniform(ref, 'u_wh', [0, 0, 0, 0]);
+            if (w.mode === 'tyres' && w.tiles) {
+                c.uniform(ref, 'u_bx', [w.tiles[0] - w.x, w.tiles[1] - w.x]);
+                c.uniform(ref, 'u_ry', [w.tiles[2] - w.y, w.tiles[3] - w.y, -1, -1]);
+            }
         } else if (w.type === 'navi') {
             const B = w.band, L = w.line, L2 = w.line2;
             c.uniform(ref, 'u_size', [w.w, w.h]);
@@ -3708,7 +3742,7 @@ class HudApp {
             x.last = key;
             x.c.uniform(x.ref, 'u_v', [v, pk, zone, 0]);
             x.c.uniform(x.ref, 'u_hy', bar === 1 ? [0.3, 0.75, 1.0, 1] : bar === 2 ? [0.2, 0.85, 0.5, 1] : [0, 0, 0, 0]);
-        } else if (w.type === 'mpanel') {
+        } else if (VIEW_PANEL[w.type]) {
             // the panel's bars: each row's reading between its min and max, in its tone: "temp" (oil, coolant) blue while cold, green once warm, flashing
             // red over the warning limit; "boost" light blue; "ice" (the outside) blue under the setting "iceBelow"; else white
             const rows = (w.rows || []).slice(0, 4), v = [0, 0, 0, 0], tn = [0, 0, 0, 0];
@@ -3719,14 +3753,18 @@ class HudApp {
                 if (r.tone === 'temp') {
                     const cold = COLD_BELOW[r.signal] ? this.setting(COLD_BELOW[r.signal]) : 0;
                     tn[i] = this._overLimit(r.signal) ? (flash ? 3 : 4) : isNum(raw) && isNum(cold) && cold > 0 && raw < cold ? 1 : 2;
-                } else if (r.tone === 'boost') tn[i] = 5;
+                } else if (r.tone === 'boost' || r.tone === 'blue') tn[i] = 5;
+                else if (r.tone === 'green') tn[i] = 2;
                 else if (r.tone === 'ice') tn[i] = this._ice(now).on ? 1 : 0;
             });
-            const key = v.join(',') + '|' + tn.join(',');
+            // the tyres' view: each wheel in its tyre's state (the readouts' own rule, _tyreLevel: 0 fine, 1 low, 2 very low)
+            const wh = w.mode === 'tyres' ? ['FL', 'FR', 'RL', 'RR'].map((k) => this._tyreLevel(k) || 0) : [0, 0, 0, 0];
+            const key = v.join(',') + '|' + tn.join(',') + '|' + wh.join(',');
             if (!force && key === x.last) return;
             x.last = key;
             x.c.uniform(x.ref, 'u_v', v);
             x.c.uniform(x.ref, 'u_tone', tn);
+            if (w.mode === 'tyres') x.c.uniform(x.ref, 'u_wh', wh);
         } else if (w.type === 'slantbar' && SENSOR_BAR[w.sensor]) {
             // a sensor's bar ("sensor": oil | coolant | boost, "min" / "max" in C or bar): blue while the oil / the coolant is under its cold limit, green once
             // warm, light blue for the boost, and over the warning limit flashing between the shift red and a dark red (the readouts' colours, "tempBy")

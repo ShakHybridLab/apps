@@ -28,11 +28,13 @@ module.exports = {
         },
     },
     shakconso: {
-        title: 'ShakConso', glyph: 'CNS', logId: 'OACN',
-        description: "Essai : la consommation moyenne de l'ordinateur de bord (depuis la dernière remise à zéro).",
-        note: 'Compare avec ton ordinateur de bord : la consommation moyenne doit ressembler à celle qu\'il affiche. Photographie l\'écran.',
+        title: 'ShakConso', glyph: 'CNS', logId: 'OACN', version: '0.3.0',
+        description: "Essai : ce que l'ordinateur de bord donne à une appli (consommation et vitesse moyennes, distance et durée du trajet, données électriques).",
+        note: 'Roule quelques minutes, puis photographie l\'écran : chaque ligne qui a reçu une valeur est lisible par les thèmes.',
         signals: {
-            'de.bmw.infotainment.resetlogic.ResetLogic': ['currentConsumption', 'averageConsumption'],
+            // (noms lus dans le catalogue de la voiture, photos du 19 nov. 2026, pages « Touche BC, ordinateur de bord et commodo »)
+            'de.bmw.infotainment.KombiIF': ['statusBordcomputerAverage', 'statusBordcomputerTravelData', 'statusBordcomputerElectricData',
+                'statusConsumptionAverageElectricVehicle', 'statusBordcomputerStatus2'],
         },
     },
     shakgps: {

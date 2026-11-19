@@ -1161,10 +1161,11 @@ void main() {
         float dT = poly5(g, vec2(795.0, 167.0), vec2(1079.0, 169.0), vec2(1110.0, 230.0), vec2(1097.0, 272.0), vec2(737.0, 272.0)) * s;
         float dL = poly5(g, vec2(650.0, 408.0), vec2(1006.0, 408.0), vec2(906.0, 589.0), vec2(735.0, 589.0), vec2(641.0, 430.0)) * s;
         float dR = poly4(g, vec2(1114.0, 241.0), vec2(1179.0, 352.0), vec2(1018.0, 588.0), vec2(913.0, 589.0)) * s;
-        c = over(vec4(vec3(0.09, 0.31, 0.7), cov(dS)), c);
-        c = over(vec4(mix(vec3(0.085, 0.34, 0.79), vec3(0.075, 0.31, 0.72), (g.y - 167.0) / 105.0), cov(dT)), c);
-        c = over(vec4(mix(vec3(0.07, 0.275, 0.66), vec3(0.08, 0.31, 0.74), clamp((g.x - 640.0) / 360.0, 0.0, 1.0)), cov(dL)), c);
-        c = over(vec4(mix(vec3(0.075, 0.28, 0.68), vec3(0.095, 0.32, 0.76), gy), cov(dR)), c);
+        // (the hexagon's four panels and the tab under it are a quarter darker since 19 Nov 2026, in every state of the theme: the owner, "le fond un peu plus foncé")
+        c = over(vec4(vec3(0.065, 0.223, 0.504), cov(dS)), c);
+        c = over(vec4(mix(vec3(0.061, 0.245, 0.569), vec3(0.054, 0.223, 0.518), (g.y - 167.0) / 105.0), cov(dT)), c);
+        c = over(vec4(mix(vec3(0.05, 0.198, 0.475), vec3(0.058, 0.223, 0.533), clamp((g.x - 640.0) / 360.0, 0.0, 1.0)), cov(dL)), c);
+        c = over(vec4(mix(vec3(0.054, 0.202, 0.49), vec3(0.068, 0.23, 0.547), gy), cov(dR)), c);
         // the thin lighter facet lines the photo shows on the panels
         float f1 = segD(g, vec2(775.0, 408.0), vec2(699.0, 537.0)) * s;
         float f3 = segD(g, vec2(1043.0, 162.0), vec2(1102.0, 245.0)) * s;
@@ -1182,7 +1183,7 @@ void main() {
             float gr = poly4(g, vec2(1154.0, 649.0), vec2(1203.0, 649.0), vec2(1222.0, 676.0), vec2(1172.0, 676.0)) * s;
             c = over(vec4(0.12, 0.3, 0.62, 0.55 * cov(gl) * (1.0 - clamp((g.y - 649.0) / 27.0, 0.0, 1.0))), c);
             c = over(vec4(0.62, 0.05, 0.16, 0.65 * cov(gr) * (1.0 - clamp((g.y - 649.0) / 27.0, 0.0, 1.0))), c);
-            c = over(vec4(mix(vec3(0.12, 0.34, 0.7), vec3(0.1, 0.3, 0.66), clamp((g.y - 651.0) / 57.0, 0.0, 1.0)), cov(dTab)), c);
+            c = over(vec4(mix(vec3(0.086, 0.245, 0.504), vec3(0.072, 0.216, 0.475), clamp((g.y - 651.0) / 57.0, 0.0, 1.0)), cov(dTab)), c);
             c = over(vec4(0.02, 0.03, 0.09, cov(sd - 1.6) * cov(dTab + 0.5)), c);
             float sw = min(min(segD(g, vec2(693.0, 608.0), vec2(700.0, 621.0)), segD(g, vec2(700.0, 621.0), vec2(714.0, 630.0))), segD(g, vec2(714.0, 630.0), vec2(797.0, 632.0))) * s;
             c = over(vec4(0.3, 0.78, 1.0, 0.3 * exp(-sw * 0.2)), c);
@@ -1290,6 +1291,11 @@ uniform vec4 u_v;      // each bar's level 0..1
 uniform vec4 u_rz;     // where each bar's red end starts 0..1 (>= 1: none)
 uniform vec4 u_tone;   // each bar's colour: 0 white, 1 cold blue, 2 warm green, 3 red, 4 dark red, 5 light blue
 uniform float u_div;   // the marks cut each bar in this many parts (2: the ends and the middle)
+uniform float u_seg;   // each bar's segments (24: a fine band; 3: the drive view's three steps)
+uniform float u_lean;  // the bars' lean, x per y px (0: upright)
+uniform float u_rule;  // the thin line between two rows is this far above a row's bar (M Blade: 47)
+uniform float u_mode;  // 0: the rows of bars; 1: the tyres' view (the car from above, see tyresView)
+uniform vec4 u_wh;     // the tyres' view: each wheel's state, front left, front right, rear left, rear right (0 fine, 1 low, 2 very low)
 
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
 vec4 over(vec4 t, vec4 u) {
@@ -1304,19 +1310,73 @@ vec3 tone(float t) {
     if (t < 4.5) return vec3(0.47, 0.06, 0.09);
     return vec3(0.31, 0.71, 1.0);
 }
+// A level bar in the hexagon's own language (19 Nov 2026, the owner: "trop simple", "moderne"): a leaning band cut in segments (u_seg; a wide
+// gap between few segments, as the drive view's three steps), a faint track with its red end, the level lit in its tone and brighter towards the
+// top, a soft glow of that tone above and under it, a white needle at the level and small marks under the band (u_div parts).
 vec4 bar(vec2 p, float y, float v, float rz, float t, vec4 c) {
-    float dy = abs(p.y - y);
-    if (y < 0.0 || dy > 16.0) return c;
-    float x0 = u_bx.x, x1 = u_bx.y, f = (p.x - x0) / (x1 - x0);
-    float inX = cov(max(x0 - p.x, p.x - x1));
-    vec3 red = vec3(1.0, 0.22, 0.27);
-    c = over(vec4(f >= rz ? red : vec3(0.62, 0.7, 0.9), 0.8 * inX * cov(dy - 1.5)), c);
-    float m = floor(f * u_div + 0.5) / u_div;
-    float xm = x0 + clamp(m, 0.0, 1.0) * (x1 - x0);
-    c = over(vec4(m >= rz ? red : vec3(0.86, 0.9, 1.0), 0.9 * cov(abs(p.x - xm) - 1.2) * cov(abs(p.y - y + 5.0) - 7.0)), c);
-    float xv = x0 + clamp(v, 0.0, 1.0) * (x1 - x0);
-    if (v > 0.002) c = over(vec4(tone(t), cov(max(x0 - p.x, p.x - xv)) * cov(dy - 4.5)), c);
-    return c;
+    float dy = p.y - y;
+    if (y < 0.0 || abs(dy) > 24.0) return c;
+    float x0 = u_bx.x, x1 = u_bx.y, L = x1 - x0, H = 9.0;
+    float xs = p.x + dy * u_lean;                                     // the band leans (M Blade: 0.5, as the blade does): its top to the right
+    float n = max(u_seg, 1.0), sw = L / n, sx = mod(xs - x0, sw), gap = n > 6.0 ? 3.0 : 6.0;
+    float fs = (floor((xs - x0) / sw) + 0.5) / n;                     // the middle of this segment, 0..1
+    float inX = cov(max(x0 - xs, xs - x1)), inY = cov(abs(dy) - H);
+    float a = inX * inY * cov(max(gap * 0.5 - sx, sx - (sw - gap * 0.5)));
+    vec3 red = vec3(1.0, 0.2, 0.25), col = fs >= rz ? red : tone(t);
+    float on = step(0.002, v), xv = x0 + clamp(v, 0.0, 1.0) * L;
+    float lit = on * step(fs, v + 0.5 / n - 0.001);
+    // the needle, the lit segments, the track, then the glow under them all
+    vec4 top = vec4(1.0, 1.0, 1.0, 0.95 * on * cov(abs(xs - xv) - 1.5) * cov(abs(dy) - H - 4.0));
+    top = over(top, vec4(col * (1.0 - 0.3 * clamp((dy + H) / (2.0 * H), 0.0, 1.0)) + 0.1, lit * a));
+    top = over(top, vec4(fs >= rz ? red : vec3(0.55, 0.68, 0.95), (fs >= rz ? 0.36 : 0.2) * a));
+    if (n > 6.0 && u_div > 0.5) {                                     // (u_div under 1: no marks, as in the other themes' card, whose rows are close)
+        float m = floor((xs - x0) / L * u_div + 0.5) / u_div, xm = x0 + clamp(m, 0.0, 1.0) * L;
+        top = over(top, vec4(m >= rz ? red : vec3(0.8, 0.86, 1.0), 0.75 * cov(abs(xs - xm) - 1.0) * cov(abs(dy - H - 8.0) - 3.0)));
+    }
+    float gy = clamp(1.0 - (abs(dy) - H) / 13.0, 0.0, 1.0);
+    top = over(top, vec4(tone(t), 0.3 * on * cov(max(x0 - xs, xs - xv)) * gy * gy));
+    return over(top, c);
+}
+// a thin line across the panel above a row: the rows read as a list
+vec4 rule(vec2 p, float y, float u, vec4 c) {
+    if (y < 0.0) return c;
+    return over(vec4(0.5, 0.68, 1.0, 0.22 * cov(abs(p.y - (y - u_rule)) - 0.6) * step(0.05, u) * step(u, 0.95)), c);
+}
+float rbox(vec2 q, vec2 half_, float r) { return length(max(abs(q) - (half_ - r), 0.0)) - r; }
+// (green while the tyre is fine since 19 Nov 2026: the owner, "ajoute des couleurs sur les roues")
+vec3 wheelTone(float t) { return t < 0.5 ? vec3(0.2, 0.85, 0.5) : t < 1.5 ? vec3(1.0, 0.8, 0.2) : vec3(1.0, 0.2, 0.25); }
+// The tyres' view: the car seen from above in the middle (a body that narrows to the nose, its two windows, a light outline), its four wheels each in
+// its tyre's state (u_wh: 0 fine, 1 low, 2 very low), and a glass plate behind each corner's readings (u_bx: the plates' middles x, u_ry.xy: y), with a
+// line from the plate to its wheel.
+vec4 tyresView(vec2 p, vec4 c) {
+    vec2 ctr = vec2(0.5 * (u_bx.x + u_bx.y), 0.5 * (u_ry.x + u_ry.y)), q = p - ctr;
+    float wy = 0.5 * (u_ry.y - u_ry.x) - 4.0, bl = wy + 36.0, bw = 44.0;
+    vec4 top = vec4(0.0);
+    for (int i = 0; i < 4; i++) {
+        float sxn = (i == 0 || i == 2) ? -1.0 : 1.0, syn = i < 2 ? -1.0 : 1.0;
+        float wt = i == 0 ? u_wh.x : i == 1 ? u_wh.y : i == 2 ? u_wh.z : u_wh.w;
+        vec2 wc = vec2(sxn * (bw + 5.0), syn * wy);
+        float dw = rbox(q - wc, vec2(9.0, 25.0), 5.0);
+        top = over(top, vec4(wheelTone(wt), cov(dw)));
+        top = over(top, vec4(wheelTone(wt), 0.3 * clamp(1.0 - dw / 10.0, 0.0, 1.0) * step(0.5, wt)));
+        vec2 tc = vec2(sxn < 0.0 ? u_bx.x : u_bx.y, syn < 0.0 ? u_ry.x : u_ry.y) - ctr;
+        float dt = rbox(q - tc, vec2(58.0, 42.0), 10.0);
+        top = over(top, vec4(0.5, 0.7, 1.0, 0.6 * cov(abs(dt) - 0.8)));
+        top = over(top, vec4(0.01, 0.05, 0.16, 0.5 * cov(dt)));
+        // the line from the plate's inner side to the wheel
+        float lx0 = min(tc.x - sxn * 58.0, wc.x + sxn * 9.0), lx1 = max(tc.x - sxn * 58.0, wc.x + sxn * 9.0);
+        top = over(top, vec4(0.5, 0.7, 1.0, 0.5 * cov(abs(q.y - wc.y) - 0.7) * step(lx0, q.x) * step(q.x, lx1)));
+    }
+    // the body: narrower towards the nose (up)
+    vec2 b = vec2(q.x * (1.0 + 0.2 * clamp((-q.y - 0.25 * bl) / (0.75 * bl), 0.0, 1.0)), q.y);
+    float db = rbox(b, vec2(bw, bl), 24.0);
+    vec4 body = vec4(0.6, 0.78, 1.0, 0.85 * cov(abs(db) - 1.0));
+    body = over(body, vec4(0.5, 0.72, 1.0, 0.55 * cov(rbox(b - vec2(0.0, -0.36 * bl), vec2(bw - 11.0, 0.13 * bl), 7.0))));
+    body = over(body, vec4(0.5, 0.72, 1.0, 0.4 * cov(rbox(b - vec2(0.0, 0.52 * bl), vec2(bw - 13.0, 0.09 * bl), 6.0))));
+    body = over(body, vec4(0.5, 0.72, 1.0, 0.35 * cov(abs(rbox(b - vec2(0.0, 0.06 * bl), vec2(bw - 9.0, 0.3 * bl), 10.0)) - 0.7)));
+    body = over(body, vec4(mix(vec3(0.05, 0.14, 0.36), vec3(0.02, 0.06, 0.18), clamp(0.5 + q.y / (2.0 * bl), 0.0, 1.0)), 0.92 * cov(db)));
+    top = over(body, top);
+    return over(top, c);
 }
 void main() {
     vec2 p = v_uv * u_size;
@@ -1326,17 +1386,213 @@ void main() {
     float d = max(max(-u, u - 1.0) * u_pan.z * cs, max(1.0 - p.y, p.y - u_size.y + 1.0));
     float inside = cov(d);
     if (inside <= 0.0) { gl_FragColor = vec4(0.0); return; }
-    vec4 c = vec4(mix(vec3(0.03, 0.09, 0.27), vec3(0.07, 0.24, 0.6), u * u), 1.0);
+    // (darker since 19 Nov 2026, the owner: "le fond un peu plus foncé": the readings stand out, the hexagon stays the bright piece)
+    vec4 c = vec4(mix(vec3(0.015, 0.045, 0.16), vec3(0.04, 0.14, 0.42), u * u), 1.0);
     // a lighter facet along the upper arm, as the hexagon's panels
-    c = over(vec4(0.1, 0.34, 0.8, 0.45 * step(p.y, u_pan.x) * cov(abs(u - 0.7) * u_pan.z * cs - 34.0)), c);
+    c = over(vec4(0.08, 0.26, 0.66, 0.4 * step(p.y, u_pan.x) * cov(abs(u - 0.7) * u_pan.z * cs - 34.0)), c);
+    // two leaning bands along the panel's right side, in the theme's own two colours (its light blue, its blade's red), fading towards the
+    // point: the panel ends on colour where it meets the hexagon (owner, 19 Nov 2026: "ajouter des couleurs derrière le fond")
+    float du = u * u_pan.z * cs, wR = u_pan.z * cs;
+    float fadeB = 0.35 + 0.65 * clamp(abs(p.y - u_pan.x) / (0.5 * u_size.y), 0.0, 1.0);
+    c = over(vec4(0.32, 0.66, 1.0, 0.7 * fadeB * cov(abs(du - (wR - 62.0)) - 15.0)), c);
+    c = over(vec4(0.95, 0.16, 0.22, 0.75 * fadeB * cov(abs(du - (wR - 26.0)) - 15.0)), c);
     // the thin light lines along the top, the bottom and the pointed left side
     float e = min(min(p.y, u_size.y - p.y), u * u_pan.z * cs);
     c = over(vec4(0.45, 0.65, 1.0, 0.75 * cov(abs(e - 2.0) - 1.0)), c);
-    c = bar(p, u_ry.x, u_v.x, u_rz.x, u_tone.x, c);
-    c = bar(p, u_ry.y, u_v.y, u_rz.y, u_tone.y, c);
-    c = bar(p, u_ry.z, u_v.z, u_rz.z, u_tone.z, c);
-    c = bar(p, u_ry.w, u_v.w, u_rz.w, u_tone.w, c);
+    if (u_mode > 0.5) c = tyresView(p, c);
+    else {
+        c = rule(p, u_ry.y, u, c); c = rule(p, u_ry.z, u, c); c = rule(p, u_ry.w, u, c);
+        c = bar(p, u_ry.x, u_v.x, u_rz.x, u_tone.x, c);
+        c = bar(p, u_ry.y, u_v.y, u_rz.y, u_tone.y, c);
+        c = bar(p, u_ry.z, u_v.z, u_rz.z, u_tone.z, c);
+        c = bar(p, u_ry.w, u_v.w, u_rz.w, u_tone.w, c);
+    }
     gl_FragColor = vec4(c.rgb, c.a * inside);
+}
+`;
+// The views' card of Sport, M and Navi (19 Nov 2026): the same bars and the same tyres' view as M Blade's panel (the code between its uniforms and
+// its main is shared), on a glass card in each theme's own shape: "card" [skew x per y px (the top to the right), corner radius, accent bar width],
+// its glass colour (u_ca) and its edge's (u_cb). The glass lets the theme's backdrop through a little.
+const VCARD = MPANEL.slice(0, MPANEL.indexOf('void main() {')).replace(/^\/\/ M Blade's view panel[^\n]*\n(\/\/[^\n]*\n)*/, '// The views\' card (see VCARD in shaders.js).\n') + `uniform vec3 u_card;
+uniform vec3 u_ca;
+uniform vec3 u_cb;
+void main() {
+    vec2 p = v_uv * u_size, q = p - 0.5 * u_size;
+    float sk = u_card.x, m = abs(sk) * 0.5 * u_size.y, hw = 0.5 * u_size.x - m - 1.0, hh = 0.5 * u_size.y - 1.0;
+    vec2 b = vec2(q.x + q.y * sk, q.y);
+    float d = rbox(b, vec2(hw, hh), u_card.y);
+    float inside = cov(d);
+    if (inside <= 0.0) { gl_FragColor = vec4(0.0); return; }
+    float u = clamp(b.x / (2.0 * hw) + 0.5, 0.0, 1.0);
+    vec4 c = vec4(mix(u_ca * 0.55, u_ca * 1.5, u * u), 0.9);
+    // a soft light from the top, the edge's line, and the accent bar down the left side
+    c = over(vec4(u_cb, 0.1 * clamp(1.0 - (q.y + hh) / (0.9 * hh), 0.0, 1.0)), c);
+    c = over(vec4(u_cb, 0.85 * cov(abs(d + 1.5) - 0.9)), c);
+    c = over(vec4(u_cb, 0.95 * cov(abs(b.x + hw - 9.0 - 0.5 * u_card.z) - 0.5 * u_card.z) * cov(abs(q.y) - (hh - 14.0)) * step(0.5, u_card.z)), c);
+    if (u_mode > 0.5) c = tyresView(p, c);
+    else {
+        c = rule(p, u_ry.y, u, c); c = rule(p, u_ry.z, u, c); c = rule(p, u_ry.w, u, c);
+        c = bar(p, u_ry.x, u_v.x, u_rz.x, u_tone.x, c);
+        c = bar(p, u_ry.y, u_v.y, u_rz.y, u_tone.y, c);
+        c = bar(p, u_ry.z, u_v.z, u_rz.z, u_tone.z, c);
+        c = bar(p, u_ry.w, u_v.w, u_rz.w, u_tone.w, c);
+    }
+    gl_FragColor = vec4(c.rgb, c.a * inside);
+}
+`;
+// Sport's own views (19 Nov 2026, the owner: "chaque thème est différent", "original et très sportif"): round gauges. Up to four rings in a row
+// (u_bx: the first one's middle x and the next one's, u_ry: each ring's middle y, < 0: none; u_card: radius, thickness, the tyres' frame's cut corner),
+// each a dark disc, an arc open at the bottom cut in u_seg segments, its red end, the level lit in its tone with a glow, a thin inner circle. With
+// u_mode 1: a frame with cut corners, as the theme's two dials, round the tyres' view. The code before main is M Blade's panel's.
+const SRING = MPANEL.slice(0, MPANEL.indexOf('void main() {')).replace(/^\/\/ M Blade's view panel[^\n]*\n(\/\/[^\n]*\n)*/, '// Sport\'s round gauges (see SRING in shaders.js).\n') + `uniform vec3 u_card;
+uniform vec3 u_ca;
+uniform vec3 u_cb;
+vec4 ring(vec2 p, float cx, float cy, float v, float rz, float t, vec4 c) {
+    if (cy < 0.0) return c;
+    vec2 q = p - vec2(cx, cy);
+    float R = u_card.x, th = u_card.y, r = length(q);
+    if (r > R + 18.0) return c;
+    float f = mod(atan(q.y, q.x) - 2.35619, 6.28318) / 4.71239;      // 0 at the lower left end of the arc, 1 at the lower right one
+    float onArc = step(f, 1.0), n = max(u_seg, 1.0), sx = fract(f * n);
+    float fs = (floor(f * n) + 0.5) / n, edge = min(sx, 1.0 - sx) * 4.71239 / n * R;
+    float a = cov(abs(r - R) - 0.5 * th) * onArc * cov((n > 6.0 ? 1.4 : 2.6) - edge);
+    vec3 red = vec3(1.0, 0.2, 0.25), col = fs >= rz ? red : tone(t);
+    float on = step(0.002, v), lit = on * step(fs, v + 0.5 / n - 0.001);
+    vec4 top = vec4(col + 0.1, lit * a);
+    top = over(top, vec4(fs >= rz ? red : vec3(0.55, 0.68, 0.95), (fs >= rz ? 0.4 : 0.22) * a));
+    float g = clamp(1.0 - (abs(r - R) - 0.5 * th) / 11.0, 0.0, 1.0);
+    top = over(top, vec4(tone(t), 0.3 * on * onArc * step(f, v) * g * g));
+    top = over(top, vec4(u_cb, 0.4 * cov(abs(r - (R - 0.5 * th - 6.0)) - 0.6)));
+    top = over(top, vec4(u_ca, 0.72 * cov(r - (R + 0.5 * th + 6.0))));
+    return over(top, c);
+}
+void main() {
+    vec2 p = v_uv * u_size;
+    vec4 c = vec4(0.0);
+    if (u_mode > 0.5) {
+        vec2 q = p - 0.5 * u_size, h = 0.5 * u_size - 2.0;
+        float d = max(max(abs(q.x) - h.x, abs(q.y) - h.y), (abs(q.x) + abs(q.y) - (h.x + h.y - u_card.z)) * 0.7071);
+        c = vec4(u_ca, 0.8 * cov(d));
+        c = over(vec4(u_cb, 0.9 * cov(abs(d + 1.5) - 0.9)), c);
+        c = tyresView(p, c);
+    } else {
+        float sp = u_bx.y - u_bx.x;
+        c = ring(p, u_bx.x, u_ry.x, u_v.x, u_rz.x, u_tone.x, c);
+        c = ring(p, u_bx.x + sp, u_ry.y, u_v.y, u_rz.y, u_tone.y, c);
+        c = ring(p, u_bx.x + 2.0 * sp, u_ry.z, u_v.z, u_rz.z, u_tone.z, c);
+        c = ring(p, u_bx.x + 3.0 * sp, u_ry.w, u_v.w, u_rz.w, u_tone.w, c);
+    }
+    gl_FragColor = c;
+}
+`;
+// Navi's own views (19 Nov 2026: each theme its own drawing): nothing but thin lines, as the white line that runs under its map. Each row
+// (u_ry: its line's y, u_bx: the line's two ends) is a hairline with its red end, the level drawn over it thicker in its tone with a soft glow, and
+// a small ring with a dot that slides to the level; with few segments (u_seg under 6: the drive view's three steps) the line is that many dashes.
+// Under the rows the theme's own motif: a line that steps up near its right end (u_card: where the step starts x, its height). With u_mode 1 the
+// tyres: the car as a white outline, its wheels in their tyres' colours, a line from each wheel out to its readings (u_bx, u_ry.xy: their middles).
+const NLINE = MPANEL.slice(0, MPANEL.indexOf('void main() {')).replace(/^\/\/ M Blade's view panel[^\n]*\n(\/\/[^\n]*\n)*/, '// Navi\'s thin lines (see NLINE in shaders.js).\n') + `uniform vec3 u_card;
+uniform vec3 u_ca;
+uniform vec3 u_cb;
+vec4 lrow(vec2 p, float y, float v, float rz, float t, vec4 c) {
+    float dy = p.y - y;
+    if (y < 0.0 || abs(dy) > 14.0) return c;
+    float x0 = u_bx.x, x1 = u_bx.y, L = x1 - x0, f = (p.x - x0) / L;
+    float inX = cov(max(x0 - p.x, p.x - x1)), on = step(0.002, v), xv = x0 + clamp(v, 0.0, 1.0) * L;
+    vec3 red = vec3(1.0, 0.25, 0.3), col = tone(t);
+    vec4 top = vec4(0.0);
+    if (u_seg < 6.0) {
+        float n = max(u_seg, 1.0), sw = L / n, sx = mod(p.x - x0, sw), fs = (floor((p.x - x0) / sw) + 0.5) / n;
+        float inSeg = inX * cov(max(5.0 - sx, sx - (sw - 5.0)));
+        float lit = on * step(fs, v + 0.5 / n - 0.001);
+        top = over(top, vec4(col, lit * inSeg * cov(abs(dy) - 2.2)));
+        top = over(top, vec4(col, 0.3 * lit * inSeg * clamp(1.0 - abs(dy) / 9.0, 0.0, 1.0)));
+        top = over(top, vec4(u_cb, 0.5 * inSeg * cov(abs(dy) - 0.7)));
+        return over(top, c);
+    }
+    // the ring and its dot at the level
+    float r = length(vec2(p.x - xv, dy));
+    top = over(top, vec4(1.0, 1.0, 1.0, on * cov(abs(r - 6.5) - 0.9)));
+    top = over(top, vec4(col, on * cov(r - 3.0)));
+    top = over(top, vec4(u_ca, 0.9 * on * cov(r - 6.5)));
+    // the level, its glow, the hairline with its red end, a small mark at each end
+    top = over(top, vec4(col, on * cov(max(x0 - p.x, p.x - xv)) * cov(abs(dy) - 1.7)));
+    top = over(top, vec4(col, 0.28 * on * cov(max(x0 - p.x, p.x - xv)) * clamp(1.0 - abs(dy) / 9.0, 0.0, 1.0)));
+    top = over(top, vec4(f >= rz ? red : u_cb, (f >= rz ? 0.9 : 0.55) * inX * cov(abs(dy) - 0.7)));
+    top = over(top, vec4(u_cb, 0.7 * cov(min(abs(p.x - x0), abs(p.x - x1)) - 0.7) * cov(abs(dy) - 5.0)));
+    return over(top, c);
+}
+vec4 lineTyres(vec2 p, vec4 c) {
+    vec2 ctr = vec2(0.5 * (u_bx.x + u_bx.y), 0.5 * (u_ry.x + u_ry.y)), q = p - ctr;
+    float wy = 0.5 * (u_ry.y - u_ry.x) - 2.0, bl = wy + 34.0, bw = 40.0;
+    vec4 top = vec4(0.0);
+    for (int i = 0; i < 4; i++) {
+        float sxn = (i == 0 || i == 2) ? -1.0 : 1.0, syn = i < 2 ? -1.0 : 1.0;
+        float wt = i == 0 ? u_wh.x : i == 1 ? u_wh.y : i == 2 ? u_wh.z : u_wh.w;
+        vec2 wc = vec2(sxn * (bw + 6.0), syn * wy);
+        float dw = rbox(q - wc, vec2(8.0, 23.0), 4.0);
+        top = over(top, vec4(wheelTone(wt), cov(dw)));
+        top = over(top, vec4(wheelTone(wt), 0.3 * clamp(1.0 - dw / 9.0, 0.0, 1.0)));
+        // the line from the wheel out to its readings, a dot at its end
+        float tx = (sxn < 0.0 ? u_bx.x : u_bx.y) - ctr.x - sxn * 60.0;
+        float lx0 = min(tx, wc.x + sxn * 10.0), lx1 = max(tx, wc.x + sxn * 10.0);
+        top = over(top, vec4(u_cb, 0.7 * cov(abs(q.y - wc.y) - 0.7) * step(lx0, q.x) * step(q.x, lx1)));
+        top = over(top, vec4(u_cb, cov(length(q - vec2(tx, wc.y)) - 2.6)));
+    }
+    vec2 b = vec2(q.x * (1.0 + 0.2 * clamp((-q.y - 0.25 * bl) / (0.75 * bl), 0.0, 1.0)), q.y);
+    float db = rbox(b, vec2(bw, bl), 22.0);
+    top = over(top, vec4(1.0, 1.0, 1.0, 0.95 * cov(abs(db) - 0.9)));
+    top = over(top, vec4(u_cb, 0.8 * cov(abs(rbox(b - vec2(0.0, -0.36 * bl), vec2(bw - 10.0, 0.13 * bl), 6.0)) - 0.7)));
+    top = over(top, vec4(u_cb, 0.8 * cov(abs(rbox(b - vec2(0.0, 0.52 * bl), vec2(bw - 12.0, 0.09 * bl), 5.0)) - 0.7)));
+    top = over(top, vec4(u_ca, 0.6 * cov(db)));
+    return over(top, c);
+}
+void main() {
+    vec2 p = v_uv * u_size;
+    vec4 c = vec4(0.0);
+    // the stepped line along the bottom: flat, up at 45 degrees, flat again; it fades at both ends
+    float yb = u_size.y - 3.0, sx0 = u_card.x, sh = u_card.y;
+    float yl = p.x < sx0 ? yb : p.x < sx0 + sh ? yb - (p.x - sx0) : yb - sh;
+    float thick = (p.x >= sx0 && p.x < sx0 + sh) ? 1.0 : 0.7;
+    float fade = clamp(p.x / 40.0, 0.0, 1.0) * clamp((u_size.x - p.x) / 70.0, 0.0, 1.0);
+    c = over(vec4(1.0, 1.0, 1.0, 0.85 * fade * cov(abs(p.y - yl) - thick) * step(0.5, sh)), c);
+    if (u_mode > 0.5) c = lineTyres(p, c);
+    else {
+        c = lrow(p, u_ry.x, u_v.x, u_rz.x, u_tone.x, c);
+        c = lrow(p, u_ry.y, u_v.y, u_rz.y, u_tone.y, c);
+        c = lrow(p, u_ry.z, u_v.z, u_rz.z, u_tone.z, c);
+        c = lrow(p, u_ry.w, u_v.w, u_rz.w, u_tone.w, c);
+    }
+    gl_FragColor = c;
+}
+`;
+// M's own views (19 Nov 2026: each theme its own drawing): blades. Each row (u_ry: its middle y, u_bx: its two ends) is a small copy of the theme's
+// two rev blades: a leaning dark track in a thin white outline, its red end, small marks along its top, and the level filled in brushed silver (pale
+// blue while cold, red over the limit and in the red end). No glow, no colour but silver and red: the M theme's own two.
+const MBLADES = MPANEL.slice(0, MPANEL.indexOf('void main() {')).replace(/^\/\/ M Blade's view panel[^\n]*\n(\/\/[^\n]*\n)*/, '// M\'s small blades (see MBLADES in shaders.js).\n') + `vec3 silver(float t, float k) {
+    vec3 hi = t > 2.5 && t < 4.5 ? (t > 3.5 ? vec3(0.5, 0.07, 0.1) : vec3(1.0, 0.16, 0.2)) : t > 0.5 && t < 1.5 ? vec3(0.72, 0.86, 1.0) : vec3(0.97, 0.97, 1.0);
+    return mix(hi, hi * 0.55, k);
+}
+vec4 blade(vec2 p, float y, float v, float rz, float t, vec4 c) {
+    float dy = p.y - y, H = 8.0;
+    if (y < 0.0 || abs(dy) > 18.0) return c;
+    float x0 = u_bx.x, x1 = u_bx.y, L = x1 - x0, xs = p.x + dy * u_lean, f = (xs - x0) / L;
+    float d = max(max(x0 - xs, xs - x1), abs(dy) - H);                // the track's parallelogram (signed, px)
+    float on = step(0.002, v), xv = x0 + clamp(v, 0.0, 1.0) * L, k = clamp((dy + H) / (2.0 * H), 0.0, 1.0);
+    vec4 top = vec4(0.92, 0.94, 1.0, 0.9 * cov(abs(d) - 0.8));         // the outline
+    top = over(top, vec4(f >= rz ? vec3(1.0, 0.16, 0.2) * (1.0 - 0.45 * k) : silver(t, k), on * cov(max(d + 2.0, xs - xv))));
+    float m = floor(f * 4.0 + 0.5) / 4.0, xm = x0 + clamp(m, 0.0, 1.0) * L;
+    top = over(top, vec4(0.9, 0.92, 1.0, 0.8 * cov(abs(xs - xm) - 0.8) * cov(abs(dy + H + 5.0) - 3.0)));
+    top = over(top, vec4(f >= rz ? vec3(0.3, 0.04, 0.06) : vec3(0.09, 0.1, 0.12), 0.92 * cov(d)));
+    return over(top, c);
+}
+void main() {
+    vec2 p = v_uv * u_size;
+    vec4 c = vec4(0.0);
+    c = blade(p, u_ry.x, u_v.x, u_rz.x, u_tone.x, c);
+    c = blade(p, u_ry.y, u_v.y, u_rz.y, u_tone.y, c);
+    c = blade(p, u_ry.z, u_v.z, u_rz.z, u_tone.z, c);
+    c = blade(p, u_ry.w, u_v.w, u_rz.w, u_tone.w, c);
+    gl_FragColor = c;
 }
 `;
 const NAVI = `// The Navi theme in one cluster-render "effect" layer (GLSL ES 1.00), after a photo of a BMW map view: a wide diagonal
@@ -1987,9 +2243,9 @@ void main() {
 const ACCENT_LITERALS = {
     sdash: ['0.36, 0.62, 1.0', '0.13, 0.3, 0.78', '0.62, 0.86, 1.0', '0.2, 0.45, 0.98', '0.012, 0.036, 0.09', '0.03, 0.09, 0.19', '0.04, 0.12, 0.24',
         '0.02, 0.07, 0.16', '0.07, 0.2, 0.38', '0.06, 0.2, 0.62', '0.15, 0.36, 0.92'],
-    mblade: ['0.03, 0.07, 0.19', '0.09, 0.31, 0.7', '0.085, 0.34, 0.79', '0.075, 0.31, 0.72', '0.07, 0.275, 0.66', '0.08, 0.31, 0.74', '0.075, 0.28, 0.68',
-        '0.095, 0.32, 0.76', '0.45, 0.6, 1.0', '0.5, 0.7, 1.0', '0.4, 0.62, 1.0', '0.12, 0.3, 0.62', '0.12, 0.34, 0.7', '0.1, 0.3, 0.66', '0.3, 0.78, 1.0'],
-    mpanel: ['0.03, 0.09, 0.27', '0.07, 0.24, 0.6', '0.1, 0.34, 0.8', '0.45, 0.65, 1.0'],
+    mblade: ['0.03, 0.07, 0.19', '0.065, 0.223, 0.504', '0.061, 0.245, 0.569', '0.054, 0.223, 0.518', '0.05, 0.198, 0.475', '0.058, 0.223, 0.533', '0.054, 0.202, 0.49',
+        '0.068, 0.23, 0.547', '0.45, 0.6, 1.0', '0.5, 0.7, 1.0', '0.4, 0.62, 1.0', '0.12, 0.3, 0.62', '0.086, 0.245, 0.504', '0.072, 0.216, 0.475', '0.3, 0.78, 1.0'],
+    mpanel: ['0.015, 0.045, 0.16', '0.04, 0.14, 0.42', '0.08, 0.26, 0.66', '0.45, 0.65, 1.0', '0.32, 0.66, 1.0'],
     navi: ['0.016, 0.05, 0.125', '0.026, 0.08, 0.19', '0.014, 0.045, 0.11', '0.03, 0.08, 0.17', '0.1, 0.18, 0.84'],
 };
 const _accented = {};
@@ -2002,4 +2258,4 @@ function accented(type, hue) {
     if (!_accented[key]) _accented[key] = accentSource(base, ACCENT_LITERALS[type], hue);
     return _accented[key];
 }
-module.exports = { slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, mpanel: MPANEL, navi: NAVI, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, accented, ACCENT_LITERALS };
+module.exports = { mblades: MBLADES, nline: NLINE, sring: SRING, vcard: VCARD, slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, mpanel: MPANEL, navi: NAVI, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, accented, ACCENT_LITERALS };

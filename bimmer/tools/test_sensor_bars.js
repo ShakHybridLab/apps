@@ -24,7 +24,7 @@ const THEMES = ['sport', 'm', 'mblade', 'navi'];
 check('le réglage "viewSel" existe, vide par défaut, avec les vues ; le fond bleu est au plus fort', () => {
     const s = app.settings.find((x) => x.key === 'viewSel');
     assert(s && s.type === 'choice' && s.default === 'none', 'viewSel');
-    assert.deepStrictEqual(s.options.map((o) => o[0]), ['none', 'gauges', 'tyres', 'drive']);
+    assert.deepStrictEqual(s.options.map((o) => o[0]), ['none', 'gauges', 'tyres', 'drive', 'electric']);
     assert(s.options.every((o) => o[1] && /[a-zé]/.test(o[1])), 'étiquettes en français');
     assert(!app.settings.some((x) => x.key === 'tempBars'), 'l\'ancien réglage permanent est parti');
     const t = app.settings.find((x) => x.key === 'sportTint');
@@ -32,16 +32,20 @@ check('le réglage "viewSel" existe, vide par défaut, avec les vues ; le fond b
     assert(t.steps.includes(t.default), 'le défaut est un cran');
 });
 
+// M Blade's view panel and the other themes' card: the effect layer the views' texts sit on
+const PANEL = (w) => w.type === 'mpanel' || w.type === 'vcard' || w.type === 'sring' || w.type === 'nline' || w.type === 'mblades';
 THEMES.forEach((name) => {
     const L = layout(name);
     const xb = L.widgets.filter((w) => w.id.startsWith('xb_'));
     check(name + ' : des widgets "xb_", chacun dans sa vue (jauges, pneus ou conduite), rien de permanent, ids uniques', () => {
         assert(xb.length >= (name === 'm' ? 6 : 14), 'trop peu de widgets xb_ : ' + xb.length);
         // (M Blade : le fond, la jauge d'essence à droite et la limitation sous le panneau des vues valent pour toutes les vues, carte fermée : "!mapUp&!viewSel=none")
-        xb.forEach((w) => assert(/^viewSel=(gauges|tyres|drive&!?driveSport)(&!?mapUp)?$/.test(w.toggle) || (name === 'mblade' && /^(!mapUp&!viewSel=none|(!?mapUp)&!viewSel=none&!viewSel=gauges)$/.test(w.toggle)), w.id + ' : bascule ' + w.toggle));
+        xb.forEach((w) => assert(/^viewSel=(gauges|tyres|electric|drive&!?driveSport)(&!?mapUp)?$/.test(w.toggle) || (name === 'mblade' && /^(!mapUp&!viewSel=none|(!?mapUp)&!viewSel=none&!viewSel=gauges)$/.test(w.toggle))
+            // (M, 19 nov. 2026 : le fond sans la petite voiture des pneus, pour toutes les vues ; la vue Conduite y est le G-mètre, en Sport ou non)
+            || (name === 'm' && (w.toggle === '!viewSel=none' || w.toggle === 'viewSel=drive')), w.id + ' : bascule ' + w.toggle));
         assert(xb.some((w) => /^viewSel=gauges/.test(w.toggle)), 'pas de vue jauges');
         assert.strictEqual(xb.some((w) => /^viewSel=tyres/.test(w.toggle)), name !== 'm', 'les pneus : M a déjà son bloc, les autres ont une vue');
-        assert.deepStrictEqual(HudApp.viewsOf(L.widgets), name === 'm' ? ['gauges'] : ['gauges', 'tyres', 'drive'], 'les vues du thème (M a déjà ses réglages de modes dans son tableau)');
+        assert.deepStrictEqual(HudApp.viewsOf(L.widgets), name === 'm' ? ['gauges', 'drive', 'electric'] : ['gauges', 'tyres', 'drive', 'electric'], 'les vues du thème (M montre ses pneus sans vue, à la même place)');
         if (name !== 'sport') assert(xb.some((w) => w.toggle === 'viewSel=gauges' || w.toggle === 'viewSel=gauges&mapUp'), 'au moins une barre reste carte ouverte');
         const ids = L.widgets.map((w) => w.id);
         assert.strictEqual(new Set(ids).size, ids.length, 'identifiant en double');
@@ -52,20 +56,24 @@ THEMES.forEach((name) => {
             assert(xb.some((w) => w.text === '{{tyreP:' + k + '}}'), 'pression ' + k);
             assert(xb.some((w) => w.text === '{{tyreT:' + k + '}}'), 'température ' + k);
         });
-        assert(xb.some((w) => w.type === 'icon' && w.icon === 'tyre'), 'la roue');
+        // (depuis le 19 nov. 2026 la roue seule a laissé la place à la voiture vue de dessus, dessinée par le panneau ou la carte : "mode": "tyres")
+        assert(xb.some((w) => w.type === 'icon' && w.icon === 'tyre') || xb.some((w) => PANEL(w) && w.mode === 'tyres' && Array.isArray(w.tiles)), 'la roue');
     });
     check(name + ' : les barres : turbo et liquide partout, l\'huile là où le thème n\'a pas déjà la sienne', () => {
         // (M Blade has each view twice: right of the blade with the map closed, in the left column with the map up: the map-up copy is "&mapUp")
         // (M Blade : carte fermée, les barres sont dans le panneau des vues à gauche, "rows" de xb_vpan_g, comme le combiné M de BMW ; carte ouverte,
         // le turbo et le liquide en barres inclinées à droite, "&mapUp")
         const bars = xb.filter((w) => (w.type === 'slantbar' || w.type === 'meter') && !/(^|&)mapUp$/.test(w.toggle));
-        const sig = name === 'mblade' ? xb.find((w) => w.id === 'xb_vpan_g').rows.map((r) => r.signal).sort() : bars.map((w) => w.sensor || w.signal).sort();
+        // (Sport et Navi, 19 nov. 2026 : les quatre lectures sont les rangées de la carte des vues, xb_card_g)
+        const pg = xb.find((w) => w.id === 'xb_vpan_g' || w.id === 'xb_card_g');
+        const sig = pg ? pg.rows.map((r) => r.signal).sort() : bars.map((w) => w.sensor || w.signal).sort();
+        if (pg) pg.rows.forEach((r) => assert(r.max > r.min && r.y > pg.y && r.y < pg.y + pg.h, r.signal + ' : bornes, dans la carte'));
         if (name === 'mblade') {
             assert.deepStrictEqual(bars, [], 'carte fermée : les barres sont dans le panneau');
             assert.deepStrictEqual(xb.filter((w) => w.type === 'slantbar' && /(^|&)mapUp$/.test(w.toggle)).map((w) => w.sensor).sort(), ['boost', 'coolant'], 'carte ouverte : le turbo et le liquide');
             xb.find((w) => w.id === 'xb_vpan_g').rows.forEach((r) => assert(r.max > r.min && r.y > 0, r.signal + ' : bornes'));
         }
-        assert.deepStrictEqual(sig, name === 'mblade' ? ['ambient', 'boost', 'coolant', 'oil'] : ['boost', 'coolant', 'oil'], 'capteurs : ' + sig);
+        assert.deepStrictEqual(sig, pg ? ['ambient', 'boost', 'coolant', 'oil'] : ['boost', 'coolant', 'oil'], 'capteurs : ' + sig);
         bars.forEach((w) => {
             assert(w.min !== undefined && w.max > w.min, w.id + ' : bornes');
             if (w.type === 'slantbar') assert(w.sensor === w.signal, w.id + ' : "sensor" et "signal" vont ensemble (le validateur veut "signal")');
@@ -80,7 +88,7 @@ THEMES.forEach((name) => {
         });
         const box = (w) => w.type === 'text' || w.type === 'icon' || w.type === 'slantbar' || w.type === 'meter' || w.type === 'gmeter' || w.type === 'segbar';
         [false, true].forEach((map) => [['gauges', false], ['tyres', false], ['drive', true], ['drive', false]].forEach(([view, sport]) => {
-            const mine = xb.filter((w) => on(w, map, view, sport) && w.type !== 'mblade');      // (M Blade's backdrop for the views, xb_vback: the whole panel)
+            const mine = xb.filter((w) => on(w, map, view, sport) && w.type !== 'mblade' && w.type !== 'mdash');      // (M Blade's backdrop for the views, xb_vback: the whole panel)
             // M Blade's view panel (mpanel) is a band whose sides are "<": a box hits it when one of its corners or its middle is inside the band
             const inPanel = (p, w) => [[w.x, w.y], [w.x + w.w, w.y], [w.x, w.y + w.h], [w.x + w.w, w.y + w.h], [w.x + w.w / 2, w.y + w.h / 2]].some(([x, y]) => {
                 const xl = p.shape[0] + p.shape[2] * Math.abs(y - p.shape[1]);
@@ -89,14 +97,14 @@ THEMES.forEach((name) => {
             mine.forEach((a) => L.widgets.filter((o) => !o.id.startsWith('xb_') && box(o) && on(o, map, view, sport)).forEach((o) => {
                 assert(a.type === 'mpanel' ? !inPanel(a, o) : !hit(a, o), a.id + ' recouvre ' + o.id + ' (vue ' + view + (sport ? ', Sport' : '') + (map ? ', carte ouverte' : '') + ')');
             }));
-            mine.filter((w) => w.type !== 'mpanel').forEach((a, i, m) => m.slice(i + 1).forEach((b) => {
+            mine.filter((w) => !PANEL(w)).forEach((a, i, m) => m.slice(i + 1).forEach((b) => {
                 if (a.type === 'text' || b.type === 'text' || a.type === 'icon' || b.type === 'icon' || a.type === 'gmeter' || b.type === 'gmeter') assert(!hit(a, b) || a.id.replace(/_[a-z]+$/, '') === b.id.replace(/_[a-z]+$/, '') && (a.type === 'segbar' || b.type === 'segbar') === false, a.id + ' recouvre ' + b.id + ' (vue ' + view + ')');
             }));
         }));
     });
     // la vue « Conduite » : en Sport le G-mètre et deux lectures, hors Sport quatre rangées (icône, nom du réglage), avec leur trait de trois crans sauf M Blade
     if (name !== 'm') check(name + ' : la vue Conduite : G-mètre et lectures en Sport, les quatre réglages des modes sinon', () => {
-        const mine = (w) => !/(^|&)mapUp$/.test(w.toggle) && w.type !== 'mpanel';       // the view with the map closed (M Blade's panel apart); M Blade's map-up copy is checked the same way below
+        const mine = (w) => !/(^|&)mapUp$/.test(w.toggle) && !PANEL(w);       // the view with the map closed (M Blade's panel apart); M Blade's map-up copy is checked the same way below
         const g = xb.filter((w) => mine(w) && /driveSport$|driveSport&/.test(w.toggle) && !/!driveSport/.test(w.toggle)), r = xb.filter((w) => mine(w) && /!driveSport/.test(w.toggle));
         if (name === 'mblade') {
             const up = (w) => /(^|&)mapUp$/.test(w.toggle);
@@ -109,10 +117,10 @@ THEMES.forEach((name) => {
         assert.deepStrictEqual(r.filter((w) => w.type === 'text').map((w) => w.text).sort(), ['{{setup:chassis}}', '{{setup:engine}}', '{{setup:gearbox}}', '{{setup:steering}}']);
         assert.strictEqual(r.filter((w) => w.type === 'icon').length, 4);
         const bars = r.filter((w) => w.type === 'segbar');
-        assert.strictEqual(bars.length, name === 'mblade' ? 0 : 4, 'les traits : M Blade les a dans son panneau');
-        if (name === 'mblade') {
-            const p = xb.find((w) => w.id === 'xb_vpan_dr');
-            assert(p && p.type === 'mpanel' && p.div === 3 && p.toggle === 'viewSel=drive&!driveSport&!mapUp', 'le panneau des réglages');
+        assert.strictEqual(bars.length, 0, 'les traits sont dans le panneau (M Blade) ou la carte (Sport, Navi)');
+        {
+            const p = xb.find((w) => w.id === 'xb_vpan_dr' || w.id === 'xb_card_dr');
+            assert(p && PANEL(p) && p.div === 3 && p.seg === 3 && p.toggle === 'viewSel=drive&!driveSport&!mapUp', 'le panneau des réglages');
             assert.deepStrictEqual(p.rows.map((x) => x.signal), ['setupLevel:engine', 'setupLevel:chassis', 'setupLevel:steering', 'setupLevel:gearbox']);
             p.rows.forEach((x) => assert(x.min === 0 && x.max === 3, x.signal + ' : trois crans'));
         }
