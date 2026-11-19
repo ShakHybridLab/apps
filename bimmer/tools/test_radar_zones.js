@@ -85,6 +85,7 @@ assert(Date.now() - t0 < 2000, 'the lookup of every zone took ' + (Date.now() - 
     rows.push('9005;ETF;01/01/2020;130;48.90030;2.37400');        // ...with its twin 300 m away for the other carriageway
     rows.push('9002;ETU;01/01/2020;50;48.80003;2.30001');         // in town, on a street going north (two ways)
     rows.push('9003;ETF;01/01/2020;NA;48.70000;2.20000');         // no road near it
+    rows.push('9006;ETFR;01/01/2020;NA;48.50000;2.10000');        // a red light camera: no speed in the list, a short zone like a town's
     rows.push('9004;ETT;01/01/2020;110;48.60005;2.50000');        // alone on a divided road (no other camera within 500 m): it covers both sides
     fs.writeFileSync(path.join(tmp, 'r.csv'), Buffer.from(rows.join('\n'), 'latin1'));
     const line = (tags, pts) => JSON.stringify({ type: 'Feature', properties: tags, geometry: { type: 'LineString', coordinates: pts } });
@@ -97,7 +98,7 @@ assert(Date.now() - t0 < 2000, 'the lookup of every zone took ' + (Date.now() - 
     ].join('\n'));
     const out = path.join(tmp, 'z.json');
     const said = execFileSync('python3', [path.join(__dirname, 'make_radar_zones.py'), path.join(tmp, 'r.csv'), path.join(tmp, 'roads.geojsonseq'), '--out', out]).toString();
-    assert(/1205 radars/.test(said), said);
+    assert(/1206 radars/.test(said), said);
     const d2 = JSON.parse(fs.readFileSync(out, 'utf8')), z2 = new RadarZones(d2);
     assert.strictEqual(d2.cell, 0.002); assert.strictEqual(d2.radiusTown, 300);
     const mw = z2.zones.find((q) => q.limit === 130 && q.dir === 90), mw2 = z2.zones.find((q) => q.limit === 130 && q.dir === 270), tw = z2.zones.find((q) => q.limit === 50), none = z2.zones.find((q) => Math.abs(q.lat - 48.7) < 0.002 && Math.abs(q.lon - 2.2) < 0.002);
@@ -105,6 +106,9 @@ assert(Date.now() - t0 < 2000, 'the lookup of every zone took ' + (Date.now() - 
     assert(mw2 && mw2.oneway, 'the twin: the other carriageway, one way too');
     assert(tw && tw.town && tw.dir === 0 && !tw.oneway, JSON.stringify(tw));
     assert(none && none.dir === null && none.limit === null, JSON.stringify(none));
+    const red = z2.zones.find((q) => Math.abs(q.lat - 48.5) < 0.002 && Math.abs(q.lon - 2.1) < 0.002);
+    assert(red && red.town && red.limit === null && !none.town, 'a red light camera has a short zone, a speed camera without a limit keeps the usual one');
+    assert(!/ETFR/.test(JSON.stringify(d2)));
     assert(!/48\.9001|2\.30001|48\.80003/.test(JSON.stringify(d2)), 'no exact position in the list');
     // a camera alone within 500 m covers both sides (the owner's rule; the list does not say): both directions are warned, a crossing road still is not
     const both = z2.zones.find((q) => q.limit === 110);

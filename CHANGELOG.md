@@ -2,6 +2,9 @@
 
 ## 19 novembre 2026
 
+### Zones de danger : première fabrication, et zones courtes pour les radars de feu rouge
+La fabrication sur GitHub a tourné (ShakTheme 0.21.33, ShakRadar 0.1.4, montés par elle) : 3 309 radars de la liste du 30 décembre 2025, **3 152 zones**, dont 494 en ville (300 m), 65 larges (autoroute), **2 842 avec la direction de leur route** (310 sans : pas de route connue à 60 m, elles alertent comme avant), 173 « un côté » (un jumeau à moins de 500 m) ; en Île-de-France 397 zones, 103 en ville, 48 « un côté », 18 sans direction. Constat à la position de la photo du matin : un radar sans vitesse dans la liste (feu rouge) gardait une zone de 2 km en pleine ville. Corrigé dans `tools/make_radar_zones.py` : un radar de feu rouge ou de passage à niveau a une zone courte (300 m), son type n'étant toujours pas gardé. Liste à refaire (prochain envoi).
+
 ### ShakTheme 0.21.32, ShakRadar 0.1.3 : l'alerte ignore les radars qui ne sont pas sur ta route, zones courtes en ville (liste à refaire sur GitHub ; pas encore essayé sur la voiture)
 Demandes du propriétaire (19 nov. 2026, 13:40 à 13:43) : « plus précis », « ignore aussi les radars de l'autre côté, ça ne sert à rien », « garde alerte danger ». L'emplacement exact d'un radar n'est pas affiché (article R413-15 du Code de la route ; le propriétaire l'a demandé, refusé) : l'alerte reste une zone, mais bien plus utile.
 - **Zones courtes en ville** : 300 m autour (limite de 50 km/h ou moins) et l'alerte n'y part qu'à 300 m du bord, au lieu de 2 km partout ; 2 km sur route, 4 km sur autoroute, comme les avertisseurs du commerce. Le centre d'une zone est maintenant arrondi à 0,002° (environ 200 m) au lieu de 0,01° : le radar est dans sa zone, pas à son centre, et aucune position exacte n'est écrite dans le dépôt (`tools/make_radar_zones.py`, refait).

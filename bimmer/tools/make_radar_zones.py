@@ -52,6 +52,7 @@ def radars(raw):
     rows = list(csv.reader(io.StringIO(text), delimiter=';'))
     head = [h.strip().lower() for h in rows[0]]
     col = {k: next(i for i, h in enumerate(head) if h.startswith(k)) for k in ('vma', 'latitude', 'longitude')}
+    tcol = next((i for i, h in enumerate(head) if h.startswith('type')), None)
     out = []
     for r in rows[1:]:
         if len(r) <= max(col.values()):
@@ -62,14 +63,17 @@ def radars(raw):
         except ValueError:
             continue
         vma = r[col['vma']].strip()
-        out.append((lat, lon, int(vma) if vma.isdigit() else 0))
+        # un radar de feu rouge ou de passage à niveau (ETFR, ETPN) n'a pas de vitesse dans la liste et se trouve à un carrefour, presque toujours
+        # en ville : zone courte (une zone de 2 km en pleine ville couvrait tout un quartier). Le type lui-même n'est pas gardé.
+        kind = r[tcol].strip().upper() if tcol is not None and tcol < len(r) else ''
+        out.append((lat, lon, int(vma) if vma.isdigit() else 0, kind in ('ETFR', 'ETPN')))
     return out
 
 
 def bearings(cams, files):
     """pour chaque radar : (direction de sa route en degrés depuis le nord, sens unique) ou None"""
     want = {}
-    for i, (lat, lon, _) in enumerate(cams):
+    for i, (lat, lon, _, _) in enumerate(cams):
         gy, gx = int(math.floor(lat / GRID)), int(math.floor(lon / GRID))
         for a in (-1, 0, 1):
             for b in (-1, 0, 1):
@@ -104,7 +108,7 @@ def bearings(cams, files):
                         for i in want.get(key, ()):
                             seen.add(i)
                     for i in seen:
-                        lat, lon, _ = cams[i]
+                        lat, lon = cams[i][0], cams[i][1]
                         kx, ky = 111320.0 * math.cos(math.radians(lat)), 110540.0
                         ax, ay = (p[0] - lon) * kx, (p[1] - lat) * ky
                         bx, by = (q[0] - lon) * kx, (q[1] - lat) * ky
@@ -120,7 +124,7 @@ def bearings(cams, files):
     for i, b in enumerate(best):
         if b is None or not b[2]:
             continue
-        lat, lon, _ = cams[i]
+        lat, lon = cams[i][0], cams[i][1]
         kx, ky = 111320.0 * math.cos(math.radians(lat)), 110540.0
         twin = any(j != i and abs(c[0] - lat) * ky <= TWIN_M and math.hypot((c[0] - lat) * ky, (c[1] - lon) * kx) <= TWIN_M and (c[0], c[1]) != (lat, lon)
                    for j, c in enumerate(cams))
@@ -147,10 +151,11 @@ def main(argv):
     roads = [a for a in args[1:] if os.path.isfile(a)]
     brg = bearings(cams, roads) if roads else [None] * len(cams)
     cells = {}
-    for (lat, lon, limit), b in zip(cams, brg):
+    for (lat, lon, limit, short), b in zip(cams, brg):
         key = (int(round(lat / CELL)), int(round(lon / CELL)))
-        c = cells.setdefault(key, {'limit': 0, 'dirs': []})
+        c = cells.setdefault(key, {'limit': 0, 'dirs': [], 'short': True})
         c['limit'] = max(c['limit'], limit)
+        c['short'] = c['short'] and (short or 0 < limit <= TOWN_TO)
         c['dirs'].append(b)
     zones = []
     for (la, lo), c in sorted(cells.items()):
@@ -172,7 +177,7 @@ def main(argv):
             if all(same(x) for x in ds):
                 d = int(round(ref[1] / 10.0)) * 10 % 360
                 flags |= 1 if ref[2] else 0
-        if 0 < limit <= TOWN_TO:
+        if c['short']:
             flags |= 2
         zones.append([la, lo, limit, 1 if limit >= WIDE_FROM else 0, d, flags])
     doc = {
