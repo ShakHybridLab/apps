@@ -39,6 +39,7 @@ class RadarApp {
         this.ext = null;             // gps.extended() of the last GPSPositionExtendedCAN
         this.raw = { pos: null, ext: null, posN: 0, extN: 0, posAt: 0, extAt: 0 };
         this.trail = [];             // [{ key (zone), centreM, at }]
+        this.near = null; this.nearKey = null;      // the nearest the car has been to the centre of the zone it is at (nearKey), metres
         this.zone = null;            // the zone the alert is about now: { edgeM, centreM, inside, limit, lat, lon }, or null
         this.why = 'no position yet';
         this.writing = false; this.writtenAt = 0; this.writeError = null;
@@ -83,13 +84,16 @@ class RadarApp {
         if (!this.pos) { this.why = this.raw.posN ? 'position not understood' : 'no position yet'; return null; }
         if (t - this.pos.at > POS_STALE_MS || t < this.pos.at) { this.why = 'position too old'; return null; }
         const z = this.d.zones ? this.d.zones.nearest(this.pos.lat, this.pos.lon, WITHIN_M, this.heading) : null;
-        if (!z) { this.trail = []; this.why = 'no zone within ' + (WITHIN_M / 1000) + ' km'; return null; }
+        if (!z) { this.trail = []; this.near = null; this.nearKey = null; this.why = 'no zone within ' + (WITHIN_M / 1000) + ' km'; return null; }
         const key = z.lat.toFixed(2) + ',' + z.lon.toFixed(2);
         if (this.trail.length && this.trail[this.trail.length - 1].key !== key) this.trail = [];
         this.trail.push({ key, centreM: z.centreM, at: t });
         if (this.trail.length > TRAIL) this.trail.shift();
         const first = this.trail[0];
-        if (!z.inside && this.trail.length >= 3 && z.centreM - first.centreM > AWAY_M) { this.why = 'zone behind'; return null; }
+        // going away: farther than the nearest the car has been to this zone, by AWAY_M. (Until Nov 19 2026 only the last TRAIL seconds counted:
+        // in slow traffic the car never made AWAY_M in that time, and the owner watched the metres go up on a zone he was leaving.)
+        if (this.near === null || this.nearKey !== key || z.centreM < this.near) { this.near = z.centreM; this.nearKey = key; }
+        if (!z.inside && (z.centreM - this.near > AWAY_M || (this.trail.length >= 3 && z.centreM - first.centreM > AWAY_M))) { this.why = 'zone behind'; return null; }
         this.why = z.inside ? 'in a zone' : 'zone ahead';
         return z;
     }

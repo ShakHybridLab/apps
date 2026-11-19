@@ -2,6 +2,9 @@
 
 ## 19 novembre 2026
 
+### ShakTheme 0.21.38, ShakRadar 0.1.8 : l'alerte s'arrête quand la voiture s'éloigne de la zone, même au pas (pas encore essayé sur la voiture)
+Premier essai du propriétaire (19 nov., 19 h 10, bouchon vers Bagnolet) : « je suis de l'autre côté, quand même danger, et les mètres augmentent ». La règle « zone derrière » ne comptait que les 6 dernières secondes : il fallait s'éloigner de 30 m en 6 s (18 km/h), ce qu'un bouchon ne fait pas. `shared/radar_app.js` retient maintenant le plus près que la voiture a été du centre de la zone : 30 m de plus que ce minimum, et l'alerte s'arrête, à n'importe quelle vitesse. Elle revient si la voiture se rapproche de nouveau. Autre constat du même essai, pas un défaut de code : le réglage « Alerte zone de danger » était resté éteint sur sa voiture (valeur gardée d'une ancienne version), il est dans l'onglet Carte.
+
 ### ShakTheme 0.21.37 : l'état de l'alerte zone de danger dans l'onglet Signaux (pas encore essayé sur la voiture)
 Le propriétaire est passé devant un radar du périphérique (porte de Bagnolet, en venant d'Aubervilliers) sans alerte, avec la 0.21.36. La zone existe et son sens correspond au sien : la cause est donc dans l'appli (position GPS non reçue, non comprise…), et l'écran n'en disait rien. L'onglet Signaux, page 1, montre maintenant en bas une ligne « Alerte danger : … · positions N (il y a X s) · cap N° » (`shared/page.js`, traduite dans `shared/fr.js`) : éteinte, aucune position reçue, position non comprise, position trop ancienne, pas de zone proche, zone devant, dans une zone, zone derrière. Ni lieu ni distance : seulement l'état. Le réglage s'appelle « Alerte zone de danger » (il disait encore « M Blade et Navi » alors que Sport et M l'affichent aussi).
 

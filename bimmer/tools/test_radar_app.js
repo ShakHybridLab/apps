@@ -74,10 +74,23 @@ check('en approchant d\'une zone : le fichier de l\'alerte dit la distance au bo
 });
 check('en s\'éloignant d\'une zone (dehors) : pas d\'alerte, le fichier est retiré', () => {
     const R = rig();
-    R.at(1500); R.step(1000); R.at(2100); assert(R.read(), 'sorti de 100 m : encore là (pas assez de positions pour dire)');
-    R.step(1000); R.at(2300); R.step(1000); R.at(2500);
+    R.at(2100); R.step(1000); R.at(2120); assert(R.read(), 'éloigné de 20 m : encore là (moins que la marge)');
+    R.step(1000); R.at(2140);
+    assert.strictEqual(R.read(), null, 'la zone est derrière');
+    // et en sortant d'une zone traversée : dès le bord
+    R.step(1000); R.at(1500); assert(R.read(), 'dedans'); R.step(1000); R.at(2010);
     assert.strictEqual(R.read(), null, 'la zone est derrière');
     assert.strictEqual(R.app.state().why, 'zone behind');
+});
+check('dans un bouchon : la voiture s\'éloigne de 5 m toutes les 2 s, l\'alerte s\'arrête quand même (le propriétaire voyait les mètres monter)', () => {
+    const R = rig();
+    R.at(1990);
+    let north = 2005;
+    for (let i = 0; i < 12; i++) { R.step(2000); R.at(north); north += 5; }
+    assert.strictEqual(R.read(), null, 'toujours affichée à ' + north);
+    assert.strictEqual(R.app.state().why, 'zone behind');
+    // elle revient si la voiture fait demi-tour et se rapproche
+    R.step(2000); R.at(1900); assert(R.read(), 'de retour dans la zone');
 });
 check('sans position depuis plus de 5 s : plus d\'alerte ; une position pas comprise ne compte pas', () => {
     const R = rig();
