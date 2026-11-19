@@ -24,6 +24,22 @@ mgu.run({
             return;
         }
         hud.start();
+        // l'alerte « zone de danger » sans appli à part (demande du propriétaire, 19 nov. 2026) : la position GPS de la voiture contre la liste des
+        // zones de France (shared/radar_app.js, comme ShakRadar), tant que le réglage « Alerte zone de danger » est allumé. Rien ici ne peut
+        // empêcher le thème de démarrer : une erreur est écrite au journal, le thème continue sans l'alerte.
+        let radar = null;
+        try {
+            const { RadarZones } = require('./radar_zones');
+            const { RadarApp } = require('./radar_app');
+            const zones = new RadarZones(require('./kit/pack').open(require('path').join(__dirname, 'zones')).json('radars_fr_zones.json'));
+            radar = new RadarApp({ zones, log: ctx.log, file: 'danger-shaktheme.json', app: 'ShakTheme', enabled: () => ctx.settings.get('dangerAlert') === true, everyMs: 1900 });
+            radar.start();
+            hud.radar = radar;
+            ctx.signals.watch('de.bmw.infotainment.GPSData', '1', {
+                GPSPositionCAN: (v) => radar.position(v),       // (le cap, l'altitude et la vitesse du GPS ne servent pas à l'alerte : pas lus ici)
+            }, ctx.log).then((s) => ctx.log.info('GPSData : ' + (s && s.error ? s.error : 'abonné') + ', ' + zones.zones.length + ' zones de danger'))
+                .catch((e) => ctx.log.warn('GPSData : ' + (e && e.message || e)));
+        } catch (e) { ctx.log.warn('alerte zone de danger : pas démarrée (' + (e && e.message || e) + ')'); }
         new Page(ctx, hud, {
             title: ctx.spec.title, what: 'cluster',
             look: { name: 'Themes', style: 'hero', tags: { m: 'M8 style', sport: 'Live Cockpit', mblade: 'blue card · red blade', navi: 'speed band · big map' } },
@@ -31,6 +47,6 @@ mgu.run({
             settings: ['units', 'clock', 'timeZone', 'tankLitres', 'evRangeFull', 'reserveKm', 'reservePct', 'tyreLow', 'speedZone', 'startupSweep', 'limitRing', 'launchTimer', 'launchReady', 'launchRpm', 'accentByMode', 'iceBelow', 'evShare', 'redline', 'shiftBefore', 'coldGuard', 'showBoost', 'demo'],
             display: ['viewSel', 'gFlipLat', 'gFlipLong', 'sportTint', 'sportFacets', 'sportPower', 'stockShiftLight', 'shiftLightRed', 'shiftLightFlash', 'nightDim', 'gearWindow', 'cameraNotch'],
         }).start();
-        process.on('exit', () => { try { hud.stop(); } catch (e) { /* exiting anyway */ } });
+        process.on('exit', () => { try { hud.stop(); if (radar) radar.stop(); } catch (e) { /* exiting anyway */ } });
     },
 });

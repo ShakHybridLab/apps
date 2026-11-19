@@ -30,6 +30,8 @@ class RadarApp {
         this.d = deps;
         this.now = deps.now || Date.now;
         this.dir = deps.dir || THEMES_DIR;
+        this.file = deps.file || FILE;          // (ShakTheme writes its own file: ShakRadar, if it is still installed, keeps its own)
+        this.app = deps.app || 'ShakRadar';
         this.pos = null;             // { lat, lon, how, at }
         this.ext = null;             // gps.extended() of the last GPSPositionExtendedCAN
         this.raw = { pos: null, ext: null, posN: 0, extN: 0, posAt: 0, extAt: 0 };
@@ -44,6 +46,8 @@ class RadarApp {
     position(v) {
         const t = this.now();
         this.raw.pos = v; this.raw.posN++; this.raw.posAt = t;
+        // `everyMs` (ShakTheme: 2 s): the car sends a position every second, a zone is 2 km wide: one in two is enough, the others cost nothing
+        if (this.d.everyMs && this.pos && t >= this.pos.at && t - this.pos.at < this.d.everyMs) return;
         const p = gps.position(v);
         if (p) this.pos = { lat: p.lat, lon: p.lon, how: p.how, at: t };
     }
@@ -84,13 +88,13 @@ class RadarApp {
         const t = this.now();
         this.zone = this._ahead(t);
         if (!this.zone) { this._clear(); return; }
-        const o = { t, app: 'ShakRadar', distance: Math.max(0, Math.round(this.zone.edgeM)) };
+        const o = { t, app: this.app, distance: Math.max(0, Math.round(this.zone.edgeM)) };
         if (this.zone.limit) o.limit = this.zone.limit;
         this._write(o);
     }
 
     _write(o) {
-        const f = path.join(this.dir, FILE);
+        const f = path.join(this.dir, this.file);
         try {
             try { fs.mkdirSync(this.dir); } catch (e) { /* already there */ }
             fs.writeFileSync(f + '.tmp', JSON.stringify(o), { mode: 0o644 });
@@ -102,7 +106,7 @@ class RadarApp {
     _clear() {
         if (!this.writing) return;
         this.writing = false;
-        try { fs.unlinkSync(path.join(this.dir, FILE)); } catch (e) { /* gone */ }
+        try { fs.unlinkSync(path.join(this.dir, this.file)); } catch (e) { /* gone */ }
     }
 
     /** What the screen shows. */

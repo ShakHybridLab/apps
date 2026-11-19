@@ -2,6 +2,13 @@
 
 ## 19 novembre 2026
 
+### ShakTheme 0.21.29 : l'alerte zone de danger est dans ShakTheme, plus besoin de ShakRadar (pas encore essayé sur la voiture)
+Demande du propriétaire (19 nov. 2026, 10:48) : « tu ne peux pas mettre dans ShakTheme directement ? Fusionne. » La voiture accepte `GPSData` (photo de ShakGPS du matin) : ShakTheme lit maintenant lui-même la position (`apps/shaktheme/main.js`, `shared/radar_app.js`, `gps_pos.js`, `radar_zones.js`, la liste `apps/shaktheme/zones/`) et affiche l'alerte dans les quatre thèmes tant que le réglage « Alerte zone de danger » est allumé ; éteint, plus rien n'est cherché.
+- `GPSData` est déclaré **optionnel** dans `app.json` : si la voiture ne l'avait pas, l'installation passerait quand même. Une erreur au démarrage de l'alerte est écrite au journal et le thème continue sans elle.
+- ShakTheme écrit son propre fichier (`danger-shaktheme.json`) : ShakRadar, s'il reste installé, ne gêne pas (la zone la plus proche gagne). **ShakRadar n'est plus nécessaire** ; il reste utile comme écran de diagnostic (valeurs brutes, position comprise, zone).
+- **Léger** (« qu'il ne consomme pas énormément, pas besoin que ce soit très précis ») : seule la position est lue (pas le cap ni l'altitude), sans relecture forcée, et une position sur deux suffit (une zone fait 2 km) ; une recherche de zone prend 0,04 ms au banc, une fois par seconde, et la liste tient en quelques centaines de Ko.
+- Essai de bout en bout au banc (ShakTheme construit, position de la photo injectée) : abonné, 3 003 zones, alerte allumée (zone à 50 km/h), fichier retiré quand le réglage est éteint.
+
 ### ShakTheme 0.21.28, ShakHUD 0.6.32 : une reconstruction ne refait plus que ce qui change, plus de clignotement quand la puissance partagée s'interrompt (vidéo du propriétaire ; pas encore essayé sur la voiture)
 Vidéo du 19 nov. 2026 (09:13, M Blade, en démarrant) : pendant un quart de seconde tous les textes disparaissent (lettre du rapport, vitesse, graduations, jauges), le fond reste, puis tout revient. Image par image : avant le clignotement il y a une ligne « kW » sous la vitesse, après elle n'y est plus. C'est une **reconstruction du thème** déclenchée par la puissance de la batterie partagée par eDrive Live qui s'arrête (puis une autre quand elle revient) ; sur la voiture, les images des textes mettent environ 250 ms à revenir après une reconstruction.
 - **La ligne des kW garde sa place 60 s** après la fin du partage (`shared/hud.js`, `_powerHeld`, `POWER_HOLD_MS`) : un trou dans le partage affiche « -- » au lieu de refaire tout le thème ; au bout d'une minute sans partage, le turbo (Sport) reprend sa place, une seule fois.
