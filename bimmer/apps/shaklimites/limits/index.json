@@ -4,11 +4,11 @@
  "margin": 0.05,
  "date": "2026-11-19",
  "tiles": 319,
- "ways": 623445,
- "points": 1894220,
- "km": 172979,
- "bytes": 10082396,
- "read": 853358,
- "noLimit": 229913,
+ "ways": 733548,
+ "points": 2193494,
+ "km": 190543,
+ "bytes": 11720852,
+ "read": 1100530,
+ "noLimit": 366982,
  "source": "OpenStreetMap (ODbL), extrait Geofabrik France"
 }
