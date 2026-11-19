@@ -87,6 +87,10 @@
   },
   "de.bmw.infotainment.personalization.SessionManager": {
    "currentUserAccountReference": "r"
+  },
+  "de.bmw.infotainment.GPSData": {
+   "GPSPositionCAN": "s",
+   "GPSPositionExtendedCAN": "s"
   }
  }
 }

@@ -318,6 +318,7 @@ const MAX_CONN = 4;              // connections a layout may ask for ("conn"): 3
 const PIXEL_BYTES = 16 * 1024 * 1024;   // cluster-render's pixel memory for every app's images together (CompositorLimits.pixel_bytes)
 const SHEET_AREA_FRAC = 4;       // the first sheet size limit: 1/4 of the target area (see the header)
 const REFUSED_RETRY_MS = [5000, 15000, 45000];   // after cluster-render refused a layer: the layout is made again after these waits, then left (see _retryRefused)
+const POWER_HOLD_MS = 60000;      // the battery's power, once shared, keeps its place this long after the sharing stops (see _powerHeld)
 const REBUILD_MIN_MS = 400;      // two rebuilds of the layout are at least this far apart (see _rebuild)
 const FAULT_WHOLE = 3;           // an error caught by _guard is logged with its stack this many times for each place...
 const FAULT_QUIET_MS = 10000;    // ...then one line at most this often
@@ -840,7 +841,7 @@ class HudApp {
         // "boostShown": the boost shows (the setting "showBoost", and no power flow in its place)
         // "powerShut" / "powerOpen": the power flow shows and the Waze map window is closed / open (for layouts that draw it twice)
         if (key === 'power' || key === 'powerShut' || key === 'powerOpen' || key === 'boostShown') {
-            const flow = this.target === 'panel' && this.ctx.settings.item('sportPower') && this.ctx.settings.get('sportPower') !== false && this.ci.sharedPower() !== null;
+            const flow = this.target === 'panel' && this.ctx.settings.item('sportPower') && this.ctx.settings.get('sportPower') !== false && this._powerHeld();
             if (key === 'boostShown') return !flow && this.ctx.settings.get('showBoost') !== false;
             return key === 'power' ? !!flow : !!flow && (key === 'powerOpen') === (this.setting('mapUp') === true);
         }
@@ -1098,6 +1099,17 @@ class HudApp {
     /** The energy flow replaces the boost or not (see setting("power")), as a string to see when the layout has to be rebuilt. */
     _powerKey() { return this.setting('power') ? '1' : '0'; }
 
+    /**
+     * An app shares the battery's power now, or did within the last POWER_HOLD_MS. The layout is rebuilt when the power comes or goes, and a
+     * rebuild takes the texts off the cluster for a quarter of a second on the car (owner's video of Nov 19 2026: eDrive Live's power went and
+     * came back while driving off, the whole cluster blinked each time). Held, a gap in the sharing only shows "--" where the kW are.
+     */
+    _powerHeld() {
+        const now = Date.now();
+        if (this.ci.sharedPower() !== null) { this.powerSeenAt = now; return true; }
+        return isNum(this.powerSeenAt) && now >= this.powerSeenAt && now - this.powerSeenAt < POWER_HOLD_MS;
+    }
+
     /** Another app began or stopped sharing the battery's power: rebuild a layout that shows it in place of the boost. */
     _powerChanged() {
         if (this.powerLayout && this._powerKey() !== this.powerShown) this._rebuild(); else this._status();
@@ -1289,6 +1301,7 @@ class HudApp {
         const ownFresh = isNum(this.hvSoc) && now - this.hvSocAt < HV_STALE_MS;
         this.ci.publish(ownFresh && !this.car.data().demo ? this.hvSoc : null);
         this.ci.wantPower(this.target === 'panel' && this.started && this.powerLayout && !!this.ctx.settings.item('sportPower') && this.ctx.settings.get('sportPower') !== false);
+        if (this.powerLayout && this._powerKey() !== this.powerShown) this._rebuild();      // the hold of _powerHeld ran out: the boost takes its place back
         const shows = this.target === 'panel' && this.started && !!this.activeName && this.activeName !== 'off' && !this.screen.yielded;
         // the centre window: open while Cluster Centre / Cluster Info ask for it (and for a few seconds after), if this
         // theme has one and the setting allows; the layout is rebuilt with the window cut or filled
@@ -2426,13 +2439,23 @@ class HudApp {
         // every connection holds its writes till the whole new layout is made: the drops, the new layers and their first pixels reach
         // cluster-render together (cluster_render_client.js cork), so it has no time to draw the cluster without the theme in between
         const corked = this.clients.filter((c) => typeof c.cork === 'function' && c.cork());
-        try { this._guard('rebuild', () => this._rebuildInner()); } finally { corked.forEach((c) => { try { c.uncork(); } catch (e) { /* a socket gone meanwhile */ } }); }
+        try {
+            this._guard('rebuild', () => this._rebuildInner());
+            // the values of now go out with the layers (a layer kept through the rebuild had its uniforms set to their starting values just above: sent
+            // apart, the rev bar would fall to 0 for a frame)
+            const t0 = Date.now();
+            if (this.client.ready && this.widgets) this.widgets.forEach((x) => this._guard('widget ' + x.w.id, () => this._update(x, t0, true)));
+        } finally { corked.forEach((c) => { try { c.uncork(); } catch (e) { /* a socket gone meanwhile */ } }); }
         this._status();
     }
 
     _rebuildInner() {
         if (!this.client.ready) return; // the 'ready' handler calls us again
-        this._layerRefs().forEach((r) => r.c.drop(r.ref));
+        // the layers on the screen now: those the new layout has just the same are kept (_keepLayers), the others dropped once the new plan is
+        // known. After a refusal everything is made anew (a layer cluster-render refused is not there to be kept).
+        this.oldLayers = this.live || new Map();
+        this.live = new Map();
+        if (this.refused) this._dropOld();
         this.placed = [];
         this.widgets.clear();
         this.sheets = [];
@@ -2455,6 +2478,7 @@ class HudApp {
             this._wazeWant();
             this.problem = null; this.layoutTheme = null; this.needsBoost = false; this.needsIntake = false; this.needsHv = false; this.needsFuel = false;
             this.log.info('off: nothing drawn, BMW\'s own ' + (this.target === 'panel' ? 'cluster' : 'HUD') + ' shows');
+            this._dropOld();
             return;
         }
         let layout;
@@ -2462,6 +2486,7 @@ class HudApp {
             this.problem = e.message;
             this.log.warn('layout "' + name + '" unusable (' + e.message + '); showing nothing');
             this._wazeWant();
+            this._dropOld();
             return;
         }
         this.problem = null;
@@ -2541,8 +2566,10 @@ class HudApp {
             plan = this._plan(shown, maxPx, waste);
         }
         if (this.gearWin) this._balance(plan);
+        const kept = this._keepLayers(plan, name);
         let effects = 0, own = 0, sheets = 0, bytes = 0, px = 0;
         plan.forEach((e) => {
+            this.reuse = e.kind === 'sheet' ? null : (e.reuse || null); this.reuseSig = e.sig;
             if (e.kind === 'sheet') {
                 sheets++; bytes += e.w * e.h * 4; px += e.w * e.h * 8; this._guard('sheet ' + e.members[0].id, () => this._createSheet(e));
                 // what each sheet costs (the car's own log then says which sheet to shrink when its pixel memory runs out)
@@ -2562,13 +2589,67 @@ class HudApp {
         this.log.info('layout "' + layout.name + '": ' + shown.length + ' widgets, ' + this._layerCount(n) + ' (' + effects + ' effects, ' +
             sheets + ' image sheets' + (own ? ', ' + own + ' own image layers' : '') + ')' +
             (counts.length > 1 ? ' on ' + counts.length + ' connections (' + counts.join(' + ') + ')' : '') + ', sheet limit ' +
-            (maxPx === Infinity ? 'unlimited' : maxPx + ' px') + ', whole-sheet writes ' + bytes + ' bytes, pixel memory ' + mib(px) + ' of 16 MiB' +
+            (maxPx === Infinity ? 'unlimited' : maxPx + ' px') + ', ' + kept + ' layers kept from before, whole-sheet writes ' + bytes + ' bytes, pixel memory ' + mib(px) + ' of 16 MiB' +
             (atlasBytes ? ' (' + this.atlases.size + ' glyph atlas' + (this.atlases.size > 1 ? 'es' : '') + ' ' + mib(atlasBytes) + ')' : ''));
         counts.forEach((k, ci) => {
             if (k > LAYER_BUDGET) this.log.warn('layout "' + layout.name + '" needs ' + k + ' layers on connection ' + (ci + 1) + ', cluster-render draws at most ' + LAYER_BUDGET + ' per connection');
         });
         if (px > PIXEL_BYTES) this.log.warn('layout "' + layout.name + '" needs ' + mib(px) + ' of pixel memory; cluster-render has 16 MiB for every app together (each image counts twice)');
         this.statusAskT = setTimeout(() => { this.statusAskT = null; this._guard('status request', () => this.client.status()); }, STATUS_ASK_MS);
+    }
+
+    /** Drops what is left of the layers of the layout before (those the new one did not keep). */
+    _dropOld() {
+        const old = this.oldLayers;
+        this.oldLayers = null;
+        if (old) old.forEach((l) => l.c.drop(l.ref));
+    }
+
+    /**
+     * Which layers of the layout before stay as they are. A rebuild used to drop every layer and make them all again; on the car the image
+     * sheets (every text and icon) then take about a quarter of a second to come back: the whole cluster blinked at each change of view, each
+     * Waze map opening, each danger alert (owner's video of Nov 19 2026). Now a layer the new plan has just the same (the same widgets at the
+     * same place on the same connection, for an effect the same shader) keeps its layer: its uniforms and its texts are set again by the usual
+     * path and only what differs is sent. Only the layers that really change are dropped (first, so the connection's 8 layers are never
+     * exceeded) and made.
+     * The stacking is kept: within a class and z cluster-render puts a newer layer on top, so a kept layer that should lie over a new one of
+     * its class and z it overlaps is made anew too. Marks each entry of `plan` (e.sig, e.reuse: the ref kept); returns how many are kept.
+     */
+    _keepLayers(plan, name) {
+        const old = this.oldLayers || new Map();
+        const bySig = new Map();
+        old.forEach((l, key) => { if (!bySig.has(l.sig)) bySig.set(l.sig, key); });
+        const box = (m) => [m.x, m.y, m.w, m.h].join(',');
+        const info = plan.map((e) => {
+            if (e.kind === 'sheet') {
+                e.sig = ['S', name, e.conn || 0, e.klass, e.z, box(e), e.members.map((m) => m.id + '@' + box(m)).join(' ')].join('|');
+                return { klass: e.klass, z: e.z, r: e };
+            }
+            const w = e.w, fx = IMAGE_TYPES[w.type] ? '' : (w.type === 'swatch' ? 'swatch' : w.type + '/' + this.accentHue);
+            e.sig = ['W', name, this._connOf(w), fx, JSON.stringify(w)].join('|');
+            return { klass: w.class || 'content', z: w.z || 0, r: w.rect || w };
+        });
+        plan.forEach((e) => {
+            const key = bySig.get(e.sig);
+            e.reuse = null;
+            if (key === undefined) return;
+            bySig.delete(e.sig);
+            e.reuse = old.get(key); e.reuseKey = key;
+        });
+        const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+        for (let again = true; again;) {
+            again = false;
+            plan.forEach((e, i) => {
+                if (!e.reuse) return;
+                for (let j = 0; j < i; j++) {
+                    if (!plan[j].reuse && info[j].klass === info[i].klass && info[j].z === info[i].z && hit(info[j].r, info[i].r)) { e.reuse = null; again = true; return; }
+                }
+            });
+        }
+        let kept = 0;
+        plan.forEach((e) => { if (e.reuse) { old.delete(e.reuseKey); kept++; } });
+        this._dropOld();
+        return kept;
     }
 
     /**
@@ -2639,7 +2720,8 @@ class HudApp {
     /** One image layer for a sheet: every member painted into a local buffer, then sent whole once. */
     _createSheet(s) {
         const c = this._clientAt(s.conn);
-        const ref = c.image({ target: this.target, klass: s.klass, z: s.z, x: s.x, y: s.y, w: s.w, h: s.h, iw: s.w, ih: s.h });
+        const ref = s.reuse ? s.reuse.ref : c.image({ target: this.target, klass: s.klass, z: s.z, x: s.x, y: s.y, w: s.w, h: s.h, iw: s.w, ih: s.h });
+        if (ref && this.live) this.live.set((s.conn || 0) + ':' + ref, { c, ref, sig: s.sig });
         if (!ref) { this.log.warn('sheet ' + s.klass + '/' + s.z + ' at ' + s.x + ',' + s.y + ' ' + s.w + 'x' + s.h + ': layer refused'); return; }
         s.ref = ref; s.c = c; s.ci = s.conn;
         this.placed.push({ c, ref, x: s.x, y: s.y, w: s.w, h: s.h });
@@ -2716,8 +2798,11 @@ class HudApp {
             // own x, y, w, h for every uniform, and the four backdrop shaders read u_rect / u_org to know which part of the picture the layer holds
             const r = w.rect || w;
             const base = { target: this.target, klass: w.class || 'content', z: w.z || 0, x: r.x, y: r.y, w: r.w, h: r.h };
-            if (IMAGE_TYPES[w.type]) ref = c.image(Object.assign({ iw: w.w, ih: w.h }, base));
+            const keep = this.reuse; this.reuse = null;
+            if (keep) ref = keep.ref;                                   // the same layer as before the rebuild (_keepLayers)
+            else if (IMAGE_TYPES[w.type]) ref = c.image(Object.assign({ iw: w.w, ih: w.h }, base));
             else ref = c.effect(Object.assign({ fs: w.type === 'swatch' ? calibration.SWATCH : shaders.accented(w.type, this.accentHue) }, base));
+            if (ref && this.live) this.live.set(this._connOf(w) + ':' + ref, { c, ref, sig: this.reuseSig });
             if (!ref) { this.log.warn('widget "' + w.id + '": layer refused'); return; }
             this.placed.push({ c, ref, x: r.x, y: r.y, w: r.w, h: r.h, fixed: !!w.fixed });
         }

@@ -152,6 +152,82 @@ check('couche refusée : le vrai _rebuildInner remet le compte à zéro quand le
     assert(/clearTimeout\(this\.refusedT\); this\.refusedT = null;/.test(hudSrc) && /clearTimeout\(this\.rebuildT\); this\.rebuildT = null;\n\s+clearTimeout\(this\.refusedT\)/.test(hudSrc));
 });
 
+check('puissance partagée (eDrive Live) : un trou dans le partage ne refait pas le thème, la ligne des kW garde sa place 60 s (vidéo du 19 nov. 2026)', () => {
+    const h = fakeHud();
+    let shared = { kw: 12 };
+    h.ci = { sharedPower: () => shared };
+    assert.strictEqual(h._powerHeld(), true);
+    shared = null;
+    assert.strictEqual(h._powerHeld(), true, 'le partage vient de s\'arrêter : la place est tenue');
+    h.powerSeenAt = Date.now() - 61000;
+    assert.strictEqual(h._powerHeld(), false, 'une minute sans partage : la place est rendue');
+    h.powerSeenAt = Date.now() + 3600000;
+    assert.strictEqual(h._powerHeld(), false, 'l\'horloge a reculé : pas tenue une heure');
+    assert.strictEqual(fakeHud.call ? (() => { const n = fakeHud(); n.ci = { sharedPower: () => null }; return n._powerHeld(); })() : null, false, 'jamais partagée : rien');
+    assert(/this\.ctx\.settings\.get\('sportPower'\) !== false && this\._powerHeld\(\);/.test(hudSrc));
+    assert(/if \(this\.powerLayout && this\._powerKey\(\) !== this\.powerShown\) this\._rebuild\(\);\s+\/\/ the hold of _powerHeld ran out/.test(hudSrc));
+});
+
+// les couches gardées d'une reconstruction à l'autre (vidéo du 19 nov. 2026 : les textes disparaissaient un quart de seconde à chaque reconstruction)
+function keepHud(oldSigs) {
+    const h = fakeHud();
+    h.accentHue = 'blue'; h._connOf = (w) => w.conn || 0;
+    h.dropped = [];
+    const c = { drop: (ref) => h.dropped.push(ref) };
+    h.oldLayers = new Map();
+    (oldSigs || []).forEach((sig, i) => h.oldLayers.set('0:' + (i + 1), { c, ref: i + 1, sig }));
+    return h;
+}
+const sheetE = (key, x, ids, z) => ({ kind: 'sheet', key, klass: 'content', z: z || 5, conn: 0, x, y: 0, w: 100, h: 40, members: ids.map((id, i) => ({ id, type: 'text', x: x + i * 10, y: 0, w: 10, h: 10 })) });
+const layerE = (id, x, z, type) => ({ kind: 'layer', klass: 'content', z: z || 1, conn: 0, w: { id, type: type || 'fill', x, y: 0, w: 100, h: 40, z: z || 1 } });
+check('reconstruction : une couche que le nouveau plan a telle quelle garde sa couche, seules les autres sont retirées puis créées', () => {
+    const first = keepHud();
+    const planA = [layerE('backdrop', 0), sheetE('s0', 0, ['speed', 'gear']), sheetE('s1', 200, ['oil'])];
+    assert.strictEqual(first._keepLayers(planA, 'sport'), 0, 'rien avant : rien à garder');
+    const h = keepHud(planA.map((e) => e.sig));
+    const planB = [layerE('backdrop', 0), sheetE('s0', 0, ['speed', 'gear']), sheetE('s1', 200, ['oil', 'coolant']), sheetE('s9', 400, ['al_dist'])];
+    assert.strictEqual(h._keepLayers(planB, 'sport'), 2);
+    assert.deepStrictEqual(planB.map((e) => (e.reuse ? e.reuse.ref : 0)), [1, 2, 0, 0], 'le fond et la feuille inchangée gardent leur couche');
+    assert.deepStrictEqual(h.dropped, [3], 'seule la feuille qui change est retirée');
+    assert.strictEqual(h.oldLayers, null);
+    const other = keepHud(planA.map((e) => e.sig));
+    assert.strictEqual(other._keepLayers([layerE('backdrop', 0), sheetE('s0', 0, ['speed', 'gear'])], 'm'), 0, 'un autre thème : rien n\'est gardé');
+    assert.deepStrictEqual(other.dropped, [1, 2, 3]);
+});
+check('reconstruction : un effet dont la couleur de mode change est refait (autre shader), ses textes restent ; l\'empilement est gardé', () => {
+    const planA = [layerE('backdrop', 0, 1, 'sdash'), sheetE('s0', 0, ['speed'])];
+    keepHud()._keepLayers(planA, 'sport');
+    const h = keepHud(planA.map((e) => e.sig));
+    h.accentHue = 'red';
+    const planB = [layerE('backdrop', 0, 1, 'sdash'), sheetE('s0', 0, ['speed'])];
+    assert.strictEqual(h._keepLayers(planB, 'sport'), 1);
+    assert.deepStrictEqual(planB.map((e) => !!e.reuse), [false, true], 'le fond est refait, la feuille des textes (z plus haut) reste');
+    // même classe et même z, l'un sur l'autre : la couche du dessus ne peut pas rester si celle du dessous est nouvelle (la plus récente passe dessus)
+    const a2 = [layerE('card', 0, 5), sheetE('s0', 0, ['txt'], 5)];
+    keepHud()._keepLayers(a2, 'navi');
+    const h2 = keepHud([a2[1].sig]);
+    const b2 = [layerE('card', 0, 5), sheetE('s0', 0, ['txt'], 5)];
+    assert.strictEqual(h2._keepLayers(b2, 'navi'), 0, 'le texte serait passé sous la carte neuve');
+    const h3 = keepHud([a2[1].sig]);
+    const b3 = [layerE('card', 500, 5), sheetE('s0', 0, ['txt'], 5)];
+    assert.strictEqual(h3._keepLayers(b3, 'navi'), 1, 'sans recouvrement : gardé');
+});
+check('reconstruction : après un refus tout est refait, « off » et un thème illisible retirent tout, les valeurs du moment partent avec les couches', () => {
+    assert(/if \(this\.refused\) this\._dropOld\(\);/.test(hudSrc));
+    assert((hudSrc.match(/this\._dropOld\(\);\n\s+return;/g) || []).length >= 2, 'off et thème illisible');
+    assert(/this\.widgets\.forEach\(\(x\) => this\._guard\('widget ' \+ x\.w\.id, \(\) => this\._update\(x, t0, true\)\)\);/.test(hudSrc));
+    assert(!/this\._layerRefs\(\)\.forEach\(\(r\) => r\.c\.drop\(r\.ref\)\);/.test(hudSrc), 'plus de retrait de toutes les couches');
+    const { ClusterRender } = require(path.join(tmp, 'shared', 'cluster_render_client.js'));
+    const c = new ClusterRender('t', '/nonexistent');
+    let frames = 0;
+    c.sock = { write(m) { if (m[4] === 0x46) frames++; return true; } }; c.connected = true; c.ready = true;
+    const ref = c.image({ target: 'panel', x: 0, y: 0, w: 4, h: 4 });
+    const px = Buffer.alloc(64, 7);
+    c.pixels(ref, null, px); c.pixels(ref, null, Buffer.from(px)); c.pixels(ref, null, Buffer.from(px));
+    assert.strictEqual(frames, 1, 'la même image n\'est pas renvoyée');
+    c.pixels(ref, null, Buffer.alloc(64, 9)); assert.strictEqual(frames, 2);
+});
+
 // le client de cluster-render contre un faux service
 const net = require('net');
 function service(onConn) {

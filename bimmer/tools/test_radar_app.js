@@ -108,4 +108,13 @@ check('l\'appli : GPSData seul (déclaré à part, comme ShakGPS), ses fichiers 
         assert(o.loggingId !== spec.loggingId && o.iconGlyph !== spec.iconGlyph, a);
     });
 });
+// la photo de ShakGPS du 19 nov. 2026 : la voiture écrit sa position en millisecondes d'arc autour de 2^31, l'altitude et la vitesse autour de 32768
+{
+    const assert2 = require('assert'), g = require('../shared/gps_pos');
+    const p = g.position({ statusGPSLongitudeCAN: 2156016555, statusGPSLatitudeCAN: 2323529010 });
+    assert2(p && Math.abs(p.lat - 48.9015) < 0.001 && Math.abs(p.lon - 2.3703) < 0.001 && p.how === 'milliarcsecond around 2^31', 'position de la photo : ' + JSON.stringify(p));
+    const e = g.extended({ statusHeadingGPSCAN: 6, statusHeightGPSCAN: 32814, statusQualityPositionGPSCAN: 416, speedGPSCAN: 32768 });
+    assert2.deepStrictEqual([e.heading, e.altitude, e.quality, e.speed], [6, 46, 416, 0]);
+    assert2.strictEqual(g.position({ statusGPSLongitudeCAN: 2147483648, statusGPSLatitudeCAN: 2147483648 }), null, '0 N 0 E : pas en France');
+}
 console.log(process.exitCode ? 'radar app: FAILED' : 'radar app: all ' + n + ' checks pass');

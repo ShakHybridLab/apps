@@ -1,5 +1,18 @@
 # Modifications par rapport aux projets d'origine
 
+## 19 novembre 2026
+
+### ShakTheme 0.21.28, ShakHUD 0.6.32 : une reconstruction ne refait plus que ce qui change, plus de clignotement quand la puissance partagée s'interrompt (vidéo du propriétaire ; pas encore essayé sur la voiture)
+Vidéo du 19 nov. 2026 (09:13, M Blade, en démarrant) : pendant un quart de seconde tous les textes disparaissent (lettre du rapport, vitesse, graduations, jauges), le fond reste, puis tout revient. Image par image : avant le clignotement il y a une ligne « kW » sous la vitesse, après elle n'y est plus. C'est une **reconstruction du thème** déclenchée par la puissance de la batterie partagée par eDrive Live qui s'arrête (puis une autre quand elle revient) ; sur la voiture, les images des textes mettent environ 250 ms à revenir après une reconstruction.
+- **La ligne des kW garde sa place 60 s** après la fin du partage (`shared/hud.js`, `_powerHeld`, `POWER_HOLD_MS`) : un trou dans le partage affiche « -- » au lieu de refaire tout le thème ; au bout d'une minute sans partage, le turbo (Sport) reprend sa place, une seule fois.
+- Test : `tools/test_reliability.js`.
+- **Une reconstruction garde les couches qui ne changent pas** (demande du propriétaire, 09:50 : « corrige ce que ça ne corrige pas »). Avant, chaque reconstruction retirait toutes les couches et les recréait : sur la voiture, les images des textes mettaient un quart de seconde à revenir. Maintenant (`shared/hud.js`, `_keepLayers`) une couche que le nouveau plan a telle quelle (mêmes widgets au même endroit sur la même connexion, même shader pour un effet) **garde sa couche** ; ses valeurs et ses textes sont remis par le chemin habituel et seul ce qui diffère part. Les couches qui changent sont retirées d'abord (jamais plus de 8 par connexion), puis créées. L'empilement est respecté (une couche gardée qui devrait passer sur une couche neuve de même classe et même z est refaite). Après un refus de cluster-render, tout est refait comme avant. Une image identique à celle déjà envoyée n'est plus renvoyée (`cluster_render_client.js`), et les valeurs du moment partent avec les couches (la barre de régime ne retombe pas à 0 le temps d'une image).
+- Mesuré au banc (couches gardées / total) : alerte radar, changement de mode de conduite et vues de Sport, M et Navi : presque tout est gardé (Sport vue Jauges : 1 couche retirée, 5 créées, au lieu de 17 et 17 ; Navi vue Pneus : 2 et 3 ; M vue Jauges : 4 et 7). **Ce qui refait encore beaucoup** : la carte Waze qui s'ouvre ou se ferme (tout se déplace) et **les vues de M Blade** (11 couches sur 16 : le panneau prend la place de l'échelle de vitesse et la jauge d'essence change de côté) ; là, le quart de seconde reste, mais seulement à ces moments-là.
+- Tests : `tools/test_reliability.js` (21 vérifications).
+
+### ShakRadar 0.1.2 : la position GPS de la voiture est comprise (photo de ShakGPS)
+Photo du propriétaire (19 nov. 2026, 09:05) : `GPSData` est **accepté et disponible**, un message par seconde. La voiture écrit la latitude et la longitude en millisecondes d'arc **autour de 2^31** (2323529010 / 2156016555 = 48,90 N, 2,37 E), une forme que `shared/gps_pos.js` n'essayait pas : ShakRadar 0.1.1 aurait affiché « position pas comprise ». Ajouté, avec l'altitude et la vitesse lues autour de 32768 (32814 = 46 m, 32768 = à l'arrêt) ; la « qualité » ne prend plus le premier nom venu (tous commencent par « status »). `GPSData` rejoint `tools/car_accepted_signals.json`, les membres et unités sont notés dans `docs/car_catalog_notes.md`. Test : `tools/test_radar_app.js` (les valeurs de la photo).
+
 ## 18 novembre 2026
 
 ### ShakTheme 0.21.27 : Sport avec Waze, l'essence à la place du turbo (pas encore essayé sur la voiture)

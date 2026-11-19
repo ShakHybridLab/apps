@@ -25,7 +25,8 @@ const WHY = {
 // l'échelle trouvée par gps_pos.js, en français ; les polices de l'écran n'ont pas les guillemets « », d'où les droits
 const HOW = { 'degrees': 'degrés', '1e-6 degree': 'millionièmes de degré', '1e-7 degree': 'dix-millionièmes de degré', '1e-5 degree': 'cent-millièmes de degré',
     'milliarcsecond': 'millisecondes d\'arc', '1/1000 minute': 'millièmes de minute', 'turn / 2^31': 'demi-tour sur 2^31', 'turn / 2^32': 'tour sur 2^32', 'radians': 'radians' };
-const howFr = (h) => { const m = /^(.*?)( from -90 \/ -180)?$/.exec(h || ''); return (HOW[m[1]] || m[1]) + (m[2] ? ', décalé de -90 / -180' : ''); };
+
+const howFr = (h) => { const m = /^(.*?)( from -90 \/ -180| around 2\^31)?$/.exec(h || ''); return (HOW[m[1]] || m[1]) + (m[2] === ' around 2^31' ? ', centré sur 2^31' : m[2] ? ', décalé de -90 / -180' : ''); };
 
 mgu.run({
     start(ctx) {

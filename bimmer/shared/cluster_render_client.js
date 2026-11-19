@@ -530,6 +530,8 @@ class ClusterRender extends EventEmitter {
         const iw = l.iw, ih = l.ih, bpp = l.bpp;
         if (!rects || !rects.length) {
             if (px.length !== l.image.length) return false;
+            /* The same picture as the service already has (a layer kept through a rebuild): nothing to send. */
+            if (l.have && !l.whole && !l.dirty.length && px.equals(l.image)) return true;
             px.copy(l.image);
             l.whole = true;
             l.dirty = [];

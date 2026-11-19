@@ -29,6 +29,7 @@ const SCALES = [
 ];
 // the same with an unsigned raw value that starts at -90 / -180 degrees
 const OFFSETS = [false, true];
+const MID = 2147483648;        // 2^31
 const INVALID = [0x7FFFFFFF, -0x80000000, 0xFFFFFFFF, 0x80000000, 0xFFFF, 0x7FFF];
 
 function scalar(x) {
@@ -75,8 +76,18 @@ function position(v) {
             if (inArea(lat, lon)) return { lat, lon, how: s.how + (off ? ' from -90 / -180' : ''), keys: [la.key, lo.key] };
         }
     }
+    // an unsigned 32-bit word whose middle (2^31) is 0 degrees: the owner's X3 writes its position so, in milliarcseconds (photo of ShakGPS,
+    // Nov 19 2026: latitude 2323529010, longitude 2156016555 = 48.90 N, 2.37 E)
+    if (la.raw >= 0 && lo.raw >= 0) {
+        for (const s of SCALES) {
+            const lat = (la.raw - MID) * s.f, lon = (lo.raw - MID) * s.f;
+            if (inArea(lat, lon)) return { lat, lon, how: s.how + ' around 2^31', keys: [la.key, lo.key] };
+        }
+    }
     return null;
 }
+
+function mid16(x) { return x !== null && x >= 30000 && x <= 65534 ? x - 32768 : x; }
 
 /** The rest, as far as the names tell: heading (0..360 degrees when it reads so, or hundredths of a degree), altitude, quality and speed as given. */
 function extended(v) {
@@ -86,9 +97,11 @@ function extended(v) {
     if (heading !== null) heading = heading >= 0 && heading <= 360 ? heading : heading > 360 && heading <= 36000 ? heading / 100 : null;
     return {
         heading,
-        altitude: find(/alt|height|hoehe|höhe/i),
-        quality: find(/qual|fix|accur|dop|sat|valid|state|status/i),
-        speed: find(/speed|veloc|geschw/i),
+        // (the X3's altitude and speed are 16-bit words whose middle, 32768, is 0: 32814 = 46 m, 32768 = standing still; every name there begins with
+        // "status", so that word no longer finds the quality)
+        altitude: mid16(find(/alt|height|hoehe|höhe/i)),
+        quality: find(/qual|fix|accur|dop|sat/i),
+        speed: mid16(find(/speed|veloc|geschw/i)),
         raw: nums,
     };
 }
