@@ -96,10 +96,15 @@ assert(Date.now() - t0 < 2000, 'the lookup of every zone took ' + (Date.now() - 
         line({ highway: 'trunk', oneway: 'yes' }, [[2.49, 48.6], [2.51, 48.6]]),
         line({ highway: 'trunk', oneway: 'yes' }, [[2.51, 48.60018], [2.49, 48.60018]]),
     ].join('\n'));
+    // OpenStreetMap's own cameras: one the official list already has (40 m away: left out), one new (kept, with its limit), twice in the file
+    const pt = (tags, lon, lat) => JSON.stringify({ type: 'Feature', properties: tags, geometry: { type: 'Point', coordinates: [lon, lat] } });
+    fs.writeFileSync(path.join(tmp, 'osm.geojsonseq'), [pt({ highway: 'speed_camera' }, 2.37, 48.90046), pt({ highway: 'speed_camera', maxspeed: '70' }, 2.9, 48.3),
+        pt({ highway: 'speed_camera', maxspeed: '70' }, 2.9001, 48.3), pt({ highway: 'traffic_signals' }, 2.95, 48.35)].join('\n'));
     const out = path.join(tmp, 'z.json');
-    const said = execFileSync('python3', [path.join(__dirname, 'make_radar_zones.py'), path.join(tmp, 'r.csv'), path.join(tmp, 'roads.geojsonseq'), '--out', out]).toString();
-    assert(/1206 radars/.test(said), said);
+    const said = execFileSync('python3', [path.join(__dirname, 'make_radar_zones.py'), path.join(tmp, 'r.csv'), path.join(tmp, 'roads.geojsonseq'), '--osm', path.join(tmp, 'osm.geojsonseq'), '--out', out]).toString();
+    assert(/1206 radars de la liste officielle, 1 de plus dans OpenStreetMap/.test(said), said);
     const d2 = JSON.parse(fs.readFileSync(out, 'utf8')), z2 = new RadarZones(d2);
+    assert.strictEqual(d2.osm, 1); assert(z2.zones.some((q) => q.limit === 70 && Math.abs(q.lat - 48.3) < 0.002 && Math.abs(q.lon - 2.9) < 0.002), 'the new camera of OpenStreetMap is a zone');
     assert.strictEqual(d2.cell, 0.002); assert.strictEqual(d2.radiusTown, 300);
     const mw = z2.zones.find((q) => q.limit === 130 && q.dir === 90), mw2 = z2.zones.find((q) => q.limit === 130 && q.dir === 270), tw = z2.zones.find((q) => q.limit === 50), none = z2.zones.find((q) => Math.abs(q.lat - 48.7) < 0.002 && Math.abs(q.lon - 2.2) < 0.002);
     assert(mw && mw.wide && mw.dir === 90 && mw.oneway && !mw.town, JSON.stringify(mw));

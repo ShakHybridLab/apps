@@ -47,7 +47,10 @@ jobs:
             du -sh bimmer/apps/shaklimites/limits
             ls bimmer/apps/shaklimites/limits | wc -l
             # les zones de danger de l'alerte (liste officielle des radars fixes, data.gouv.fr) : zones courtes en ville, direction de la route
-            python3 bimmer/tools/make_radar_zones.py auto /tmp/routes.geojsonseq /tmp/rues.geojsonseq --out bimmer/data/radars_fr_zones.json --out bimmer/apps/shaktheme/zones/radars_fr_zones.json --out bimmer/apps/shakradar/zones/radars_fr_zones.json || echo "ECHEC des zones de danger (l'ancienne liste reste)"
+            osmium tags-filter /tmp/france.osm.pbf n/highway=speed_camera -o /tmp/radars_osm.osm.pbf --overwrite
+            osmium export /tmp/radars_osm.osm.pbf -f geojsonseq --geometry-types=point -o /tmp/radars_osm.geojsonseq --overwrite
+            wc -l /tmp/radars_osm.geojsonseq
+            python3 bimmer/tools/make_radar_zones.py auto /tmp/routes.geojsonseq /tmp/rues.geojsonseq --osm /tmp/radars_osm.geojsonseq --out bimmer/data/radars_fr_zones.json --out bimmer/apps/shaktheme/zones/radars_fr_zones.json --out bimmer/apps/shakradar/zones/radars_fr_zones.json || echo "ECHEC des zones de danger (l'ancienne liste reste)"
           } 2>&1 | tee "$LOG.new" || echo "ECHEC (voir ci-dessus)" >> "$LOG.new"
           mv "$LOG.new" "$LOG"
       - name: Commit

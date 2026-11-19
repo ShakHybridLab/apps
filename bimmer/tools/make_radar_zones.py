@@ -17,7 +17,10 @@ type d'un radar (décret n° 2012-3, article R413-15 ; ceci n'est pas un avis ju
     jumeau pour l'autre sens) : seul, il peut couvrir les deux sens et la liste ne le dit pas. Sans routes : pas de direction, la zone vaut
     pour tout le monde.
 
-    python3 tools/make_radar_zones.py <radars.csv | url> [routes.geojsonseq ...] [--out a.json] [--out b.json]
+  - avec --osm : les radars fixes notés dans OpenStreetMap (highway=speed_camera) qui ne sont pas déjà dans la liste officielle (aucun
+    radar officiel à moins de 150 m) s'ajoutent : la liste du ministère a parfois plusieurs mois de retard.
+
+    python3 tools/make_radar_zones.py <radars.csv | url> [routes.geojsonseq ...] [--osm radars_osm.geojsonseq] [--out a.json] [--out b.json]
 Sortie par défaut : data/radars_fr_zones.json. Données des routes © les contributeurs d'OpenStreetMap, ODbL.
 """
 import csv, io, json, math, os, sys, time, urllib.request
@@ -27,6 +30,7 @@ RADIUS = 2000           # mètres autour du centre
 RADIUS_WIDE = 4000      # limite de 110 ou plus : autoroute
 RADIUS_TOWN = 300       # limite de 50 ou moins : en ville
 WIDE_FROM, TOWN_TO = 110, 50
+SAME_M = 150.0          # un radar d'OpenStreetMap à moins de ça d'un radar officiel : c'est le même
 SNAP_M = 60.0           # la route du radar : la plus proche, à cette distance au plus
 TWIN_M = 500.0          # un radar à sens unique sans autre radar à cette distance : il couvre les deux sens, les deux chaussées sont alertées
 GRID = 0.002            # cases de la recherche des routes
@@ -67,6 +71,41 @@ def radars(raw):
         # en ville : zone courte (une zone de 2 km en pleine ville couvrait tout un quartier). Le type lui-même n'est pas gardé.
         kind = r[tcol].strip().upper() if tcol is not None and tcol < len(r) else ''
         out.append((lat, lon, int(vma) if vma.isdigit() else 0, kind in ('ETFR', 'ETPN')))
+    return out
+
+
+def osm_cameras(files, cams):
+    """les radars d'OpenStreetMap (points highway=speed_camera) qui ne sont pas dans la liste officielle : [(lat, lon, limite, court)]"""
+    grid = {}
+    for c in cams:
+        grid.setdefault((int(c[0] / 0.005), int(c[1] / 0.005)), []).append(c)
+    out = []
+    for f in files:
+        with open(f, encoding='utf-8') as fh:
+            for line in fh:
+                line = line.strip().lstrip('\x1e')
+                if not line:
+                    continue
+                try:
+                    ft = json.loads(line)
+                except ValueError:
+                    continue
+                g = ft.get('geometry') or {}
+                tags = ft.get('properties') or {}
+                if g.get('type') != 'Point' or tags.get('highway') != 'speed_camera':
+                    continue
+                lon, lat = float(g['coordinates'][0]), float(g['coordinates'][1])
+                ky, kx = 110540.0, 111320.0 * math.cos(math.radians(lat))
+                gy, gx = int(lat / 0.005), int(lon / 0.005)
+                known = any(math.hypot((c[0] - lat) * ky, (c[1] - lon) * kx) <= SAME_M
+                            for a in (-1, 0, 1) for b in (-1, 0, 1) for c in grid.get((gy + a, gx + b), ()))
+                if known:
+                    continue
+                v = str(tags.get('maxspeed') or '').strip()
+                limit = int(v) if v.isdigit() and 20 <= int(v) <= 130 else 0
+                c = (lat, lon, limit, False)
+                out.append(c)
+                grid.setdefault((gy, gx), []).append(c)       # (deux points d'OpenStreetMap pour le même radar ne comptent qu'une fois)
     return out
 
 
@@ -134,10 +173,12 @@ def bearings(cams, files):
 
 
 def main(argv):
-    outs, args, i = [], [], 0
+    outs, args, osm, i = [], [], [], 0
     while i < len(argv):
         if argv[i] == '--out':
             outs.append(argv[i + 1]); i += 2
+        elif argv[i] == '--osm':
+            osm.append(argv[i + 1]); i += 2
         else:
             args.append(argv[i]); i += 1
     if not args:
@@ -148,6 +189,9 @@ def main(argv):
     cams = radars(raw)
     if len(cams) < 1000:
         raise SystemExit('seulement %d radars lus : fichier inattendu, rien n\'est écrit' % len(cams))
+    official = len(cams)
+    extra = osm_cameras([f for f in osm if os.path.isfile(f)], cams)
+    cams = cams + extra
     roads = [a for a in args[1:] if os.path.isfile(a)]
     brg = bearings(cams, roads) if roads else [None] * len(cams)
     cells = {}
@@ -181,7 +225,8 @@ def main(argv):
             flags |= 2
         zones.append([la, lo, limit, 1 if limit >= WIDE_FROM else 0, d, flags])
     doc = {
-        'source': "Ministère de l'Intérieur, Liste des radars fixes en France, data.gouv.fr ; direction des routes : contributeurs d'OpenStreetMap (ODbL)",
+        'source': "Ministère de l'Intérieur, Liste des radars fixes en France, data.gouv.fr ; direction des routes et radars en plus : contributeurs d'OpenStreetMap (ODbL)",
+        'official': official, 'osm': len(extra),
         'licence': 'Licence Ouverte / Open Licence 2.0',
         'version': version or time.strftime('%Y-%m-%d'),
         'made': time.strftime('%Y-%m-%d'),
@@ -196,6 +241,7 @@ def main(argv):
         os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
         with open(out, 'w', encoding='utf-8') as f:
             f.write(text)
+    print('%d radars de la liste officielle, %d de plus dans OpenStreetMap' % (official, len(extra)))
     print('%d radars -> %d zones (%d larges, %d en ville, %d avec une direction dont %d à sens unique), %d octets, version %s' % (
         len(cams), len(zones), sum(z[3] for z in zones), sum(1 for z in zones if z[5] & 2), sum(1 for z in zones if z[4] >= 0),
         sum(1 for z in zones if z[5] & 1), len(text), doc['version']))

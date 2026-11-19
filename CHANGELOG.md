@@ -2,6 +2,9 @@
 
 ## 19 novembre 2026
 
+### Zones de danger : les radars fixes d'OpenStreetMap en plus de la liste officielle (liste à refaire)
+Demande du propriétaire (19 nov. 2026, 16:10) : « tu ne peux pas vérifier d'autres radars sur d'autres sites à mettre ? » La liste du ministère date du 30 décembre 2025. La fabrication ajoute les radars fixes notés dans OpenStreetMap (`highway=speed_camera`, déjà dans la carte téléchargée) qui ne sont pas dans la liste officielle (aucun radar officiel à moins de 150 m), avec leur limitation quand elle est notée (`tools/make_radar_zones.py --osm`). Seule source ajoutée : sa licence (ODbL) permet de la réutiliser ; les bases des sites d'avertisseurs ne sont pas libres. Toujours des zones, toujours pas les radars mobiles.
+
 ### Alerte zone de danger : elle part 500 m avant la zone, au lieu de 2 km
 Demande du propriétaire (19 nov. 2026, 15:47 et 15:49) : « il me prévient à combien de mètres ? baisse tout à 500 m ». L'alerte s'allumait 2 km avant le bord de la zone : comptés jusqu'au radar, environ 4 km sur route et 6 km sur autoroute, si longtemps qu'on ne la regardait plus. **L'avance passe à 500 m** (`shared/radar_app.js`, `WITHIN_M`) : environ 2,5 km avant sur route, 4,5 km sur autoroute, 600 m en ville (300 m d'avance, inchangé). Les zones gardent leur taille (2 km, 4 km sur autoroute, 300 m en ville, comme les avertisseurs du commerce) : les réduire à 500 m partout reviendrait à donner l'emplacement du radar.
 
