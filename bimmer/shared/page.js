@@ -540,8 +540,16 @@ class Page {
         const pf = pg === 0 && typeof this.hud.perfShown === 'function' ? this.hud.perfShown() : null;
         // errors the app caught and went on from (hud.js _guard, shared/survive.js): on the screen, since the owner reads the screen and not the log
         const ft = pg === 0 && typeof this.hud.faultsShown === 'function' ? this.hud.faultsShown() : null;
+        // the danger alert inside the app (ShakTheme): whether the car's position arrives and what the alert made of it. The owner passed a camera with
+        // nothing shown (19 Nov 2026) and the screen said nothing of why. No place and no distance here: only the state.
+        let rd = null;
+        if (pg === 0 && this.hud.radar && typeof this.hud.radar.state === 'function') {
+            const r = this.hud.radar.state(), h = this.hud.radar.heading;
+            rd = 'Danger alert: ' + r.why + ' · positions ' + r.raw.posN + (r.pos ? ' (' + Math.round(r.pos.age / 1000) + ' s ago)' : '') + ' · heading ' + (h === null ? 'unknown' : Math.round(h) + '°')
+                + (r.writeError ? ' · write ' + r.writeError : '');
+        }
         note(cv, CX, y + 12, [pf ? 'Loop: ' + pf.perSec + '/s · average ' + pf.avg + ' ms · slowest ' + pf.max + ' ms · longest wait ' + pf.gap + ' ms' : 'Photograph pages 1 and 2 after a drive: they show the last values the car sent.',
-            ft ? 'Errors caught: ' + ft.n + ' · last: ' + String(ft.last).slice(0, 84) : 'Blue: what the app understood of the value. Read only: nothing here changes the car.']);
+            ft ? 'Errors caught: ' + ft.n + ' · last: ' + String(ft.last).slice(0, 84) : rd || 'Blue: what the app understood of the value. Read only: nothing here changes the car.']);
     }
 
     /** The pages of the Signals tab as small chips at the right of the title ("1/5" ...). */

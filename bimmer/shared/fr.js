@@ -134,6 +134,11 @@ const PATTERNS = [
     [/^(\d+) msg · ([\d.]+)\/s$/, '$1 msg · $2/s'],
     // onglet Signaux : la mesure de la boucle des jauges (hud.js _perfNote)
     [/^Errors caught: (\d+) · last: (.*)$/, 'Erreurs rattrapées : $1 · dernière : $2'],
+    // onglet Signaux de ShakTheme : l'état de l'alerte zone de danger (page.js)
+    [/^Danger alert: (.*?) · positions (\d+)(?: \((\d+) s ago\))? · heading (unknown|\d+°)(.*)$/, (m, why, n, age, h, rest) => 'Alerte danger : ' + ({
+        'turned off': 'éteinte', 'no position yet': 'aucune position reçue', 'position not understood': 'position non comprise', 'position too old': 'position trop ancienne',
+        'zone behind': 'zone derrière', 'in a zone': 'dans une zone', 'zone ahead': 'zone devant' }[why] || (/^no zone within/.test(why) ? 'pas de zone proche' : why))
+        + ' · positions ' + n + (age ? ' (il y a ' + age + ' s)' : '') + ' · cap ' + (h === 'unknown' ? 'inconnu' : h) + rest.replace(' · write ', ' · écriture ')],
     [/^Loop: (\d+)\/s · average ([\d.]+) ms · slowest (\d+) ms · longest wait (\d+) ms$/, 'Boucle : $1/s · moyenne $2 ms · la plus lente $3 ms · attente la plus longue $4 ms'],
     [/^Turn HUD Widgets off so (.*) shows\?$/, 'Éteindre HUD Widgets pour afficher $1 ?'],
     [/^Turn the cluster theme off so (.*) shows\?$/, 'Éteindre le thème du cluster pour afficher $1 ?'],

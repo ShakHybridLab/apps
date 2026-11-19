@@ -2,6 +2,11 @@
 
 ## 19 novembre 2026
 
+### ShakTheme 0.21.37 : l'état de l'alerte zone de danger dans l'onglet Signaux (pas encore essayé sur la voiture)
+Le propriétaire est passé devant un radar du périphérique (porte de Bagnolet, en venant d'Aubervilliers) sans alerte, avec la 0.21.36. La zone existe et son sens correspond au sien : la cause est donc dans l'appli (position GPS non reçue, non comprise…), et l'écran n'en disait rien. L'onglet Signaux, page 1, montre maintenant en bas une ligne « Alerte danger : … · positions N (il y a X s) · cap N° » (`shared/page.js`, traduite dans `shared/fr.js`) : éteinte, aucune position reçue, position non comprise, position trop ancienne, pas de zone proche, zone devant, dans une zone, zone derrière. Ni lieu ni distance : seulement l'état. Le réglage s'appelle « Alerte zone de danger » (il disait encore « M Blade et Navi » alors que Sport et M l'affichent aussi).
+
+À savoir : les rayons des zones (500/500/300) sont ceux que le propriétaire a mis lui-même dans `tools/make_radar_zones.py` ; `tools/test_radar_zones.js` attend encore les anciens (2000/4000) et échoue pour cette seule raison.
+
 ### Zones de danger : le sens contrôlé, quand OpenStreetMap le dit (liste à refaire)
 Demande du propriétaire (19 nov. 2026, 16:14) : « compare OpenStreetMap, si c'est plus précis ça te dit les radars des deux côtés ». Les contributeurs d'OpenStreetMap notent pour certains radars d'où vient la circulation contrôlée (relations « enforcement », membres `from` et `device`). La fabrication les lit (`tools/make_radar_zones.py --enf`, `osmium cat -f opl` dans `.github/workflows/limites.yml`) : pour un radar qui en a une (à moins de 150 m), **un seul sens noté, la zone ne vaut que pour ce sens, même sur une route à double sens ; deux sens opposés, elle vaut pour les deux**. Ce qui est noté passe devant la règle du jumeau à 500 m, qui reste pour tous les autres radars. Le journal de fabrication dit combien de radars sont ainsi renseignés.
 
