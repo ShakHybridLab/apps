@@ -19,8 +19,11 @@ type d'un radar (décret n° 2012-3, article R413-15 ; ceci n'est pas un avis ju
 
   - avec --osm : les radars fixes notés dans OpenStreetMap (highway=speed_camera) qui ne sont pas déjà dans la liste officielle (aucun
     radar officiel à moins de 150 m) s'ajoutent : la liste du ministère a parfois plusieurs mois de retard.
+  - avec --enf : les relations « enforcement » d'OpenStreetMap (osmium cat -f opl), où les contributeurs notent pour un radar d'où vient la
+    circulation contrôlée (membres « from » et « device »). Un radar qui en a une n'est plus deviné : un seul sens noté, la zone ne vaut
+    que pour ce sens (même sur une route à double sens) ; deux sens opposés, elle vaut pour les deux. Sans relation, la règle du jumeau.
 
-    python3 tools/make_radar_zones.py <radars.csv | url> [routes.geojsonseq ...] [--osm radars_osm.geojsonseq] [--out a.json] [--out b.json]
+    python3 tools/make_radar_zones.py <radars.csv | url> [routes.geojsonseq ...] [--osm radars_osm.geojsonseq] [--enf enforcement.opl] [--out a.json] ...
 Sortie par défaut : data/radars_fr_zones.json. Données des routes © les contributeurs d'OpenStreetMap, ODbL.
 """
 import csv, io, json, math, os, sys, time, urllib.request
@@ -109,6 +112,84 @@ def osm_cameras(files, cams):
     return out
 
 
+def enforcement(files):
+    """les relations « enforcement » d'OpenStreetMap : [(lat, lon du radar, [directions de la circulation contrôlée, en degrés])]"""
+    nodes, rels = {}, []
+    for f in files:
+        with open(f, encoding='utf-8') as fh:
+            for line in fh:
+                if line.startswith('n'):
+                    parts = line.split(' ')
+                    x = next((q[1:] for q in parts if q.startswith('x')), '')
+                    y = next((q[1:] for q in parts if q.startswith('y')), '').strip()
+                    try:
+                        nodes[parts[0][1:]] = (float(y), float(x))
+                    except ValueError:
+                        pass
+                elif line.startswith('r'):
+                    parts = line.rstrip('\n').split(' ')
+                    tags = next((q[1:] for q in parts if q.startswith('T')), '')
+                    mem = next((q[1:] for q in parts if q.startswith('M')), '')
+                    if 'type=enforcement' not in tags or ('enforcement=' in tags and 'enforcement=maxspeed' not in tags and 'enforcement=average_speed' not in tags):
+                        continue
+                    dev, frm = [], []
+                    for m in mem.split(','):
+                        ref, _, role = m.partition('@')
+                        if ref.startswith('n') and role == 'device':
+                            dev.append(ref[1:])
+                        elif ref.startswith('n') and role == 'from':
+                            frm.append(ref[1:])
+                    rels.append((dev, frm))
+    out = []
+    for dev, frm in rels:
+        for d in dev:
+            if d not in nodes:
+                continue
+            la, lo = nodes[d]
+            kx, ky = 111320.0 * math.cos(math.radians(la)), 110540.0
+            dirs = []
+            for f2 in frm:
+                if f2 in nodes:
+                    dx, dy = (lo - nodes[f2][1]) * kx, (la - nodes[f2][0]) * ky
+                    if dx * dx + dy * dy > 4.0:
+                        dirs.append((math.degrees(math.atan2(dx, dy)) + 360.0) % 360.0)
+            if dirs:
+                out.append((la, lo, dirs))
+    return out
+
+
+def sides(cams, brg, enf):
+    """applique ce que les relations disent : renvoie (directions corrigées, nombre « un sens », nombre « deux sens »)"""
+    grid = {}
+    for e in enf:
+        grid.setdefault((int(e[0] / 0.005), int(e[1] / 0.005)), []).append(e)
+    one = both = 0
+    out = list(brg)
+    for i, c in enumerate(cams):
+        lat, lon = c[0], c[1]
+        ky, kx = 110540.0, 111320.0 * math.cos(math.radians(lat))
+        gy, gx = int(lat / 0.005), int(lon / 0.005)
+        dirs = []
+        for a in (-1, 0, 1):
+            for b in (-1, 0, 1):
+                for e in grid.get((gy + a, gx + b), ()):
+                    if math.hypot((e[0] - lat) * ky, (e[1] - lon) * kx) <= SAME_M:
+                        dirs += e[2]
+        if not dirs:
+            continue
+        def off(x, y):
+            a2 = abs(x - y) % 360.0
+            return 360.0 - a2 if a2 > 180.0 else a2
+        if all(off(d, dirs[0]) <= 60.0 for d in dirs):
+            out[i] = (0.0, dirs[0], True)                 # un seul sens contrôlé : la zone ne vaut que pour lui
+            one += 1
+        else:
+            road = brg[i][1] if brg[i] is not None else dirs[0]
+            out[i] = (0.0, road, False)                   # les deux sens
+            both += 1
+    return out, one, both
+
+
 def bearings(cams, files):
     """pour chaque radar : (direction de sa route en degrés depuis le nord, sens unique) ou None"""
     want = {}
@@ -173,12 +254,14 @@ def bearings(cams, files):
 
 
 def main(argv):
-    outs, args, osm, i = [], [], [], 0
+    outs, args, osm, enf_files, i = [], [], [], [], 0
     while i < len(argv):
         if argv[i] == '--out':
             outs.append(argv[i + 1]); i += 2
         elif argv[i] == '--osm':
             osm.append(argv[i + 1]); i += 2
+        elif argv[i] == '--enf':
+            enf_files.append(argv[i + 1]); i += 2
         else:
             args.append(argv[i]); i += 1
     if not args:
@@ -194,6 +277,9 @@ def main(argv):
     cams = cams + extra
     roads = [a for a in args[1:] if os.path.isfile(a)]
     brg = bearings(cams, roads) if roads else [None] * len(cams)
+    enf = enforcement([f for f in enf_files if os.path.isfile(f)])
+    brg, said_one, said_both = sides(cams, brg, enf)
+    print('%d relations de contrôle dans OpenStreetMap : %d radars notés un seul sens, %d notés deux sens' % (len(enf), said_one, said_both))
     cells = {}
     for (lat, lon, limit, short), b in zip(cams, brg):
         key = (int(round(lat / CELL)), int(round(lon / CELL)))

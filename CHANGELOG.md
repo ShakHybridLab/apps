@@ -2,6 +2,9 @@
 
 ## 19 novembre 2026
 
+### Zones de danger : le sens contrôlé, quand OpenStreetMap le dit (liste à refaire)
+Demande du propriétaire (19 nov. 2026, 16:14) : « compare OpenStreetMap, si c'est plus précis ça te dit les radars des deux côtés ». Les contributeurs d'OpenStreetMap notent pour certains radars d'où vient la circulation contrôlée (relations « enforcement », membres `from` et `device`). La fabrication les lit (`tools/make_radar_zones.py --enf`, `osmium cat -f opl` dans `.github/workflows/limites.yml`) : pour un radar qui en a une (à moins de 150 m), **un seul sens noté, la zone ne vaut que pour ce sens, même sur une route à double sens ; deux sens opposés, elle vaut pour les deux**. Ce qui est noté passe devant la règle du jumeau à 500 m, qui reste pour tous les autres radars. Le journal de fabrication dit combien de radars sont ainsi renseignés.
+
 ### Zones de danger : les radars fixes d'OpenStreetMap en plus de la liste officielle (liste à refaire)
 Demande du propriétaire (19 nov. 2026, 16:10) : « tu ne peux pas vérifier d'autres radars sur d'autres sites à mettre ? » La liste du ministère date du 30 décembre 2025. La fabrication ajoute les radars fixes notés dans OpenStreetMap (`highway=speed_camera`, déjà dans la carte téléchargée) qui ne sont pas dans la liste officielle (aucun radar officiel à moins de 150 m), avec leur limitation quand elle est notée (`tools/make_radar_zones.py --osm`). Seule source ajoutée : sa licence (ODbL) permet de la réutiliser ; les bases des sites d'avertisseurs ne sont pas libres. Toujours des zones, toujours pas les radars mobiles.
 

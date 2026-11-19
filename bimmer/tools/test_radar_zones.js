@@ -100,16 +100,26 @@ assert(Date.now() - t0 < 2000, 'the lookup of every zone took ' + (Date.now() - 
     const pt = (tags, lon, lat) => JSON.stringify({ type: 'Feature', properties: tags, geometry: { type: 'Point', coordinates: [lon, lat] } });
     fs.writeFileSync(path.join(tmp, 'osm.geojsonseq'), [pt({ highway: 'speed_camera' }, 2.37, 48.90046), pt({ highway: 'speed_camera', maxspeed: '70' }, 2.9, 48.3),
         pt({ highway: 'speed_camera', maxspeed: '70' }, 2.9001, 48.3), pt({ highway: 'traffic_signals' }, 2.95, 48.35)].join('\n'));
+    // OpenStreetMap's enforcement relations (OPL): the camera in town (9002, a two-way street) is noted for the traffic going north only; the one
+    // with a twin on the motorway (9001) is noted for both directions: what the contributors wrote wins over the guesses
+    fs.writeFileSync(path.join(tmp, 'enf.opl'), [
+        'n1 v1 dV c0 t i0 u T x2.30001 y48.80003', 'n2 v1 dV c0 t i0 u T x2.30001 y48.79800',
+        'n3 v1 dV c0 t i0 u T x2.37000 y48.90010', 'n4 v1 dV c0 t i0 u T x2.36500 y48.90010', 'n5 v1 dV c0 t i0 u T x2.37500 y48.90010',
+        'r10 v1 dV c0 t i0 u Ttype=enforcement,enforcement=maxspeed,maxspeed=50 Mn1@device,n2@from',
+        'r11 v1 dV c0 t i0 u Ttype=enforcement,enforcement=maxspeed Mn3@device,n4@from,n5@from',
+        'r12 v1 dV c0 t i0 u Ttype=enforcement,enforcement=traffic_signals Mn1@device,n5@from',
+    ].join('\n') + '\n');
     const out = path.join(tmp, 'z.json');
-    const said = execFileSync('python3', [path.join(__dirname, 'make_radar_zones.py'), path.join(tmp, 'r.csv'), path.join(tmp, 'roads.geojsonseq'), '--osm', path.join(tmp, 'osm.geojsonseq'), '--out', out]).toString();
+    const said = execFileSync('python3', [path.join(__dirname, 'make_radar_zones.py'), path.join(tmp, 'r.csv'), path.join(tmp, 'roads.geojsonseq'), '--osm', path.join(tmp, 'osm.geojsonseq'), '--enf', path.join(tmp, 'enf.opl'), '--out', out]).toString();
     assert(/1206 radars de la liste officielle, 1 de plus dans OpenStreetMap/.test(said), said);
     const d2 = JSON.parse(fs.readFileSync(out, 'utf8')), z2 = new RadarZones(d2);
     assert.strictEqual(d2.osm, 1); assert(z2.zones.some((q) => q.limit === 70 && Math.abs(q.lat - 48.3) < 0.002 && Math.abs(q.lon - 2.9) < 0.002), 'the new camera of OpenStreetMap is a zone');
     assert.strictEqual(d2.cell, 0.002); assert.strictEqual(d2.radiusTown, 300);
     const mw = z2.zones.find((q) => q.limit === 130 && q.dir === 90), mw2 = z2.zones.find((q) => q.limit === 130 && q.dir === 270), tw = z2.zones.find((q) => q.limit === 50), none = z2.zones.find((q) => Math.abs(q.lat - 48.7) < 0.002 && Math.abs(q.lon - 2.2) < 0.002);
-    assert(mw && mw.wide && mw.dir === 90 && mw.oneway && !mw.town, JSON.stringify(mw));
-    assert(mw2 && mw2.oneway, 'the twin: the other carriageway, one way too');
-    assert(tw && tw.town && tw.dir === 0 && !tw.oneway, JSON.stringify(tw));
+    assert(/2 relations de contrôle dans OpenStreetMap : 1 radars notés un seul sens, 1 notés deux sens/.test(said), said);
+    assert(mw && mw.wide && mw.dir === 90 && !mw.oneway && !mw.town, 'noted for both directions in OpenStreetMap: ' + JSON.stringify(mw));
+    assert(mw2 && mw2.oneway, 'the twin (no relation): the other carriageway, one way');
+    assert(tw && tw.town && tw.dir === 0 && tw.oneway, 'noted for the traffic going north only: ' + JSON.stringify(tw));
     assert(none && none.dir === null && none.limit === null, JSON.stringify(none));
     const red = z2.zones.find((q) => Math.abs(q.lat - 48.5) < 0.002 && Math.abs(q.lon - 2.1) < 0.002);
     assert(red && red.town && red.limit === null && !none.town, 'a red light camera has a short zone, a speed camera without a limit keeps the usual one');
@@ -122,7 +132,7 @@ assert(Date.now() - t0 < 2000, 'the lookup of every zone took ' + (Date.now() - 
     // the motorway: the car going east is warned, the other carriageway (west) and a road crossing it (north) are not; unknown heading: warned
     // (each carriageway is warned by its own camera: going west the zone found is the twin's, not the eastbound one)
     const east = z2.nearest(48.9, 2.33, 2000, 90), west = z2.nearest(48.9003, 2.41, 2000, 270);
-    assert(east && west && Math.abs(east.lon - 2.37) < 0.002 && Math.abs(west.lon - 2.374) < 0.002, JSON.stringify([east, west]));
+    assert(east && west && Math.abs(east.lon - 2.37) < 0.002, JSON.stringify([east, west]));
     assert.strictEqual(z2.nearest(48.9, 2.33, 2000, 0), null);
     assert(z2.nearest(48.9, 2.33, 2000, null) && z2.nearest(48.9, 2.33, 2000));
     // in town: 300 m around, and warned from 300 m before that only, in either direction of the street, not from the street across
@@ -130,7 +140,7 @@ assert(Date.now() - t0 < 2000, 'the lookup of every zone took ' + (Date.now() - 
     assert.strictEqual(z2.nearest(48.8 - 900 * M, 2.3, 2000, 0), null, '900 m away in town: too soon');
     const near = z2.nearest(48.8 - 500 * M, 2.3, 2000, 0);
     assert(near && near.town && near.edgeM > 100 && near.edgeM < 300, JSON.stringify(near));
-    assert(z2.nearest(48.8 + 500 * M, 2.3, 2000, 180), 'the street is two ways');
+    assert.strictEqual(z2.nearest(48.8 + 500 * M, 2.3, 2000, 180), null, 'going south: OpenStreetMap says this camera checks the traffic going north only');
     assert.strictEqual(z2.nearest(48.8 - 100 * M, 2.3, 2000, 90), null, 'crossing the street');
     fs.rmSync ? fs.rmSync(tmp, { recursive: true, force: true }) : null;
 }
