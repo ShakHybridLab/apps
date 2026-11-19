@@ -23,6 +23,10 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+        with:
+          # la pointe de la branche au moment où la fabrication démarre, pas le commit qui l'a demandée : sinon le résultat
+          # d'une fabrication passée entre-temps entre en conflit avec celui-ci à l'envoi (échec de la n° 6, 19 nov. 2026)
+          ref: ${{ github.ref_name }}
       - name: Outils
         run: sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
       - name: Fabrication

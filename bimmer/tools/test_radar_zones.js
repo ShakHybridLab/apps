@@ -58,7 +58,7 @@ assert.strictEqual(new RadarZones({ zones: [[1], 'x', null, [4536, 425, 70, 0]] 
 const file = path.join(__dirname, '..', 'data', 'radars_fr_zones.json');
 const doc = JSON.parse(fs.readFileSync(file, 'utf8'));
 assert(/Licence Ouverte/.test(doc.licence) && /Intérieur/.test(doc.source) && doc.version, 'source, licence and version are written in it');
-assert(doc.zones.length > 2500 && doc.zones.length < 3600, 'about three thousand zones: ' + doc.zones.length);
+assert(doc.zones.length > 2500 && doc.zones.length < 6000, 'three to five thousand zones (the official list, and OpenStreetMap\'s own since Nov 19 2026): ' + doc.zones.length);
 // (the list of Nov 2026 on: a 0.002 degree grid, the road's direction and flags after the four first numbers)
 assert(doc.zones.every((q) => (q.length === 4 || q.length === 6) && q.every(Number.isInteger)), 'whole numbers only: a centre is on the grid, never an exact position');
 assert(doc.cell >= 0.002, 'the grid is not finer than 0.002 degree: a zone, not a place');
