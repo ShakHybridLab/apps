@@ -65,9 +65,9 @@ function rig() {
 }
 check('en approchant d\'une zone : le fichier de l\'alerte dit la distance au bord et la limite ; dedans : 0 m', () => {
     const R = rig();
-    R.at(4500); assert.strictEqual(R.read(), null, '2,5 km du bord : pas encore (alerte à 2 km)');
-    R.step(1000); R.at(3300); let f = R.read();
-    assert(f && f.app === 'ShakRadar' && Math.abs(f.distance - 1300) < 10 && f.limit === 70, JSON.stringify(f));
+    R.at(3300); assert.strictEqual(R.read(), null, '1,3 km du bord : pas encore (alerte à 500 m du bord depuis le 19 nov. 2026)');
+    R.step(1000); R.at(2400); let f = R.read();
+    assert(f && f.app === 'ShakRadar' && Math.abs(f.distance - 400) < 10 && f.limit === 70, JSON.stringify(f));
     R.step(1000); R.at(2600); R.step(1000); R.at(1500);
     f = R.read(); assert(f && f.distance === 0, 'dedans : ' + JSON.stringify(f));
     assert.strictEqual(R.app.state().why, 'in a zone');
@@ -81,7 +81,7 @@ check('en s\'éloignant d\'une zone (dehors) : pas d\'alerte, le fichier est ret
 });
 check('sans position depuis plus de 5 s : plus d\'alerte ; une position pas comprise ne compte pas', () => {
     const R = rig();
-    R.at(2500); assert(R.read());
+    R.at(2300); assert(R.read());
     R.step(6000); R.app.tick();
     assert.strictEqual(R.read(), null); assert.strictEqual(R.app.state().why, 'position too old');
     R.app.position({ latitude: 0x7FFFFFFF, longitude: 1 }); R.app.tick();
@@ -89,11 +89,11 @@ check('sans position depuis plus de 5 s : plus d\'alerte ; une position pas comp
 });
 check('le fichier écrit est celui que lit l\'alerte du thème (danger.js), avec la limite', () => {
     const R = rig();
-    R.at(3000);
+    R.at(2300);
     const d = new Danger({ dir: R.dir, now: R.now }, { info() {}, warn() {} }, () => {});
     d.scan ? d.scan() : d._scan();
     const s = d.state();
-    assert(s && s.on && Math.abs(s.distM - 1000) < 10 && s.limit === 70 && s.app === 'ShakRadar', JSON.stringify(s));
+    assert(s && s.on && Math.abs(s.distM - 300) < 10 && s.limit === 70 && s.app === 'ShakRadar', JSON.stringify(s));
     R.app.stop(); assert.strictEqual(R.read(), null, 'arrêtée : le fichier part');
 });
 check('l\'appli : GPSData seul (déclaré à part, comme ShakGPS), ses fichiers partagés existent, la liste des zones est celle de data/', () => {

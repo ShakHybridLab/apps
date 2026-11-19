@@ -5,7 +5,7 @@
  *
  *   /dev/shm/cluster-themes/danger-shakradar.json   { "t": <ms>, "app": "ShakRadar", "distance": <metres to the zone>, "limit": <km/h, optional> }
  *
- * once a second while a zone is ahead (within WITHIN_M of its edge, or the car inside it), and removes it otherwise. A zone the car is
+ * once a second while a zone is ahead (within WITHIN_M of its edge, 500 m, or the car inside it), and removes it otherwise. A zone the car is
  * moving away from (its centre farther than it was AWAY_M ago, the car outside it) is not ahead: no alert behind the car, whatever the
  * heading the car may or may not give. No position for POS_STALE_MS: no alert (a tunnel, a car parked, the GPS not answering).
  * The wording stays the law's: a "danger zone" and a distance, nothing says what is there.
@@ -18,7 +18,8 @@ const gps = require('./gps_pos');
 
 const THEMES_DIR = process.env.CLUSTER_THEMES_DIR || '/dev/shm/cluster-themes';
 const FILE = 'danger-shakradar.json';
-const WITHIN_M = 2000;          // the alert starts this far from a zone's edge
+const WITHIN_M = 500;           // the alert starts this far from a zone's edge (2000 until Nov 19 2026: on a road it came on 4 km before the camera,
+                                // on a motorway 6 km, and stayed on so long that nobody looked at it; the zones keep their size)
 const POS_STALE_MS = 5000;      // a position older than this is no position
 const WRITE_MS = 1000;          // danger.js counts a file older than 3 s as gone
 const AWAY_M = 30;              // moved this much farther from the zone's centre (over the last positions): going away from it

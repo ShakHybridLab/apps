@@ -81,7 +81,7 @@ mgu.run({
                 if (z) {
                     cv.text(z.inside ? 'dans la zone' : 'à ' + Math.round(z.edgeM) + ' m du bord de la zone', 900, 214, 18, W);
                     cv.text('limite : ' + (z.limit ? z.limit + ' km/h' : 'inconnue') + (z.wide ? '   ·   zone large (4 km)' : '   ·   zone de 2 km'), 900, 240, 16, D);
-                } else cv.text('alerte à moins de ' + (WITHIN_M / 1000) + ' km du bord d\'une zone', 900, 214, 15, G);
+                } else cv.text('alerte à moins de ' + WITHIN_M + ' m du bord d\'une zone', 900, 214, 15, G);
                 cv.text(s.writing ? 'Alerte envoyée au thème (ShakTheme)' : s.writeError ? 'Écriture impossible : ' + s.writeError : 'Rien envoyé au thème', 900, 290, 16, s.writing ? OK : s.writeError ? BAD : G, { font: 'bold' });
                 cv.text('Dans ShakTheme : réglage "Alerte zone de danger" allumé.', 900, 316, 14, G);
                 cv.text('Zones et non radars : la liste officielle des radars fixes, arrondie en zones de 2 km (4 km sur autoroute).', 40, 500, 14, G);

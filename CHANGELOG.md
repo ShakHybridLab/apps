@@ -2,6 +2,9 @@
 
 ## 19 novembre 2026
 
+### Alerte zone de danger : elle part 500 m avant la zone, au lieu de 2 km
+Demande du propriétaire (19 nov. 2026, 15:47 et 15:49) : « il me prévient à combien de mètres ? baisse tout à 500 m ». L'alerte s'allumait 2 km avant le bord de la zone : comptés jusqu'au radar, environ 4 km sur route et 6 km sur autoroute, si longtemps qu'on ne la regardait plus. **L'avance passe à 500 m** (`shared/radar_app.js`, `WITHIN_M`) : environ 2,5 km avant sur route, 4,5 km sur autoroute, 600 m en ville (300 m d'avance, inchangé). Les zones gardent leur taille (2 km, 4 km sur autoroute, 300 m en ville, comme les avertisseurs du commerce) : les réduire à 500 m partout reviendrait à donner l'emplacement du radar.
+
 ### Zones de danger : première fabrication, et zones courtes pour les radars de feu rouge
 La fabrication sur GitHub a tourné (ShakTheme 0.21.33, ShakRadar 0.1.4, montés par elle) : 3 309 radars de la liste du 30 décembre 2025, **3 152 zones**, dont 494 en ville (300 m), 65 larges (autoroute), **2 842 avec la direction de leur route** (310 sans : pas de route connue à 60 m, elles alertent comme avant), 173 « un côté » (un jumeau à moins de 500 m) ; en Île-de-France 397 zones, 103 en ville, 48 « un côté », 18 sans direction. Constat à la position de la photo du matin : un radar sans vitesse dans la liste (feu rouge) gardait une zone de 2 km en pleine ville. Corrigé dans `tools/make_radar_zones.py` : un radar de feu rouge ou de passage à niveau a une zone courte (300 m), son type n'étant toujours pas gardé. Liste à refaire (prochain envoi).
 
