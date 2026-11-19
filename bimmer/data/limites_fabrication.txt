@@ -1,10 +1,12 @@
-Fabrication du 2026-11-19T14:26Z
-2026-11-19 15:02:43 URL:https://download.geofabrik.de/europe/france-261118.osm.pbf [5118593302/5118593302] -> "/tmp/france.osm.pbf" [1]
+Fabrication du 2026-11-19T15:12Z
+2026-11-19 15:44:48 URL:https://download.geofabrik.de/europe/france-261118.osm.pbf [5118593302/5118593302] -> "/tmp/france.osm.pbf" [1]
 -rw-r--r-- 1 runner runner 5118593302 Nov 19 03:06 /tmp/france.osm.pbf
--rw-r--r-- 1 runner runner 104994620 Nov 19 15:03 /tmp/routes.osm.pbf
--rw-r--r-- 1 runner runner 394983953 Nov 19 15:03 /tmp/routes.geojsonseq
--rw-r--r-- 1 runner runner 93425873 Nov 19 15:05 /tmp/rues.geojsonseq
+-rw-r--r-- 1 runner runner 104994620 Nov 19 15:46 /tmp/routes.osm.pbf
+-rw-r--r-- 1 runner runner 394983953 Nov 19 15:46 /tmp/routes.geojsonseq
+-rw-r--r-- 1 runner runner 93425873 Nov 19 15:48 /tmp/rues.geojsonseq
 {"v": 1, "step": 0.5, "margin": 0.05, "date": "2026-11-19", "tiles": 319, "ways": 733548, "points": 2193494, "km": 190543, "bytes": 11720852, "read": 1100530, "noLimit": 366982, "source": "OpenStreetMap (ODbL), extrait Geofabrik France"}
 16M	bimmer/apps/shaklimites/limits
 320
-3309 radars -> 3152 zones (65 larges, 989 en ville, 2842 avec une direction dont 173 à sens unique), 73936 octets, version 2025-12-30
+3878 /tmp/radars_osm.geojsonseq
+3309 radars de la liste officielle, 903 de plus dans OpenStreetMap
+4212 radars -> 4053 zones (115 larges, 1133 en ville, 3679 avec une direction dont 264 à sens unique), 94798 octets, version 2025-12-30
