@@ -19,7 +19,7 @@ const WHY = {
     'on the road': 'sur la route',
     'standing': 'à l\'arrêt : la dernière limite est gardée',
 };
-const CLS = ['autoroute', 'voie rapide', 'route principale', 'route secondaire', 'route tertiaire'];
+const CLS = ['autoroute', 'voie rapide', 'route principale', 'route secondaire', 'petite route', 'rue'];
 
 mgu.run({
     start(ctx) {

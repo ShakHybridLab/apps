@@ -7,7 +7,7 @@ Sortie : apps/shaklimites/limits/ : un petit fichier par carreau de 0,5 degré (
 chaîne base64) et index.json (date, nombre de routes, kilomètres). L'appli ne lit que le carreau où est la voiture (shared/limits_map.js).
 
 Ne sont gardées que les routes qui portent une limitation (maxspeed) : une limite devinée serait pire que rien.
-    python3 tools/build_limits.py routes.geojsonseq [dossier de sortie]
+    python3 tools/build_limits.py routes.geojsonseq [autres.geojsonseq ...] [dossier de sortie]
 Python seul, aucune dépendance. Données © les contributeurs d'OpenStreetMap, licence ODbL.
 """
 import base64, json, math, os, struct, sys, time
@@ -16,7 +16,9 @@ STEP = 0.5          # un carreau : 0,5 degré de côté
 MARGIN = 0.05       # les coordonnées d'un carreau couvrent ce débord de chaque côté (une route qui dépasse un peu)
 TOL_M = 6.0         # simplification : un point à moins de 6 m de la ligne est retiré
 MAX_SEG_M = 600.0   # un tronçon droit plus long est recoupé (il reste ainsi dans le débord du carreau)
-CLASSES = {'motorway': 0, 'motorway_link': 0, 'trunk': 1, 'trunk_link': 1, 'primary': 2, 'primary_link': 2, 'secondary': 3, 'secondary_link': 3, 'tertiary': 4}
+# (les classes 4 et 5, les petites routes et les rues, ne sont dans l'entrée que là où la fabrication les demande : l'Île-de-France)
+CLASSES = {'motorway': 0, 'motorway_link': 0, 'trunk': 1, 'trunk_link': 1, 'primary': 2, 'primary_link': 2, 'secondary': 3, 'secondary_link': 3,
+           'tertiary': 4, 'tertiary_link': 4, 'unclassified': 5, 'residential': 5, 'living_street': 5}
 WORDS = {'fr:urban': 50, 'fr:rural': 80, 'fr:motorway': 130, 'fr:zone30': 30, 'fr:zone20': 20, 'fr:living_street': 20}
 
 
@@ -164,6 +166,15 @@ def build(lines, out):
 
 
 if __name__ == '__main__':
-    src = open(sys.argv[1], encoding='utf-8') if len(sys.argv) > 1 and sys.argv[1] != '-' else sys.stdin
-    out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'apps', 'shaklimites', 'limits')
-    print(json.dumps(build(src, out)))
+    files = [a for a in sys.argv[1:] if os.path.isfile(a)]
+    dirs = [a for a in sys.argv[1:] if not os.path.isfile(a) and a != '-']
+    out = dirs[0] if dirs else os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'apps', 'shaklimites', 'limits')
+    def lines():
+        if not files:
+            for l in sys.stdin:
+                yield l
+        for f in files:
+            with open(f, encoding='utf-8') as fh:
+                for l in fh:
+                    yield l
+    print(json.dumps(build(lines(), out)))

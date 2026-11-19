@@ -34,9 +34,9 @@ const db = { json: (f) => JSON.parse(fs.readFileSync(path.join(out, f), 'utf8'))
 const at = (dxM, dyM) => [LAT + dyM * M_LAT, LON + dxM * M_LON];
 
 check('fabricant : seules les grandes routes qui portent une limitation sont gardées (km/h, FR:urban), simplifiées, en carreaux', () => {
-    assert.strictEqual(index.ways, 3, 'autoroute, secondaire, principale en ville : ' + index.ways);
+    assert.strictEqual(index.ways, 4, 'autoroute, secondaire, principale en ville, et la rue (gardée quand la fabrication la donne : Île-de-France) : ' + index.ways);
     assert.strictEqual(index.noLimit, 2, 'sans maxspeed ou en mph : ' + index.noLimit);
-    assert(index.tiles >= 1 && index.km >= 9 && index.km <= 11, JSON.stringify(index));
+    assert(index.tiles >= 1 && index.km >= 11 && index.km <= 13, JSON.stringify(index));
     assert(index.points < 60, 'les points alignés sont retirés : ' + index.points);
     assert(fs.existsSync(path.join(out, 't_97_4.json')), 'le carreau de 48,9 N 2,37 E');
 });
@@ -60,6 +60,10 @@ check('carte : le cap départage un croisement (la route nord-sud à 50 sous l\'
     assert(b && b.limit === 130, JSON.stringify(b));
     assert.strictEqual(map.match(...at(500, 1), null), null, 'sans cap, au croisement : deux routes, pas de réponse');
     assert(Math.abs(bearing(48, 2, 48.001, 2).deg) < 0.01 && Math.abs(bearing(48, 2, 48, 2.001).deg - 90) < 0.01);
+});
+check('carte : une rue (classe 5) se retrouve comme une autre route', () => {
+    const r = map.match(...at(1500, 300), 0);
+    assert(r && r.limit === 30 && r.cls === 5, JSON.stringify(r));
 });
 check('carte : deux carreaux gardés en mémoire, pas plus ; une carte absente ou vide ne donne rien', () => {
     map.match(48.9, 2.37, 90); map.match(10, 10, 0); map.match(20, 20, 0);

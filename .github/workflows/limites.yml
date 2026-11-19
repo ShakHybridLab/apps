@@ -37,7 +37,12 @@ jobs:
             ls -la /tmp/routes.osm.pbf
             osmium export /tmp/routes.osm.pbf -f geojsonseq --geometry-types=linestring -o /tmp/routes.geojsonseq --overwrite
             ls -la /tmp/routes.geojsonseq
-            python3 bimmer/tools/build_limits.py /tmp/routes.geojsonseq bimmer/apps/shaklimites/limits
+            # l'Île-de-France en détail (demande du propriétaire) : aussi les petites routes et les rues qui portent une limitation
+            osmium extract -b 1.44,48.10,3.56,49.25 /tmp/france.osm.pbf -o /tmp/idf.osm.pbf --overwrite
+            osmium tags-filter /tmp/idf.osm.pbf w/highway=tertiary,tertiary_link,unclassified,residential,living_street -o /tmp/rues.osm.pbf --overwrite
+            osmium export /tmp/rues.osm.pbf -f geojsonseq --geometry-types=linestring -o /tmp/rues.geojsonseq --overwrite
+            ls -la /tmp/rues.geojsonseq
+            python3 bimmer/tools/build_limits.py /tmp/routes.geojsonseq /tmp/rues.geojsonseq bimmer/apps/shaklimites/limits
             du -sh bimmer/apps/shaklimites/limits
             ls bimmer/apps/shaklimites/limits | wc -l
           } 2>&1 | tee "$LOG.new" || echo "ECHEC (voir ci-dessus)" >> "$LOG.new"
@@ -49,6 +54,23 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A bimmer/apps/shaklimites/limits bimmer/data/limites_fabrication.txt
           if git diff --cached --quiet; then echo "rien de nouveau"; exit 0; fi
+          if git diff --cached --quiet -- bimmer/apps/shaklimites/limits; then
+            # la carte n'a pas changé (ou la fabrication a échoué) : seul le journal part
+            git commit -q -m "ShakLimites : journal de fabrication de la carte"
+            git pull -q --rebase origin "${GITHUB_REF_NAME}"
+            git push -q origin "HEAD:${GITHUB_REF_NAME}"
+            exit 0
+          fi
+          # la carte a changé : la version de l'appli monte d'un cran, pour que la voiture propose la mise à jour
+          python3 - <<'PY'
+          import re
+          p = 'bimmer/apps/shaklimites/app.json'
+          s = open(p, encoding='utf-8').read()
+          m = re.search(r'"version": "(\d+)\.(\d+)\.(\d+)"', s)
+          s = s[:m.start()] + '"version": "%s.%s.%d"' % (m.group(1), m.group(2), int(m.group(3)) + 1) + s[m.end():]
+          open(p, 'w', encoding='utf-8').write(s)
+          PY
+          git add bimmer/apps/shaklimites/app.json
           git commit -q -m "ShakLimites : carte des limitations refaite depuis OpenStreetMap"
           git pull -q --rebase origin "${GITHUB_REF_NAME}"
           git push -q origin "HEAD:${GITHUB_REF_NAME}"

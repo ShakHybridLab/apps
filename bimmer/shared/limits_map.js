@@ -5,7 +5,7 @@
  * The map is made from OpenStreetMap by tools/build_limits.py (on GitHub, .github/workflows/limites.yml): the main roads that carry a
  * limit, cut in tiles of 0.5 degree, one small file each (t_<lat>_<lon>.json: { v, lat, lon, n, b: base64 }), read through the kit's pack
  * only when the car is in it; two tiles are kept in memory. A tile's bytes: for each road, limit (km/h, u8), flags (u8: class 0 motorway,
- * 1 trunk, 2 primary, 3 secondary, 4 tertiary; +8 one way), the number of points (u16), then the points (u16 x, u16 y over the tile and
+ * 1 trunk, 2 primary, 3 secondary, 4 tertiary, 5 a street (the last two only where the map was made with them: Ile-de-France); +8 one way), the number of points (u16), then the points (u16 x, u16 y over the tile and
  * a margin around it).
  *
  *   const map = new LimitsMap(db);                 // db: require('./kit/pack').open(dir), or anything with json(name)
