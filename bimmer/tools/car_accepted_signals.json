@@ -91,6 +91,10 @@
   "de.bmw.infotainment.GPSData": {
    "GPSPositionCAN": "s",
    "GPSPositionExtendedCAN": "s"
+  },
+  "de.bmw.body.Light": {
+   "IndicatorSteeringColumn": "s",
+   "IndicatorSteeringColumnComplete": "s"
   }
  }
 }

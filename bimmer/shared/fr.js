@@ -51,7 +51,7 @@ const EXACT = {
     "Speed cameras and road hazards (the car's catalog)": 'Radars et dangers sur la route (catalogue de la voiture)',
     'Cameras: CameraProxy and ICAM2Proxy': 'Caméras : CameraProxy et ICAM2Proxy',
     'Cameras: next entries': 'Caméras : suite',
-    'GPS: where the car is': 'GPS : où est la voiture', 'Engine speed under other names (the car\'s catalog)': "Régime moteur sous d'autres noms (catalogue de la voiture)", 'BC button, on-board computer and stalk (the car\'s catalog)': 'Touche BC, ordinateur de bord et commodo (catalogue de la voiture)', 'BC button and stalk: next entries': 'Touche BC et commodo : suite',
+    'GPS: where the car is': 'GPS : où est la voiture', 'Engine speed under other names (the car\'s catalog)': "Régime moteur sous d'autres noms (catalogue de la voiture)", 'BC button, on-board computer and stalk (the car\'s catalog)': 'Touche BC, ordinateur de bord et commodo (catalogue de la voiture)', 'BC button and stalk: next entries': 'Touche BC et commodo : suite', 'Speed limit signs: next entries': 'Panneaux de limitation : suite', 'Navigation map: navigation.ADAS': 'Carte de navigation : navigation.ADAS', 'Navigation map: next entries': 'Carte de navigation : suite',
     'GPS: next entries': 'GPS : suite',
     'Signals in the car\'s catalog': 'Signaux du catalogue de la voiture',
     'Catalog not readable': 'Catalogue illisible', "Nothing found in the car's catalog": 'Rien dans le catalogue de la voiture',

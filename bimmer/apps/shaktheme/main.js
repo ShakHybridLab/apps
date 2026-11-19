@@ -40,12 +40,21 @@ mgu.run({
             }, ctx.log).then((s) => ctx.log.info('GPSData : ' + (s && s.error ? s.error : 'abonné') + ', ' + zones.zones.length + ' zones de danger'))
                 .catch((e) => ctx.log.warn('GPSData : ' + (e && e.message || e)));
         } catch (e) { ctx.log.warn('alerte zone de danger : pas démarrée (' + (e && e.message || e) + ')'); }
+        // la touche BC au bout du commodo des clignotants fait défiler les vues du thème (demande du propriétaire, 19 nov. 2026). Sur sa voiture
+        // (ShakManette), IndicatorSteeringColumn.operationColumnStalks vaut 64 pendant l'appui et 0 au relâcher : un appui = le passage de « sans 64 » à
+        // « avec 64 ». Lecture seule : la voiture change aussi son propre ordinateur de bord, comme avant.
+        try {
+            const bc = new (require('./bc_button').BcButton)(() => { if (ctx.settings.get('bcViews') !== false) ctx.log.info('touche BC : vue ' + hud.nextView()); });
+            ctx.signals.watch('de.bmw.body.Light', '1', { IndicatorSteeringColumn: (v) => bc.value(v) }, ctx.log)
+                .then((s) => ctx.log.info('commodo : ' + (s && s.error ? s.error : 'abonné')))
+                .catch((e) => ctx.log.warn('commodo : ' + (e && e.message || e)));
+        } catch (e) { ctx.log.warn('touche BC : pas démarrée (' + (e && e.message || e) + ')'); }
         new Page(ctx, hud, {
             title: ctx.spec.title, what: 'cluster',
             look: { name: 'Themes', style: 'hero', tags: { m: 'M8 style', sport: 'Live Cockpit', mblade: 'blue card · red blade', navi: 'speed band · big map' } },
             tabs: ['look', 'badge', 'map', 'alerts', 'display', 'signals', 'settings'],
             settings: ['units', 'clock', 'timeZone', 'tankLitres', 'evRangeFull', 'reserveKm', 'reservePct', 'tyreLow', 'speedZone', 'startupSweep', 'limitRing', 'launchTimer', 'launchReady', 'launchRpm', 'accentByMode', 'iceBelow', 'evShare', 'redline', 'shiftBefore', 'coldGuard', 'showBoost', 'demo'],
-            display: ['viewSel', 'gFlipLat', 'gFlipLong', 'sportTint', 'sportFacets', 'sportPower', 'stockShiftLight', 'shiftLightRed', 'shiftLightFlash', 'nightDim', 'gearWindow', 'cameraNotch'],
+            display: ['bcViews', 'viewSel', 'gFlipLat', 'gFlipLong', 'sportTint', 'sportFacets', 'sportPower', 'stockShiftLight', 'shiftLightRed', 'shiftLightFlash', 'nightDim', 'gearWindow', 'cameraNotch'],
         }).start();
         process.on('exit', () => { try { hud.stop(); if (radar) radar.stop(); } catch (e) { /* exiting anyway */ } });
     },

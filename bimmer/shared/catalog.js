@@ -49,6 +49,12 @@ const GROUPS = [
     // it steps through, and the stalk itself (indicators, high beam), over two pages
     { id: 'bc', title: 'BC button, on-board computer and stalk (the car\'s catalog)', first: withBC(/bordcomputer|board.?computer|tripcomputer|trip.?computer|reisecomputer|bcbutton|bctaste|turnindicator|steeringcolumn|columnswitch|szl|lenkstock/i), match: withBC(/bordcomputer|board.?computer|tripcomputer|trip.?computer|reisecomputer|bcbutton|bctaste|onboardinfo|tripinfo|tripdata|traveldata|turnindicator|turn.?signal|blinker|fahrtrichtung|steeringcolumn|columnswitch|column.?stalk|szl|lenkstock|lever|hebel|highbeam|fernlicht|lichthupe|flasher/i), not: /seat|sitz|gear|gang|wahlhebel|selector|parkbrake|handbrake|door|tuer|window|fenster/i },
     { id: 'bc2', skip: MAX_ROWS, title: 'BC button and stalk: next entries', first: withBC(/bordcomputer|board.?computer|tripcomputer|trip.?computer|reisecomputer|bcbutton|bctaste|turnindicator|steeringcolumn|columnswitch|szl|lenkstock/i), match: withBC(/bordcomputer|board.?computer|tripcomputer|trip.?computer|reisecomputer|bcbutton|bctaste|onboardinfo|tripinfo|tripdata|traveldata|turnindicator|turn.?signal|blinker|fahrtrichtung|steeringcolumn|columnswitch|column.?stalk|szl|lenkstock|lever|hebel|highbeam|fernlicht|lichthupe|flasher/i), not: /seat|sitz|gear|gang|wahlhebel|selector|parkbrake|handbrake|door|tuer|window|fenster/i },
+    // the speed limit signs again (19 Nov 2026): BMW's own cluster shows them on the owner's car, but TrafficSignDisplayControl "does not answer" (its service
+    // is not offered). The first page stops at MAX_ROWS names: here are the next ones, then every entry of navigation.ADAS (the navigation map's own
+    // speeds and events, seen on the hazards page), where the limit may come from
+    { id: 'sign2', skip: MAX_ROWS, title: 'Speed limit signs: next entries', match: /speedlimit|speed.?limit|tempolimit|geschwindigkeitsbegrenzung|verkehrszeichen|roadsign|trafficsign|limitspeed|nopassing|passingrestriction|overtak|\bsli\b/i },
+    { id: 'adas', all: true, skip: 0, title: 'Navigation map: navigation.ADAS', match: /navigation\.adas(?![a-z])/i },
+    { id: 'adas2', all: true, skip: MAX_ROWS, title: 'Navigation map: next entries', match: /navigation\.adas(?![a-z])/i },
 ];
 
 /** The member names of a field's data type (structs flattened, a parent's members first), at most two levels deep. */

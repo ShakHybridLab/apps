@@ -2,6 +2,12 @@
 
 ## 19 novembre 2026
 
+### ShakTheme 0.21.41 : la touche BC du commodo fait défiler les vues (pas encore essayé sur la voiture)
+Demande du propriétaire. Essai du 19 nov. à 19 h 40 dans ShakManette : `de.bmw.body.Light` `IndicatorSteeringColumn` donne `operationColumnStalks` = 64 pendant l'appui sur BC et 0 au relâcher. ShakTheme écoute ce signal (`shared/bc_button.js`, déclaré « s » et optionnel, ajouté à `tools/car_accepted_signals.json`) : chaque appui appelle `hud.nextView()`, qui existait sans rien pour l'appeler (aucune vue, puis les vues du thème l'une après l'autre, puis aucune). Un appui = le passage de « sans 64 » à « avec 64 » ; la valeur répétée par la voiture, une touche tenue au démarrage et deux appuis à moins de 250 ms ne comptent pas. Réglage « Touche BC du commodo : vue suivante » (allumé), onglet Affichage. Lecture seule : la voiture change aussi son propre ordinateur de bord à chaque appui. `tools/test_bc_button.js` (4 contrôles).
+
+### ShakTheme 0.21.40 : le catalogue cherche d'où vient la limitation que BMW affiche (pas encore essayé sur la voiture)
+Le tableau de bord d'origine du propriétaire affiche bien les limitations, mais `TrafficSignDisplayControl` « ne répond pas » (son service n'est pas proposé) : la limitation vient donc d'ailleurs. L'onglet Signaux gagne trois pages à la fin (16 à 18 sur 18) : la suite des noms de panneaux (la première page s'arrête à 8) et toutes les entrées de `navigation.ADAS`, la carte de navigation de la voiture (`shared/catalog.js`, groupes `sign2`, `adas`, `adas2`). Des noms seulement.
+
 ### ShakTheme 0.21.39 : le catalogue de la voiture cherche la touche BC et le commodo (pas encore essayé sur la voiture)
 Le propriétaire veut faire défiler les vues avec la touche BC du commodo des clignotants. Essai du 19 nov. dans ShakVolant : `SteeringWheelPushButton` est disponible (volume, commande vocale, molette appui et rotation, piste, téléphone) mais rien ne bouge quand il appuie sur BC, et la page « Boutons » du catalogue ne la nomme pas. L'onglet Signaux gagne deux pages à la fin (14 et 15 sur 15) : « Touche BC, ordinateur de bord et commodo », les noms du catalogue qui parlent de l'ordinateur de bord, de « BC » en majuscules dans un nom, du commodo, des clignotants et des appels de phares (`shared/catalog.js`, groupes `bc` et `bc2`). Des noms seulement : pour voir une valeur en direct il faut déclarer le signal, et la voiture refuse l'installation si le nom n'est pas dans son catalogue.
 
