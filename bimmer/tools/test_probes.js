@@ -12,7 +12,7 @@ const app = (n) => JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps',
 const theme = app('shaktheme'), hud = app('shakhud');
 
 // "get notify" in the catalog photos is "rs", "notify" alone "s" (a notifier without getter)
-const FLAGS = { rpm: 'rs', engt: 'rs', speed: 'rs', sign: 's', next: 'rs', fas: 'rs', fasx: 'rs', wheel: 's', rel: 'rs', pdrive: 's', pdrive2: 's', pdist: 'rs', erange: 'rs', cc: 'rs', rpm2: 'rs' };
+const FLAGS = { rpm: 'rs', engt: 'rs', speed: 'rs', sign: 's', next: 'rs', fas: 'rs', fasx: 'rs', wheel: 's', rel: 'rs', pdrive: 's', pdrive2: 's', pdist: 'rs', erange: 'rs', cc: 'rs', rpm2: 'rs', rpme: 's' };
 
 check('every probe is declared in ShakTheme\'s app.json with the flags the catalog lists (a signal the car does not have breaks the installation)', () => {
     assert.deepStrictEqual(PROBES.map((p) => p.id).sort(), Object.keys(FLAGS).sort(), 'the probes are not the ones listed here');
@@ -27,7 +27,7 @@ const OWN = ['rpm', 'engt', 'speed'];
 // and the cluster's power meter (the electric motor's share, for the hybrid rev counter without eDrive Live: setting carPower, car_extras.js)
 // and its electric range (the plug-in hybrid's own figure, KombiIF displayRangeElectricVehicle, which ShakHUD's widgets read already)
 // and the engine's speed under its other name (rpm2): the HUD's rev counter is the one that never moves on the owner's car
-const HUD_ASKS = OWN.concat(['rel', 'pdrive', 'pdrive2', 'erange', 'rpm2']);
+const HUD_ASKS = OWN.concat(['rel', 'pdrive', 'pdrive2', 'erange', 'rpm2', 'rpme']);
 check('ShakHUD declares only what the app draws from (it asks for no signal it does not use)', () => {
     PROBES.forEach((p) => {
         const has = !!(hud.signals && hud.signals[p.iface] && hud.signals[p.iface][p.field]);

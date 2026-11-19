@@ -2,6 +2,9 @@
 
 ## 19 novembre 2026
 
+### ShakTheme 0.21.43, ShakHUD 0.6.36 : le régime du moteur électrique dans l'onglet Signaux (pas encore essayé sur la voiture)
+Demande du propriétaire : un compte-tours qui marche en électrique comme en thermique. Sa voiture nomme le régime de la machine électrique (`FES.displaySportPowertrain`, membre `displaySportRpmEmachine`, « notify », déjà accepté : les applis Cluster le déclarent). Les deux applis le déclarent et l'onglet Signaux, page 2, le montre en deuxième ligne, sous la seconde source du régime thermique, valeur brute. Rien n'est encore dessiné avec.
+
 ### ShakTheme 0.21.42, ShakHUD 0.6.35 : la seconde source du régime moteur dans l'onglet Signaux (pas encore essayé sur la voiture)
 Le compte-tours du HUD ne bouge pas : `CDS.statusEngineSpeed2` arrive (6 220 messages, 4 par seconde) mais vaut 0, et le propriétaire dit que c'est pareil moteur thermique allumé. Le catalogue de sa voiture (photo du 19 nov., page 13) nomme une autre source : `DisplayDataServer.functionalLibraryData`, membre `rpm`, déjà accepté sur sa voiture (les applis Cluster installées le déclarent). Les deux applis le déclarent (« rs », optionnel) et l'onglet Signaux, **page 2, première ligne**, « Régime moteur : seconde source », montre la valeur brute du membre `rpm`. Rien n'est encore dessiné avec : il faut voir ce qu'elle vaut moteur allumé (échelle inconnue) avant de brancher le compte-tours dessus.
 
