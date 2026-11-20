@@ -28,15 +28,15 @@ Sortie par défaut : data/radars_fr_zones.json. Données des routes © les contr
 """
 import csv, io, json, math, os, sys, time, urllib.request
 
-CELL = 0.002            # degrés : l'arrondi du centre d'une zone
-RADIUS = 500           # mètres autour du centre
-RADIUS_WIDE = 500      # limite de 110 ou plus : autoroute
-RADIUS_TOWN = 300       # limite de 50 ou moins : en ville
+CELL = 0.001            # degrés : l'arrondi du centre d'une zone
+RADIUS = 150           # mètres autour du centre
+RADIUS_WIDE = 150      # limite de 110 ou plus : autoroute
+RADIUS_TOWN = 150       # limite de 50 ou moins : en ville
 WIDE_FROM, TOWN_TO = 110, 50
 SAME_M = 150.0          # un radar d'OpenStreetMap à moins de ça d'un radar officiel : c'est le même
 SNAP_M = 60.0           # la route du radar : la plus proche, à cette distance au plus
 TWIN_M = 500.0          # un radar à sens unique sans autre radar à cette distance : il couvre les deux sens, les deux chaussées sont alertées
-GRID = 0.002            # cases de la recherche des routes
+GRID = 0.001            # cases de la recherche des routes
 DATASET = 'https://www.data.gouv.fr/api/1/datasets/liste-des-radars-fixes-en-france/'
 
 
