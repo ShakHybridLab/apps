@@ -2,6 +2,10 @@
 
 ## 20 novembre 2026
 
+### ShakTheme 0.21.50 : la ligne d'état lisible sur une photo
+- Onglet Carte : la réponse de Waze on Cluster à la dernière demande (« asked "panel": … ») s'écrit devant son fichier d'état. Sur la voiture (20 nov.) le thème restait sur « Moving the map into the theme » alors que Waze montrait sa carte dans la vue de BMW (state=showing target=map) : rien ne disait ce que Waze répondait.
+- Onglet Réglages : la ligne où le moteur d'affichage dit ce qu'il dessine (« N of M layers drawn », et pourquoi) se dessinait par-dessus la dernière rangée ; sur la photo du 20 nov. le nombre de calques dessinés était caché par un interrupteur. Elle a maintenant deux lignes à elle sous les rangées, en blanc. Sert à comprendre pourquoi le panneau bleu de M Blade ne s'affiche pas sur la voiture (vidéo du 20 nov.) alors qu'il s'affiche au banc.
+
 ### ShakTheme 0.21.48, ShakHUD 0.6.40 : « Dans la zone » ; ShakLimites : 50 km/h par défaut, les petites routes à 50 km autour de l'Île-de-France (carte à refaire)
 - **L'alerte dit « Dans la zone »** une fois la voiture dedans, à la place de la distance : la plus petite distance affichée, « 10 m », se lisait comme un radar à 10 mètres (essai du 19 nov.). Bascules `dangerAhead` (avant la zone : la distance jusqu'à son bord) et `dangerInside` (dedans : les mots), les quatre thèmes et le HUD.
 - **ShakLimites 0.1.2** : les petites routes et les rues qui portent une limitation, jusque-là en Île-de-France seulement, le sont dans un rectangle de 50 km autour d'elle (`.github/workflows/limites.yml` : longitudes 0,76 à 4,24, latitudes 47,65 à 49,70). Là où la carte ne connaît aucune route limitée sous la voiture, le rond affiche **50 km/h par défaut** (demande du propriétaire : c'est la limite en ville, là où la carte a ses trous) ; le fichier le marque `"guess": true`, réglage « Sans information sur la route : afficher 50 km/h » (activé). C'est une supposition : fausse en zone 30 ou sur une petite route à 80.

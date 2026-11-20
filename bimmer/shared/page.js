@@ -467,8 +467,9 @@ class Page {
         let text = info.text;
         if (this.get('mapInTheme') && !this.hud.mapLayout && this.hud.activeName !== 'off') text = 'This theme has no map version (Sport, M, M Blade and Navi do)';
         // the whole status file under it (this app reads only state and target; whether the file holds a position decides if the radar list can work)
-        const raw = this.hud.waze && this.hud.waze.st && this.hud.waze.st.raw;
-        const rows = raw ? Math.min(2, Math.ceil(raw.length / 100)) : 0, ch = 46 + rows * 15;
+        const said = this.hud.waze && this.hud.waze.said;
+        const raw = (said ? 'asked "' + said.target + '": ' + said.text + ' | ' : '') + ((this.hud.waze && this.hud.waze.st && this.hud.waze.st.raw) || '');
+        const rows = raw ? Math.min(said ? 4 : 2, Math.ceil(raw.length / 100)) : 0, ch = 46 + rows * 15;
         glass(cv, CX, y, w, ch, false);
         cv.circle(CX + 26, y + 23, 7, info.up ? C.live : info.ok ? C.dim : '#e0a340');
         cv.text(text, CX + 46, y + 30, 18, info.up ? C.live : C.text, { literal: true });
@@ -760,6 +761,9 @@ class Page {
     /** The Display tab (cluster apps): the look of the themes and the shift light, in the same rows. */
     displayTab(cv, bottom) { this.settingRows(cv, bottom, 'Display', this.cfg.display || []); }
     settingRows(cv, bottom, title, list) {
+        // the engine's status keeps two lines of its own under the rows: on the car it was drawn over the last row and could not be read on a
+        // photo (20 Nov 2026), when it is the one thing that tells why a layer is not shown
+        const full = bottom; bottom -= 44;
         label(cv, CX, 70, title);
         const keys = list.filter((k) => this.item(k));
         const colW = (CW - 24) / 2, per = Math.ceil(keys.length / 2);
@@ -774,7 +778,9 @@ class Page {
             else this.pickRow(cv, x, y, colW, s.label, k, undefined, rh);
         });
         // what the engine says it is doing (layers, pixel memory, why nothing shows): for checking on the car
-        cv.text(this.hud.lastStatus || '', CX, bottom - 6, 15, C.label, { literal: true });
+        const st = String(this.hud.lastStatus || ''), cut = st.length > 120 ? st.lastIndexOf(' ', 120) : -1;
+        cv.text(cut > 0 ? st.slice(0, cut) : st, CX, full - 26, 15, C.text, { literal: true });
+        if (cut > 0) cv.text(st.slice(cut + 1, cut + 1 + 130), CX, full - 6, 15, C.text, { literal: true });
     }
 
     /* ---------- rows ---------- */

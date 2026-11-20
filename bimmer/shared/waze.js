@@ -175,6 +175,8 @@ class Waze {
             try { sock.destroy(); } catch (e) { /* closed */ }
             this.sending = false;
             if (/"reason"\s*:\s*"busy"/.test(answer)) problem = 'busy';
+            // what Waze on cluster answered to the last request, for the page: on the car the map stayed on BMW's view with nothing said (20 Nov 2026)
+            this.said = { target, at: Date.now(), text: answer.replace(/\s+/g, ' ').trim().slice(0, 160) || (problem ? '' : 'no answer') };
             this.problem = problem || null;
             if (!this.problem) {
                 this.log.info('waze: asked for the map on "' + target + '"');
