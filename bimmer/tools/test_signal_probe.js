@@ -30,7 +30,7 @@ Object.keys(SETS).filter((id) => fs.existsSync(path.join(__dirname, '..', 'apps'
 });
 check('les applis d\'essai ont chacune leur identifiant, leur journal et leur glyphe', () => {
     ['logId', 'glyph', 'title'].forEach((k) => assert.strictEqual(new Set(Object.keys(SETS).map((i) => SETS[i][k])).size, Object.keys(SETS).length, k));
-    ['shaktheme', 'shakhud', 'shakpark'].forEach((a) => {
+    ['shaktheme', 'shakhud'].forEach((a) => {
         const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', a, 'app.json'), 'utf8'));
         Object.keys(SETS).forEach((i) => assert(SETS[i].logId !== spec.loggingId && SETS[i].glyph !== spec.iconGlyph, i + ' ressemble à ' + a));
     });

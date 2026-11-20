@@ -11,7 +11,7 @@ function check(name, fn) { try { fn(); console.log('ok   ' + name); } catch (e) 
 const ROOT = path.join(__dirname, '..');
 const accepted = JSON.parse(fs.readFileSync(path.join(__dirname, 'car_accepted_signals.json'), 'utf8')).signals;
 
-['shaktheme', 'shakhud', 'shakpark'].forEach((app) => {
+['shaktheme', 'shakhud'].forEach((app) => {
     check(app + ': every declared signal is one the car accepted, with the same flags', () => {
         const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', app, 'app.json'), 'utf8'));
         Object.keys(spec.signals || {}).forEach((i) => {

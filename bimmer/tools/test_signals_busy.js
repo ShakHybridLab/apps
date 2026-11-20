@@ -81,7 +81,9 @@ const signals = require(path.join(rt, 'signals.js'));
         const body = /info\(\) \{([\s\S]*?)\n    \}/.exec(src)[1];
         const texts = [];
         body.replace(/text: ('(?:[^'\\]|\\.)*')/g, (m, q) => { texts.push(eval(q)); return m; });      // eslint-disable-line no-eval
-        assert(texts.length >= 10, 'texts found: ' + texts.length);
+        // info() dropped the "busy"/retry and "moving into the panel" texts on 20 Nov 2026: there is no mode to switch to or retry any more
+        // (the real waze-on-cluster only ever has one target, "map"; re-read from its source after the car never actually moved the map)
+        assert(texts.length >= 8, 'texts found: ' + texts.length);
         texts.filter((t) => !/\($/.test(t)).forEach((t) => assert.notStrictEqual(fr.tr(t), t, 'not translated: ' + t));      // the one that ends in "(" is cut at the problem: tested above
     });
 

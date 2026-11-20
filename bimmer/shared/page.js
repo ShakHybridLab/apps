@@ -467,9 +467,8 @@ class Page {
         let text = info.text;
         if (this.get('mapInTheme') && !this.hud.mapLayout && this.hud.activeName !== 'off') text = 'This theme has no map version (Sport, M, M Blade and Navi do)';
         // the whole status file under it (this app reads only state and target; whether the file holds a position decides if the radar list can work)
-        const said = this.hud.waze && this.hud.waze.said;
-        const raw = (said ? 'asked "' + said.target + '": ' + said.text + ' | ' : '') + ((this.hud.waze && this.hud.waze.st && this.hud.waze.st.raw) || '');
-        const rows = raw ? Math.min(said ? 4 : 2, Math.ceil(raw.length / 100)) : 0, ch = 46 + rows * 15;
+        const raw = (this.hud.waze && this.hud.waze.st && this.hud.waze.st.raw) || '';
+        const rows = raw ? Math.min(2, Math.ceil(raw.length / 100)) : 0, ch = 46 + rows * 15;
         glass(cv, CX, y, w, ch, false);
         cv.circle(CX + 26, y + 23, 7, info.up ? C.live : info.ok ? C.dim : '#e0a340');
         cv.text(text, CX + 46, y + 30, 18, info.up ? C.live : C.text, { literal: true });

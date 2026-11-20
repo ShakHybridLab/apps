@@ -310,7 +310,7 @@ check('chaque appli embarque tous les modules partagés que son code charge ("sh
 });
 
 // l'horloge de la voiture qui recule (elle est réglée par la voiture, parfois après le démarrage des applis)
-check('horloge qui recule d\'une heure : la carte Waze ne reste pas « ouverte », l\'alerte radar ne garde pas une vieille position, une vieille image de caméra n\'est pas « en direct »', () => {
+check('horloge qui recule d\'une heure : la carte Waze ne reste pas « ouverte », l\'alerte radar ne garde pas une vieille position', () => {
     const Waze = require(path.join(tmp, 'shared', 'waze.js'));
     let now = 5000000;
     const w = new Waze({ dataDir: tmp, statusPath: path.join(tmp, 'none.json'), controlPath: path.join(tmp, 'none.sock'), now: () => now }, logOf(), () => {});
@@ -326,8 +326,6 @@ check('horloge qui recule d\'une heure : la carte Waze ne reste pas « ouverte �
     assert(r._ahead(t), 'une zone devant');
     t -= 3600000;
     assert.strictEqual(r._ahead(t), null); assert.strictEqual(r.why, 'position too old');
-    const park = fs.readFileSync(path.join(root, 'shared', 'park_app.js'), 'utf8');
-    assert(/live\(now\) \{ return this\.seq !== null && this\.seqAt > 0 && now >= this\.seqAt && now - this\.seqAt < LIVE_MS; \}/.test(park));
     assert(/now >= this\._wzAt && now - this\._wzAt < 1000/.test(hudSrc) && /now >= this\.windowAskAt && now - this\.windowAskAt < WINDOW_HOLD_MS/.test(hudSrc));
 });
 check('horloge qui recule : Cluster Info continue d\'écrire ses fichiers (les autres applis croiraient le thème parti)', () => {

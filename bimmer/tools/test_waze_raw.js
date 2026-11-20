@@ -24,7 +24,7 @@ check('Waze lit le fichier d\'état entier : st.raw et st.keys, une ligne de jou
     const f = path.join(dir, 'status.json');
     fs.writeFileSync(f, JSON.stringify({ state: 'idle', target: 'map', lat: 48.1, lon: 2.2 }));
     const lines = [];
-    const w = new Waze({ status: f, control: path.join(dir, 'none.sock') }, { info: (m) => lines.push(m), warn() {} }, () => {});
+    const w = new Waze({ status: f }, { info: (m) => lines.push(m), warn() {} }, () => {});
     return new Promise((resolve, reject) => {
         w._poll();
         setTimeout(() => {

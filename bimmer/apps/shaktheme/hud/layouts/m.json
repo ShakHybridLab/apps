@@ -1573,7 +1573,7 @@
       "y": 372,
       "w": 240,
       "h": 20,
-      "text": "Temp\u00e9rature ext\u00e9rieure",
+      "text": "Température extérieure",
       "font": "m_name_s",
       "color": "dim",
       "align": "left",
@@ -1721,7 +1721,7 @@
       "y": 256,
       "w": 240,
       "h": 20,
-      "text": "Autonomie \u00e9lectrique",
+      "text": "Autonomie électrique",
       "font": "m_name_s",
       "color": "dim",
       "align": "left",
@@ -1769,7 +1769,7 @@
       "y": 314,
       "w": 240,
       "h": 20,
-      "text": "Puissance \u00e9lectrique",
+      "text": "Puissance électrique",
       "font": "m_name_s",
       "color": "dim",
       "align": "left",
@@ -1817,7 +1817,7 @@
       "y": 372,
       "w": 240,
       "h": 20,
-      "text": "R\u00e9cup\u00e9ration d'\u00e9nergie",
+      "text": "Récupération d'énergie",
       "font": "m_name_s",
       "color": "dim",
       "align": "left",
@@ -2000,7 +2000,8 @@
         255
       ],
       "toggle": "danger",
-      "sheet": "s3"
+      "sheet": "s5",
+      "conn": 2
     },
     {
       "id": "al_title",
@@ -2020,7 +2021,8 @@
       ],
       "align": "left",
       "toggle": "danger",
-      "sheet": "s3"
+      "sheet": "s5",
+      "conn": 2
     },
     {
       "id": "al_dist",
@@ -2035,7 +2037,8 @@
       "color": "fg",
       "align": "right",
       "toggle": "dangerAhead",
-      "sheet": "s3"
+      "sheet": "s5",
+      "conn": 2
     },
     {
       "id": "al_unit",
@@ -2050,7 +2053,8 @@
       "color": "dim",
       "align": "left",
       "toggle": "dangerAhead",
-      "sheet": "s3"
+      "sheet": "s5",
+      "conn": 2
     },
     {
       "id": "al_in",
@@ -2065,7 +2069,8 @@
       "color": "fg",
       "align": "left",
       "toggle": "dangerInside",
-      "sheet": "s3"
+      "sheet": "s5",
+      "conn": 2
     },
     {
       "id": "al_limit",
@@ -2080,7 +2085,8 @@
       "color": "fg",
       "align": "center",
       "toggle": "dangerLimit",
-      "sheet": "s3"
+      "sheet": "s5",
+      "conn": 2
     }
   ]
 }
