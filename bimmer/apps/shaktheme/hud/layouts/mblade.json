@@ -2312,7 +2312,7 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "toggle": "danger",
+      "toggle": "dangerAhead",
       "sheet": "s11",
       "conn": 2
     },
@@ -2328,7 +2328,23 @@
       "font": "m_unit",
       "color": "dim",
       "align": "left",
-      "toggle": "danger",
+      "toggle": "dangerAhead",
+      "sheet": "s11",
+      "conn": 2
+    },
+    {
+      "id": "al_in",
+      "type": "text",
+      "z": 5,
+      "x": 1680,
+      "y": 380,
+      "w": 126,
+      "h": 24,
+      "text": "Dans la zone",
+      "font": "m_name",
+      "color": "fg",
+      "align": "left",
+      "toggle": "dangerInside",
       "sheet": "s11",
       "conn": 2
     },

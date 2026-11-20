@@ -32,7 +32,7 @@ mgu.run({
                 const i = map.index;
                 mapWhy = i ? 'carte du ' + i.date + ' : ' + i.ways + ' routes, ' + i.km + ' km' : 'carte absente : elle n\'a pas encore été fabriquée';
             } catch (e) { mapWhy = 'carte illisible : ' + (e && e.message || e); }
-            app = new LimitsApp({ map, log: ctx.log });
+            app = new LimitsApp({ map, log: ctx.log, fallback: () => ctx.settings.get('assume50') !== false ? 50 : null });
             app.start();
             let loop = null;
             const kick = () => { if (loop && loop.kick) loop.kick(); };
@@ -56,11 +56,11 @@ mgu.run({
                 cv.text(m ? (CLS[m.cls] || 'route') + ' limitée à ' + m.limit + ' km/h, à ' + Math.round(m.dist) + ' m' + (m.oneway ? ', sens unique' : '') : 'aucune', 40, 284, 15, m ? D : G);
                 if (s.cand) cv.text('en attente de confirmation : ' + s.cand.limit + ' km/h', 40, 310, 15, HI);
                 cv.text('LIMITATION', 900, 160, 16, G, { font: 'bold' });
-                cv.text(s.limit === null ? '--' : s.limit + ' km/h', 900, 220, 54, s.limit === null ? G : HI, { font: 'bold' });
-                cv.text(WHY[s.why] || s.why, 900, 256, 16, D);
+                cv.text(s.said === null ? '--' : s.said + ' km/h', 900, 220, 54, s.said === null ? G : HI, { font: 'bold' });
+                cv.text((WHY[s.why] || s.why) + (s.guess ? ' : 50 km/h par défaut' : ''), 900, 256, 16, D);
                 cv.text(s.writing ? 'Envoyée au thème (ShakTheme, rond de limitation)' : s.writeError ? 'Écriture impossible : ' + s.writeError : 'Rien envoyé au thème', 900, 300, 16, s.writing ? OK : s.writeError ? BAD : G, { font: 'bold' });
                 cv.text('Le panneau lu par la caméra de la voiture passe devant la carte.', 900, 326, 14, G);
-                cv.text('Grandes routes seulement. Ni travaux ni limites temporaires. Carte : contributeurs d\'OpenStreetMap (ODbL).', 40, 500, 14, G);
+                cv.text('Sans route connue : 50 km/h par défaut. Ni travaux ni limites temporaires. Carte : contributeurs d\'OpenStreetMap (ODbL).', 40, 500, 14, G);
                 return ctx.ui.image('MAIN_GFX', cv);
             };
             loop = ctx.loop('MAIN', 4, render);

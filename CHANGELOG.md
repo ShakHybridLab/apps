@@ -2,6 +2,10 @@
 
 ## 20 novembre 2026
 
+### ShakTheme 0.21.48, ShakHUD 0.6.40 : « Dans la zone » ; ShakLimites : 50 km/h par défaut, les petites routes à 50 km autour de l'Île-de-France (carte à refaire)
+- **L'alerte dit « Dans la zone »** une fois la voiture dedans, à la place de la distance : la plus petite distance affichée, « 10 m », se lisait comme un radar à 10 mètres (essai du 19 nov.). Bascules `dangerAhead` (avant la zone : la distance jusqu'à son bord) et `dangerInside` (dedans : les mots), les quatre thèmes et le HUD.
+- **ShakLimites 0.1.2** : les petites routes et les rues qui portent une limitation, jusque-là en Île-de-France seulement, le sont dans un rectangle de 50 km autour d'elle (`.github/workflows/limites.yml` : longitudes 0,76 à 4,24, latitudes 47,65 à 49,70). Là où la carte ne connaît aucune route limitée sous la voiture, le rond affiche **50 km/h par défaut** (demande du propriétaire : c'est la limite en ville, là où la carte a ses trous) ; le fichier le marque `"guess": true`, réglage « Sans information sur la route : afficher 50 km/h » (activé). C'est une supposition : fausse en zone 30 ou sur une petite route à 80.
+
 ### ShakHUD 0.6.39, ShakTheme 0.21.47 : des réglages remis à « activé » une fois (pas encore essayé sur la voiture)
 Sur le HUD, la barre des tours ne monte pas en électrique alors que celle du thème le fait, avec le même code et la même lecture : le banc la fait monter, la différence est donc un réglage que la voiture a gardé d'une ancienne version (comme « Alerte zone de danger », resté éteint le 19). Le kit sait remettre un réglage à sa valeur d'origine une fois (`"reset": n` dans `app.json`) : ShakHUD le fait pour « Compte-tours hybride », la puissance lue sur le compteur d'origine et la puissance estimée ; ShakTheme pour « Alerte zone de danger ». Les choix faits ensuite sont gardés.
 

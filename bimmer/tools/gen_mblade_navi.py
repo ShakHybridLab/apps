@@ -72,8 +72,10 @@ def danger_alert(x, y, h):
     W.append(icon('al_cam', 'cam', x + 14, y + round((h - 48) / 2.0), 48, 48, RED, 1, **k))
     W.append(text('al_title', x + 72, y + top, 130, 19, 'DANGER', 'm_label', RED, 'left', 1, **k))
     # three digits ("850") need 87 px in m_mid: a 78 px box cut the first one in half (850 read 350, bench Nov 18 2026); same right edge, and clear of the camera's box (x + 62)
-    W.append(text('al_dist', x + 62, y + top + 25, 88, 29, '{{dangerDist}}', 'm_mid', 'fg', 'right', 1, **k))
-    W.append(text('al_unit', x + 154, y + top + 24, 42, 36, '{{dangerUnit}}', 'm_unit', 'dim', 'left', 1, **k))
+    W.append(text('al_dist', x + 62, y + top + 25, 88, 29, '{{dangerDist}}', 'm_mid', 'fg', 'right', 1, toggle='dangerAhead'))
+    W.append(text('al_unit', x + 154, y + top + 24, 42, 36, '{{dangerUnit}}', 'm_unit', 'dim', 'left', 1, toggle='dangerAhead'))
+    # in the zone the words in place of the distance (20 Nov 2026: "10 m", the smallest distance shown, read as a camera 10 m away)
+    W.append(text('al_in', x + 68, y + top + 28, 126, 24, 'Dans la zone', 'm_name', 'fg', 'left', 1, toggle='dangerInside'))
     W.append(icon('al_ring', 'ring', x + 196, y + round((h - 64) / 2.0), 64, 64, RED, 1, toggle='dangerLimit'))
     W.append(text('al_limit', x + 196, y + round((h - 29) / 2.0), 64, 29, '{{dangerLimit}}', 'm_tiny', 'fg', 'center', 1, toggle='dangerLimit'))
     return W

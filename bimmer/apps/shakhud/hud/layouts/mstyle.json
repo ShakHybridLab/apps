@@ -359,7 +359,7 @@
     {
       "class": "content",
       "z": 10,
-      "toggle": "danger",
+      "toggle": "dangerAhead",
       "id": "al_dist",
       "type": "text",
       "font": "big",
@@ -374,7 +374,7 @@
     {
       "class": "content",
       "z": 10,
-      "toggle": "danger",
+      "toggle": "dangerAhead",
       "id": "al_unit",
       "type": "text",
       "font": "mid",
@@ -385,6 +385,21 @@
       "w": 40,
       "h": 29,
       "text": "{{dangerUnit}}"
+    },
+    {
+      "class": "content",
+      "z": 10,
+      "toggle": "dangerInside",
+      "id": "al_in",
+      "type": "text",
+      "font": "mid",
+      "color": "fg",
+      "align": "left",
+      "x": 436,
+      "y": 286,
+      "w": 176,
+      "h": 29,
+      "text": "DANS LA ZONE"
     },
     {
       "class": "content",

@@ -107,8 +107,9 @@ AL = {'class': 'content', 'z': 10, 'toggle': 'danger'}
 widgets += [
     dict(AL, id='al_cam', type='icon', icon='cam', color=RED, x=BX, y=258, w=52, h=52),
     dict(AL, id='al_title', type='text', font='mid', color=RED, align='left', x=BX + 64, y=244, w=180, h=29, text='ZONE DE DANGER'),
-    dict(AL, id='al_dist', type='text', font='big', color='fg', align='right', x=BX + 60, y=276, w=104, h=46, text='{{dangerDist}}'),
-    dict(AL, id='al_unit', type='text', font='mid', color='fg', align='left', x=BX + 170, y=292, w=40, h=29, text='{{dangerUnit}}'),
+    dict(AL, id='al_dist', type='text', font='big', color='fg', align='right', x=BX + 60, y=276, w=104, h=46, text='{{dangerDist}}', toggle='dangerAhead'),
+    dict(AL, id='al_unit', type='text', font='mid', color='fg', align='left', x=BX + 170, y=292, w=40, h=29, text='{{dangerUnit}}', toggle='dangerAhead'),
+    dict(AL, id='al_in', type='text', font='mid', color='fg', align='left', x=BX + 64, y=286, w=176, h=29, text='DANS LA ZONE', toggle='dangerInside'),
     dict(AL, id='al_ring', type='icon', icon='ring', color=RED, x=BX + BW - 62, y=258, w=60, h=60, toggle='dangerLimit'),
     dict(AL, id='al_limit', type='text', font='mid', color='fg', align='center', x=BX + BW - 56, y=274, w=48, h=29, text='{{dangerLimit}}', toggle='dangerLimit'),
     {'id': 'al_bar', 'type': 'slantbar', 'class': 'overlay', 'z': 10, 'toggle': 'danger', 'signal': 'dangerNear', 'min': 0, 'max': 1, 'tone': 'hot',

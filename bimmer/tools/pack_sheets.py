@@ -39,6 +39,8 @@ def shown(w, mapup, view=None, sport=False):
             on = (view or 'none') == k[len('viewSel='):]      # None: no view (the setting's "none")
         elif k == 'driveSport':
             on = sport
+        elif k == 'dangerInside':
+            on = False                      # in the zone the words replace the distance and its unit: never both, the larger case (before the zone) is counted
         else:
             on = mapup if k == 'mapUp' else True
         if on == neg:                       # "a" veut a allumé, "!a" veut a éteint

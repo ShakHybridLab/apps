@@ -90,6 +90,20 @@ check('appli : en roulant sur l\'autoroute la limite est dite après deux positi
     drive(app, clock, [-700, 300], [25, 0], 5);
     assert.strictEqual(app.limit, null); assert(!fs.existsSync(path.join(dir, FILE)), 'le fichier est retiré');
 });
+check('appli : sans route connue, 50 par défaut si demandé (marqué « guess ») ; la limite de la carte reprend la main ; sans position, plus rien', () => {
+    const clock = { t: 3000000 }, dir = path.join(tmp, 'themesF');
+    const app = new LimitsApp({ map: new LimitsMap(db), now: () => clock.t, dir, fallback: () => 50 });
+    drive(app, clock, [-900, 300], [25, 0], 3);
+    assert(!fs.existsSync(path.join(dir, FILE)), 'pas avant quatre positions sans route');
+    drive(app, clock, [-800, 300], [25, 0], 2);
+    let j = JSON.parse(fs.readFileSync(path.join(dir, FILE), 'utf8'));
+    assert.deepStrictEqual([j.limit, j.guess], [50, true]); assert.strictEqual(app.limit, null);
+    drive(app, clock, [-700, 1], [25, 0], 3);
+    j = JSON.parse(fs.readFileSync(path.join(dir, FILE), 'utf8'));
+    assert.deepStrictEqual([j.limit, j.guess], [130, undefined]);
+    clock.t += 6000; app.tick();
+    assert(!fs.existsSync(path.join(dir, FILE)));
+});
 check('appli : à l\'arrêt la limite reste ; une lecture isolée d\'une autre limite (un croisement) ne la change pas ; sans position 5 s, plus rien', () => {
     const clock = { t: 5000000 }, dir = path.join(tmp, 'themes2');
     const app = new LimitsApp({ map: new LimitsMap(db), now: () => clock.t, dir });

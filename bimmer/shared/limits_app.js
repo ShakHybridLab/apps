@@ -37,7 +37,8 @@ class LimitsApp {
         this.heading = null;
         this.raw = { pos: null, n: 0 };
         this.cand = null;           // { limit, n }
-        this.limit = null;          // the limit said now
+        this.limit = null;          // the limit found on the map now
+        this.guess = false;         // the limit written is the fallback (no road with a limit here), not one from the map
         this.at = null;             // where it was last found
         this.gone = 0;
         this.last = null;           // the last match (for the screen)
@@ -91,11 +92,17 @@ class LimitsApp {
     tick() {
         const t = this.now();
         if (this.pos && (t - this.pos.at > POS_STALE_MS || t < this.pos.at)) { this.limit = null; this.cand = null; this.why = 'position too old'; }
-        if (this.limit === null) { this._clear(); return; }
+        // No road with a limit under a fresh position: mostly a street the map does not carry, so the owner asked for the town limit (deps.fallback,
+        // km/h) instead of an empty ring. It is a guess and the file says so ("guess": true).
+        const fb = this.limit === null && this.why === 'no road with a limit here' && this.d.fallback ? this.d.fallback() : null;
+        const said = this.limit !== null ? this.limit : fb > 0 ? Math.round(fb) : null;
+        this.guess = this.limit === null && said !== null;
+        this.said = said;
+        if (said === null) { this._clear(); return; }
         const f = path.join(this.dir, FILE);
         try {
             try { fs.mkdirSync(this.dir); } catch (e) { /* there */ }
-            fs.writeFileSync(f + '.tmp', JSON.stringify({ t, app: 'ShakLimites', limit: this.limit }), { mode: 0o644 });
+            fs.writeFileSync(f + '.tmp', JSON.stringify(this.guess ? { t, app: 'ShakLimites', limit: said, guess: true } : { t, app: 'ShakLimites', limit: said }), { mode: 0o644 });
             fs.renameSync(f + '.tmp', f);
             this.writing = true; this.writeError = null;
         } catch (e) { this.writeError = String(e && e.code || e); }
@@ -110,7 +117,7 @@ class LimitsApp {
     state() {
         const t = this.now();
         return { pos: this.pos ? { lat: this.pos.lat, lon: this.pos.lon, age: t - this.pos.at } : null, heading: this.heading, raw: this.raw, last: this.last,
-            cand: this.cand, limit: this.limit, why: this.why, writing: this.writing, writeError: this.writeError };
+            cand: this.cand, limit: this.limit, said: this.said === undefined ? null : this.said, guess: this.guess, why: this.why, writing: this.writing, writeError: this.writeError };
     }
 }
 

@@ -28,7 +28,8 @@ function check(name, fn) { try { fn(); n++; } catch (e) { bad++; console.error('
 function shownIn(widgets, map, view, sport) {
     const one = (t) => {
         const not = t.charAt(0) === '!', k = not ? t.slice(1) : t;
-        const v = k === 'mapUp' || k === 'powerOpen' ? map : k === 'powerShut' ? !map : k === 'driveSport' ? sport === true : k.indexOf('viewSel=') === 0 ? k.slice(8) === view : true;
+        const v = k === 'mapUp' || k === 'powerOpen' ? map : k === 'powerShut' ? !map : k === 'driveSport' ? sport === true : k.indexOf('viewSel=') === 0 ? k.slice(8) === view
+            : k === 'dangerInside' ? false : true;        // (dans la zone, les mots remplacent la distance et son unité : jamais les deux, le plus gros cas est compté)
         return not ? !v : v;
     };
     const on = (t) => t.split('&').every(one);

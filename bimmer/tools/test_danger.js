@@ -93,7 +93,10 @@ assert(set && set.type === 'bool' && set.default === true, 'dangerAlert is a boo
     assert.strictEqual(by('al_card').type, 'box'); assert.strictEqual(by('al_card').toggle, 'dangerLimit');
     assert.strictEqual(by('al_card2').toggle, 'dangerNoLimit');
     assert(by('al_card2').w < by('al_card').w, 'the card without the limit is the narrower');
-    ['al_cam', 'al_title', 'al_dist', 'al_unit'].forEach((id) => assert.strictEqual(by(id).toggle, 'danger', n + ' ' + id));
+    ['al_cam', 'al_title'].forEach((id) => assert.strictEqual(by(id).toggle, 'danger', n + ' ' + id));
+    // (20 nov. 2026 : avant la zone la distance et son unité, dedans les mots « Dans la zone »)
+    ['al_dist', 'al_unit'].forEach((id) => assert.strictEqual(by(id).toggle, 'dangerAhead', n + ' ' + id));
+    assert(by('al_in') && by('al_in').toggle === 'dangerInside' && /zone/i.test(by('al_in').text), n + ' al_in');
     ['al_ring', 'al_limit'].forEach((id) => assert.strictEqual(by(id).toggle, 'dangerLimit', n + ' ' + id));
     assert.strictEqual(by('al_dist').text, '{{dangerDist}}'); assert.strictEqual(by('al_unit').text, '{{dangerUnit}}'); assert.strictEqual(by('al_limit').text, '{{dangerLimit}}');
     // the card without the limit is a prefix of the other: the same corner, so it grows to the right

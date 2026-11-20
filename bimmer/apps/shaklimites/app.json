@@ -1,8 +1,8 @@
 {
   "id": "shaklimites",
   "title": "ShakLimites (essai)",
-  "description": "La limitation de vitesse de la route d'après une carte (OpenStreetMap) et le GPS de la voiture, pour les voitures dont la caméra ne lit pas les panneaux. Elle s'affiche dans le rond de limitation de ShakTheme. Grandes routes seulement ; ne connaît ni les travaux ni les limites temporaires.",
-  "version": "0.1.1",
+  "description": "La limitation de vitesse de la route d'après une carte (OpenStreetMap) et le GPS de la voiture, pour les voitures dont la caméra ne lit pas les panneaux. Elle s'affiche dans le rond de limitation de ShakTheme. Là où la carte ne sait pas, 50 km/h par défaut ; ne connaît ni les travaux ni les limites temporaires.",
+  "version": "0.1.2",
   "vendor": "custom",
   "startType": "autostart",
   "loggingId": "OALM",
@@ -12,6 +12,6 @@
     "de.bmw.infotainment.GPSData": {"GPSPositionCAN": "s", "_optional": "la position GPS de la voiture (vue acceptée et disponible sur la voiture du propriétaire, photo du 19 nov. 2026)"}
   },
   "screens": [{"name": "MAIN", "kind": "canvas", "title": "ShakLimites"}],
-  "settings": [],
+  "settings": [{"key": "assume50", "label": "Sans information sur la route : afficher 50 km/h", "type": "bool", "default": true}],
   "config": {"lang": "fr", "readOnly": true}
 }

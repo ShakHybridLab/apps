@@ -80,15 +80,17 @@ def danger_card(d, x, y, sheet, conn, h=78, top=12):
          'ring': [229, h / 2.0, rr, 5], 'ringWhen': 'dangerLimit', 'toggle': 'danger', 'conn': 0},
         icon('al_cam', x + 14, y + (h - min(48, h - 14)) // 2, min(48, h - 14), min(48, h - 14), 'cam', RED, sheet, conn, **k),
         text('al_title', x + 72, y + top, 118, 19, 'DANGER', 'm_label', RED, 'left', sheet, conn, **k),
-        text('al_dist', x + 62, y + top + 22, 88, 29, '{{dangerDist}}', 'm_mid', 'fg', 'right', sheet, conn, **k),
-        text('al_unit', x + 154, y + top + 21, 40, 36, '{{dangerUnit}}', 'm_unit', 'dim', 'left', sheet, conn, **k),
+        # before the zone the distance to its edge; in it, the words (20 Nov 2026: "10 m", the smallest distance shown, read as a camera 10 m away)
+        text('al_dist', x + 62, y + top + 22, 88, 29, '{{dangerDist}}', 'm_mid', 'fg', 'right', sheet, conn, toggle='dangerAhead'),
+        text('al_unit', x + 154, y + top + 21, 40, 36, '{{dangerUnit}}', 'm_unit', 'dim', 'left', sheet, conn, toggle='dangerAhead'),
+        text('al_in', x + 68, y + top + 25, 126, 24, 'Dans la zone', 'm_name', 'fg', 'left', sheet, conn, toggle='dangerInside'),
         text('al_limit', x + 229 - 23, y + (h - 23) // 2, 46, 23, '{{dangerLimit}}', 'lim_num', 'fg', 'center', sheet, conn, toggle='dangerLimit'),
     ]
-    for w in d['widgets'][-5:]:
+    for w in d['widgets'][-6:]:
         if not w.get('conn'):
             w.pop('conn', None)
     # the card's own layer: the connection that stays the least loaded in every view (8 layers each at most)
-    card = d['widgets'][-6]
+    card = d['widgets'][-7]
     best = None
     for c in range(pack_sheets.NCONN):
         card['conn'] = c

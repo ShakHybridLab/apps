@@ -42,8 +42,9 @@ jobs:
             ls -la /tmp/routes.osm.pbf
             osmium export /tmp/routes.osm.pbf -f geojsonseq --geometry-types=linestring -o /tmp/routes.geojsonseq --overwrite
             ls -la /tmp/routes.geojsonseq
-            # l'Île-de-France en détail (demande du propriétaire) : aussi les petites routes et les rues qui portent une limitation
-            osmium extract -b 1.44,48.10,3.56,49.25 /tmp/france.osm.pbf -o /tmp/idf.osm.pbf --overwrite
+            # l'Île-de-France et 200 km autour, en détail (demande du propriétaire, 20 nov. 2026 ; l'Île-de-France seule jusque-là : 1.44,48.10,3.56,49.25) :
+            # aussi les petites routes et les rues qui portent une limitation
+            osmium extract -b 0.76,47.65,4.24,49.70 /tmp/france.osm.pbf -o /tmp/idf.osm.pbf --overwrite
             osmium tags-filter /tmp/idf.osm.pbf w/highway=tertiary,tertiary_link,unclassified,residential,living_street -o /tmp/rues.osm.pbf --overwrite
             osmium export /tmp/rues.osm.pbf -f geojsonseq --geometry-types=linestring -o /tmp/rues.geojsonseq --overwrite
             ls -la /tmp/rues.geojsonseq

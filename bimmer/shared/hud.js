@@ -850,10 +850,14 @@ class HudApp {
         // "driveSport": not saved, the car's drive mode is Sport (the "drive" view shows the G-meter then, the settings of the modes otherwise)
         if (key === 'driveSport') return this.driveMode === 'sport';
         // "danger": not saved, a danger zone is ahead (danger.js) and the alert is turned on; "dangerLimit" / "dangerNoLimit": and its speed limit is / isn't known
-        if (key === 'danger' || key === 'dangerLimit' || key === 'dangerNoLimit') {
+        // "dangerInside" / "dangerAhead" (20 Nov 2026): the car is in the zone (the distance to its edge is 0: the card says so in words, the owner
+        // read the smallest distance, "10 m", as a camera 10 m away) or still before it
+        if (key === 'danger' || key === 'dangerLimit' || key === 'dangerNoLimit' || key === 'dangerInside' || key === 'dangerAhead') {
             // (the HUD shows it too since 20 Nov 2026, ShakHUD: an app whose settings have "dangerAlert")
             const d = this.ctx.settings.item('dangerAlert') && this.ctx.settings.get('dangerAlert') === true ? this.danger.state() : null;
-            return !!d && d.on && (key === 'danger' || (d.limit !== null) === (key === 'dangerLimit'));
+            if (!d || !d.on) return false;
+            if (key === 'dangerInside' || key === 'dangerAhead') return (d.distM > 0) === (key === 'dangerAhead');
+            return key === 'danger' || (d.limit !== null) === (key === 'dangerLimit');
         }
         // "power": not saved, an app shares the battery's power (cluster_info.js) and the setting "sportPower" lets it replace the boost;
         // "boostShown": the boost shows (the setting "showBoost", and no power flow in its place)
@@ -1138,7 +1142,7 @@ class HudApp {
     }
 
     /** Which states of the danger alert the layout shows: "on / limit known" as one string, to see when it has to be rebuilt. */
-    _dangerKey() { return ['danger', 'dangerLimit'].map((k) => (this.setting(k) ? 1 : 0)).join(''); }
+    _dangerKey() { return ['danger', 'dangerLimit', 'dangerInside'].map((k) => (this.setting(k) ? 1 : 0)).join(''); }
 
     /** The alert came or went, or its limit became known or unknown (danger.js): rebuild a layout that draws it. */
     _dangerChanged() {
