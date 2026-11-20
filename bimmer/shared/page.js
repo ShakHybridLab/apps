@@ -487,11 +487,6 @@ class Page {
         const ci = this.hud.windowOpen ? 'Window open: Cluster Centre / Cluster Info draw in it' : this.hud.ci && this.hud.ci.wantsWindow() ? 'Asked for, opening' : 'Closed (nothing asks for it)';
         note(cv, CX, y + 14, [ci + '. It is the same window Waze\'s map shows in (Sport, M, M Blade and Navi).']);
         y += 34;
-        // the danger zone alert (M Blade and Navi, danger.js): shows only while another app says a zone is ahead
-        y = this.toggleRow(cv, CX, y, w, 'Danger zone alert (M Blade and Navi)', 'dangerAlert');
-        const dz = this.hud.danger ? this.hud.danger.state() : null;
-        note(cv, CX, y + 8, [dz && dz.on ? 'Showing a zone ' + Math.round(dz.distM) + ' m ahead (from ' + dz.app + ')' : 'Nothing to show: no zone near, or no app gives the zones (ShakRadar, from the car\'s GPS).']);
-        y += 20;
         note(cv, CX, y + 22 - (rows > 1 ? 10 : 0), [
             'On: Sport, M, M Blade and Navi open a window in the middle and Waze on Cluster draws its map in it, above',
             'BMW\'s own map view, so nothing shows twice. When the map goes away the theme fills back in.',
@@ -672,6 +667,17 @@ class Page {
             'and flash. Only while the car stands.',
             'Set a limit to 0 (Off) to turn it off.',
         ]);
+        // the danger zone alert (danger.js; the four themes and the HUD): here with the other alerts since 20 Nov 2026 (it sat at the bottom of the
+        // Map tab, named after two themes only and after an app that is gone, and the owner did not find it)
+        if (this.item('dangerAlert')) {
+            let dy = sy + 222;
+            label(cv, rx, dy - 14, 'Danger zone');
+            dy = this.toggleRow(cv, rx, dy, rw, 'Danger zone alert', 'dangerAlert');
+            const dz = this.hud.danger ? this.hud.danger.state() : null;
+            const now = this.get('dangerAlert') !== true ? 'Off: no alert shown.' : !(dz && dz.on) ? 'Nothing to show now: no zone near.'
+                : dz.distM > 0 ? 'Shown now: a zone ' + Math.round(dz.distM) + ' m ahead.' : 'Shown now: the car is in a zone.';
+            note(cv, rx, dy + 12, [now, 'On the four themes, from the car\'s GPS', 'and the list of zones in the app.']);
+        }
     }
 
     /* ---------- G-meter (both) ---------- */
@@ -778,7 +784,7 @@ class Page {
             else this.pickRow(cv, x, y, colW, s.label, k, undefined, rh);
         });
         // what the engine says it is doing (layers, pixel memory, why nothing shows): for checking on the car
-        const st = String(this.hud.lastStatus || ''), cut = st.length > 120 ? st.lastIndexOf(' ', 120) : -1;
+        const st = this.fr ? fr.tr(String(this.hud.lastStatus || '')) : String(this.hud.lastStatus || ''), cut = st.length > 120 ? st.lastIndexOf(' ', 120) : -1;
         cv.text(cut > 0 ? st.slice(0, cut) : st, CX, full - 26, 15, C.text, { literal: true });
         if (cut > 0) cv.text(st.slice(cut + 1, cut + 1 + 130), CX, full - 6, 15, C.text, { literal: true });
     }

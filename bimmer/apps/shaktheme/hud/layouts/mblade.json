@@ -2891,7 +2891,7 @@
       "h": 34,
       "color": "fg",
       "toggle": "viewSel=gauges&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "tempBy": "coolant",
       "conn": 3
     },
@@ -2908,7 +2908,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "viewSel=gauges&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -2924,7 +2924,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "viewSel=gauges&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -2945,7 +2945,7 @@
       ],
       "align": "right",
       "toggle": "viewSel=gauges&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -2961,7 +2961,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "viewSel=gauges&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "tempBy": "coolant",
       "conn": 3
     },
@@ -2978,7 +2978,7 @@
       "color": "dim",
       "align": "right",
       "toggle": "viewSel=gauges&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -2992,7 +2992,7 @@
       "h": 34,
       "color": "fg",
       "toggle": "viewSel=gauges&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3008,7 +3008,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "viewSel=gauges&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3024,7 +3024,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "viewSel=gauges&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3040,7 +3040,7 @@
       "color": "dim",
       "align": "right",
       "toggle": "viewSel=gauges&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3056,7 +3056,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "viewSel=gauges&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "iceBy": true,
       "conn": 3
     },
@@ -3073,7 +3073,7 @@
       "color": "dim",
       "align": "right",
       "toggle": "viewSel=gauges&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3333,7 +3333,7 @@
       "h": 34,
       "color": "fg",
       "toggle": "viewSel=electric&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3349,7 +3349,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "viewSel=electric&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3365,7 +3365,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "viewSel=electric&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3381,7 +3381,7 @@
       "color": "dim",
       "align": "right",
       "toggle": "viewSel=electric&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3397,7 +3397,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "viewSel=electric&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3413,7 +3413,7 @@
       "color": "dim",
       "align": "right",
       "toggle": "viewSel=electric&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3427,7 +3427,7 @@
       "h": 34,
       "color": "fg",
       "toggle": "viewSel=electric&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3443,7 +3443,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "viewSel=electric&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3459,7 +3459,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "viewSel=electric&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3475,7 +3475,7 @@
       "color": "dim",
       "align": "right",
       "toggle": "viewSel=electric&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3491,7 +3491,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "viewSel=electric&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3507,7 +3507,7 @@
       "color": "dim",
       "align": "right",
       "toggle": "viewSel=electric&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3679,7 +3679,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "viewSel=tyres&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "tyreBy": "RL",
       "conn": 3
     },
@@ -3696,7 +3696,7 @@
       "color": "dim",
       "align": "center",
       "toggle": "viewSel=tyres&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3712,7 +3712,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "viewSel=tyres&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "tyreBy": "RR",
       "conn": 3
     },
@@ -3729,7 +3729,7 @@
       "color": "dim",
       "align": "center",
       "toggle": "viewSel=tyres&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3789,7 +3789,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "viewSel=drive&driveSport&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3805,7 +3805,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "viewSel=drive&driveSport&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3904,7 +3904,7 @@
       "h": 34,
       "color": "fg",
       "toggle": "viewSel=drive&!driveSport&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3920,7 +3920,7 @@
       "color": "fg",
       "align": "left",
       "toggle": "viewSel=drive&!driveSport&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3934,7 +3934,7 @@
       "h": 34,
       "color": "fg",
       "toggle": "viewSel=drive&!driveSport&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -3950,7 +3950,7 @@
       "color": "fg",
       "align": "left",
       "toggle": "viewSel=drive&!driveSport&!mapUp",
-      "sheet": "xs_vb",
+      "sheet": "xs_va",
       "conn": 3
     },
     {
@@ -4004,301 +4004,471 @@
       "conn": 3
     },
     {
-      "id": "xb_mcool_icon",
-      "type": "icon",
-      "icon": "tempWave",
-      "z": 5,
-      "x": 1662,
-      "y": 196,
-      "w": 26,
-      "h": 34,
-      "color": "fg",
-      "toggle": "viewSel=gauges&mapUp",
-      "sheet": "s7",
-      "tempBy": "coolant",
-      "conn": 1
-    },
-    {
-      "id": "xb_mcool",
-      "type": "text",
-      "z": 5,
-      "x": 1696,
-      "y": 198,
-      "w": 104,
-      "h": 29,
-      "text": "{{coolant}}",
-      "font": "m_mid",
-      "color": "fg",
-      "align": "right",
-      "toggle": "viewSel=gauges&mapUp",
-      "sheet": "s7",
-      "tempBy": "coolant",
-      "conn": 1
-    },
-    {
-      "id": "xb_mcool_unit",
-      "type": "text",
-      "z": 5,
-      "x": 1804,
-      "y": 201,
-      "w": 44,
-      "h": 32,
-      "text": "{{u:temp}}",
-      "font": "m_tiny",
-      "color": "dim",
-      "align": "left",
-      "toggle": "viewSel=gauges&mapUp",
-      "sheet": "s7",
-      "conn": 1
-    },
-    {
-      "id": "xb_mcool_bar",
-      "type": "slantbar",
-      "class": "content",
-      "z": 5,
-      "x": 1662,
-      "y": 238,
-      "w": 200,
-      "h": 14,
-      "signal": "coolant",
-      "sensor": "coolant",
-      "min": 40,
-      "max": 130,
-      "slant": 12,
-      "toggle": "viewSel=gauges&mapUp",
-      "conn": 3
-    },
-    {
-      "id": "xb_mboost_icon",
+      "id": "xb_mg_boost_ic",
       "type": "icon",
       "icon": "gauge",
       "z": 5,
-      "x": 1662,
-      "y": 268,
-      "w": 29,
+      "x": 1704,
+      "y": 178,
+      "w": 28,
       "h": 34,
       "color": "fg",
       "toggle": "viewSel=gauges&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
-      "id": "xb_mboost",
+      "id": "xb_mg_boost",
       "type": "text",
       "z": 5,
-      "x": 1696,
-      "y": 270,
-      "w": 104,
+      "x": 1734,
+      "y": 180,
+      "w": 96,
       "h": 29,
       "text": "{{boostPos}}",
       "font": "m_mid",
       "color": "fg",
       "align": "right",
       "toggle": "viewSel=gauges&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
-      "id": "xb_mboost_unit",
+      "id": "xb_mg_boost_unit",
       "type": "text",
       "z": 5,
-      "x": 1804,
-      "y": 273,
-      "w": 60,
+      "x": 1834,
+      "y": 183,
+      "w": 48,
       "h": 32,
       "text": "{{u:pressure}}",
       "font": "m_tiny",
       "color": "dim",
       "align": "left",
       "toggle": "viewSel=gauges&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
-      "id": "xb_mboost_bar",
-      "type": "slantbar",
-      "class": "content",
+      "id": "xb_mg_cool_ic",
+      "type": "icon",
+      "icon": "tempWave",
       "z": 5,
-      "x": 1662,
-      "y": 310,
-      "w": 200,
-      "h": 14,
-      "signal": "boost",
-      "sensor": "boost",
-      "min": 0,
-      "max": 1.6,
-      "slant": 12,
+      "x": 1704,
+      "y": 256,
+      "w": 28,
+      "h": 34,
+      "color": "fg",
       "toggle": "viewSel=gauges&mapUp",
+      "sheet": "xs_mo",
+      "tempBy": "coolant",
+      "conn": 3
+    },
+    {
+      "id": "xb_mg_cool",
+      "type": "text",
+      "z": 5,
+      "x": 1734,
+      "y": 258,
+      "w": 96,
+      "h": 29,
+      "text": "{{coolant}}",
+      "font": "m_mid",
+      "color": "fg",
+      "align": "right",
+      "toggle": "viewSel=gauges&mapUp",
+      "sheet": "xs_mo",
+      "tempBy": "coolant",
+      "conn": 3
+    },
+    {
+      "id": "xb_mg_cool_unit",
+      "type": "text",
+      "z": 5,
+      "x": 1834,
+      "y": 261,
+      "w": 48,
+      "h": 32,
+      "text": "{{u:temp}}",
+      "font": "m_tiny",
+      "color": "dim",
+      "align": "left",
+      "toggle": "viewSel=gauges&mapUp",
+      "sheet": "xs_mo",
+      "conn": 3
+    },
+    {
+      "id": "xb_mg_pan",
+      "type": "mpanel",
+      "class": "content",
+      "z": 2,
+      "x": 1646,
+      "y": 122,
+      "w": 266,
+      "h": 214,
+      "shape": [
+        1650,
+        229,
+        0.12,
+        247
+      ],
+      "bar": [
+        1704,
+        1876
+      ],
+      "div": 2,
+      "seg": 24,
+      "rows": [
+        {
+          "y": 232,
+          "signal": "boost",
+          "min": 0,
+          "max": 2,
+          "red": 0.8,
+          "tone": "boost"
+        },
+        {
+          "y": 310,
+          "signal": "coolant",
+          "min": 50,
+          "max": 150,
+          "red": 0.8,
+          "tone": "temp"
+        }
+      ],
+      "rule": 57,
+      "flip": true,
+      "bands": 0.42,
+      "toggle": "viewSel=gauges&mapUp",
+      "conn": 3
+    },
+    {
+      "id": "xb_me_epow_ic",
+      "type": "icon",
+      "icon": "gauge",
+      "z": 5,
+      "x": 1704,
+      "y": 178,
+      "w": 28,
+      "h": 34,
+      "color": "fg",
+      "toggle": "viewSel=electric&mapUp",
+      "sheet": "xs_mo",
+      "conn": 3
+    },
+    {
+      "id": "xb_me_epow",
+      "type": "text",
+      "z": 5,
+      "x": 1734,
+      "y": 180,
+      "w": 96,
+      "h": 29,
+      "text": "{{evPower}}",
+      "font": "m_mid",
+      "color": "fg",
+      "align": "right",
+      "toggle": "viewSel=electric&mapUp",
+      "sheet": "xs_mo",
+      "conn": 3
+    },
+    {
+      "id": "xb_me_epow_unit",
+      "type": "text",
+      "z": 5,
+      "x": 1834,
+      "y": 183,
+      "w": 48,
+      "h": 32,
+      "text": "kW",
+      "font": "m_tiny",
+      "color": "dim",
+      "align": "left",
+      "toggle": "viewSel=electric&mapUp",
+      "sheet": "xs_mo",
+      "conn": 3
+    },
+    {
+      "id": "xb_me_erec_ic",
+      "type": "icon",
+      "icon": "leaf",
+      "z": 5,
+      "x": 1704,
+      "y": 256,
+      "w": 28,
+      "h": 34,
+      "color": "fg",
+      "toggle": "viewSel=electric&mapUp",
+      "sheet": "xs_mo",
+      "conn": 3
+    },
+    {
+      "id": "xb_me_erec",
+      "type": "text",
+      "z": 5,
+      "x": 1734,
+      "y": 258,
+      "w": 96,
+      "h": 29,
+      "text": "{{evRecup}}",
+      "font": "m_mid",
+      "color": "fg",
+      "align": "right",
+      "toggle": "viewSel=electric&mapUp",
+      "sheet": "xs_mo",
+      "conn": 3
+    },
+    {
+      "id": "xb_me_erec_unit",
+      "type": "text",
+      "z": 5,
+      "x": 1834,
+      "y": 261,
+      "w": 48,
+      "h": 32,
+      "text": "kW",
+      "font": "m_tiny",
+      "color": "dim",
+      "align": "left",
+      "toggle": "viewSel=electric&mapUp",
+      "sheet": "xs_mo",
+      "conn": 3
+    },
+    {
+      "id": "xb_me_pan",
+      "type": "mpanel",
+      "class": "content",
+      "z": 2,
+      "x": 1646,
+      "y": 122,
+      "w": 266,
+      "h": 214,
+      "shape": [
+        1650,
+        229,
+        0.12,
+        247
+      ],
+      "bar": [
+        1704,
+        1876
+      ],
+      "div": 2,
+      "seg": 24,
+      "rows": [
+        {
+          "y": 232,
+          "signal": "evPower",
+          "min": 0,
+          "max": 80,
+          "red": 2,
+          "tone": "blue"
+        },
+        {
+          "y": 310,
+          "signal": "evRecup",
+          "min": 0,
+          "max": 60,
+          "red": 2,
+          "tone": "green"
+        }
+      ],
+      "rule": 57,
+      "flip": true,
+      "bands": 0.42,
+      "toggle": "viewSel=electric&mapUp",
       "conn": 3
     },
     {
       "id": "xb_mtyu",
       "type": "text",
       "z": 5,
-      "x": 1670,
-      "y": 180,
-      "w": 192,
+      "x": 1676,
+      "y": 182,
+      "w": 196,
       "h": 24,
       "text": "{{u:pressure}} \u00b7 {{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
       "align": "center",
       "toggle": "viewSel=tyres&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
       "id": "xb_mtypFL",
       "type": "text",
       "z": 5,
-      "x": 1670,
-      "y": 210,
-      "w": 72,
+      "x": 1676,
+      "y": 216,
+      "w": 62,
       "h": 26,
       "text": "{{tyreP:FL}}",
       "font": "m_tyre",
       "color": "fg",
       "align": "center",
       "toggle": "viewSel=tyres&mapUp",
-      "sheet": "s7",
+      "sheet": "xs_mo",
       "tyreBy": "FL",
-      "conn": 1
+      "conn": 3
     },
     {
       "id": "xb_mtytFL",
       "type": "text",
       "z": 5,
-      "x": 1670,
-      "y": 236,
-      "w": 72,
+      "x": 1676,
+      "y": 242,
+      "w": 62,
       "h": 26,
       "text": "{{tyreT:FL}}",
       "font": "m_tyre",
       "color": "dim",
       "align": "center",
       "toggle": "viewSel=tyres&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
       "id": "xb_mtypFR",
       "type": "text",
       "z": 5,
-      "x": 1790,
-      "y": 210,
-      "w": 72,
+      "x": 1810,
+      "y": 216,
+      "w": 62,
       "h": 26,
       "text": "{{tyreP:FR}}",
       "font": "m_tyre",
       "color": "fg",
       "align": "center",
       "toggle": "viewSel=tyres&mapUp",
-      "sheet": "s7",
+      "sheet": "xs_mo",
       "tyreBy": "FR",
-      "conn": 1
+      "conn": 3
     },
     {
       "id": "xb_mtytFR",
       "type": "text",
       "z": 5,
-      "x": 1790,
-      "y": 236,
-      "w": 72,
+      "x": 1810,
+      "y": 242,
+      "w": 62,
       "h": 26,
       "text": "{{tyreT:FR}}",
       "font": "m_tyre",
       "color": "dim",
       "align": "center",
       "toggle": "viewSel=tyres&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
       "id": "xb_mtypRL",
       "type": "text",
       "z": 5,
-      "x": 1670,
-      "y": 270,
-      "w": 72,
+      "x": 1676,
+      "y": 282,
+      "w": 62,
       "h": 26,
       "text": "{{tyreP:RL}}",
       "font": "m_tyre",
       "color": "fg",
       "align": "center",
       "toggle": "viewSel=tyres&mapUp",
-      "sheet": "s7",
+      "sheet": "xs_mo",
       "tyreBy": "RL",
-      "conn": 1
+      "conn": 3
     },
     {
       "id": "xb_mtytRL",
       "type": "text",
       "z": 5,
-      "x": 1670,
-      "y": 296,
-      "w": 72,
+      "x": 1676,
+      "y": 308,
+      "w": 62,
       "h": 26,
       "text": "{{tyreT:RL}}",
       "font": "m_tyre",
       "color": "dim",
       "align": "center",
       "toggle": "viewSel=tyres&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
       "id": "xb_mtypRR",
       "type": "text",
       "z": 5,
-      "x": 1790,
-      "y": 270,
-      "w": 72,
+      "x": 1810,
+      "y": 282,
+      "w": 62,
       "h": 26,
       "text": "{{tyreP:RR}}",
       "font": "m_tyre",
       "color": "fg",
       "align": "center",
       "toggle": "viewSel=tyres&mapUp",
-      "sheet": "s7",
+      "sheet": "xs_mo",
       "tyreBy": "RR",
-      "conn": 1
+      "conn": 3
     },
     {
       "id": "xb_mtytRR",
       "type": "text",
       "z": 5,
-      "x": 1790,
-      "y": 296,
-      "w": 72,
+      "x": 1810,
+      "y": 308,
+      "w": 62,
       "h": 26,
       "text": "{{tyreT:RR}}",
       "font": "m_tyre",
       "color": "dim",
       "align": "center",
       "toggle": "viewSel=tyres&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
-      "id": "xb_mtyic",
-      "type": "icon",
-      "icon": "tyre",
-      "z": 5,
-      "x": 1751,
-      "y": 246,
-      "w": 29,
-      "h": 29,
-      "color": "dim",
+      "id": "xb_mtpan",
+      "type": "mpanel",
+      "class": "content",
+      "z": 2,
+      "x": 1646,
+      "y": 122,
+      "w": 266,
+      "h": 214,
+      "shape": [
+        1650,
+        229,
+        0.12,
+        247
+      ],
+      "bar": [
+        1704,
+        1876
+      ],
+      "div": 2,
+      "seg": 24,
+      "rows": [],
+      "rule": 57,
+      "flip": true,
+      "bands": 0.42,
       "toggle": "viewSel=tyres&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "mode": "tyres",
+      "car": 0.55,
+      "tiles": [
+        1773,
+        1775,
+        242,
+        308
+      ],
+      "conn": 3
     },
     {
       "id": "xb_mdgg",
       "type": "gmeter",
       "class": "content",
       "z": 5,
-      "x": 1710,
+      "x": 1712,
       "y": 150,
       "w": 120,
       "h": 120,
@@ -4309,153 +4479,209 @@
       "id": "xb_mdgside",
       "type": "text",
       "z": 5,
-      "x": 1670,
-      "y": 276,
-      "w": 200,
+      "x": 1676,
+      "y": 274,
+      "w": 196,
       "h": 28,
       "text": "{{gSide}}",
       "font": "s_unit",
       "color": "fg",
       "align": "center",
       "toggle": "viewSel=drive&driveSport&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
       "id": "xb_mdgfwd",
       "type": "text",
       "z": 5,
-      "x": 1670,
-      "y": 306,
-      "w": 200,
+      "x": 1676,
+      "y": 304,
+      "w": 196,
       "h": 28,
       "text": "{{gFwd}}",
       "font": "s_unit",
       "color": "fg",
       "align": "center",
       "toggle": "viewSel=drive&driveSport&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
+    },
+    {
+      "id": "xb_mdspan",
+      "type": "mpanel",
+      "class": "content",
+      "z": 2,
+      "x": 1646,
+      "y": 122,
+      "w": 266,
+      "h": 214,
+      "shape": [
+        1650,
+        229,
+        0.12,
+        247
+      ],
+      "bar": [
+        1704,
+        1876
+      ],
+      "div": 2,
+      "seg": 24,
+      "rows": [],
+      "rule": 57,
+      "flip": true,
+      "bands": 0.42,
+      "toggle": "viewSel=drive&driveSport&mapUp",
+      "conn": 3
     },
     {
       "id": "xb_mdr_engine_ic",
       "type": "icon",
       "icon": "gauge",
       "z": 5,
-      "x": 1662,
+      "x": 1698,
       "y": 186,
       "w": 28,
       "h": 34,
       "color": "fg",
       "toggle": "viewSel=drive&!driveSport&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
       "id": "xb_mdr_engine",
       "type": "text",
       "z": 5,
-      "x": 1706,
+      "x": 1734,
       "y": 190,
-      "w": 170,
+      "w": 150,
       "h": 28,
       "text": "{{setup:engine}}",
       "font": "m_label",
       "color": "fg",
       "align": "left",
       "toggle": "viewSel=drive&!driveSport&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
       "id": "xb_mdr_chassis_ic",
       "type": "icon",
       "icon": "shock",
       "z": 5,
-      "x": 1662,
+      "x": 1698,
       "y": 224,
       "w": 28,
       "h": 34,
       "color": "fg",
       "toggle": "viewSel=drive&!driveSport&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
       "id": "xb_mdr_chassis",
       "type": "text",
       "z": 5,
-      "x": 1706,
+      "x": 1734,
       "y": 228,
-      "w": 170,
+      "w": 150,
       "h": 28,
       "text": "{{setup:chassis}}",
       "font": "m_label",
       "color": "fg",
       "align": "left",
       "toggle": "viewSel=drive&!driveSport&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
       "id": "xb_mdr_steering_ic",
       "type": "icon",
       "icon": "wheel",
       "z": 5,
-      "x": 1662,
+      "x": 1698,
       "y": 262,
       "w": 28,
       "h": 34,
       "color": "fg",
       "toggle": "viewSel=drive&!driveSport&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
       "id": "xb_mdr_steering",
       "type": "text",
       "z": 5,
-      "x": 1706,
+      "x": 1734,
       "y": 266,
-      "w": 170,
+      "w": 150,
       "h": 28,
       "text": "{{setup:steering}}",
       "font": "m_label",
       "color": "fg",
       "align": "left",
       "toggle": "viewSel=drive&!driveSport&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
       "id": "xb_mdr_gearbox_ic",
       "type": "icon",
       "icon": "cog",
       "z": 5,
-      "x": 1662,
+      "x": 1698,
       "y": 300,
       "w": 28,
       "h": 34,
       "color": "fg",
       "toggle": "viewSel=drive&!driveSport&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
     },
     {
       "id": "xb_mdr_gearbox",
       "type": "text",
       "z": 5,
-      "x": 1706,
+      "x": 1734,
       "y": 304,
-      "w": 170,
+      "w": 150,
       "h": 28,
       "text": "{{setup:gearbox}}",
       "font": "m_label",
       "color": "fg",
       "align": "left",
       "toggle": "viewSel=drive&!driveSport&mapUp",
-      "sheet": "s7",
-      "conn": 1
+      "sheet": "xs_mo",
+      "conn": 3
+    },
+    {
+      "id": "xb_mdrpan",
+      "type": "mpanel",
+      "class": "content",
+      "z": 2,
+      "x": 1646,
+      "y": 122,
+      "w": 266,
+      "h": 214,
+      "shape": [
+        1650,
+        229,
+        0.12,
+        247
+      ],
+      "bar": [
+        1704,
+        1876
+      ],
+      "div": 2,
+      "seg": 24,
+      "rows": [],
+      "rule": 57,
+      "flip": true,
+      "bands": 0.42,
+      "toggle": "viewSel=drive&!driveSport&mapUp",
+      "conn": 2
     }
   ]
 }

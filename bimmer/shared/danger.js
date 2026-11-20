@@ -25,7 +25,7 @@ const SCAN_MS = 500;
 const MAX_M = 20000;            // a distance past this is not a zone ahead (a bad value)
 
 class Danger {
-    /** opts: { dir, now }; onChange() is called when the alert comes or goes, or when whether a limit is known changes. */
+    /** opts: { dir, now }; onChange() is called when the alert comes or goes, when whether a limit is known changes, or when the car enters or leaves the zone. */
     constructor(opts, log, onChange) {
         opts = opts || {};
         this.dir = opts.dir || THEMES_DIR;
@@ -75,7 +75,9 @@ class Danger {
         } catch (e) { best = null; }
         const before = this.cur;
         this.cur = best;
-        const flipped = !!before !== !!best || (before && best && (before.limit === null) !== (best.limit === null));
+        // (entering or leaving the zone counts too since 20 Nov 2026: the card says "in the zone" in place of the distance, and without this the theme was
+        // not told, so a zone the car drove into kept its last distance, "10 m": the owner's photo of that day)
+        const flipped = !!before !== !!best || (before && best && ((before.limit === null) !== (best.limit === null) || (before.distance > 0) !== (best.distance > 0)));
         if (flipped) {
             if (best && !before) this.log.info('danger zone alert on (' + best.app + ', ' + Math.round(best.distance) + ' m)');
             else if (!best) this.log.info('danger zone alert off');

@@ -67,9 +67,12 @@ const EXACT = {
     'Centre window for Cluster Centre / Cluster Info': 'Fenêtre centrale pour Cluster Centre / Cluster Info',
     'Window open: Cluster Centre / Cluster Info draw in it': 'Fenêtre ouverte : Cluster Centre / Cluster Info y dessinent',
     'Asked for, opening': 'Demandée, ouverture en cours', 'Closed (nothing asks for it)': 'Fermée (personne ne la demande)',
-    'Danger zone alert (M Blade and Navi)': 'Alerte zone de danger (M Blade et Navi)',
-    'Nothing to show: no zone near, or no app gives the zones (ShakRadar, from the car\'s GPS).':
-        "Rien à afficher : pas de zone proche, ou aucune appli ne donne les zones (ShakRadar, avec le GPS de la voiture).",
+    'Danger zone': 'Zone de danger', 'Danger zone alert': 'Alerte zone de danger',
+    'Shown now: the car is in a zone.': 'Affichée en ce moment : la voiture est dans une zone.',
+    'Nothing to show now: no zone near.': 'Rien à afficher pour le moment : pas de zone proche.',
+    'Off: no alert shown.': 'Éteinte : aucune alerte affichée.',
+    'On the four themes, from the car\'s GPS': 'Sur les quatre thèmes, avec le GPS de la voiture',
+    'and the list of zones in the app.': "et la liste des zones de l'appli.",
     'On: Sport, M, M Blade and Navi open a window in the middle and Waze on Cluster draws its map in it, above':
         'Activé : Sport, M, M Blade et Navi ouvrent une fenêtre au milieu et Waze on Cluster y dessine sa carte, par-dessus',
     "BMW's own map view, so nothing shows twice. When the map goes away the theme fills back in.":
@@ -120,7 +123,29 @@ const EXACT = {
 };
 
 // les phrases qui contiennent un nom ou un nombre
+// La ligne d'état du moteur d'affichage (hud.js statusText, _drawnNote, et l'état de Waze derrière « ; Waze: ») : des morceaux mis bout à bout,
+// traduits un par un. Le propriétaire photographie cette ligne pour dire ce que fait la voiture : elle se lit en français (20 nov. 2026).
+const STATUS = [
+    [/^(Cluster|HUD) on/, '$1 actif'], [/^(Cluster|HUD) off/, '$1 éteint'],
+    [/\(drive mode not seen yet\)/, '(mode de conduite pas encore vu)'], [/\(drive mode not recognised: the car sends (.*?)\)/, '(mode de conduite inconnu : la voiture envoie $1)'],
+    [/: (.*?) layout, (.*?) theme( \(Auto\))?/, ' : disposition $1, couleurs $2$3'], [/: (.*?) theme/, ' : thème $1'],
+    [/, (\d+) layers? on (\d+) connections/, ', $1 couches sur $2 connexions'], [/, (\d+) layers?(?=,|;|$)/, ', $1 couches'],
+    [/, ([\d.]+) MiB of 16 MiB pixels/, ', $1 Mio de pixels sur 16'], [/, demo data/, ', données de démo'],
+    [/, (\d+) of (\d+) layers? drawn/, ', $1 couches affichées sur $2'],
+    [/\((\d+) waiting: /, '($1 en attente : '], [/, waiting: another app has this display/, ', en attente : une autre appli a cet écran'],
+    [/, waiting: BMW is using this display/, ', en attente : BMW utilise cet écran'], [/, refused /, ', refusé : '],
+    [/: connecting to cluster-render/, ' : connexion à cluster-render'], [/: cluster-render is not installed or not running/, " : cluster-render n'est pas installé ou ne tourne pas"],
+    [/: BMW's own cluster shows/, ' : le cluster de BMW'], [/: BMW's own HUD shows/, ' : le HUD de BMW'],
+];
+function status(s) {
+    const cut = s.indexOf('; Waze: ');
+    let head = cut < 0 ? s : s.slice(0, cut);
+    STATUS.forEach((r) => { head = head.replace(r[0], r[1]); });
+    return cut < 0 ? head : head + ' ; Waze : ' + tr(s.slice(cut + 8));
+}
+
 const PATTERNS = [
+    [/^(Cluster|HUD)( on| off|:).*$/, (m) => status(m)],
     [/^Can't reach Waze on Cluster \((.*)\)$/, 'Waze on Cluster est injoignable ($1)'],
     [/^(.*)\. It is the same window Waze's map shows in \(Sport, M, M Blade and Navi\)\.$/, (m, a) => tr(a) + ". C'est la fenêtre de la carte Waze (Sport, M, M Blade, Navi)."],
     // onglet Signaux : l'étape de la voiture qui ne finit jamais (kit/runtime/signals.js busyWith)
@@ -165,7 +190,7 @@ const PATTERNS = [
     [/^(.*) · facets (\d+) %$/, '$1 · facettes $2 %'],
     [/^Slot (\d+) · pick a sensor$/, 'Emplacement $1 · choisis une mesure'],
     [/^Reset slots$/, 'Réinitialiser'],
-    [/^Showing a zone (\d+) m ahead \(from (.*)\)$/, 'Zone à $1 m (de $2)'],
+    [/^Shown now: a zone (\d+) m ahead\.$/, 'Affichée en ce moment : une zone à $1 m.'],
     [/^(.*) · where it sits on the glass$/, '$1 · où il se place sur le pare-brise'],
     [/^None of these (.*) has readout slots\.$/, "Aucun de ces $1 n'a d'emplacements de données."],
     [/^(.*) · readout slots$/, '$1 · emplacements de données'],

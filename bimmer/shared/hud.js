@@ -2967,6 +2967,13 @@ class HudApp {
             c.uniform(ref, 'u_seg', [w.seg || 24]);
             c.uniform(ref, 'u_mode', [w.mode === 'tyres' ? 1 : 0]);
             c.uniform(ref, 'u_wh', [0, 0, 0, 0]);
+            if (w.type === 'mpanel') {
+                // M Blade's small panel beside the Waze map: "flip" (its point to the right, the colour bands on the left), "bands" (their size, 1)
+                // and "car" (the tyres' view's car, 1; smaller: the car alone, the readings stand beside it without a plate)
+                c.uniform(ref, 'u_flip', [w.flip === true ? 1 : 0]);
+                c.uniform(ref, 'u_bs', [isNum(w.bands) ? w.bands : 1]);
+                c.uniform(ref, 'u_car', [isNum(w.car) ? w.car : 1]);
+            }
             if (w.mode === 'tyres' && w.tiles) {
                 c.uniform(ref, 'u_bx', [w.tiles[0] - w.x, w.tiles[1] - w.x]);
                 c.uniform(ref, 'u_ry', [w.tiles[2] - w.y, w.tiles[3] - w.y, -1, -1]);

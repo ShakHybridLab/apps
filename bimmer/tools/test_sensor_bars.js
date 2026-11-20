@@ -70,7 +70,11 @@ THEMES.forEach((name) => {
         if (pg) pg.rows.forEach((r) => assert(r.max > r.min && r.y > pg.y && r.y < pg.y + pg.h, r.signal + ' : bornes, dans la carte'));
         if (name === 'mblade') {
             assert.deepStrictEqual(bars, [], 'carte fermée : les barres sont dans le panneau');
-            assert.deepStrictEqual(xb.filter((w) => w.type === 'slantbar' && /(^|&)mapUp$/.test(w.toggle)).map((w) => w.sensor).sort(), ['boost', 'coolant'], 'carte ouverte : le turbo et le liquide');
+            // (avec la carte, depuis le 20 nov. 2026 : le même panneau en petit à droite de la lame, ses deux barres dedans)
+            const mg = xb.filter((w) => w.type === 'mpanel' && w.toggle === 'viewSel=gauges&mapUp')[0];
+            assert(mg && mg.flip === true, 'carte ouverte : le petit panneau');
+            assert.deepStrictEqual(mg.rows.map((r) => r.signal).sort(), ['boost', 'coolant'], 'carte ouverte : le turbo et le liquide');
+            mg.rows.forEach((r) => assert(r.y > mg.y && r.y < mg.y + mg.h && mg.bar[0] > mg.x && mg.bar[1] < mg.x + mg.w, 'carte ouverte : les barres dans le panneau'));
             xb.find((w) => w.id === 'xb_vpan_g').rows.forEach((r) => assert(r.max > r.min && r.y > 0, r.signal + ' : bornes'));
         }
         assert.deepStrictEqual(sig, pg ? ['ambient', 'boost', 'coolant', 'oil'] : ['boost', 'coolant', 'oil'], 'capteurs : ' + sig);
@@ -107,7 +111,7 @@ THEMES.forEach((name) => {
         const mine = (w) => !/(^|&)mapUp$/.test(w.toggle) && !PANEL(w);       // the view with the map closed (M Blade's panel apart); M Blade's map-up copy is checked the same way below
         const g = xb.filter((w) => mine(w) && /driveSport$|driveSport&/.test(w.toggle) && !/!driveSport/.test(w.toggle)), r = xb.filter((w) => mine(w) && /!driveSport/.test(w.toggle));
         if (name === 'mblade') {
-            const up = (w) => /(^|&)mapUp$/.test(w.toggle);
+            const up = (w) => /(^|&)mapUp$/.test(w.toggle) && !PANEL(w);
             const g2 = xb.filter((w) => up(w) && /driveSport/.test(w.toggle) && !/!driveSport/.test(w.toggle)), r2 = xb.filter((w) => up(w) && /!driveSport/.test(w.toggle));
             assert.deepStrictEqual(g2.map((w) => w.type).sort(), g.map((w) => w.type).sort(), 'carte ouverte : le même G-mètre');
             assert.deepStrictEqual(r2.map((w) => w.text || w.icon).sort(), r.map((w) => w.text || w.icon).sort(), 'carte ouverte : les mêmes réglages');

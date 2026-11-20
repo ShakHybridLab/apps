@@ -2,7 +2,7 @@
   "id": "shakhud",
   "title": "ShakHUD",
   "description": "ShakHUD : un HUD pour le pare-brise, le compte-tours M Style (une barre brisée, rouge dans la zone rouge, bleu clair en électrique, verte en recharge), avec la batterie, les autonomies et les températures en bas à droite ; il se cache tout seul quand la carte Waze du HUD est affichée",
-  "version": "0.6.40",
+  "version": "0.6.41",
   "vendor": "custom",
   "startType": "autostart",
   "loggingId": "OAS1",
@@ -529,7 +529,7 @@
     },
     {
       "key": "evRangeFull",
-      "label": "Autonomie électrique à pleine charge (hybrides rechargeables)",
+      "label": "Autonomie électrique à pleine charge",
       "type": "number",
       "unit": "km",
       "default": 40,
@@ -678,7 +678,7 @@
     },
     {
       "key": "warnCoolant",
-      "label": "Alerte température du liquide de refroidissement",
+      "label": "Alerte température du liquide",
       "type": "number",
       "unit": "°C",
       "default": 115,
@@ -901,7 +901,7 @@
     },
     {
       "key": "reserveKm",
-      "label": "Réserve : autonomie essence en rouge à partir de",
+      "label": "Réserve d'essence : rouge à partir de",
       "type": "number",
       "unit": "km",
       "default": 90,
@@ -956,7 +956,7 @@
     },
     {
       "key": "launchRpm",
-      "label": "Launch Control Ready : à partir de (0 = dès l'arrêt)",
+      "label": "Launch Control Ready dès (0 = à l'arrêt)",
       "type": "number",
       "unit": "tr/min",
       "default": 2000,

@@ -532,13 +532,45 @@ def _mblade(d):
     sheet_of = lambda wid, dflt: next((w.get('sheet') for w in d['widgets'] if w['id'] == wid and w.get('sheet')), dflt)
     # without the map the views' texts keep sheets of their own, xs_va / xs_vb (20 Nov 2026, the owner: "quand j'appuie tout bug un peu, ça clignote"): sharing the sheets of the
     # theme's own texts, each press of BC changed those sheets, so the gear, the speed and the strips' numbers were taken off and drawn again
-    # (with the Waze map up the views' texts still share a sheet of the theme's: one more sheet there is a 21st layer, over the 20 the theme keeps to)
-    S_RIGHT = sheet_of('o_n7', 'xs_mo')
-    new += _mblade_views(d, 'xs_va', 'xs_vb', 'xs_vl', 'xs_vf')
-    new += gauges('xb_m', 1662, 196, 72, 'viewSel=gauges&mapUp', S_RIGHT, 1, bw=200)
-    new += tyres('xb_mty', 1670, 180, 'm_tyre', 'm_tiny', S_RIGHT, 1, rowp=30, rowt=26, rear=90, toggle='viewSel=tyres&mapUp')
-    new += drive_g('xb_mdg', 1710, 150, 120, 1670, 276, 200, S_RIGHT, 1, 'viewSel=drive&driveSport&mapUp', stacked=True)
-    new += drive_rows('xb_mdr_', 1662, 186, 38, S_RIGHT, 1, 'viewSel=drive&!driveSport&mapUp', 'm_label', 170)
+    # (with the Waze map up too, since the sheets were packed apart on 20 Nov 2026: there is room for this one, 17 layers at most)
+    S_RIGHT = 'xs_mo'
+    new += _mblade_views(d, 'xs_va', 'xs_va', 'xs_vl', 'xs_vf')      # (the upper and the lower rows in one sheet: one layer less, the same memory)
+    # With the Waze map up (20 Nov 2026, the owner: the views with the map were "trop simple", two readings on bare slanted bars): the same panel
+    # in small, right of the blade's numbers and above the danger alert's card (y 340), mirrored: its point to the right, the two colour bands on
+    # the left, towards the blade. Two readings (the oil has its strip just under): each an icon, the value, the unit, and its leaning bar.
+    MX, MY, MW, MH, MK = 1646, 122, 266, 214, 0.12
+    MZ = MW - 4 - int(round(MK * MH / 2)) - 2                  # the band's width: the point 4 px from the right edge, the corners 2 px from the left one
+    MBAR = [1704, 1876]
+
+    def mini(id, tog, rows=None, **kw):
+        o = {'id': id, 'type': 'mpanel', 'class': 'content', 'z': 2, 'x': MX, 'y': MY, 'w': MW, 'h': MH, 'shape': [MX + 4, MY + MH // 2, MK, MZ],
+             'bar': MBAR, 'div': 2, 'seg': 24, 'rows': rows or [], 'rule': 57, 'flip': True, 'bands': 0.42, 'toggle': tog, 'conn': 3}
+        o.update(kw)
+        return o
+
+    def mini_rows(pfx, tog, ROWS):
+        out, rows = [], []
+        for r, (k, ic, sig, mn, mx, tok, unit, red, tone) in enumerate(ROWS):
+            T = 178 + r * 78                                   # (the first row's unit, at the right, clears the hood: y 185 at x 1882)
+            tb = {'tempBy': sig} if tone == 'temp' else {}
+            out += [icon(pfx + k + '_ic', MBAR[0], T, 28, 34, ic, 'fg', S_RIGHT, 1, toggle=tog, **tb),
+                    text(pfx + k, MBAR[0] + 30, T + 2, 96, 29, tok, 'm_mid', 'fg', 'right', S_RIGHT, 1, toggle=tog, **tb),
+                    text(pfx + k + '_unit', MBAR[0] + 130, T + 5, 48, 32, unit, 'm_tiny', 'dim', 'left', S_RIGHT, 1, toggle=tog)]
+            rows.append({'y': T + 54, 'signal': sig, 'min': mn, 'max': mx, 'red': red if red else 2, 'tone': tone})
+        return out + [mini(pfx + 'pan', tog, rows)]
+
+    by_row = {r[0]: r for r in CARD_ROWS}
+    new += mini_rows('xb_mg_', 'viewSel=gauges&mapUp', (by_row['boost'], by_row['cool']))
+    new += mini_rows('xb_me_', 'viewSel=electric&mapUp', (ELEC_ROWS[2], ELEC_ROWS[3]))          # the power and what is won back: the charge and the range have their strip
+    # the tyres: the car in small between the two columns, each wheel in its tyre's colour
+    tm = 'viewSel=tyres&mapUp'
+    new += tyres('xb_mty', 1676, 182, 'm_tyre', 'm_tiny', S_RIGHT, 1, colw=62, gap=72, rowp=34, rowt=26, rear=100, toggle=tm)
+    new = [w for w in new if w['id'] != 'xb_mtyic']                                              # (the car is drawn by the panel: no wheel glyph)
+    new.append(mini('xb_mtpan', tm, mode='tyres', car=0.55, tiles=[1676 + 62 + 36 - 1, 1676 + 62 + 36 + 1, 182 + 34 + 26, 182 + 100 + 26]))
+    new += drive_g('xb_mdg', 1712, 150, 120, 1676, 274, 196, S_RIGHT, 1, 'viewSel=drive&driveSport&mapUp', stacked=True)
+    new.append(mini('xb_mdspan', 'viewSel=drive&driveSport&mapUp'))
+    new += drive_rows('xb_mdr_', 1698, 186, 38, S_RIGHT, 1, 'viewSel=drive&!driveSport&mapUp', 'm_label', 150, shiftx=36)
+    new.append(mini('xb_mdrpan', 'viewSel=drive&!driveSport&mapUp'))
     d['widgets'] += new
 
 

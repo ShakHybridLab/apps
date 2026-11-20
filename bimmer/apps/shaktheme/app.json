@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.21.52",
+  "version": "0.21.53",
   "vendor": "custom",
   "startType": "autostart",
   "loggingId": "OAC1",
@@ -474,7 +474,7 @@
     },
     {
       "key": "evRangeFull",
-      "label": "Autonomie électrique à pleine charge (hybrides rechargeables)",
+      "label": "Autonomie électrique à pleine charge",
       "type": "number",
       "unit": "km",
       "default": 40,
@@ -764,7 +764,7 @@
     },
     {
       "key": "warnCoolant",
-      "label": "Alerte température du liquide de refroidissement",
+      "label": "Alerte température du liquide",
       "type": "number",
       "unit": "°C",
       "default": 115,
@@ -1180,7 +1180,7 @@
     },
     {
       "key": "reserveKm",
-      "label": "Réserve : autonomie essence en rouge à partir de",
+      "label": "Réserve d'essence : rouge à partir de",
       "type": "number",
       "unit": "km",
       "default": 90,
@@ -1212,7 +1212,7 @@
     },
     {
       "key": "tyreLow",
-      "label": "Pneus : pression en jaune sous (rouge 0,4 bar plus bas)",
+      "label": "Pneus : jaune sous (rouge 0,4 bar plus bas)",
       "type": "number",
       "unit": "bar",
       "default": 2.0,
@@ -1229,7 +1229,7 @@
     },
     {
       "key": "speedZone",
-      "label": "Zone de vitesse : barre orange puis rouge à partir de",
+      "label": "Zone de vitesse : orange puis rouge dès",
       "type": "number",
       "unit": "km/h",
       "default": 130,
@@ -1287,7 +1287,7 @@
     },
     {
       "key": "launchRpm",
-      "label": "Launch Control Ready : à partir de (0 = dès l'arrêt)",
+      "label": "Launch Control Ready dès (0 = à l'arrêt)",
       "type": "number",
       "unit": "tr/min",
       "default": 2000,
@@ -1301,7 +1301,7 @@
     },
     {
       "key": "accentByMode",
-      "label": "Couleur du thème selon le mode de conduite (bleu électrique, vert hybride, rouge sport)",
+      "label": "Couleur du thème selon le mode de conduite",
       "type": "bool",
       "default": true
     },

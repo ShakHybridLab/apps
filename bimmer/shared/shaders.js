@@ -1298,6 +1298,9 @@ uniform float u_lean;  // the bars' lean, x per y px (0: upright)
 uniform float u_rule;  // the thin line between two rows is this far above a row's bar (M Blade: 47)
 uniform float u_mode;  // 0: the rows of bars; 1: the tyres' view (the car from above, see tyresView)
 uniform vec4 u_wh;     // the tyres' view: each wheel's state, front left, front right, rear left, rear right (0 fine, 1 low, 2 very low)
+uniform float u_flip;  // 1: the panel mirrored, its point to the right and its two colour bands on the left (with the Waze map up: right of the blade)
+uniform float u_bs;    // the colour bands' and the facet's size (1; the small panel beside the map: 0.42)
+uniform float u_car;   // the tyres' view: the car's size (1); under 1 the car alone, no plate behind the readings (the small panel)
 
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
 vec4 over(vec4 t, vec4 u) {
@@ -1352,30 +1355,33 @@ vec3 wheelTone(float t) { return t < 0.5 ? vec3(0.2, 0.85, 0.5) : t < 1.5 ? vec3
 // line from the plate to its wheel.
 vec4 tyresView(vec2 p, vec4 c) {
     vec2 ctr = vec2(0.5 * (u_bx.x + u_bx.y), 0.5 * (u_ry.x + u_ry.y)), q = p - ctr;
-    float wy = 0.5 * (u_ry.y - u_ry.x) - 4.0, bl = wy + 36.0, bw = 44.0;
+    float s = u_car;
+    float wy = 0.5 * (u_ry.y - u_ry.x) - 4.0 * s, bl = wy + 36.0 * s, bw = 44.0 * s;
     vec4 top = vec4(0.0);
     for (int i = 0; i < 4; i++) {
         float sxn = (i == 0 || i == 2) ? -1.0 : 1.0, syn = i < 2 ? -1.0 : 1.0;
         float wt = i == 0 ? u_wh.x : i == 1 ? u_wh.y : i == 2 ? u_wh.z : u_wh.w;
-        vec2 wc = vec2(sxn * (bw + 5.0), syn * wy);
-        float dw = rbox(q - wc, vec2(9.0, 25.0), 5.0);
+        vec2 wc = vec2(sxn * (bw + 5.0 * s), syn * wy);
+        float dw = rbox(q - wc, vec2(9.0, 25.0) * s, 5.0 * s);
         top = over(top, vec4(wheelTone(wt), cov(dw)));
         top = over(top, vec4(wheelTone(wt), 0.3 * clamp(1.0 - dw / 10.0, 0.0, 1.0) * step(0.5, wt)));
-        vec2 tc = vec2(sxn < 0.0 ? u_bx.x : u_bx.y, syn < 0.0 ? u_ry.x : u_ry.y) - ctr;
-        float dt = rbox(q - tc, vec2(58.0, 42.0), 10.0);
-        top = over(top, vec4(0.5, 0.7, 1.0, 0.6 * cov(abs(dt) - 0.8)));
-        top = over(top, vec4(0.01, 0.05, 0.16, 0.5 * cov(dt)));
-        // the line from the plate's inner side to the wheel
-        float lx0 = min(tc.x - sxn * 58.0, wc.x + sxn * 9.0), lx1 = max(tc.x - sxn * 58.0, wc.x + sxn * 9.0);
-        top = over(top, vec4(0.5, 0.7, 1.0, 0.5 * cov(abs(q.y - wc.y) - 0.7) * step(lx0, q.x) * step(q.x, lx1)));
+        if (s >= 0.99) {                                              // (the small panel: the car alone)
+            vec2 tc = vec2(sxn < 0.0 ? u_bx.x : u_bx.y, syn < 0.0 ? u_ry.x : u_ry.y) - ctr;
+            float dt = rbox(q - tc, vec2(58.0, 42.0), 10.0);
+            top = over(top, vec4(0.5, 0.7, 1.0, 0.6 * cov(abs(dt) - 0.8)));
+            top = over(top, vec4(0.01, 0.05, 0.16, 0.5 * cov(dt)));
+            // the line from the plate's inner side to the wheel
+            float lx0 = min(tc.x - sxn * 58.0, wc.x + sxn * 9.0), lx1 = max(tc.x - sxn * 58.0, wc.x + sxn * 9.0);
+            top = over(top, vec4(0.5, 0.7, 1.0, 0.5 * cov(abs(q.y - wc.y) - 0.7) * step(lx0, q.x) * step(q.x, lx1)));
+        }
     }
     // the body: narrower towards the nose (up)
     vec2 b = vec2(q.x * (1.0 + 0.2 * clamp((-q.y - 0.25 * bl) / (0.75 * bl), 0.0, 1.0)), q.y);
-    float db = rbox(b, vec2(bw, bl), 24.0);
+    float db = rbox(b, vec2(bw, bl), 24.0 * s);
     vec4 body = vec4(0.6, 0.78, 1.0, 0.85 * cov(abs(db) - 1.0));
-    body = over(body, vec4(0.5, 0.72, 1.0, 0.55 * cov(rbox(b - vec2(0.0, -0.36 * bl), vec2(bw - 11.0, 0.13 * bl), 7.0))));
-    body = over(body, vec4(0.5, 0.72, 1.0, 0.4 * cov(rbox(b - vec2(0.0, 0.52 * bl), vec2(bw - 13.0, 0.09 * bl), 6.0))));
-    body = over(body, vec4(0.5, 0.72, 1.0, 0.35 * cov(abs(rbox(b - vec2(0.0, 0.06 * bl), vec2(bw - 9.0, 0.3 * bl), 10.0)) - 0.7)));
+    body = over(body, vec4(0.5, 0.72, 1.0, 0.55 * cov(rbox(b - vec2(0.0, -0.36 * bl), vec2(bw - 11.0 * s, 0.13 * bl), 7.0 * s))));
+    body = over(body, vec4(0.5, 0.72, 1.0, 0.4 * cov(rbox(b - vec2(0.0, 0.52 * bl), vec2(bw - 13.0 * s, 0.09 * bl), 6.0 * s))));
+    body = over(body, vec4(0.5, 0.72, 1.0, 0.35 * cov(abs(rbox(b - vec2(0.0, 0.06 * bl), vec2(bw - 9.0 * s, 0.3 * bl), 10.0 * s)) - 0.7)));
     body = over(body, vec4(mix(vec3(0.05, 0.14, 0.36), vec3(0.02, 0.06, 0.18), clamp(0.5 + q.y / (2.0 * bl), 0.0, 1.0)), 0.92 * cov(db)));
     top = over(body, top);
     return over(top, c);
@@ -1383,21 +1389,22 @@ vec4 tyresView(vec2 p, vec4 c) {
 void main() {
     vec2 p = v_uv * u_size;
     float k = u_pan.y, cs = 1.0 / sqrt(1.0 + k * k);
+    float px = u_flip > 0.5 ? u_size.x - p.x : p.x;                  // (mirrored: the point to the right)
     float xl = u_pan.w + abs(p.y - u_pan.x) * k;
-    float u = (p.x - xl) / u_pan.z;                                  // 0 on the left side, 1 on the right one
+    float u = (px - xl) / u_pan.z;                                  // 0 on the left side, 1 on the right one
     float d = max(max(-u, u - 1.0) * u_pan.z * cs, max(1.0 - p.y, p.y - u_size.y + 1.0));
     float inside = cov(d);
     if (inside <= 0.0) { gl_FragColor = vec4(0.0); return; }
     // (darker since 19 Nov 2026, the owner: "le fond un peu plus foncé": the readings stand out, the hexagon stays the bright piece)
     vec4 c = vec4(mix(vec3(0.015, 0.045, 0.16), vec3(0.04, 0.14, 0.42), u * u), 1.0);
     // a lighter facet along the upper arm, as the hexagon's panels
-    c = over(vec4(0.08, 0.26, 0.66, 0.4 * step(p.y, u_pan.x) * cov(abs(u - 0.7) * u_pan.z * cs - 34.0)), c);
+    c = over(vec4(0.08, 0.26, 0.66, 0.4 * step(p.y, u_pan.x) * cov(abs(u - 0.7) * u_pan.z * cs - 34.0 * u_bs)), c);
     // two leaning bands along the panel's right side, in the theme's own two colours (its light blue, its blade's red), fading towards the
     // point: the panel ends on colour where it meets the hexagon (owner, 19 Nov 2026: "ajouter des couleurs derrière le fond")
     float du = u * u_pan.z * cs, wR = u_pan.z * cs;
     float fadeB = 0.35 + 0.65 * clamp(abs(p.y - u_pan.x) / (0.5 * u_size.y), 0.0, 1.0);
-    c = over(vec4(0.32, 0.66, 1.0, 0.7 * fadeB * cov(abs(du - (wR - 62.0)) - 15.0)), c);
-    c = over(vec4(0.95, 0.16, 0.22, 0.75 * fadeB * cov(abs(du - (wR - 26.0)) - 15.0)), c);
+    c = over(vec4(0.32, 0.66, 1.0, 0.7 * fadeB * cov(abs(du - (wR - 62.0 * u_bs)) - 15.0 * u_bs)), c);
+    c = over(vec4(0.95, 0.16, 0.22, 0.75 * fadeB * cov(abs(du - (wR - 26.0 * u_bs)) - 15.0 * u_bs)), c);
     // the thin light lines along the top, the bottom and the pointed left side
     float e = min(min(p.y, u_size.y - p.y), u * u_pan.z * cs);
     c = over(vec4(0.45, 0.65, 1.0, 0.75 * cov(abs(e - 2.0) - 1.0)), c);

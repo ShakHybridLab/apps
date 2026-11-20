@@ -63,6 +63,19 @@ now += STALE_MS - 1; d.scan(); assert.strictEqual(d.state().on, true);
 now += 1; d.scan(); assert.strictEqual(d.state().on, false);
 assert.strictEqual(changes, before + 1);
 
+// entering the zone (the distance reaches 0) and leaving it are announced: the card's words change ("in the zone" for the distance)
+{
+    const dir2 = fs.mkdtempSync(path.join(os.tmpdir(), 'danger-in-'));
+    let n2 = 0;
+    const d2 = new Danger({ dir: dir2, now: () => now }, log, () => { n2++; });
+    const put2 = (obj) => fs.writeFileSync(path.join(dir2, 'danger-a.json'), JSON.stringify(obj));
+    put2({ t: now, app: 'a', distance: 40, limit: 50 }); d2.scan(); assert.strictEqual(n2, 1);
+    put2({ t: now, app: 'a', distance: 12, limit: 50 }); d2.scan(); assert.strictEqual(n2, 1, 'nearer, still ahead: nothing');
+    put2({ t: now, app: 'a', distance: 0, limit: 50 }); d2.scan(); assert.strictEqual(n2, 2, 'in the zone: announced');
+    put2({ t: now, app: 'a', distance: 0, limit: 50 }); d2.scan(); assert.strictEqual(n2, 2);
+    put2({ t: now, app: 'a', distance: 25, limit: 50 }); d2.scan(); assert.strictEqual(n2, 3, 'out of it again: announced');
+}
+
 // a folder that doesn't exist is no zone, and no error
 const gone = new Danger({ dir: path.join(dir, 'nope'), now: () => now }, log, () => { throw new Error('nothing to announce'); });
 gone.scan(); assert.strictEqual(gone.state().on, false);
