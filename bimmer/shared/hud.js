@@ -2569,6 +2569,17 @@ class HudApp {
         let shown = layout.widgets.filter((w) => !(w.toggle && !this._toggleOn(w.toggle)) && !(w.themes && w.themes.indexOf(this.themeName) < 0)
             && !(stripOn && bottomStrip.duplicates(w.id)));
         if (stripOn) bottomStrip.band().forEach((b) => shown.push(b));
+        // "alt": { "when": "<toggle>", "set": { ... } }: the widget's other face while the toggle is on (M Blade's backdrop without its speed line
+        // while a view shows). It stays the same layer (its signature is the widget's as the file has it, see _keepLayers), only its settings are
+        // sent again: before, two widgets took turns and each change of view dropped the whole backdrop and made another, so the theme blinked
+        // (owner, 20 Nov 2026: "c'est tout le thème qui clignote").
+        shown = shown.map((w) => {
+            if (!w.alt || typeof w.alt.when !== 'string') return w;
+            const o = Object.assign({}, w, this._toggleOn(w.alt.when) ? w.alt.set : null);
+            delete o.alt;
+            o.sigOf = JSON.stringify(w);       // (a plain key: the gear window's pieces of this widget are copies and must carry it too)
+            return o;
+        });
         if (this.gearWin) {
             const g = gearWindow.apply(shown, this.gearWin, (t) => !!IMAGE_TYPES[t]);
             shown = g.widgets;
@@ -2594,9 +2605,14 @@ class HudApp {
             // the two pieces of the backdrop under the theme (or the two black bands) go on the least used connections (each connection holds 8 layers)
             const covers = shown.filter((w) => w.follow || /^gw_cover/.test(w.id));
             const used = this._connCounts(this._plan(shown.filter((w) => covers.indexOf(w) < 0), Math.floor(area / SHEET_AREA_FRAC), waste));
+            // (a piece that is on the screen stays on its connection while there is room: on another one it would be dropped and made again,
+            // and the backdrop's right half blinked at each change of view)
+            const before = {};
+            (this.oldLayers || new Map()).forEach((l, key) => { if (l.id) before[l.id] = parseInt(key, 10) || 0; });
             covers.forEach((w) => {
                 let ci = 0;
                 for (let i = 1; i < MAX_CONN; i++) if ((used[i] || 0) < (used[ci] || 0)) ci = i;
+                if (before[w.id] !== undefined && (used[before[w.id]] || 0) < LAYER_BUDGET) ci = before[w.id];
                 w.conn = ci; used[ci] = (used[ci] || 0) + 1;
             });
         }
@@ -2667,7 +2683,7 @@ class HudApp {
                 return { klass: e.klass, z: e.z, r: e };
             }
             const w = e.w, fx = IMAGE_TYPES[w.type] ? '' : (w.type === 'swatch' ? 'swatch' : w.type + '/' + this.accentHue);
-            e.sig = ['W', name, this._connOf(w), fx, JSON.stringify(w)].join('|');
+            e.sig = ['W', name, this._connOf(w), fx, w.sigOf ? [w.id, w.x, w.y, w.w, w.h, w.sigOf].join(',') : JSON.stringify(w)].join('|');
             return { klass: w.class || 'content', z: w.z || 0, r: w.rect || w };
         });
         plan.forEach((e) => {
@@ -2843,7 +2859,7 @@ class HudApp {
             if (keep) ref = keep.ref;                                   // the same layer as before the rebuild (_keepLayers)
             else if (IMAGE_TYPES[w.type]) ref = c.image(Object.assign({ iw: w.w, ih: w.h }, base));
             else ref = c.effect(Object.assign({ fs: w.type === 'swatch' ? calibration.SWATCH : shaders.accented(w.type, this.accentHue) }, base));
-            if (ref && this.live) this.live.set(this._connOf(w) + ':' + ref, { c, ref, sig: this.reuseSig });
+            if (ref && this.live) this.live.set(this._connOf(w) + ':' + ref, { c, ref, sig: this.reuseSig, id: w.id });
             if (!ref) { this.log.warn('widget "' + w.id + '": layer refused'); return; }
             this.placed.push({ c, ref, x: r.x, y: r.y, w: r.w, h: r.h, fixed: !!w.fixed });
         }

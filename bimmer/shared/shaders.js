@@ -2260,4 +2260,17 @@ function accented(type, hue) {
     if (!_accented[key]) _accented[key] = accentSource(base, ACCENT_LITERALS[type], hue);
     return _accented[key];
 }
+// The views' drawings (19-20 Nov 2026) on the car: their texts showed and the drawings did not (owner's photos of 20 Nov: M Blade's panel, the car of
+// the tyres' view), while the bench drew them. Two things the bench forgives and a car's graphics chip may not, put right for every shader here:
+// - plain ASCII only (an accent in a comment, "fonce" with its accent, is outside GLSL ES 1.00's character set);
+// - the views compute in high precision where the chip has it, as the backdrops that do show (mblade, navi): in medium precision a length across
+//   the panel (hundreds of px, squared) is past what the format must hold.
+const HIGHP = '#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif';
+function hardened(src, highp) {
+    let out = src.replace(/[^\x00-\x7f]/g, '?');
+    if (highp && out.indexOf('GL_FRAGMENT_PRECISION_HIGH') < 0) out = out.replace('precision mediump float;', HIGHP);
+    return out;
+}
+const VIEW_SHADERS = { mpanel: true, mblades: true, sring: true, nline: true, vcard: true };
 module.exports = { mblades: MBLADES, nline: NLINE, sring: SRING, vcard: VCARD, slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, mpanel: MPANEL, navi: NAVI, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, accented, ACCENT_LITERALS };
+Object.keys(module.exports).forEach((k) => { if (typeof module.exports[k] === 'string') module.exports[k] = hardened(module.exports[k], VIEW_SHADERS[k] === true); });

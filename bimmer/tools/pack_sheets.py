@@ -80,9 +80,18 @@ def together(a, b):
     return any(shown(a, st) and shown(b, st) for st in (False, True))
 
 
+APART = set()       # ids kept in sheets of their own kind (pack(..., apart=...)): what gives way to a view does not share a sheet with what stays
+
+
+def mixed(groups):
+    return any(len({w['id'] in APART for w in ms}) > 1 for ms in groups)
+
+
 def valid(groups, order, layers):
     """Aucune feuille ne contient deux textes dont les boîtes se recouvrent (la feuille écrase), et l'ordre de création des
     feuilles (celui de leur premier membre) respecte l'ordre du fichier pour tout ce qui se recouvre, effets compris."""
+    if APART and mixed(groups):
+        return False
     first = [min(order[id(w)] for w in g) for g in groups]
     for g in groups:
         for i in range(len(g)):
@@ -226,8 +235,9 @@ def memory(widgets, mapup, view=None, sport=False):
     return mib(px), n, per
 
 
-def pack(widgets, k, verbose=False):
+def pack(widgets, k, verbose=False, apart=()):
     """Met "sheet" et "conn" sur les textes et icônes de `widgets` (liste modifiée en place) ; renvoie un résumé."""
+    APART.clear(); APART.update(apart)
     img = [w for w in widgets if w['type'] in IMG and not w.get('own')]
     # la pastille « Launch Control Ready » reste sur la 2e connexion (la 1re n'a pas de couche à lui laisser, test_zones)
     pin = {id(w): 1 for w in img if w.get('readyBy')}

@@ -165,7 +165,7 @@ NAMES.forEach((n) => {
             assert(by('o_ev_range_unit').x + by('o_ev_range_unit').w <= by('ice_icon').x - 10, 'the electric range runs into the right column in the map view');
         });
         check('mblade: each bar keeps its reading next to it (owner, Nov 18 2026): the fuel range under the fuel strip without the map, beside the flat bar with it, under the strip moved right with a view', () => {
-            const n = by('backdrop'), o = by('backdrop_open'), v = by('xb_vback');
+            const n = by('backdrop'), o = by('backdrop_open'), v = n.alt.set;      // (the backdrop's other face while a view shows, since 20 Nov 2026: one layer, not two taking turns)
             const low = (g) => g[0] + g[3] * (g[2] - g[1]);            // the strip's left edge at its lower end
             const mid = (w) => w.x + w.w / 2;
             // the normal dial: the range on the bottom row, under the fuel strip (it leans right: its lower end is the right one)

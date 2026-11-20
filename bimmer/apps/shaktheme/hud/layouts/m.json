@@ -120,7 +120,16 @@
         }
       ],
       "segSlant": 6,
-      "toggle": "viewSel=none"
+      "alt": {
+        "when": "!viewSel=none",
+        "set": {
+          "tyres": [
+            369,
+            328,
+            0
+          ]
+        }
+      }
     },
     {
       "id": "tach_left",
@@ -505,9 +514,9 @@
       "font": "m_tiny",
       "color": "dim",
       "align": "center",
+      "toggle": "viewSel=none",
       "sheet": "s6",
-      "conn": 2,
-      "toggle": "viewSel=none"
+      "conn": 1
     },
     {
       "id": "tyre_icon",
@@ -519,9 +528,9 @@
       "w": 29,
       "h": 29,
       "color": "dim",
+      "toggle": "viewSel=none",
       "sheet": "s6",
-      "conn": 2,
-      "toggle": "viewSel=none"
+      "conn": 1
     },
     {
       "id": "tyre_unit_t",
@@ -534,9 +543,9 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
+      "toggle": "viewSel=none",
       "sheet": "s6",
-      "conn": 2,
-      "toggle": "viewSel=none"
+      "conn": 1
     },
     {
       "id": "tp_FL",
@@ -551,9 +560,9 @@
       "color": "fg",
       "align": "center",
       "tyreBy": "FL",
+      "toggle": "viewSel=none",
       "sheet": "s6",
-      "conn": 2,
-      "toggle": "viewSel=none"
+      "conn": 1
     },
     {
       "id": "tt_FL",
@@ -567,9 +576,9 @@
       "font": "m_tyre",
       "color": "fg",
       "align": "center",
+      "toggle": "viewSel=none",
       "sheet": "s6",
-      "conn": 2,
-      "toggle": "viewSel=none"
+      "conn": 1
     },
     {
       "id": "tp_FR",
@@ -584,9 +593,9 @@
       "color": "fg",
       "align": "center",
       "tyreBy": "FR",
+      "toggle": "viewSel=none",
       "sheet": "s6",
-      "conn": 2,
-      "toggle": "viewSel=none"
+      "conn": 1
     },
     {
       "id": "tt_FR",
@@ -600,9 +609,9 @@
       "font": "m_tyre",
       "color": "fg",
       "align": "center",
+      "toggle": "viewSel=none",
       "sheet": "s6",
-      "conn": 2,
-      "toggle": "viewSel=none"
+      "conn": 1
     },
     {
       "id": "tp_RL",
@@ -617,9 +626,9 @@
       "color": "fg",
       "align": "center",
       "tyreBy": "RL",
+      "toggle": "viewSel=none",
       "sheet": "s6",
-      "conn": 2,
-      "toggle": "viewSel=none"
+      "conn": 1
     },
     {
       "id": "tt_RL",
@@ -633,9 +642,9 @@
       "font": "m_tyre",
       "color": "fg",
       "align": "center",
+      "toggle": "viewSel=none",
       "sheet": "s6",
-      "conn": 2,
-      "toggle": "viewSel=none"
+      "conn": 1
     },
     {
       "id": "tp_RR",
@@ -650,9 +659,9 @@
       "color": "fg",
       "align": "center",
       "tyreBy": "RR",
+      "toggle": "viewSel=none",
       "sheet": "s6",
-      "conn": 2,
-      "toggle": "viewSel=none"
+      "conn": 1
     },
     {
       "id": "tt_RR",
@@ -666,9 +675,9 @@
       "font": "m_tyre",
       "color": "fg",
       "align": "center",
+      "toggle": "viewSel=none",
       "sheet": "s6",
-      "conn": 2,
-      "toggle": "viewSel=none"
+      "conn": 1
     },
     {
       "id": "b_hi",
@@ -738,7 +747,7 @@
       "w": 29,
       "h": 34,
       "color": "dim",
-      "sheet": "s7",
+      "sheet": "s8",
       "conn": 2
     },
     {
@@ -754,7 +763,7 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "sheet": "s7",
+      "sheet": "s8",
       "conn": 2
     },
     {
@@ -768,7 +777,7 @@
       "text": "{{u:distLc}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s7",
+      "sheet": "s8",
       "conn": 2
     },
     {
@@ -783,7 +792,7 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -797,7 +806,7 @@
       "text": "{{ampmLc}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -810,7 +819,7 @@
       "w": 31,
       "h": 29,
       "color": "fg",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -824,7 +833,7 @@
       "text": "{{setup:engine}}",
       "font": "m_label",
       "color": "fg",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -837,7 +846,7 @@
       "w": 31,
       "h": 29,
       "color": "fg",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -851,7 +860,7 @@
       "text": "{{setup:chassis}}",
       "font": "m_label",
       "color": "fg",
-      "sheet": "s9",
+      "sheet": "s10",
       "conn": 1
     },
     {
@@ -976,7 +985,7 @@
       "w": 26,
       "h": 32,
       "color": "dim",
-      "sheet": "s10",
+      "sheet": "s11",
       "conn": 1
     },
     {
@@ -992,7 +1001,7 @@
       "color": "fg",
       "align": "right",
       "iceBy": true,
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1006,7 +1015,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1020,7 +1029,7 @@
       "icon": "oilPour",
       "tempBy": "oil",
       "color": "dim",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1036,7 +1045,7 @@
       "color": "fg",
       "align": "right",
       "tempBy": "oil",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1050,7 +1059,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1064,7 +1073,7 @@
       "icon": "tempWave",
       "tempBy": "coolant",
       "color": "dim",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1080,7 +1089,7 @@
       "color": "fg",
       "align": "right",
       "tempBy": "coolant",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1094,7 +1103,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1108,7 +1117,7 @@
       "h": 34,
       "icon": "battBolt",
       "color": "dim",
-      "sheet": "s10",
+      "sheet": "s11",
       "conn": 1
     },
     {
@@ -1124,7 +1133,7 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "sheet": "s10",
+      "sheet": "s11",
       "conn": 1
     },
     {
@@ -1138,7 +1147,7 @@
       "text": "{{u:distLc}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s10",
+      "sheet": "s11",
       "conn": 1
     },
     {
@@ -1154,7 +1163,7 @@
       "color": "dim",
       "align": "center",
       "readyHides": true,
-      "sheet": "s11",
+      "sheet": "s12",
       "conn": 1
     },
     {
@@ -1170,7 +1179,7 @@
       "color": "dim",
       "align": "right",
       "accentBy": true,
-      "sheet": "s10",
+      "sheet": "s11",
       "conn": 1
     },
     {
@@ -1185,7 +1194,7 @@
       "color": "dim",
       "limitBy": true,
       "toggle": "!mapUp",
-      "sheet": "s6",
+      "sheet": "s7",
       "conn": 2
     },
     {
@@ -1202,7 +1211,7 @@
       "align": "center",
       "limitBy": true,
       "toggle": "!mapUp",
-      "sheet": "s7",
+      "sheet": "s8",
       "conn": 2
     },
     {
@@ -1219,7 +1228,7 @@
       "toggle": "!mapUp",
       "conn": 2,
       "pinConn": 2,
-      "sheet": "s6"
+      "sheet": "s7"
     },
     {
       "id": "lim_nxt_num",
@@ -1237,7 +1246,7 @@
       "toggle": "!mapUp",
       "conn": 2,
       "pinConn": 2,
-      "sheet": "s7"
+      "sheet": "s8"
     },
     {
       "id": "lim_alert",
@@ -1328,7 +1337,7 @@
       "h": 32,
       "color": "dim",
       "iceBy": true,
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1347,7 +1356,7 @@
         255
       ],
       "evShareBy": true,
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1362,7 +1371,7 @@
       "font": "m_mid",
       "color": "fg",
       "align": "right",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1377,7 +1386,7 @@
       "font": "m_tiny",
       "color": "dim",
       "align": "left",
-      "sheet": "s8",
+      "sheet": "s9",
       "conn": 1
     },
     {
@@ -1392,7 +1401,7 @@
       "color": "fg",
       "conn": 1,
       "readyBy": true,
-      "sheet": "s11"
+      "sheet": "s12"
     },
     {
       "id": "ready_text",
@@ -1408,124 +1417,7 @@
       "align": "left",
       "conn": 1,
       "readyBy": true,
-      "sheet": "s11"
-    },
-    {
-      "id": "xb_back",
-      "type": "mdash",
-      "class": "content",
-      "z": 1,
-      "x": 0,
-      "y": 0,
-      "w": 1920,
-      "h": 720,
-      "hole": [
-        705,
-        168,
-        510,
-        366
-      ],
-      "holeWhen": "mapUp",
-      "holeInset": 6,
-      "holeRadius": 24,
-      "plate": [
-        711,
-        540,
-        498,
-        70,
-        896
-      ],
-      "card": [
-        170,
-        536,
-        186,
-        48
-      ],
-      "cardTop": [
-        0.00130995,
-        -1.417868,
-        468.53
-      ],
-      "cardFill": 0.0,
-      "blade": {
-        "xm": 528,
-        "y0": 566,
-        "y8": 66,
-        "ym": 303,
-        "kTop": 1.0684,
-        "kBot": 0.5434,
-        "round": 135
-      },
-      "bladeGap": 15,
-      "line": [
-        742,
-        376,
-        1181,
-        55
-      ],
-      "tyres": [
-        369,
-        328,
-        0
-      ],
-      "gaugeL": {
-        "cx": 244,
-        "cy": 430,
-        "r": 144,
-        "signal": "fuel",
-        "min": 0,
-        "max": 1
-      },
-      "gaugeR": {
-        "cx": 1676,
-        "cy": 430,
-        "r": 144,
-        "signal": "hvSoc",
-        "min": 0,
-        "max": 100
-      },
-      "mark": [
-        926,
-        66,
-        1.2
-      ],
-      "segbars": [
-        {
-          "x": 1454,
-          "y": 247,
-          "w": 280,
-          "h": 6,
-          "max": 3,
-          "signal": "setupLevel:engine"
-        },
-        {
-          "x": 1454,
-          "y": 335,
-          "w": 280,
-          "h": 6,
-          "max": 3,
-          "signal": "setupLevel:chassis"
-        },
-        {
-          "x": 1454,
-          "y": 423,
-          "w": 182,
-          "h": 6,
-          "max": 2,
-          "signal": "setupLevel:steering"
-        },
-        {
-          "x": 1454,
-          "y": 511,
-          "w": 182,
-          "h": 6,
-          "max": 2,
-          "signal": "setupLevel:gearbox"
-        }
-      ],
-      "segSlant": 6,
-      "toggle": "!viewSel=none",
-      "conn": 3
+      "sheet": "s12"
     },
     {
       "id": "xb_g_boost_name",
@@ -1541,7 +1433,7 @@
       "align": "left",
       "toggle": "viewSel=gauges",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_g_boost",
@@ -1557,7 +1449,7 @@
       "align": "right",
       "toggle": "viewSel=gauges",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_g_boost_unit",
@@ -1573,7 +1465,7 @@
       "align": "left",
       "toggle": "viewSel=gauges",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_g_oil_name",
@@ -1589,7 +1481,7 @@
       "align": "left",
       "toggle": "viewSel=gauges",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_g_oil",
@@ -1606,7 +1498,7 @@
       "toggle": "viewSel=gauges",
       "sheet": "s6",
       "tempBy": "oil",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_g_oil_unit",
@@ -1622,7 +1514,7 @@
       "align": "left",
       "toggle": "viewSel=gauges",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_g_cool_name",
@@ -1638,7 +1530,7 @@
       "align": "left",
       "toggle": "viewSel=gauges",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_g_cool",
@@ -1655,7 +1547,7 @@
       "toggle": "viewSel=gauges",
       "sheet": "s6",
       "tempBy": "coolant",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_g_cool_unit",
@@ -1671,7 +1563,7 @@
       "align": "left",
       "toggle": "viewSel=gauges",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_g_out_name",
@@ -1681,13 +1573,13 @@
       "y": 372,
       "w": 240,
       "h": 20,
-      "text": "Température extérieure",
+      "text": "Temp\u00e9rature ext\u00e9rieure",
       "font": "m_name_s",
       "color": "dim",
       "align": "left",
       "toggle": "viewSel=gauges",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_g_out",
@@ -1704,7 +1596,7 @@
       "toggle": "viewSel=gauges",
       "sheet": "s6",
       "iceBy": true,
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_g_out_unit",
@@ -1720,7 +1612,7 @@
       "align": "left",
       "toggle": "viewSel=gauges",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_card_g",
@@ -1787,7 +1679,7 @@
       "align": "left",
       "toggle": "viewSel=electric",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_e_batt",
@@ -1803,7 +1695,7 @@
       "align": "right",
       "toggle": "viewSel=electric",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_e_batt_unit",
@@ -1819,7 +1711,7 @@
       "align": "left",
       "toggle": "viewSel=electric",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_e_erange_name",
@@ -1829,13 +1721,13 @@
       "y": 256,
       "w": 240,
       "h": 20,
-      "text": "Autonomie électrique",
+      "text": "Autonomie \u00e9lectrique",
       "font": "m_name_s",
       "color": "dim",
       "align": "left",
       "toggle": "viewSel=electric",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_e_erange",
@@ -1851,7 +1743,7 @@
       "align": "right",
       "toggle": "viewSel=electric",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_e_erange_unit",
@@ -1867,7 +1759,7 @@
       "align": "left",
       "toggle": "viewSel=electric",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_e_epow_name",
@@ -1877,13 +1769,13 @@
       "y": 314,
       "w": 240,
       "h": 20,
-      "text": "Puissance électrique",
+      "text": "Puissance \u00e9lectrique",
       "font": "m_name_s",
       "color": "dim",
       "align": "left",
       "toggle": "viewSel=electric",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_e_epow",
@@ -1899,7 +1791,7 @@
       "align": "right",
       "toggle": "viewSel=electric",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_e_epow_unit",
@@ -1915,7 +1807,7 @@
       "align": "left",
       "toggle": "viewSel=electric",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_e_erec_name",
@@ -1925,13 +1817,13 @@
       "y": 372,
       "w": 240,
       "h": 20,
-      "text": "Récupération d'énergie",
+      "text": "R\u00e9cup\u00e9ration d'\u00e9nergie",
       "font": "m_name_s",
       "color": "dim",
       "align": "left",
       "toggle": "viewSel=electric",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_e_erec",
@@ -1947,7 +1839,7 @@
       "align": "right",
       "toggle": "viewSel=electric",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_e_erec_unit",
@@ -1963,7 +1855,7 @@
       "align": "left",
       "toggle": "viewSel=electric",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_card_e",
@@ -2042,7 +1934,7 @@
       "align": "center",
       "toggle": "viewSel=drive",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "xb_dgfwd",
@@ -2058,7 +1950,7 @@
       "align": "center",
       "toggle": "viewSel=drive",
       "sheet": "s6",
-      "conn": 2
+      "conn": 1
     },
     {
       "id": "al_card",

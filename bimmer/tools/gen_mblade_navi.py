@@ -499,7 +499,10 @@ SHEETS = {'mblade': 14, 'navi': 10}      # image sheets per theme: the memory a 
 if __name__ == '__main__':
     for name, L in (('mblade', mblade()), ('navi', navi())):
         zoomify(name, L['widgets'])                        # the scale numbers that grow in their zone: bigger boxes (tools/zoom_labels.py)
-        print(name, pack_sheets.pack(L['widgets'], SHEETS[name]))   # tight sheets for cluster-render's pixel memory (tools/pack_sheets.py)
+        # M Blade: what gives way to a view (the speed scale, the fuel strip's marks, the limit...) keeps sheets apart from what stays (the gear,
+        # the speed, the clock): opening a view then leaves those sheets as they are, and the theme does not blink (owner, 20 Nov 2026)
+        apart = add_sensor_bars.V_GIVE + ['cool_icon', 'cool', 'cool_unit'] if name == 'mblade' else ()
+        print(name, pack_sheets.pack(L['widgets'], SHEETS[name], apart=apart))   # tight sheets for cluster-render's pixel memory (tools/pack_sheets.py)
         print(name, add_sensor_bars.add(name, L['widgets']))        # the sensor bars and the tyre block (tempBars) with their own sheets and connections (tools/add_sensor_bars.py)
         p = os.path.join(OUT, name + '.json')
         with open(p, 'w') as f:

@@ -2,6 +2,15 @@
 
 ## 20 novembre 2026
 
+### ShakTheme 0.21.52 : la touche BC ne fait plus clignoter tout le thème (M Blade, M)
+- Le propriétaire (20 nov.) : « ce n'est pas que le rapport et la vitesse, c'est tout le thème ». Mesuré au banc (calques gardés à l'ouverture d'une vue) : M Blade 5 sur 17, M 10 sur 21, Navi 12 sur 15, Sport 17 sur 19. Trois causes :
+  - **le fond était remplacé** : deux widgets de fond se relayaient (avec et sans la ligne de vitesse sur M Blade, avec et sans la voiture sur M), donc tout le fond était retiré puis refait. Un seul widget maintenant, avec un second visage (`"alt": {"when", "set"}`, shared/hud.js) : le calque reste, seuls ses réglages changent. Ses morceaux autour de la lettre du rapport restent aussi sur leur connexion.
+  - **M Blade : les planches mêlaient ce qui reste et ce qui cède la place** (l'échelle de vitesse, les repères du carburant, la limitation avec le rapport, la vitesse, l'heure) : `tools/pack_sheets.py` les range à part (`apart`).
+  - les textes des vues ont leurs propres planches (0.21.51).
+  - **M : ses planches refaites** avec la même règle (14 planches, les pressions des pneus à part) : la mémoire et le nombre de couches restent ceux d'avant (6,0 Mio au plus, 20 couches au plus).
+- Résultat au banc, à l'ouverture d'une vue : M Blade 13 calques gardés sur 19, M 18 sur 21, Sport 17 sur 19, Navi 12 sur 15 : partout, seuls les calques de la vue elle-même sont refaits. Pas vu sur la voiture.
+- **Les dessins des vues, absents sur la voiture** (photos du 20 nov. : le panneau bleu de M Blade et la voiture de la vue des pneus ne s'affichent pas, leurs textes si) : cause pas encore connue. Deux précautions pour tous les dessins (`shared/shaders.js`, `hardened`) : plus aucun caractère hors ASCII (deux accents dans des commentaires), et les dessins des vues calculent en haute précision quand la puce l'a, comme les fonds qui, eux, s'affichent. Si ça ne suffit pas, la ligne d'état de l'onglet Réglages (0.21.50) dira pourquoi.
+
 ### ShakTheme 0.21.51 : M Blade, la touche BC ne fait plus clignoter le rapport et la vitesse
 - Sans la carte Waze, les textes des vues de M Blade ont leurs propres planches (`xs_va`, `xs_vb`) au lieu de partager celles des textes permanents : à chaque appui sur BC ces planches changeaient, donc le rapport, la vitesse et les chiffres des bandes étaient retirés puis redessinés (vidéo du 20 nov. : l'hexagone vide pendant le changement). Reste : le premier appui (ouverture du panneau) et le dernier (retour au thème nu) changent encore les planches de l'échelle de vitesse ; avec la carte Waze rien ne change (une planche de plus y ferait une 21e couche). Au banc seulement.
 

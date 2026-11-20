@@ -118,10 +118,10 @@ def _m(d):
     for k in ('tyre_unit_p', 'tyre_icon', 'tyre_unit_t') + tuple(p + c for p in ('tp_', 'tt_') for c in ('FL', 'FR', 'RL', 'RR')):
         if k in by:
             by[k]['toggle'] = VN
+    # (one backdrop with an "alt" face since 20 Nov 2026: the layer stays when a view opens, the theme does not blink)
     b = by['backdrop']
-    b['toggle'] = VN
-    b2 = dict(b, id='xb_back', toggle='!viewSel=none', tyres=[b['tyres'][0], b['tyres'][1], 0])
-    new.append(b2)
+    b.pop('toggle', None)
+    b['alt'] = {'when': '!viewSel=none', 'set': {'tyres': [b['tyres'][0], b['tyres'][1], 0]}}
     S_T, C_T = _sheet(d, 'tp_FL')
     for vname, vp, ROWS, NAMES in (('gauges', 'g_', CARD_ROWS, GAUGE_NAMES), ('electric', 'e_', ELEC_ROWS, ELEC_NAMES)):
         tg = 'viewSel=%s' % vname
@@ -265,13 +265,12 @@ def _mblade_views(d, SA, SB, SL, SF):
             by[k]['toggle'] = V_OFF
     new = []
     # the backdrop without the speed line, the fuel strip right of the battery's (130 px, as the two strips), leaning the same way
-    b = dict(by['backdrop'], id='xb_vback', toggle=V_ON)
-    b['sq'] = [b['sq'][0], b['sq'][1], 0]
+    # (one widget with an "alt" face since 20 Nov 2026, not a second backdrop taking its turn: the layer stays, the theme does not blink)
+    b = by['backdrop']
+    b['toggle'] = '!mapUp'
     g2 = b['g2']
     G3 = [g2[0] + 130, g2[1], g2[2], g2[3]]
-    b['g0'] = G3
-    b.pop('conn', None)
-    new.append(b)
+    b['alt'] = {'when': V_ON, 'set': {'sq': [b['sq'][0], b['sq'][1], 0], 'g0': G3}}
     top, bot = G3[1], G3[2]
     sx = lambda y: G3[0] + G3[3] * (y - top)
     for y, t, n in zip((top + 10, top + 87 * (bot - top) / 176.0, bot - 11), ('1', '1/2', '0'), ('hi', 'mid', 'lo')):

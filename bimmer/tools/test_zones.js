@@ -697,6 +697,9 @@ check('accent by mode: blue is the identity; green and red rewrite only the list
     });
     assert.throws(() => acc.accentSource('vec3(1.0, 1.0, 1.0)', ['0.1, 0.2, 0.3'], 'green'), /not in the shader/);
     // the M theme and the HUD keep their blue: no accent list for them, no accent role
+    // every shader is plain ASCII, and the views' ones ask for high precision where the chip has it (20 Nov 2026: drawn at the bench, not on the car)
+    Object.keys(sh).forEach((k) => { if (typeof sh[k] === 'string') assert(!/[^\x00-\x7f]/.test(sh[k]), k + ' has a character outside ASCII'); });
+    ['mpanel', 'mblades', 'sring', 'nline'].forEach((k) => assert(sh[k].indexOf('precision highp float;') > 0, k + ' is not in high precision'));
     assert.strictEqual(sh.ACCENT_LITERALS.mdash, undefined); assert.strictEqual(sh.accented('mdash', 'red'), sh.mdash);
     const th = { sblue: [20, 60, 200, 255], other: [1, 2, 3, 255] }, t2 = acc.accentTheme(th, ['sblue'], 'red');
     assert.strictEqual(acc.accentTheme(th, ['sblue'], 'blue'), th, 'blue: the same object'); assert.deepStrictEqual(t2.other, th.other);
