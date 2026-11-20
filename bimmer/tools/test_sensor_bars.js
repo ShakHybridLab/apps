@@ -95,11 +95,19 @@ THEMES.forEach((name) => {
             const mine = xb.filter((w) => on(w, map, view, sport) && w.type !== 'mblade' && w.type !== 'mdash');      // (M Blade's backdrop for the views, xb_vback: the whole panel)
             // M Blade's view panel (mpanel) is a band whose sides are "<": a box hits it when one of its corners or its middle is inside the band
             const inPanel = (p, w) => [[w.x, w.y], [w.x + w.w, w.y], [w.x, w.y + w.h], [w.x + w.w, w.y + w.h], [w.x + w.w / 2, w.y + w.h / 2]].some(([x, y]) => {
-                const xl = p.shape[0] + p.shape[2] * Math.abs(y - p.shape[1]);
+                // ("flip": the small panel beside the Waze map, mirrored: its point to the right)
+                const off = p.shape[2] * Math.abs(y - p.shape[1]);
+                const xl = p.flip ? p.x + p.w - (p.shape[0] - p.x) - off - p.shape[3] : p.shape[0] + off;
                 return y > p.y && y < p.y + p.h && x > xl && x < xl + p.shape[3];
             });
+            // Sport's round gauges (sring) cover their discs, not their layer's whole box: beside the map two rings share a tall layer, one above the
+            // speed and one below it, and the speed shows between them
+            const discs = (p) => (p.type === 'sring' && p.mode !== 'tyres' && p.rows && p.rows.length ? p.rows.map((r, i) => {
+                const cx = p.bar[0] + i * (p.bar[1] - p.bar[0]), rr = p.card[0] + p.card[1] / 2 + 7;
+                return { x: cx - rr, y: r.y - rr, w: 2 * rr, h: 2 * rr };
+            }) : [p]);
             mine.forEach((a) => L.widgets.filter((o) => !o.id.startsWith('xb_') && box(o) && on(o, map, view, sport)).forEach((o) => {
-                assert(a.type === 'mpanel' ? !inPanel(a, o) : !hit(a, o), a.id + ' recouvre ' + o.id + ' (vue ' + view + (sport ? ', Sport' : '') + (map ? ', carte ouverte' : '') + ')');
+                assert(a.type === 'mpanel' ? !inPanel(a, o) : !discs(a).some((q) => hit(q, o)), a.id + ' recouvre ' + o.id + ' (vue ' + view + (sport ? ', Sport' : '') + (map ? ', carte ouverte' : '') + ')');
             }));
             mine.filter((w) => !PANEL(w)).forEach((a, i, m) => m.slice(i + 1).forEach((b) => {
                 if (a.type === 'text' || b.type === 'text' || a.type === 'icon' || b.type === 'icon' || a.type === 'gmeter' || b.type === 'gmeter') assert(!hit(a, b) || a.id.replace(/_[a-z]+$/, '') === b.id.replace(/_[a-z]+$/, '') && (a.type === 'segbar' || b.type === 'segbar') === false, a.id + ' recouvre ' + b.id + ' (vue ' + view + ')');
@@ -163,6 +171,15 @@ check('nextView : chaque appui passe à la vue suivante, le dernier revient à a
     assert.strictEqual(saved.nextView(), 'none');
     assert.deepStrictEqual(t.views(), ['gauges', 'tyres']);
 });
+check('les dessins des vues reçoivent tous les mêmes réglages : ils sont bâtis sur la source de mpanel (un réglage oublié vaut 0 : la voiture des pneus de Sport avait disparu, 0.21.53)', () => {
+    const src = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8'), sh = require('../shared/shaders');
+    assert(!src.includes("if (w.type === 'mpanel') {"), 'un réglage réservé à mpanel');
+    ['u_flip', 'u_bs', 'u_car'].forEach((u) => {
+        assert(src.includes("c.uniform(ref, '" + u + "'"), u + " n'est pas envoyé");
+        ['mpanel', 'sring', 'mblades', 'nline'].forEach((t) => assert(sh[t].indexOf('uniform float ' + u + ';') > 0, t + ' : ' + u));
+    });
+});
+
 check('la vue du bouton gagne sur le réglage, et un choix fait dans les réglages reprend la main', () => {
     const src = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
     assert(src.includes("if (key === 'viewSel' && this.viewNow !== null) return this.viewNow;"), 'setting()');

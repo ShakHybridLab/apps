@@ -66,6 +66,7 @@ CLUSTER_FONTS = [
     ('m_tyre', 'Orbitron[wght].ttf', 25, DIGITS + '.-', 0, 'Bold', {'0': 'O'}),
     ('lim_num', 'BarlowSemiCondensed-SemiBold.ttf', 27, DIGITS),      # the speed limit in the danger alert's ring (Sport, M): three digits in 46 px
     ('r_val', 'Orbitron[wght].ttf', 24, DIGITS + ':+-.', 0, 'Bold', {'0': 'O'}),   # the value inside one of Sport's round gauges (71 px across)
+    ('r_val_s', 'Orbitron[wght].ttf', 19, DIGITS + ':+-.', 0, 'Bold', {'0': 'O'}),   # the same, small: Sport's round gauges beside the Waze map (51 px across)
     ('m_unit', 'Barlow-Medium.ttf', 30, LOWER + UPPER + '°/-.'),
     ('m_label', 'Orbitron[wght].ttf', 20, UPPER + ' -', 0, 'Bold'),
     # the names of the rows in M Blade's views, written out in full with their accents (the owner, 19 Nov 2026: "naturel, pas de langage court")

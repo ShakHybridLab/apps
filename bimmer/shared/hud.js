@@ -847,6 +847,12 @@ class HudApp {
         if (key === 'mapUp') return !!(this._wazeMapOn() || this.windowOpen === true);
         // "viewSel": the view showing: the button's step when it has been pressed, else the saved choice ("none" = nothing extra)
         if (key === 'viewSel' && this.viewNow !== null) return this.viewNow;
+        // a view this theme does not have counts as none: M has no tyres' view of its own (its tyres are part of the dial), and with "tyres"
+        // picked on the page its left side stayed empty, the tyres gone and nothing in their place (bench, 20 Nov 2026)
+        if (key === 'viewSel') {
+            const sv = this.ctx.settings.get('viewSel');
+            if (sv && sv !== 'none' && this.layoutViews && this.layoutViews.length && this.layoutViews.indexOf(sv) < 0) return 'none';
+        }
         // "driveSport": not saved, the car's drive mode is Sport (the "drive" view shows the G-meter then, the settings of the modes otherwise)
         if (key === 'driveSport') return this.driveMode === 'sport';
         // "danger": not saved, a danger zone is ahead (danger.js) and the alert is turned on; "dangerLimit" / "dangerNoLimit": and its speed limit is / isn't known
@@ -2967,7 +2973,9 @@ class HudApp {
             c.uniform(ref, 'u_seg', [w.seg || 24]);
             c.uniform(ref, 'u_mode', [w.mode === 'tyres' ? 1 : 0]);
             c.uniform(ref, 'u_wh', [0, 0, 0, 0]);
-            if (w.type === 'mpanel') {
+            {
+                // (set for every view shader: they are all built on mpanel's source and its uniforms, and one left unset is 0: Sport's tyres' view
+                // lost its car that way in 0.21.53, found on the bench the same day)
                 // M Blade's small panel beside the Waze map: "flip" (its point to the right, the colour bands on the left), "bands" (their size, 1)
                 // and "car" (the tyres' view's car, 1; smaller: the car alone, the readings stand beside it without a plate)
                 c.uniform(ref, 'u_flip', [w.flip === true ? 1 : 0]);

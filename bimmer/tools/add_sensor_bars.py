@@ -465,6 +465,108 @@ def sport_views(pre, sheets, conn, cconn):
     return new
 
 
+# Sport with the Waze map up (20 Nov 2026): there was no view at all then, the four rings' place is under the map. The same rings in small, two
+# on each side of the map (the window: x 524..1396): one above and one below the speed on the left, one above and one below the gear on the right,
+# each with its value and unit inside and its icon beside it (no room for the names written out). SM: each ring's middle (x, y), the radius;
+# every ring 4 px or more inside the dial's frame (its lower sides lean in: x 373 + 0.645 (y - 493) on the left).
+SM = dict(at=((430, 176), (430, 452), (1490, 176), (1490, 452)), R=36, th=8, top=124, h=380, w=112)
+
+
+def sport_map_views(pre, conn, cconn):
+    new = []
+    SL, SRT = 'xs_sl', 'xs_sr'                       # the left pair's texts and the right pair's: two small sheets, not one across the map
+
+    def side(i):
+        cx, cy = SM['at'][i]
+        return cx, cy, (SL if i < 2 else SRT), i < 2
+
+    def rings(id, tog, rows, **kw):
+        out = []
+        for left in (True, False):
+            (x0, _), (x1, _) = SM['at'][0:2] if left else SM['at'][2:4]
+            out.append(sring(id + ('l' if left else 'r'), tog, cconn, rows[:2] if left else rows[2:], x=min(x0, x1) - 56, y=SM['top'], w=SM['w'], h=SM['h'],
+                             bar=[x0, x1], card=[SM['R'], SM['th'], 26], **kw))
+        return out
+
+    def badge(id, i, ic, tog, color='fg', **kw):
+        cx, cy, sh, left = side(i)
+        outer = i % 2 == 0          # the upper rings' icon on the outer side (the drive mode's icon is on the map's side there), the lower rings' on the map's
+        return icon(id, cx - 76 if left == outer else cx + 56, cy - 12, 20, 24, ic, color, sh, conn, toggle=tog, **kw)
+
+    for vname, vp, ROWS in (('gauges', 'g', CARD_ROWS), ('electric', 'e', ELEC_ROWS)):
+        tg = 'viewSel=%s&mapUp' % vname
+        rows = []
+        for r, (k, ic, sig, mn, mx, tok, unit, red, tone) in enumerate(ROWS):
+            cx, cy, sh, left = side(r)
+            tb = {'tempBy': sig} if tone == 'temp' else {'iceBy': True} if tone == 'ice' else {}
+            new += [text(pre + vp + '_%s' % k, cx - 30, cy - 15, 60, 18, tok, 'r_val_s', 'fg', 'center', sh, conn, toggle=tg, **tb),
+                    text(pre + vp + '_%s_unit' % k, cx - 24, cy + 5, 48, 29, unit, 's_unit', 'dim', 'center', sh, conn, toggle=tg),
+                    badge(pre + vp + '_%s_ic' % k, r, ic, tg, **({'tempBy': sig} if tone == 'temp' else {}))]
+            rows.append({'y': cy, 'signal': sig, 'min': mn, 'max': mx, 'red': red if red else 2, 'tone': tone})
+        new += rings(pre + vp + '_ring', tg, rows)
+    # the tyres: each one's pressure over its temperature in a ring, where the wheel is on the car (front ones on top, left ones on the left)
+    tt = 'viewSel=tyres&mapUp'
+    rows = []
+    for i, corner in enumerate(('FL', 'RL', 'FR', 'RR')):
+        cx, cy, sh, left = side(i)
+        new += [text(pre + 't_p' + corner, cx - 30, cy - 15, 60, 18, '{{tyreP:%s}}' % corner, 'r_val_s', 'fg', 'center', sh, conn, toggle=tt, tyreBy=corner),
+                text(pre + 't_t' + corner, cx - 24, cy + 6, 48, 23, '{{tyreT:%s}}' % corner, 'm_tyre', 'dim', 'center', sh, conn, toggle=tt),
+                badge(pre + 't_ic' + corner, i, 'tyre', tt, 'dim')]
+        rows.append({'y': cy, 'signal': 'none', 'min': 0, 'max': 1})
+    new += rings(pre + 't_ring', tt, rows)
+    # the drive view: in Sport the G-meter under the speed and its two readings under the gear; else each part's ring in three steps, its icon inside
+    ds, dn = 'viewSel=drive&driveSport&mapUp', 'viewSel=drive&!driveSport&mapUp'
+    gx, gy = SM['at'][1]
+    new.append({'id': pre + 'dg', 'type': 'gmeter', 'class': 'content', 'z': 5, 'x': gx - 52, 'y': gy - 52, 'w': 104, 'h': 104, 'toggle': ds, 'conn': conn})
+    rx, ry = SM['at'][3]
+    new += [text(pre + 'dside', rx - 62, ry - 30, 124, 28, '{{gSide}}', 's_unit', 'fg', 'center', SRT, conn, toggle=ds),
+            text(pre + 'dfwd', rx - 62, ry + 4, 124, 28, '{{gFwd}}', 's_unit', 'fg', 'center', SRT, conn, toggle=ds)]
+    rows = []
+    for i, (k, ic) in enumerate(SETUP_ROWS):
+        cx, cy, sh, left = side(i)
+        new.append(icon(pre + 'dr_%s_ic' % k, cx - 14, cy - 17, 28, 34, ic, 'fg', sh, conn, toggle=dn))
+        rows.append({'y': cy, 'signal': 'setupLevel:' + k, 'min': 0, 'max': 3})
+    new += rings(pre + 'dr_ring', dn, rows, seg=3, div=3)
+    return new
+
+
+# Navi with the Waze map up (20 Nov 2026: no view at all then): its thin lines in a narrow column between the map (x 1396) and the speed (x 1570),
+# above the place BMW keeps black (y 322). Each row: its icon, its value and unit, the hairline with its sliding ring under them.
+NM = dict(x=1400, y=124, w=168, h=192, x0=1408, x1=1562, t0=143, pitch=44)       # (the last row's line 12 px above the stepped one)
+
+
+def navi_map_views(pre, conn, cconn):
+    new = []
+    S = 'xs_nm'
+
+    def col(id, tog, rows=None, **kw):
+        return nline(id, tog, cconn, rows, x=NM['x'], y=NM['y'], w=NM['w'], h=NM['h'], bar=[NM['x0'], NM['x1']], card=[110, 10, 0], **kw)
+
+    for vname, vp, ROWS in (('gauges', 'g', CARD_ROWS), ('electric', 'e', ELEC_ROWS)):
+        tg = 'viewSel=%s&mapUp' % vname
+        rows = []
+        for r, (k, ic, sig, mn, mx, tok, unit, red, tone) in enumerate(ROWS):
+            T = NM['t0'] + r * NM['pitch']
+            tb = {'tempBy': sig} if tone == 'temp' else {'iceBy': True} if tone == 'ice' else {}
+            new += [icon(pre + vp + '_%s_ic' % k, NM['x0'], T - 16, 28, 34, ic, 'fg', S, conn, toggle=tg, **({'tempBy': sig} if tone == 'temp' else {})),
+                    text(pre + vp + '_%s' % k, NM['x0'] + 30, T - 6, 80, 21, tok, 'r_val', 'fg', 'right', S, conn, toggle=tg, **tb),
+                    text(pre + vp + '_%s_unit' % k, NM['x0'] + 114, T - 12, 44, 32, unit, 'm_tiny', 'dim', 'left', S, conn, toggle=tg)]
+            rows.append({'y': T + 24, 'signal': sig, 'min': mn, 'max': mx, 'red': red if red else 2, 'tone': tone})
+        new.append(col(pre + vp + '_col', tg, rows))
+    tt = 'viewSel=tyres&mapUp'
+    new += tyres(pre + 't_', NM['x0'], 140, 'm_tyre', 'm_tiny', S, conn, colw=62, gap=30, rowp=36, rowt=26, rear=104, toggle=tt)
+    ds, dn = 'viewSel=drive&driveSport&mapUp', 'viewSel=drive&!driveSport&mapUp'
+    new += drive_g(pre + 'dg', NM['x0'] + 17, 132, 120, NM['x0'], 256, NM['x1'] - NM['x0'], S, conn, ds, stacked=True)
+    rows = []
+    for r, (k, ic) in enumerate(SETUP_ROWS):
+        T = NM['t0'] + r * NM['pitch']
+        new += [icon(pre + 'dr_%s_ic' % k, NM['x0'], T - 16, 28, 34, ic, 'fg', S, conn, toggle=dn),
+                text(pre + 'dr_%s' % k, NM['x0'] + 36, T - 6, 118, 19, '{{setup:%s}}' % k, 'm_label', 'fg', 'left', S, conn, toggle=dn)]
+        rows.append({'y': T + 24, 'signal': 'setupLevel:' + k, 'min': 0, 'max': 3})
+    new.append(col(pre + 'dr_col', dn, rows, seg=3, div=3))
+    return new
+
+
 # Navi's own views (19 Nov 2026): thin lines, no card. Right of the emblem and the speed, under the danger alert's card (y 38..114), above the place
 # BMW keeps black (shared/visible.js BLACK_BOX: x 1406..1597, y 322..440). Each row: its name, its value and unit at the right, a hairline under them
 # with a ring that slides to the level; the theme's stepped line under the rows.
@@ -551,7 +653,7 @@ def _mblade(d):
     def mini_rows(pfx, tog, ROWS):
         out, rows = [], []
         for r, (k, ic, sig, mn, mx, tok, unit, red, tone) in enumerate(ROWS):
-            T = 178 + r * 78                                   # (the first row's unit, at the right, clears the hood: y 185 at x 1882)
+            T = 180 + r * 77                                   # (the first row's unit, at the right, clears the hood: y 185 at x 1882)
             tb = {'tempBy': sig} if tone == 'temp' else {}
             out += [icon(pfx + k + '_ic', MBAR[0], T, 28, 34, ic, 'fg', S_RIGHT, 1, toggle=tog, **tb),
                     text(pfx + k, MBAR[0] + 30, T + 2, 96, 29, tok, 'm_mid', 'fg', 'right', S_RIGHT, 1, toggle=tog, **tb),
@@ -564,9 +666,9 @@ def _mblade(d):
     new += mini_rows('xb_me_', 'viewSel=electric&mapUp', (ELEC_ROWS[2], ELEC_ROWS[3]))          # the power and what is won back: the charge and the range have their strip
     # the tyres: the car in small between the two columns, each wheel in its tyre's colour
     tm = 'viewSel=tyres&mapUp'
-    new += tyres('xb_mty', 1676, 182, 'm_tyre', 'm_tiny', S_RIGHT, 1, colw=62, gap=72, rowp=34, rowt=26, rear=100, toggle=tm)
+    new += tyres('xb_mty', 1676, 176, 'm_tyre', 'm_tiny', S_RIGHT, 1, colw=62, gap=72, rowp=34, rowt=26, rear=96, toggle=tm)     # (12 px of air under the rear tyres' temperatures)
     new = [w for w in new if w['id'] != 'xb_mtyic']                                              # (the car is drawn by the panel: no wheel glyph)
-    new.append(mini('xb_mtpan', tm, mode='tyres', car=0.55, tiles=[1676 + 62 + 36 - 1, 1676 + 62 + 36 + 1, 182 + 34 + 26, 182 + 100 + 26]))
+    new.append(mini('xb_mtpan', tm, mode='tyres', car=0.55, tiles=[1676 + 62 + 36 - 1, 1676 + 62 + 36 + 1, 176 + 34 + 26, 176 + 96 + 26]))
     new += drive_g('xb_mdg', 1712, 150, 120, 1676, 274, 196, S_RIGHT, 1, 'viewSel=drive&driveSport&mapUp', stacked=True)
     new.append(mini('xb_mdspan', 'viewSel=drive&driveSport&mapUp'))
     new += drive_rows('xb_mdr_', 1698, 186, 38, S_RIGHT, 1, 'viewSel=drive&!driveSport&mapUp', 'm_label', 150, shiftx=36)
@@ -580,6 +682,7 @@ def _sport(d):
     danger_card(d, 824, 256, *_sheet(d, 'run_time'), h=66, top=8)       # (air between the emblem, y 244, and the launch timer, y 333)
     # the three views in one slanted glass card in the middle, between the two dials (19 Nov 2026), under the launch timer (y 333..359)
     new += sport_views('xb_', ('xs_s', 'xs_t', 'xs_dr'), 3, 2)
+    new += sport_map_views('xb_sm', 3, 2)
     d['widgets'] += new
 
 
@@ -591,6 +694,7 @@ def _navi(d):
     new.append(meter('xb_oil_bar', 1644, 436, 200, 7, 'oil', 50, 150, [0.25, 0.8], [BLUE, GREEN, RED], 30, 2, 3))
     # (under the danger alert's card, y 38..114)
     new += navi_views('xb_', ('xs_n', 'xs_t', 'xs_dr'), 1, 2)
+    new += navi_map_views('xb_nm', 1, 2)
     d['widgets'] += new
 
 
