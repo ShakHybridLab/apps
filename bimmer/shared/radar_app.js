@@ -18,7 +18,7 @@ const gps = require('./gps_pos');
 
 const THEMES_DIR = process.env.CLUSTER_THEMES_DIR || '/dev/shm/cluster-themes';
 const FILE = 'danger-shakradar.json';
-const WITHIN_M = 500;           // the alert starts this far from a zone's edge (2000 until Nov 19 2026: on a road it came on 4 km before the camera,
+const WITHIN_M = 1000;           // the alert starts this far from a zone's edge (2000 until Nov 19 2026: on a road it came on 4 km before the camera,
                                 // on a motorway 6 km, and stayed on so long that nobody looked at it; the zones keep their size)
 const POS_STALE_MS = 5000;      // a position older than this is no position
 const WRITE_MS = 1000;          // danger.js counts a file older than 3 s as gone
