@@ -801,7 +801,9 @@ check('launch cue: armed in the Sport drive mode with nothing to show, a chequer
         const wd = 'Launch Control Ready'.split('').reduce((a, c) => a + adv(c), 0); assert(wd <= tx.w, 'the words are ' + wd + ' px in ' + tx.w);
         assert(tx.x + tx.w <= 800 && tx.y + tx.h <= 480 && fl.x >= 0, 'inside the 800x480 HUD');
         const box = (w) => [w.x, w.y, w.x + w.w, w.y + w.h], hit = (A, B) => A[0] < B[2] && B[0] < A[2] && A[1] < B[3] && B[1] < A[3];
-        hl.widgets.forEach((o) => { if (o === fl || o === tx) return; [fl, tx].forEach((b) => assert(!hit(box(b), box(o)) || o.readyHides === true, 'HUD: ' + b.id + ' overlaps ' + o.id + ' (only a widget the cue hides may sit under it)')); });
+        // (20 Nov 2026: the danger alert takes the block while a zone is ahead; the cue has "!danger" and the alert's widgets "danger": never together)
+        const parts = (w) => String(w.toggle || '').split('&'), EITHER = (a, b) => parts(a).indexOf('!danger') >= 0 && parts(b).some((t) => /^danger/.test(t));
+        hl.widgets.forEach((o) => { if (o === fl || o === tx) return; [fl, tx].forEach((b) => assert(!hit(box(b), box(o)) || o.readyHides === true || EITHER(b, o), 'HUD: ' + b.id + ' overlaps ' + o.id + ' (only a widget the cue hides may sit under it)')); });
         assert(by('oil').readyHides && by('oil_icon').readyHides && by('coolant').readyHides && by('coolant_icon').readyHides, 'the oil and coolant row gives way to the cue');
         assert(fl.y + fl.h <= 380 && tx.y + tx.h <= 380, 'the cue is inside the visible HUD window (down to y 380)');
         const hs = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shakhud', 'app.json'), 'utf8')).settings.map((x) => x.key);

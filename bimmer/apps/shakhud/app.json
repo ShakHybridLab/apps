@@ -2,7 +2,7 @@
   "id": "shakhud",
   "title": "ShakHUD",
   "description": "ShakHUD : un HUD pour le pare-brise, le compte-tours M Style (une barre brisée, rouge dans la zone rouge, bleu clair en électrique, verte en recharge), avec la batterie, les autonomies et les températures en bas à droite ; il se cache tout seul quand la carte Waze du HUD est affichée",
-  "version": "0.6.37",
+  "version": "0.6.38",
   "vendor": "custom",
   "startType": "autostart",
   "loggingId": "OAS1",
@@ -814,6 +814,12 @@
     {
       "key": "shiftLights",
       "label": "Shiftlight (style BMW : de l'extérieur vers le centre, bloc rouge, clignotement)",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "dangerAlert",
+      "label": "Alerte zone de danger (donnée par ShakTheme)",
       "type": "bool",
       "default": true
     },

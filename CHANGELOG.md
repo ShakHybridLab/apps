@@ -2,6 +2,12 @@
 
 ## 20 novembre 2026
 
+### ShakHUD 0.6.38 : l'alerte zone de danger sur le HUD (pas encore essayé sur la voiture)
+Demande du propriétaire : « rajoute l'alerte radar sur le ShakHUD, fais-moi un beau truc et réaménage ». Quand une zone est devant, le bloc du bas à droite (batterie, autonomies, températures) laisse sa place à l'alerte : une caméra rouge, « ZONE DE DANGER », la distance en grand avec son unité, la limitation dans un anneau rouge quand elle est connue, et dessous une barre inclinée rouge qui se remplit à l'approche (vide à 500 m, pleine à la zone). Le bloc revient quand l'alerte s'arrête.
+- ShakHUD ne cherche pas les zones lui-même : il lit l'alerte que **ShakTheme** écrit (`shared/danger.js`). Il faut donc que ShakTheme tourne (il démarre avec la voiture). Réglage « Alerte zone de danger (donnée par ShakTheme) », allumé.
+- `shared/hud.js` : l'alerte n'est plus réservée au tableau de bord (une appli dont les réglages ont `dangerAlert`) ; lecture `dangerNear` ; une barre inclinée peut être rouge (`tone: "hot"`) ; une bascule comme « showBattery&!danger » refait bien la mise en page quand l'alerte arrive.
+- `tools/gen_shakhud.py` : l'alerte, et le signal de départ (drapeau à damier) qui avait été ajouté à la main dans la mise en page et que la régénération faisait disparaître.
+
 ### ShakTheme 0.21.46 : le cercle autour de la limitation dans l'alerte de Sport et M (pas encore essayé sur la voiture)
 Le propriétaire, sur les images de la 0.21.45 : « y a plus le cercle autour pour afficher la vitesse ». Les cartes d'alerte de Sport et de M montraient la limitation en chiffres rouges nus (un anneau en icône aurait coûté deux couches) ; M Blade et Navi ont le leur. La carte dessine maintenant elle-même l'anneau rouge (`shared/shaders.js` BOX, `u_ring` ; widget `box` : `ring` et `ringWhen`), sans couche de plus, seulement quand l'alerte a une limitation ; les chiffres en blanc dedans, dans une police étroite faite pour (`lim_num`, Barlow 27 : « 130 » tient dans 46 px).
 

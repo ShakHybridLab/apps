@@ -27,7 +27,7 @@ mgu.run({
             title: ctx.spec.title, what: 'HUD',
             look: { name: 'Layouts', style: 'cards', tags: { mstyle: 'bent rev bar · hybrid colours' } },
             tabs: ['look', 'position', 'colours', 'signals', 'settings'],
-            settings: ['units', 'clock', 'timeZone', 'redline', 'shiftBefore', 'shiftLights', 'showBattery', 'hideWithWaze', 'shiftLightRed', 'shiftLightFlash', 'hybridRev', 'reserveKm', 'reservePct', 'tyreLow', 'launchReady', 'launchRpm', 'startupSweep', 'warnOil', 'oilCold', 'warnCoolant', 'coolantCold', 'demo'],
+            settings: ['units', 'clock', 'timeZone', 'redline', 'shiftBefore', 'shiftLights', 'showBattery', 'dangerAlert', 'hideWithWaze', 'shiftLightRed', 'shiftLightFlash', 'hybridRev', 'reserveKm', 'reservePct', 'tyreLow', 'launchReady', 'launchRpm', 'startupSweep', 'warnOil', 'oilCold', 'warnCoolant', 'coolantCold', 'demo'],
         }).start();
         process.on('exit', () => { try { hud.stop(); } catch (e) { /* exiting anyway */ } });
     },

@@ -851,7 +851,8 @@ class HudApp {
         if (key === 'driveSport') return this.driveMode === 'sport';
         // "danger": not saved, a danger zone is ahead (danger.js) and the alert is turned on; "dangerLimit" / "dangerNoLimit": and its speed limit is / isn't known
         if (key === 'danger' || key === 'dangerLimit' || key === 'dangerNoLimit') {
-            const d = this.target === 'panel' && this.ctx.settings.get('dangerAlert') === true ? this.danger.state() : null;
+            // (the HUD shows it too since 20 Nov 2026, ShakHUD: an app whose settings have "dangerAlert")
+            const d = this.ctx.settings.item('dangerAlert') && this.ctx.settings.get('dangerAlert') === true ? this.danger.state() : null;
             return !!d && d.on && (key === 'danger' || (d.limit !== null) === (key === 'dangerLimit'));
         }
         // "power": not saved, an app shares the battery's power (cluster_info.js) and the setting "sportPower" lets it replace the boost;
@@ -1094,6 +1095,7 @@ class HudApp {
         this.screen.start();
         this.ci.start();
         if (this.target === 'panel') { this.danger.start(); this.speedLimit.start(); }
+        else if (this.ctx.settings.item('dangerAlert')) this.danger.start();        // ShakHUD: the alert another app gives (ShakTheme's own radar list)
         this.ciTimer = setInterval(() => this._guard('cluster info', () => this._shareWithClusterInfo()), 500);
     }
 
@@ -2119,6 +2121,8 @@ class HudApp {
             return isNum(shared) ? shared : this.car.data().demo ? 64 : null;
         }
         if (name === 'evRange') return this._evRangeNow();
+        // how near the danger zone is, 0 at 500 m (where the alert starts) to 1 at the zone: a bar that fills on the way (ShakHUD's alert)
+        if (name === 'dangerNear') { const d = this.danger.state(); return d && d.on && isNum(d.distM) ? Math.max(0, Math.min(1, 1 - d.distM / 500)) : null; }
         // the electric view (19 Nov 2026): the motor's power as two readings, what it gives (evPower) and what it takes back (evRecup), in kW
         if (name === 'evPower' || name === 'evRecup') { const kw = this._evKw(); return kw === null ? null : name === 'evPower' ? Math.max(0, kw) : Math.max(0, -kw); }
         if (name === 'fuel' || name === 'range' || name === 'ambient') {
@@ -2526,7 +2530,7 @@ class HudApp {
         this.mapLayout = layout.widgets.some((w) => w.holeWhen === 'mapUp');
         this.layoutViews = viewsOf(layout.widgets);
         if (this.viewNow !== null && this.viewNow !== 'none' && this.layoutViews.indexOf(this.viewNow) < 0) this.viewNow = null;      // this theme doesn't have it
-        this.dangerLayout = layout.widgets.some((w) => /^!?danger/.test(w.toggle || ''));
+        this.dangerLayout = layout.widgets.some((w) => /(^|&)!?danger/.test(w.toggle || ''));
         this.driveLayout = layout.widgets.some((w) => /(^|&)!?driveSport(&|$)/.test(w.toggle || ''));
         this.driveShown = this.driveMode === 'sport';
         this.dangerShown = this._dangerKey();
@@ -3794,7 +3798,7 @@ class HudApp {
             // light blue; green while the battery charges (recuperation, the plug); amber when nearly empty
             const chg = this._hybridTach({ hybridTach: true }, this._raw('rpm')).chg > 0;
             const low = this._lowNow('battery');
-            const tone = low ? 3 : chg ? 2 : 1;
+            const tone = w.tone === 'hot' ? 3 : low ? 3 : chg ? 2 : 1;        // ("tone": "hot": a red bar whatever the battery does, the danger alert's)
             const key = q + '|' + tone;
             if (!force && key === x.last) return;
             x.last = key;
