@@ -1,14 +1,14 @@
-Fabrication du 2026-11-19T20:46Z
-2026-11-19 21:10:50 URL:https://download.geofabrik.de/europe/france/france-261118.osm.pbf [5118593302/5118593302] -> "/tmp/france.osm.pbf" [1]
--rw-r--r-- 1 runner runner 5118593302 Nov 19 00:22 /tmp/france.osm.pbf
--rw-r--r-- 1 runner runner 104994620 Nov 19 21:12 /tmp/routes.osm.pbf
--rw-r--r-- 1 runner runner 394983953 Nov 19 21:12 /tmp/routes.geojsonseq
--rw-r--r-- 1 runner runner 93425873 Nov 19 21:14 /tmp/rues.geojsonseq
-{"v": 1, "step": 0.5, "margin": 0.05, "date": "2026-11-19", "tiles": 319, "ways": 733548, "points": 2193494, "km": 190543, "bytes": 11720852, "read": 1100530, "noLimit": 366982, "source": "OpenStreetMap (ODbL), extrait Geofabrik France"}
-16M	bimmer/apps/shaklimites/limits
+Fabrication du 2026-11-20T02:20Z
+2026-11-20 02:53:54 URL:https://download.geofabrik.de/europe/france/france-261119.osm.pbf [5119231190/5119231190] -> "/tmp/france.osm.pbf" [1]
+-rw-r--r-- 1 runner runner 5119231190 Nov 20 00:27 /tmp/france.osm.pbf
+-rw-r--r-- 1 runner runner 105005123 Nov 20 02:55 /tmp/routes.osm.pbf
+-rw-r--r-- 1 runner runner 395047050 Nov 20 02:55 /tmp/routes.geojsonseq
+-rw-r--r-- 1 runner runner 169755435 Nov 20 02:58 /tmp/rues.geojsonseq
+{"v": 1, "step": 0.5, "margin": 0.05, "date": "2026-11-20", "tiles": 319, "ways": 800984, "points": 2421626, "km": 209458, "bytes": 12904224, "read": 1292954, "noLimit": 491970, "source": "OpenStreetMap (ODbL), extrait Geofabrik France"}
+18M	bimmer/apps/shaklimites/limits
 320
-3878 /tmp/radars_osm.geojsonseq
+3877 /tmp/radars_osm.geojsonseq
 4716
 3839 relations de contrôle dans OpenStreetMap : 1516 radars notés un seul sens, 1245 notés deux sens
 3309 radars de la liste officielle, 903 de plus dans OpenStreetMap
-4212 radars -> 4053 zones (115 larges, 1133 en ville, 3797 avec une direction dont 1611 à sens unique), 94886 octets, version 2025-12-30
+4212 radars -> 4109 zones (115 larges, 1171 en ville, 3864 avec une direction dont 1641 à sens unique), 97036 octets, version 2025-12-30
