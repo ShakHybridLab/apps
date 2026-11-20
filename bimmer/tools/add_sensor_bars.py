@@ -72,14 +72,17 @@ def danger_card(d, x, y, sheet, conn, h=78, top=12):
     # (h, top: a lower card where the place is short, 20 Nov 2026: the owner found M's "trop serré" between the shift lights and the gear)
     d['widgets'] = [w for w in d['widgets'] if not w['id'].startswith('al_')]
     k = {'toggle': 'danger'}
+    # the speed limit in a red ring, as a road sign and as M Blade's and Navi's cards have it (20 Nov 2026, the owner: "y a plus le cercle autour").
+    # The ring is drawn by the card's own layer (BOX u_ring: no layer more) and only while the alert has a limit ("ringWhen").
+    rr = min(27, h // 2 - 6)
     d['widgets'] += [
         {'id': 'al_card', 'type': 'box', 'z': 4, 'x': x, 'y': y, 'w': 272, 'h': h, 'fill': [10, 10, 14, 255], 'line': RED, 'border': 3, 'radius': 20,
-         'toggle': 'danger', 'conn': 0},
+         'ring': [229, h / 2.0, rr, 5], 'ringWhen': 'dangerLimit', 'toggle': 'danger', 'conn': 0},
         icon('al_cam', x + 14, y + (h - min(48, h - 14)) // 2, min(48, h - 14), min(48, h - 14), 'cam', RED, sheet, conn, **k),
         text('al_title', x + 72, y + top, 118, 19, 'DANGER', 'm_label', RED, 'left', sheet, conn, **k),
         text('al_dist', x + 62, y + top + 22, 88, 29, '{{dangerDist}}', 'm_mid', 'fg', 'right', sheet, conn, **k),
         text('al_unit', x + 154, y + top + 21, 40, 36, '{{dangerUnit}}', 'm_unit', 'dim', 'left', sheet, conn, **k),
-        text('al_limit', x + 200, y + (h - 29) // 2, 62, 29, '{{dangerLimit}}', 'm_tiny', RED, 'center', sheet, conn, toggle='dangerLimit'),
+        text('al_limit', x + 229 - 23, y + (h - 23) // 2, 46, 23, '{{dangerLimit}}', 'lim_num', 'fg', 'center', sheet, conn, toggle='dangerLimit'),
     ]
     for w in d['widgets'][-5:]:
         if not w.get('conn'):

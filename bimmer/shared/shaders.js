@@ -355,6 +355,7 @@ uniform vec4 u_head;
 uniform float u_headH;
 uniform float u_border;
 uniform float u_radius;
+uniform vec4 u_ring;     // a ring in u_line inside the box, as a road sign's (the danger alert's speed limit): middle x, y, radius, width (radius 0: none)
 
 void main() {
     vec2 p = vec2(v_uv.x * u_size.x, v_uv.y * u_size.y);
@@ -366,6 +367,7 @@ void main() {
     vec4 c = p.y < u_headH ? u_head : u_fill;
     float edge = clamp(d + u_border + 0.5, 0.0, 1.0);                       // 1 within the frame
     vec4 col = mix(c, u_line, edge);
+    if (u_ring.z > 0.0) col = mix(col, u_line, clamp(0.5 - (abs(length(p - u_ring.xy) - u_ring.z) - 0.5 * u_ring.w), 0.0, 1.0));
     gl_FragColor = vec4(col.rgb, col.a * outer);
 }
 `;

@@ -1,6 +1,9 @@
 # Modifications par rapport aux projets d'origine
 
-## 19 novembre 2026
+## 20 novembre 2026
+
+### ShakTheme 0.21.46 : le cercle autour de la limitation dans l'alerte de Sport et M (pas encore essayé sur la voiture)
+Le propriétaire, sur les images de la 0.21.45 : « y a plus le cercle autour pour afficher la vitesse ». Les cartes d'alerte de Sport et de M montraient la limitation en chiffres rouges nus (un anneau en icône aurait coûté deux couches) ; M Blade et Navi ont le leur. La carte dessine maintenant elle-même l'anneau rouge (`shared/shaders.js` BOX, `u_ring` ; widget `box` : `ring` et `ringWhen`), sans couche de plus, seulement quand l'alerte a une limitation ; les chiffres en blanc dedans, dans une police étroite faite pour (`lim_num`, Barlow 27 : « 130 » tient dans 46 px).
 
 ### ShakTheme 0.21.45 : les vues de M Blade redessinées (pas encore essayé sur la voiture)
 Le propriétaire, des vues que la touche BC fait défiler : « le design très moyen », « beaucoup trop simple », « moderne ». Première étape, M Blade ; Sport, M et Navi suivront, puis une vue média. Un dessin à nous dans l'esprit du thème, pas la copie de l'écran de BMW.

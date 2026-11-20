@@ -3183,6 +3183,7 @@ class HudApp {
             c.uniform(ref, 'u_headH', [w.head || 0]);
             c.uniform(ref, 'u_border', [w.border === undefined ? 2 : w.border]);
             c.uniform(ref, 'u_radius', [w.radius || 0]);
+            c.uniform(ref, 'u_ring', Array.isArray(w.ring) && w.ring.length === 4 && (!w.ringWhen || this.setting(w.ringWhen)) ? w.ring : [0, 0, 0, 0]);     // "ring": [x, y, radius, width] in the box
         } else if (w.type === 'swatch') {
             c.uniform(ref, 'u_size', [w.w, w.h]);
             c.uniform(ref, 'u_n', [w.steps || 11]);
@@ -3765,6 +3766,12 @@ class HudApp {
             x.c.uniform(x.ref, 'u_v', v);
             x.c.uniform(x.ref, 'u_tone', tn);
             if (w.mode === 'tyres') x.c.uniform(x.ref, 'u_wh', wh);
+        } else if (w.type === 'box' && w.ring && w.ringWhen) {
+            // a box's ring that shows only while a toggle is on (the danger alert's card: the ring round its speed limit, "ringWhen": "dangerLimit")
+            const on = !!this.setting(w.ringWhen);
+            if (!force && on === x.lastRing) return;
+            x.lastRing = on;
+            x.c.uniform(x.ref, 'u_ring', on ? w.ring : [0, 0, 0, 0]);
         } else if (w.type === 'slantbar' && SENSOR_BAR[w.sensor]) {
             // a sensor's bar ("sensor": oil | coolant | boost, "min" / "max" in C or bar): blue while the oil / the coolant is under its cold limit, green once
             // warm, light blue for the boost, and over the warning limit flashing between the shift red and a dark red (the readouts' colours, "tempBy")

@@ -64,6 +64,7 @@ CLUSTER_FONTS = [
     ('m_spd', 'Orbitron[wght].ttf', 50, DIGITS + '-', 0, 'Black', {'0': 'O'}),     # M Blade's small speed under the gear, as the photo has it
     ('m_mid', 'Orbitron[wght].ttf', 34, DIGITS + ':+-.', 0, 'Bold', {'0': 'O'}),
     ('m_tyre', 'Orbitron[wght].ttf', 25, DIGITS + '.-', 0, 'Bold', {'0': 'O'}),
+    ('lim_num', 'BarlowSemiCondensed-SemiBold.ttf', 27, DIGITS),      # the speed limit in the danger alert's ring (Sport, M): three digits in 46 px
     ('r_val', 'Orbitron[wght].ttf', 24, DIGITS + ':+-.', 0, 'Bold', {'0': 'O'}),   # the value inside one of Sport's round gauges (71 px across)
     ('m_unit', 'Barlow-Medium.ttf', 30, LOWER + UPPER + '°/-.'),
     ('m_label', 'Orbitron[wght].ttf', 20, UPPER + ' -', 0, 'Bold'),

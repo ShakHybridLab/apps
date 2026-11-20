@@ -1421,6 +1421,13 @@
       ],
       "border": 3,
       "radius": 20,
+      "ring": [
+        229,
+        33.0,
+        27,
+        5
+      ],
+      "ringWhen": "dangerLimit",
       "toggle": "danger",
       "conn": 2
     },
@@ -1500,18 +1507,13 @@
       "id": "al_limit",
       "type": "text",
       "z": 5,
-      "x": 1024,
-      "y": 274,
-      "w": 62,
-      "h": 29,
+      "x": 1030,
+      "y": 277,
+      "w": 46,
+      "h": 23,
       "text": "{{dangerLimit}}",
-      "font": "m_tiny",
-      "color": [
-        255,
-        42,
-        42,
-        255
-      ],
+      "font": "lim_num",
+      "color": "fg",
       "align": "center",
       "toggle": "dangerLimit",
       "sheet": "s10",
