@@ -2,6 +2,9 @@
 
 ## 20 novembre 2026
 
+### ShakTheme 0.21.51 : M Blade, la touche BC ne fait plus clignoter le rapport et la vitesse
+- Sans la carte Waze, les textes des vues de M Blade ont leurs propres planches (`xs_va`, `xs_vb`) au lieu de partager celles des textes permanents : à chaque appui sur BC ces planches changeaient, donc le rapport, la vitesse et les chiffres des bandes étaient retirés puis redessinés (vidéo du 20 nov. : l'hexagone vide pendant le changement). Reste : le premier appui (ouverture du panneau) et le dernier (retour au thème nu) changent encore les planches de l'échelle de vitesse ; avec la carte Waze rien ne change (une planche de plus y ferait une 21e couche). Au banc seulement.
+
 ### ShakTheme 0.21.50 : la ligne d'état lisible sur une photo
 - Onglet Carte : la réponse de Waze on Cluster à la dernière demande (« asked "panel": … ») s'écrit devant son fichier d'état. Sur la voiture (20 nov.) le thème restait sur « Moving the map into the theme » alors que Waze montrait sa carte dans la vue de BMW (state=showing target=map) : rien ne disait ce que Waze répondait.
 - Onglet Réglages : la ligne où le moteur d'affichage dit ce qu'il dessine (« N of M layers drawn », et pourquoi) se dessinait par-dessus la dernière rangée ; sur la photo du 20 nov. le nombre de calques dessinés était caché par un interrupteur. Elle a maintenant deux lignes à elle sous les rangées, en blanc. Sert à comprendre pourquoi le panneau bleu de M Blade ne s'affiche pas sur la voiture (vidéo du 20 nov.) alors qu'il s'affiche au banc.

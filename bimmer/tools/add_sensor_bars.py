@@ -531,8 +531,11 @@ def _mblade(d):
     # the sheets, by a widget they hold (tools/pack_sheets.py numbers the sheets anew each time it runs): with a view up and the map closed the
     # speed labels' sheets and the limit's are empty (their widgets give way to the panel), the panel's texts take them
     sheet_of = lambda wid, dflt: next((w.get('sheet') for w in d['widgets'] if w['id'] == wid and w.get('sheet')), dflt)
+    # without the map the views' texts keep sheets of their own, xs_va / xs_vb (20 Nov 2026, the owner: "quand j'appuie tout bug un peu, ça clignote"): sharing the sheets of the
+    # theme's own texts, each press of BC changed those sheets, so the gear, the speed and the strips' numbers were taken off and drawn again
+    # (with the Waze map up the views' texts still share a sheet of the theme's: one more sheet there is a 21st layer, over the 20 the theme keeps to)
     S_RIGHT = sheet_of('o_n7', 'xs_mo')
-    new += _mblade_views(d, sheet_of('spd2', 'xs_va'), sheet_of('spd5', 'xs_vb'), sheet_of('lim_ring', 'xs_vl'), sheet_of('b_hi', 'xs_vf'))
+    new += _mblade_views(d, 'xs_va', 'xs_vb', 'xs_vl', 'xs_vf')
     new += gauges('xb_m', 1662, 196, 72, 'viewSel=gauges&mapUp', S_RIGHT, 1, bw=200)
     new += tyres('xb_mty', 1670, 180, 'm_tyre', 'm_tiny', S_RIGHT, 1, rowp=30, rowt=26, rear=90, toggle='viewSel=tyres&mapUp')
     new += drive_g('xb_mdg', 1710, 150, 120, 1670, 276, 200, S_RIGHT, 1, 'viewSel=drive&driveSport&mapUp', stacked=True)
