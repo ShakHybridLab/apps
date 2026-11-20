@@ -2,6 +2,9 @@
 
 ## 20 novembre 2026
 
+### ShakHUD 0.6.39, ShakTheme 0.21.47 : des réglages remis à « activé » une fois (pas encore essayé sur la voiture)
+Sur le HUD, la barre des tours ne monte pas en électrique alors que celle du thème le fait, avec le même code et la même lecture : le banc la fait monter, la différence est donc un réglage que la voiture a gardé d'une ancienne version (comme « Alerte zone de danger », resté éteint le 19). Le kit sait remettre un réglage à sa valeur d'origine une fois (`"reset": n` dans `app.json`) : ShakHUD le fait pour « Compte-tours hybride », la puissance lue sur le compteur d'origine et la puissance estimée ; ShakTheme pour « Alerte zone de danger ». Les choix faits ensuite sont gardés.
+
 ### ShakHUD 0.6.38 : l'alerte zone de danger sur le HUD (pas encore essayé sur la voiture)
 Demande du propriétaire : « rajoute l'alerte radar sur le ShakHUD, fais-moi un beau truc et réaménage ». Quand une zone est devant, le bloc du bas à droite (batterie, autonomies, températures) laisse sa place à l'alerte : une caméra rouge, « ZONE DE DANGER », la distance en grand avec son unité, la limitation dans un anneau rouge quand elle est connue, et dessous une barre inclinée rouge qui se remplit à l'approche (vide à 500 m, pleine à la zone). Le bloc revient quand l'alerte s'arrête.
 - ShakHUD ne cherche pas les zones lui-même : il lit l'alerte que **ShakTheme** écrit (`shared/danger.js`). Il faut donc que ShakTheme tourne (il démarre avec la voiture). Réglage « Alerte zone de danger (donnée par ShakTheme) », allumé.

@@ -2,7 +2,7 @@
   "id": "shakhud",
   "title": "ShakHUD",
   "description": "ShakHUD : un HUD pour le pare-brise, le compte-tours M Style (une barre brisée, rouge dans la zone rouge, bleu clair en électrique, verte en recharge), avec la batterie, les autonomies et les températures en bas à droite ; il se cache tout seul quand la carte Waze du HUD est affichée",
-  "version": "0.6.38",
+  "version": "0.6.39",
   "vendor": "custom",
   "startType": "autostart",
   "loggingId": "OAS1",
@@ -797,19 +797,22 @@
       "key": "relPower",
       "label": "Puissance lue sur le compteur d'origine du tableau de bord (en %) : la barre des tours hybride en part sans eDrive Live",
       "type": "bool",
-      "default": true
+      "default": true,
+      "reset": 1
     },
     {
       "key": "estPower",
       "label": "Puissance estimée en électrique (vitesse et accélération) : la barre des tours monte sans donnée de la voiture",
       "type": "bool",
-      "default": true
+      "default": true,
+      "reset": 1
     },
     {
       "key": "hybridRev",
       "label": "Compte-tours hybride (bleu clair en électrique, vert en recharge)",
       "type": "bool",
-      "default": true
+      "default": true,
+      "reset": 1
     },
     {
       "key": "shiftLights",
