@@ -2,6 +2,11 @@
 
 ## 21 novembre 2026
 
+### ShakGuidage et ShakGuidage 2 (essai) : la voiture dit-elle qu'un itinéraire CarPlay est en cours ?
+- **Demande du propriétaire** : afficher la carte du téléphone dans le thème seulement quand un itinéraire est en cours. Le réglage existe (« Carte seulement avec un itinéraire ») mais il est inactif depuis la 0.21.13 : la voiture avait refusé toute l'installation de ShakTheme avec `CarPlayManager.projectedGuidanceActive` déclaré, cause inconnue. Cartes au combiné ne dit pas s'il y a un itinéraire.
+- **Deux applis d'essai, lecture seule, un seul signal chacune** (`shared/probe_sets.js`, `tools/make_probe_apps.py`) : **ShakGuidage** déclare `projectedGuidanceActive`, **ShakGuidage 2** déclare `projectedGuidanceMetadataAvailable` (le nom vu au catalogue le 19 nov.), tous deux en « s » sur `de.bmw.infotainment.a4a.carplay.CarPlayManager`. Celle qui s'installe dit quel nom la voiture accepte ; un refus ne touche ni ShakTheme ni l'autre appli.
+- **À faire sur la voiture** : installer les deux, noter laquelle s'installe ; l'ouvrir, lancer un itinéraire Waze, photographier, arrêter l'itinéraire, photographier. Si la valeur change, le signal sera remis dans ShakTheme.
+
 ### ShakTheme 0.21.61 : plus aucune vue BC quand la carte est ouverte ; diagnostic complet de Maps on Cluster
 - **La carte s'affiche dans M Blade sur la voiture** (photo du propriétaire, 21 nov., 22:28 : Waze dans la fenêtre, au milieu, l'hexagone à gauche avec la vitesse en grand). Revenue après la mise à jour de Cartes au combiné et une reconnexion du téléphone ; rien n'a changé chez nous pour ça.
 - **Demande du propriétaire sur cette photo** : avec la carte, le petit panneau de la vue BC (en haut à droite, sous le P du frein de parking) « rend moche » : on retire tout ce qui est lié au BC quand la carte est là. `shared/hud.js` : tant que la fenêtre de la carte est ouverte (`_mapOpen` : carte du téléphone ou fenêtre de Cluster Centre / Cluster Info), la vue vaut « aucune » dans les quatre thèmes et la touche BC ne fait rien ; la vue choisie avant revient dès que la carte part. `tools/test_sensor_bars.js` le contrôle.

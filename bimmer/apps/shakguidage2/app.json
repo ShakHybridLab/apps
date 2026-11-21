@@ -1,0 +1,31 @@
+{
+  "id": "shakguidage2",
+  "title": "ShakGuidage 2 (essai)",
+  "description": "Essai : la voiture dit-elle qu'un itinéraire CarPlay est en cours ? Second nom : projectedGuidanceMetadataAvailable.",
+  "version": "0.1.0",
+  "vendor": "custom",
+  "loggingId": "OAGE",
+  "iconGlyph": "GDB",
+  "shared": [
+    "signal_probe.js",
+    "probe_sets.js",
+    "survive.js"
+  ],
+  "signals": {
+    "de.bmw.infotainment.a4a.carplay.CarPlayManager": {
+      "projectedGuidanceMetadataAvailable": "s"
+    }
+  },
+  "screens": [
+    {
+      "name": "MAIN",
+      "kind": "canvas",
+      "title": "ShakGuidage 2"
+    }
+  ],
+  "settings": [],
+  "config": {
+    "lang": "fr",
+    "readOnly": true
+  }
+}
