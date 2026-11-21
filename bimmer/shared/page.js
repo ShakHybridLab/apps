@@ -135,8 +135,8 @@ class Page {
         // nothing looked dead, so ask whether to show it anyway
         if (v !== 'off' && this.hud.hiddenBy && this.hud.hiddenBy() === 'waze' && this.hud._chosenName() === v) {
             this.confirm = {
-                title: 'Waze map is showing',
-                lines: ['The HUD hides while the Waze map is showing.', 'Show ' + this.layoutName(v) + ' on the HUD anyway?'],
+                title: 'The phone\'s map is showing',
+                lines: ['The HUD hides while the phone\'s map is showing.', 'Show ' + this.layoutName(v) + ' on the HUD anyway?'],
                 yes: 'Show the HUD',
                 run: () => this.set('hideWithWaze', false),
             };
@@ -162,7 +162,7 @@ class Page {
     /** what the Look tab says while the other app has the screen, else null */
     yieldNote() {
         const scr = this.hud.screen, by = this.hud.hiddenBy ? this.hud.hiddenBy() : null;
-        if (by === 'waze') return 'Hidden · Waze map is showing · tap the layout to show the HUD anyway';
+        if (by === 'waze') return 'Hidden · the phone\'s map is showing · tap the layout to show the HUD anyway';
         if (by === 'claim') return 'Hidden · another app has the HUD';
         return scr && scr.yielded ? 'Off · ' + scr.otherName + ' has the screen · pick one to take it back' : null;
     }
@@ -248,7 +248,7 @@ class Page {
             return (p.x || p.y ? 'moved' : 'centred') + ' · ' + Math.round(p.scale * 100) + ' %';
         }
         if (id === 'signals') return (this.hud.probes ? this.hud.probes.heard() : 0) + ' of ' + probes.SHOWN.length + ' read';
-        if (id === 'map') return (this.get('mapInTheme') ? 'Waze map · on' : 'Waze map · off') + (this.get('centreWindow') === false ? ' · centre off' : '');
+        if (id === 'map') return (this.get('mapInTheme') ? 'Map · on' : 'Map · off') + (this.get('centreWindow') === false ? ' · centre off' : '');
         if (id === 'badge') return badges.text(this.get('badge'), this.get('badgeBMW') === true) || 'none';
         if (id === 'alerts') { const n = WARN_KEYS.filter((k) => this.get(k) > 0).length; return n ? n + ' warning' + (n > 1 ? 's' : '') + ' on' : 'warnings off'; }
         if (id === 'gmeter') return this.optLabel('gRange', this.get('gRange')) + ' · trail ' + this.optLabel('gTrail', this.get('gTrail')).toLowerCase();
@@ -461,8 +461,8 @@ class Page {
         label(cv, CX, 70, 'Navigation map on the cluster');
         let y = 84;
         const w = CW * 0.6;
-        y = this.toggleRow(cv, CX, y, w, 'Show Waze map inside the theme', 'mapInTheme');
-        // live state from waze.js: the map showing, waiting, the Waze app busy, Waze on Cluster missing
+        y = this.toggleRow(cv, CX, y, w, 'Show the phone\'s map inside the theme', 'mapInTheme');
+        // live state from waze.js: the map showing, waiting, Maps on Cluster missing (Waze, Apple Maps or Google Maps - it draws any of them)
         const info = this.hud.waze ? this.hud.waze.info() : { text: 'Not available in this app', up: false, ok: false };
         let text = info.text;
         if (this.get('mapInTheme') && !this.hud.mapLayout && this.hud.activeName !== 'off') text = 'This theme has no map version (Sport, M, M Blade and Navi do)';
@@ -484,10 +484,10 @@ class Page {
         cv.text(gtext, CX + w - 100, rowY + 29, 16, route === true ? C.live : route === false ? C.dim : '#e0a340', { align: 'right', literal: true });
         y = this.toggleRow(cv, CX, y, w, 'Centre window for Cluster Centre / Cluster Info', 'centreWindow');
         const ci = this.hud.windowOpen ? 'Window open: Cluster Centre / Cluster Info draw in it' : this.hud.ci && this.hud.ci.wantsWindow() ? 'Asked for, opening' : 'Closed (nothing asks for it)';
-        note(cv, CX, y + 14, [ci + '. It is the same window Waze\'s map shows in (Sport, M, M Blade and Navi).']);
+        note(cv, CX, y + 14, [ci + '. It is the same window the phone\'s map shows in (Sport, M, M Blade and Navi).']);
         y += 34;
         note(cv, CX, y + 22 - (rows > 1 ? 10 : 0), [
-            'On: Sport, M, M Blade and Navi open a window in the middle and Waze on Cluster draws its map in it, above',
+            'On: Sport, M, M Blade and Navi open a window in the middle and Maps on Cluster draws its map in it, above',
             'BMW\'s own map view, so nothing shows twice. When the map goes away the theme fills back in.',
         ]);
     }

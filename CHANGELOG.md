@@ -2,6 +2,13 @@
 
 ## 21 novembre 2026
 
+### ShakTheme 0.21.57 : la carte n'est plus appelée « Waze » partout, c'est aussi Google Maps et Apple Maps
+- **Demande du propriétaire** : la fonction « carte dans le thème » a toujours marché avec Waze et Google Maps (il s'en souvenait bien, pas seulement Waze comme je l'avais cru et répondu à tort au départ). En plus, l'outil derrière (`waze-on-cluster`, dépôt `robertnisipeanu/idrive-apps`) a été renommé sur le Store : son nom affiché n'est plus « Waze on Cluster » mais **« Maps on Cluster »** (versions 0.10.6 à 0.11.0, 16-20 novembre 2026) ; son identifiant de paquet ne change pas.
+- **Vérifié** : l'outil n'a jamais été propre à Waze. D'après son propre README et ses notes de version, il filme l'écran de ce que CarPlay ou Android Auto affiche comme carte, Waze, Apple Maps ou Google Maps pareil, puis le redessine sur le cluster — pas une lecture spécifique à Waze. Notre propre code (`shared/waze.js`, `_wazeMapOn()`, `shared/map_window.js`) lisait déjà seulement le fichier d'état générique de l'outil, sans jamais regarder quelle appli de carte est derrière : **aucun changement de fonctionnement n'était nécessaire**, seul le texte visible disait « Waze » à tort.
+- **Corrigé** : les textes vus par le propriétaire (réglages de l'onglet Carte, ligne d'état de la voiture, note sous la fenêtre, description de l'appli) parlent maintenant de « la carte du téléphone » et de « Maps on Cluster », plus de « Waze » tout seul. `shared/fr.js` mis à jour pour les traductions correspondantes (et quelques traductions mortes, qui ne correspondaient plus à aucun texte réellement affiché depuis une réécriture précédente, retirées au passage). Les paragraphes datés du `README.md` de ShakTheme (0.15.0 à 0.21.13) ne sont pas touchés : ils disent ce qui était vrai à leur date.
+- **Pas touché** : le nom du fichier `shared/waze.js` lui-même, la clé de réglage `mapInTheme`, ni les chemins internes (`/run/waze-on-cluster/...`) : l'outil garde son identifiant de paquet `waze-on-cluster` même renommé sur le Store, donc rien à y changer.
+- **Vérifié** : suite de tests complète (`tools/test_*.js`) — tout passe, sauf les trois échecs connus et ignorés (vidéo et zones radar, sans rapport avec ce changement).
+
 ### ShakPark : projet abandonné, retiré du dépôt
 - **Décision du propriétaire** : le projet caméras ShakPark est abandonné. RideTube cluster (la vidéo sur le combiné/HUD) reste.
 - **Retiré** : `bimmer/apps/shakpark` (caméra avant/arrière dans la fenêtre du cluster) et `shakpark-capture/` (l'outil natif qui lui fournissait les images, `/dev/shm/shakpark-front`/`shakpark-rear`).

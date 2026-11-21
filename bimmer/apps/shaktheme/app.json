@@ -1,8 +1,8 @@
 {
   "id": "shaktheme",
   "title": "ShakTheme",
-  "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte Waze, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.21.56",
+  "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte du téléphone, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
+  "version": "0.21.57",
   "vendor": "custom",
   "startType": "autostart",
   "loggingId": "OAC1",
@@ -253,13 +253,13 @@
     },
     {
       "key": "mapInTheme",
-      "label": "Afficher la carte Waze dans le thème",
+      "label": "Afficher la carte du téléphone dans le thème",
       "type": "bool",
       "default": false
     },
     {
       "key": "mapOnlyWithRoute",
-      "label": "Carte Waze seulement avec un itinéraire",
+      "label": "Carte seulement avec un itinéraire",
       "type": "bool",
       "default": true
     },
@@ -1333,7 +1333,7 @@
     "socketPath": "/dev/shm/cluster-render/render.sock",
     "utcOffsetMinutes": null,
     "waze": {
-      "comment": "Show Waze map inside the theme (shared/waze.js): waze-on-cluster's status file (read every second) and its control socket (one short 'start' command, then closed). Paths from waze-on-cluster 0.9.3.",
+      "comment": "Show the phone's map inside the theme (shared/waze.js): waze-on-cluster's (Store tile \"Maps on Cluster\") status file, read every second. Draws Waze, Apple Maps or Google Maps alike; never Waze-specific. Paths from waze-on-cluster 0.9.3.",
       "status": "/run/waze-on-cluster/status.json",
       "control": "/dev/shm/waze-on-cluster/ctl.sock"
     },

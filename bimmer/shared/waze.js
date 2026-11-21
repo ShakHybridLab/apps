@@ -1,6 +1,12 @@
 'use strict';
 /**
- * waze.js - "Show Waze map inside the theme" (ShakTheme, page.js Map tab).
+ * waze.js - "Show the phone's map inside the theme" (ShakTheme, page.js Map tab).
+ *
+ * The underlying tool (package id "waze-on-cluster", Store tile renamed "Maps on cluster" around 20 Nov 2026)
+ * was never Waze-only: it captures whatever CarPlay or Android Auto is already drawing as the car's own map -
+ * Waze, Apple Maps or Google Maps alike - and this file never special-cases one of them; it only reads the
+ * tool's own status file and never which phone app is behind it. Kept the file and class named "waze" (the
+ * common case, and the paths below) since the tool's own package id didn't change, only its Store tile name.
  *
  * waze-on-cluster always draws the phone's map on cluster-render's single "map" target, the KOMBI slot under
  * BMW's own gauges and map-view readouts (speed, consumption, badge), which still sit over it there; a see-through
@@ -90,13 +96,13 @@ class Waze {
     /** For the page: { text, up, ok } (ok: false when something is wrong). */
     info() {
         const s = this.st;
-        if (!s) return { text: 'Waze on Cluster isn\'t running', up: false, ok: false };
-        if (s.state === 'unsupported') return { text: 'Waze on Cluster: this car isn\'t supported', up: false, ok: false };
-        if (s.state === 'off') return { text: 'Waze map is turned off in the Waze app', up: false, ok: false };
-        if (!this.wanted) return { text: 'Off. Waze shows the map in BMW\'s own map view', up: false, ok: true };
+        if (!s) return { text: 'Maps on Cluster isn\'t running', up: false, ok: false };
+        if (s.state === 'unsupported') return { text: 'Maps on Cluster: this car isn\'t supported', up: false, ok: false };
+        if (s.state === 'off') return { text: 'The phone\'s map is turned off', up: false, ok: false };
+        if (!this.wanted) return { text: 'Off. The phone\'s map shows in BMW\'s own map view', up: false, ok: true };
         if (s.state === 'showing') return { text: 'Map showing in the theme', up: true, ok: true };
         if (s.state === 'frozen') return { text: 'Map frozen, waiting for the phone', up: false, ok: false };
-        if (s.state === 'error') return { text: 'Waze on Cluster reports an error', up: false, ok: false };
+        if (s.state === 'error') return { text: 'Maps on Cluster reports an error', up: false, ok: false };
         return { text: 'Waiting for the map', up: false, ok: true };
     }
 

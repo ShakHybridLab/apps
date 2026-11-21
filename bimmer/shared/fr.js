@@ -18,9 +18,9 @@ const EXACT = {
     "A cluster theme and the HUD can't show at the same time.": "Un thème du cluster et le HUD ne peuvent pas s'afficher en même temps.",
     "The HUD and a cluster theme can't show at the same time.": "Le HUD et un thème du cluster ne peuvent pas s'afficher en même temps.",
     'Turn HUD off': 'Éteindre le HUD', 'Turn theme off': 'Éteindre le thème', 'Cancel': 'Annuler', 'Centre': 'Centrer',
-    'Waze map is showing': 'La carte Waze est affichée', 'The HUD hides while the Waze map is showing.': 'Le HUD se cache tant que la carte Waze est affichée.',
+    'The phone\'s map is showing': 'La carte du téléphone est affichée', 'The HUD hides while the phone\'s map is showing.': 'Le HUD se cache tant que la carte du téléphone est affichée.',
     'Show the HUD': 'Afficher le HUD',
-    'Hidden · Waze map is showing · tap the layout to show the HUD anyway': 'Caché · la carte Waze est affichée · touche la disposition pour afficher le HUD quand même',
+    'Hidden · the phone\'s map is showing · tap the layout to show the HUD anyway': 'Caché · la carte du téléphone est affichée · touche la disposition pour afficher le HUD quand même',
     'Hidden · another app has the HUD': 'Caché · une autre appli a le HUD',
     'DEMO DATA': 'DONNÉES DE DÉMO',
     // thèmes
@@ -61,7 +61,7 @@ const EXACT = {
     'Read only: nothing here changes the car.': 'Lecture seule : rien ici ne modifie la voiture.',
     'Show the map only with a route': "Carte seulement avec un itinéraire",
     'CarPlay guidance active (route)': "Guidage CarPlay actif (itinéraire)",
-    'Navigation map on the cluster': 'Carte de navigation sur le cluster', 'Show Waze map inside the theme': 'Afficher la carte Waze dans le thème',
+    'Navigation map on the cluster': 'Carte de navigation sur le cluster', 'Show the phone\'s map inside the theme': 'Afficher la carte du téléphone dans le thème',
     'Not available in this app': 'Indisponible dans cette appli',
     'This theme has no map version (Sport, M, M Blade and Navi do)': "Ce thème n'a pas de version avec carte (Sport, M, M Blade et Navi en ont une)",
     'Centre window for Cluster Centre / Cluster Info': 'Fenêtre centrale pour Cluster Centre / Cluster Info',
@@ -73,14 +73,10 @@ const EXACT = {
     'Off: no alert shown.': 'Éteinte : aucune alerte affichée.',
     'On the four themes, from the car\'s GPS': 'Sur les quatre thèmes, avec le GPS de la voiture',
     'and the list of zones in the app.': "et la liste des zones de l'appli.",
-    'On: Sport, M, M Blade and Navi open a window in the middle and Waze on Cluster draws its map in it, above':
-        'Activé : Sport, M, M Blade et Navi ouvrent une fenêtre au milieu et Waze on Cluster y dessine sa carte, par-dessus',
+    'On: Sport, M, M Blade and Navi open a window in the middle and Maps on Cluster draws its map in it, above':
+        'Activé : Sport, M, M Blade et Navi ouvrent une fenêtre au milieu et Maps on Cluster y dessine sa carte, par-dessus',
     "BMW's own map view, so nothing shows twice. When the map goes away the theme fills back in.":
         "la vue carte de BMW, donc rien ne s'affiche deux fois. Quand la carte part, le thème reprend la place.",
-    "While on, Waze's map on the HUD is off (the cluster and the HUD share one picture).":
-        'Activé, la carte Waze du HUD est éteinte (le cluster et le HUD partagent une seule image).',
-    'Needs the Waze on Cluster app. Turning this off gives Waze its usual place back.':
-        "Demande l'appli Waze on Cluster. Désactivé, Waze reprend sa place habituelle.",
     // badge
     'Series': 'Série', 'Model': 'Modèle', 'On the cluster': 'Sur le cluster', 'No badge': 'Aucun badge', 'BMW lettering': 'Lettrage BMW',
     "Drawn as text in the theme's own font.": 'Dessiné en texte avec la police du thème.', 'Sport and M show it at the bottom.': "Sport et M l'affichent en bas.",
@@ -109,22 +105,20 @@ const EXACT = {
     'US Pacific': 'États-Unis Pacifique', 'Alaska': 'Alaska', 'Hawaii': 'Hawaï', 'Arizona': 'Arizona', 'Canada Atlantic': 'Canada Atlantique',
     'Mexico': 'Mexique', 'UK, Ireland, Portugal': 'Royaume-Uni, Irlande, Portugal', 'Central Europe': 'Europe centrale',
     'Eastern Europe': "Europe de l'Est",
-    // l'état de Waze on Cluster, sur l'onglet Carte (shared/waze.js)
-    "Waze on Cluster isn't running": "Waze on Cluster n'est pas lancé",
-    "Waze on Cluster: this car isn't supported": "Waze on Cluster : cette voiture n'est pas prise en charge",
-    'Waze map is turned off in the Waze app': "La carte Waze est éteinte dans l'appli Waze",
-    "Off. Waze shows the map in BMW's own map view": 'Éteint. Waze affiche la carte dans la vue carte de BMW',
-    'Waze app is open, retrying': "L'appli Waze est ouverte, nouvel essai",
-    'Moving the map into the theme': 'La carte passe dans le thème',
+    // l'état de Maps on Cluster (Waze, Apple Maps ou Google Maps : ça dessine n'importe lequel), sur l'onglet Carte (shared/waze.js)
+    "Maps on Cluster isn't running": "Maps on Cluster n'est pas lancé",
+    "Maps on Cluster: this car isn't supported": "Maps on Cluster : cette voiture n'est pas prise en charge",
+    "The phone's map is turned off": "La carte du téléphone est éteinte",
+    "Off. The phone's map shows in BMW's own map view": "Éteint. La carte du téléphone s'affiche dans la vue carte de BMW",
     'Map showing in the theme': 'Carte affichée dans le thème',
     'Map frozen, waiting for the phone': 'Carte figée, en attente du téléphone',
-    'Waze on Cluster reports an error': 'Waze on Cluster signale une erreur',
+    'Maps on Cluster reports an error': 'Maps on Cluster signale une erreur',
     'Waiting for the map': 'En attente de la carte',
 };
 
 // les phrases qui contiennent un nom ou un nombre
-// La ligne d'état du moteur d'affichage (hud.js statusText, _drawnNote, et l'état de Waze derrière « ; Waze: ») : des morceaux mis bout à bout,
-// traduits un par un. Le propriétaire photographie cette ligne pour dire ce que fait la voiture : elle se lit en français (20 nov. 2026).
+// La ligne d'état du moteur d'affichage (hud.js statusText, _drawnNote, et l'état de la carte derrière « ; Map: ») : des morceaux mis bout à
+// bout, traduits un par un. Le propriétaire photographie cette ligne pour dire ce que fait la voiture : elle se lit en français (20 nov. 2026).
 const STATUS = [
     [/^(Cluster|HUD) on/, '$1 actif'], [/^(Cluster|HUD) off/, '$1 éteint'],
     [/\(drive mode not seen yet\)/, '(mode de conduite pas encore vu)'], [/\(drive mode not recognised: the car sends (.*?)\)/, '(mode de conduite inconnu : la voiture envoie $1)'],
@@ -138,16 +132,15 @@ const STATUS = [
     [/: BMW's own cluster shows/, ' : le cluster de BMW'], [/: BMW's own HUD shows/, ' : le HUD de BMW'],
 ];
 function status(s) {
-    const cut = s.indexOf('; Waze: ');
+    const cut = s.indexOf('; Map: ');
     let head = cut < 0 ? s : s.slice(0, cut);
     STATUS.forEach((r) => { head = head.replace(r[0], r[1]); });
-    return cut < 0 ? head : head + ' ; Waze : ' + tr(s.slice(cut + 8));
+    return cut < 0 ? head : head + ' ; Carte : ' + tr(s.slice(cut + 7));
 }
 
 const PATTERNS = [
     [/^(Cluster|HUD)( on| off|:).*$/, (m) => status(m)],
-    [/^Can't reach Waze on Cluster \((.*)\)$/, 'Waze on Cluster est injoignable ($1)'],
-    [/^(.*)\. It is the same window Waze's map shows in \(Sport, M, M Blade and Navi\)\.$/, (m, a) => tr(a) + ". C'est la fenêtre de la carte Waze (Sport, M, M Blade, Navi)."],
+    [/^(.*)\. It is the same window the phone's map shows in \(Sport, M, M Blade and Navi\)\.$/, (m, a) => tr(a) + ". C'est la fenêtre de la carte du téléphone (Sport, M, M Blade, Navi)."],
     // onglet Signaux : l'étape de la voiture qui ne finit jamais (kit/runtime/signals.js busyWith)
     [/^Stuck while opening \((\d+) s\)$/, "Bloqué à l'ouverture ($1 s)"],
     [/^Stuck while waiting for the car \((\d+) s\)$/, 'Bloqué : attend la voiture ($1 s)'],
@@ -182,7 +175,7 @@ const PATTERNS = [
     [/^→ wheel on(?:, (green|yellow|red|grey))?(, warning)?$/, (m, c, w) => '→ volant allumé' + (c ? ', ' + { green: 'vert', yellow: 'jaune', red: 'rouge', grey: 'gris' }[c] : '') + (w ? ', alerte' : '')],
     [/^→ (alert|route): (yes|no)$/, (m, k, a) => '→ ' + (k === 'alert' ? 'alerte' : 'itinéraire') + ' : ' + (a === 'yes' ? 'oui' : 'non')],
     [/^Route on(.*)$/, 'Itinéraire en cours$1'], [/^No route(.*)$/, "Pas d'itinéraire$1"], [/^Value not understood(.*)$/, 'Valeur non comprise$1'],
-    [/^Waze map · (on|off)(.*)$/, (m, a, b) => 'Carte Waze · ' + (a === 'on' ? 'activée' : 'éteinte') + b.replace(' · centre off', ' · centre éteint')],
+    [/^Map · (on|off)(.*)$/, (m, a, b) => 'Carte · ' + (a === 'on' ? 'activée' : 'éteinte') + b.replace(' · centre off', ' · centre éteint')],
     [/^(\d+) warnings? on$/, '$1 alerte(s)'],
     [/^(.*) · trail (.*)$/, '$1 · traînée $2'],
     [/^blue (\d+) %$/, 'bleu $1 %'],

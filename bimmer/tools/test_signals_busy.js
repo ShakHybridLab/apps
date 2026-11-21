@@ -66,15 +66,14 @@ const signals = require(path.join(rt, 'signals.js'));
         // a subscription that exists keeps its own reasons
         assert.strictEqual(stateOf({ available: true, failed: {}, getFailed: {} }, 'f', I, { iface: 'X', step: 'open', ms: 20000 }), 'Subscribed, nothing received');
     });
-    await check('French: the stuck states and the Waze on Cluster states of the Map tab', () => {
+    await check('French: the stuck states and the Maps on Cluster states of the Map tab', () => {
         assert.strictEqual(fr.tr('Stuck while opening (12 s)'), "Bloqué à l'ouverture (12 s)");
         assert.strictEqual(fr.tr('Stuck while waiting for the car (9 s)'), 'Bloqué : attend la voiture (9 s)');
         assert.strictEqual(fr.tr('Stuck while subscribing to displaySteeringWheel (9 s)'), "Bloqué à l'abonnement à displaySteeringWheel (9 s)");
         assert.strictEqual(fr.tr('Waiting: FASuS is stuck (15 s)'), 'En attente : FASuS est bloqué (15 s)');
         assert.strictEqual(fr.tr('Map showing in the theme'), 'Carte affichée dans le thème');
-        assert.strictEqual(fr.tr("Can't reach Waze on Cluster (timeout)"), 'Waze on Cluster est injoignable (timeout)');
-        const note = fr.tr("Closed (nothing asks for it). It is the same window Waze's map shows in (Sport, M, M Blade and Navi).");
-        assert(/^Fermée \(personne ne la demande\)\. C'est la fenêtre de la carte Waze/.test(note), note);
+        const note = fr.tr("Closed (nothing asks for it). It is the same window the phone's map shows in (Sport, M, M Blade and Navi).");
+        assert(/^Fermée \(personne ne la demande\)\. C'est la fenêtre de la carte du téléphone/.test(note), note);
     });
     await check('every text of shared/waze.js info() has a French version', () => {
         const src = fs.readFileSync(path.join(__dirname, '..', 'shared', 'waze.js'), 'utf8');
