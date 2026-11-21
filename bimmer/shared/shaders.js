@@ -1350,6 +1350,24 @@ vec4 rule(vec2 p, float y, float u, vec4 c) {
 float rbox(vec2 q, vec2 half_, float r) { return length(max(abs(q) - (half_ - r), 0.0)) - r; }
 // (green while the tyre is fine since 19 Nov 2026: the owner, "ajoute des couleurs sur les roues")
 vec3 wheelTone(float t) { return t < 0.5 ? vec3(0.2, 0.85, 0.5) : t < 1.5 ? vec3(1.0, 0.8, 0.2) : vec3(1.0, 0.2, 0.25); }
+// One wheel of the tyres' view (sxn, syn: -1 / 1 for left / right, front / rear; wt: its state) with its plate and line, for the quarter the pixel is in:
+// no "for" and no "int", which no drawing that shows on the car uses (the car answered "effect did not compile" for the views, 21 Nov 2026).
+vec4 tyreWheel(vec4 top, vec2 q, vec2 ctr, float sxn, float syn, float wt, float s, float wy, float bw) {
+    vec2 wc = vec2(sxn * (bw + 5.0 * s), syn * wy);
+    float dw = rbox(q - wc, vec2(9.0, 25.0) * s, 5.0 * s);
+    top = over(top, vec4(wheelTone(wt), cov(dw)));
+    top = over(top, vec4(wheelTone(wt), 0.3 * clamp(1.0 - dw / 10.0, 0.0, 1.0) * step(0.5, wt)));
+    if (s >= 0.99) {                                              // (the small panel: the car alone)
+        vec2 tc = vec2(sxn < 0.0 ? u_bx.x : u_bx.y, syn < 0.0 ? u_ry.x : u_ry.y) - ctr;
+        float dt = rbox(q - tc, vec2(58.0, 42.0), 10.0);
+        top = over(top, vec4(0.5, 0.7, 1.0, 0.6 * cov(abs(dt) - 0.8)));
+        top = over(top, vec4(0.01, 0.05, 0.16, 0.5 * cov(dt)));
+        // the line from the plate's inner side to the wheel
+        float lx0 = min(tc.x - sxn * 58.0, wc.x + sxn * 9.0), lx1 = max(tc.x - sxn * 58.0, wc.x + sxn * 9.0);
+        top = over(top, vec4(0.5, 0.7, 1.0, 0.5 * cov(abs(q.y - wc.y) - 0.7) * step(lx0, q.x) * step(q.x, lx1)));
+    }
+    return top;
+}
 // The tyres' view: the car seen from above in the middle (a body that narrows to the nose, its two windows, a light outline), its four wheels each in
 // its tyre's state (u_wh: 0 fine, 1 low, 2 very low), and a glass plate behind each corner's readings (u_bx: the plates' middles x, u_ry.xy: y), with a
 // line from the plate to its wheel.
@@ -1358,23 +1376,10 @@ vec4 tyresView(vec2 p, vec4 c) {
     float s = u_car;
     float wy = 0.5 * (u_ry.y - u_ry.x) - 4.0 * s, bl = wy + 36.0 * s, bw = 44.0 * s;
     vec4 top = vec4(0.0);
-    for (int i = 0; i < 4; i++) {
-        float sxn = (i == 0 || i == 2) ? -1.0 : 1.0, syn = i < 2 ? -1.0 : 1.0;
-        float wt = i == 0 ? u_wh.x : i == 1 ? u_wh.y : i == 2 ? u_wh.z : u_wh.w;
-        vec2 wc = vec2(sxn * (bw + 5.0 * s), syn * wy);
-        float dw = rbox(q - wc, vec2(9.0, 25.0) * s, 5.0 * s);
-        top = over(top, vec4(wheelTone(wt), cov(dw)));
-        top = over(top, vec4(wheelTone(wt), 0.3 * clamp(1.0 - dw / 10.0, 0.0, 1.0) * step(0.5, wt)));
-        if (s >= 0.99) {                                              // (the small panel: the car alone)
-            vec2 tc = vec2(sxn < 0.0 ? u_bx.x : u_bx.y, syn < 0.0 ? u_ry.x : u_ry.y) - ctr;
-            float dt = rbox(q - tc, vec2(58.0, 42.0), 10.0);
-            top = over(top, vec4(0.5, 0.7, 1.0, 0.6 * cov(abs(dt) - 0.8)));
-            top = over(top, vec4(0.01, 0.05, 0.16, 0.5 * cov(dt)));
-            // the line from the plate's inner side to the wheel
-            float lx0 = min(tc.x - sxn * 58.0, wc.x + sxn * 9.0), lx1 = max(tc.x - sxn * 58.0, wc.x + sxn * 9.0);
-            top = over(top, vec4(0.5, 0.7, 1.0, 0.5 * cov(abs(q.y - wc.y) - 0.7) * step(lx0, q.x) * step(q.x, lx1)));
-        }
-    }
+    // each wheel, its plate and its line lie in their own quarter round the car's middle: the one of this pixel's quarter is drawn
+    float sxn = q.x < 0.0 ? -1.0 : 1.0, syn = q.y < 0.0 ? -1.0 : 1.0;
+    float wt = q.x < 0.0 ? (q.y < 0.0 ? u_wh.x : u_wh.z) : (q.y < 0.0 ? u_wh.y : u_wh.w);
+    top = tyreWheel(top, q, ctr, sxn, syn, wt, s, wy, bw);
     // the body: narrower towards the nose (up)
     vec2 b = vec2(q.x * (1.0 + 0.2 * clamp((-q.y - 0.25 * bl) / (0.75 * bl), 0.0, 1.0)), q.y);
     float db = rbox(b, vec2(bw, bl), 24.0 * s);
@@ -1530,23 +1535,26 @@ vec4 lrow(vec2 p, float y, float v, float rz, float t, vec4 c) {
     top = over(top, vec4(u_cb, 0.7 * cov(min(abs(p.x - x0), abs(p.x - x1)) - 0.7) * cov(abs(dy) - 5.0)));
     return over(top, c);
 }
+vec4 lineWheel(vec4 top, vec2 q, vec2 ctr, float sxn, float syn, float wt, float wy, float bw) {
+    vec2 wc = vec2(sxn * (bw + 6.0), syn * wy);
+    float dw = rbox(q - wc, vec2(8.0, 23.0), 4.0);
+    top = over(top, vec4(wheelTone(wt), cov(dw)));
+    top = over(top, vec4(wheelTone(wt), 0.3 * clamp(1.0 - dw / 9.0, 0.0, 1.0)));
+    // the line from the wheel out to its readings, a dot at its end
+    float tx = (sxn < 0.0 ? u_bx.x : u_bx.y) - ctr.x - sxn * 60.0;
+    float lx0 = min(tx, wc.x + sxn * 10.0), lx1 = max(tx, wc.x + sxn * 10.0);
+    top = over(top, vec4(u_cb, 0.7 * cov(abs(q.y - wc.y) - 0.7) * step(lx0, q.x) * step(q.x, lx1)));
+    top = over(top, vec4(u_cb, cov(length(q - vec2(tx, wc.y)) - 2.6)));
+    return top;
+}
 vec4 lineTyres(vec2 p, vec4 c) {
     vec2 ctr = vec2(0.5 * (u_bx.x + u_bx.y), 0.5 * (u_ry.x + u_ry.y)), q = p - ctr;
     float wy = 0.5 * (u_ry.y - u_ry.x) - 2.0, bl = wy + 34.0, bw = 40.0;
     vec4 top = vec4(0.0);
-    for (int i = 0; i < 4; i++) {
-        float sxn = (i == 0 || i == 2) ? -1.0 : 1.0, syn = i < 2 ? -1.0 : 1.0;
-        float wt = i == 0 ? u_wh.x : i == 1 ? u_wh.y : i == 2 ? u_wh.z : u_wh.w;
-        vec2 wc = vec2(sxn * (bw + 6.0), syn * wy);
-        float dw = rbox(q - wc, vec2(8.0, 23.0), 4.0);
-        top = over(top, vec4(wheelTone(wt), cov(dw)));
-        top = over(top, vec4(wheelTone(wt), 0.3 * clamp(1.0 - dw / 9.0, 0.0, 1.0)));
-        // the line from the wheel out to its readings, a dot at its end
-        float tx = (sxn < 0.0 ? u_bx.x : u_bx.y) - ctr.x - sxn * 60.0;
-        float lx0 = min(tx, wc.x + sxn * 10.0), lx1 = max(tx, wc.x + sxn * 10.0);
-        top = over(top, vec4(u_cb, 0.7 * cov(abs(q.y - wc.y) - 0.7) * step(lx0, q.x) * step(q.x, lx1)));
-        top = over(top, vec4(u_cb, cov(length(q - vec2(tx, wc.y)) - 2.6)));
-    }
+    // each wheel, its plate and its line lie in their own quarter round the car's middle: the one of this pixel's quarter is drawn
+    float sxn = q.x < 0.0 ? -1.0 : 1.0, syn = q.y < 0.0 ? -1.0 : 1.0;
+    float wt = q.x < 0.0 ? (q.y < 0.0 ? u_wh.x : u_wh.z) : (q.y < 0.0 ? u_wh.y : u_wh.w);
+    top = lineWheel(top, q, ctr, sxn, syn, wt, wy, bw);
     vec2 b = vec2(q.x * (1.0 + 0.2 * clamp((-q.y - 0.25 * bl) / (0.75 * bl), 0.0, 1.0)), q.y);
     float db = rbox(b, vec2(bw, bl), 22.0);
     top = over(top, vec4(1.0, 1.0, 1.0, 0.95 * cov(abs(db) - 0.9)));

@@ -2,6 +2,13 @@
 
 ## 21 novembre 2026
 
+### ShakTheme 0.21.59 : les dessins des vues BC refusés par la voiture (« effect did not compile »)
+- **Photo du propriétaire (21 nov., 22:08), ligne d'état de l'onglet Réglages** : « 20 couches affichées sur 21, refusé : xb_card_e: effect did not compile ». La voiture ne compile pas le dessin des vues ; c'est pour ça que les textes s'affichent et pas les panneaux, barres et voiture (défaut noté le 20 nov., cause inconnue jusqu'ici).
+- **Cause probable** : les cinq dessins de vues (`mpanel`, `mblades`, `sring`, `nline`, `vcard`) sont les seuls du thème à utiliser une boucle `for` avec un compteur `int` (les quatre roues de la vue des pneus). Aucun dessin qui s'affiche sur la voiture (fonds, shiftlight, cartes d'alerte) n'en contient. Le compilateur du banc (Mesa, GLSL ES) les accepte tous, donc le banc ne pouvait pas le voir.
+- **Correctif** (`shared/shaders.js`) : plus de boucle ni d'entier. Chaque roue, sa plaque et son trait tiennent dans leur quart autour du milieu de la voiture ; le dessin ne calcule plus que la roue du quart où se trouve le pixel (`tyreWheel`, `lineWheel`). Même image, dessin pas plus gros (7 190 jetons pour M Blade, 7 174 avant) et moins de calcul.
+- **Vérifié** : les 28 dessins compilent avec le compilateur GLSL ES de Mesa ; plaques, roues et traits restent bien dans leur quart dans les quatre thèmes ; suite de tests complète (seuls les trois échecs connus). **Pas vu sur la voiture** : si la ligne d'état dit encore « effect did not compile », la cause est ailleurs dans ces dessins et il faudra chercher plus loin.
+- **La carte et Waze en tête haute** : autre sujet. L'état de Maps on Cluster dit `Stream lost` (flux du téléphone reçu mais pas décodé) ; ShakTheme ne fait que lire cet état.
+
 ### ShakTheme 0.21.58 : M Blade, la vitesse et le rapport inversés dans le hexagone
 - **Demande du propriétaire** : dans le thème M Blade, inverser la lettre de rapport (P/D/R/N...) et la vitesse, pour que la vitesse soit dans la bande noire (grande, au milieu de l'hexagone), et le rapport en petit dessous.
 - **Fait** (`tools/gen_mblade_navi.py`, régénère `mblade.json`) : la vitesse prend la grande police `m_gear` à la place du rapport, avec son unité « km/h » juste dessous ; le rapport passe en petit, sous l'unité, dans la police `m_gear_p` (déjà utilisée ailleurs pour un petit rapport, celle du thème M sur sa plaque) — `m_spd` ne pouvait pas le faire, elle n'a que des chiffres. La boîte de la vitesse est élargie à 400 px (au lieu de 280) pour que « 330 » (la valeur la plus longue) ne soit jamais coupé dans cette police ; elle s'agrandit vers la droite, le côté gauche étant la case noire du chrono 0-100. Fait dans les deux affichages (avec et sans la carte du téléphone).
