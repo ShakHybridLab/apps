@@ -87,7 +87,9 @@ def danger_alert(x, y, h):
 #  - the central group (hexagon, speed line, blade) sits DX px left of the photo's, so the blade's 3 and 4 keep ~40 px from the
 #    black box BMW draws at x 1406..1597, y 322..440 (the photo's car has none);
 #  - the rev scale reads 0..7 (the X3's 7000 rpm) over the photo's blade, the labels spaced to fill it;
-#  - the photo's hexagon has the gear letter big in the void and the small speed under it with "km/h": both are kept (m_gear, m_spd).
+#  - the photo's hexagon had the gear letter big in the void and the small speed under it with "km/h"; inverted on the owner's
+#    request (21 Nov 2026): the speed is now big in the void, its unit under it, and the gear letter small below that (BMW's own
+#    black box still shows the gear letter too, so it is not lost). Not tried on a car.
 # Waze's map is drawn at the centred 1088x480 of the panel (x 416..1504, y 120..600) and cannot be moved, so with the map up
 # (Waze inside the theme, Cluster Centre, Cluster Info) the theme is rebuilt as the Sport theme is: the window in the middle
 # (x 534..1386, y 120..600, the same as Sport's), the blade on the left, a small hexagon with the speed on the right above BMW's
@@ -322,22 +324,28 @@ def mblade():
         W.append(text('spd%d' % i, round(spd_line_x(y, SP, SQ) - 22 - sw), round(y - 15), sw, 30, '{{ms:%d}}' % i, 'm_num', 'fg', 'right',
                       toggle='!mapUp'))
     W.append(text('spd_unit', 599, 92, 70, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'center', toggle='!mapUp'))
-    # the hexagon, as the photo has it: the selector letter big in the void (D, or S / M by the shifter programme, P R N; BMW's own
-    # box shows it too), the speed small right under it with "km/h" beside it, the battery's power in kW one line lower when eDrive
-    # Live shares it, the drive mode on the tabs
-    W.append(text('gear', 725, 291, 280, 101, '{{stage}}', 'm_gear', align='center', toggle='!mapUp'))
-    W.append(text('speed', 735, 449, 170, 40, '{{speed}}', 'm_spd', 'fg', 'right', toggle='!mapUp'))
-    W.append(text('speed_unit', 915, 461, 80, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'left', toggle='!mapUp'))
-    W.append(text('power', 740, 528, 120, 29, '{{powerKw}}', 'm_mid', 'fg', 'right', 1, toggle='powerShut'))
-    W.append(text('power_unit', 866, 528, 50, 36, 'kW', 'm_unit', 'dim', 'left', 1, toggle='powerShut'))
+    # the hexagon, inverted from the photo on the owner's request: the speed big in the void (BMW's own box still shows the
+    # gear letter, so it is not lost by moving it out), its unit under it, the selector letter (D, or S / M by the shifter
+    # programme, P R N) small below that, the battery's power in kW one line lower when eDrive Live shares it, the drive mode
+    # on the tabs
+    W.append(text('speed', 725, 291, 400, 101, '{{speed}}', 'm_gear', align='center', toggle='!mapUp'))   # 400 wide: "330" is 330 px in m_gear; grows right (left is the 0-100 timer's void)
+    W.append(text('speed_unit', 845, 393, 160, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'center', toggle='!mapUp'))
+    W.append(text('gear', 735, 439, 170, 60, '{{stage}}', 'm_gear_p', 'fg', 'center', toggle='!mapUp'))
+    # kW changes continuously while driving on the battery: its own sheet (xs_, kept out of the main pool, as the sensor bars are), so it
+    # never shares a sheet with the gear letter or the unit below it and makes them blink too (the 20 Nov 2026 fix, for the same reason)
+    W.append(text('power', 740, 528, 120, 29, '{{powerKw}}', 'm_mid', 'fg', 'right', 1, toggle='powerShut', sheet='xs_power'))
+    W.append(text('power_unit', 866, 528, 50, 36, 'kW', 'm_unit', 'dim', 'left', 1, toggle='powerShut', sheet='xs_power'))
     # (its name stays white: it sits on the hexagon's tab, which already takes the mode's colour)
     W.append(text('drive_mode', 851, 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='!mapUp', readyHides=True))
     W.extend(tab_cue(851 + 100, '', '!mapUp', PLAIN))
     # in the small hexagon's void, as in the normal view's (the same boxes, moved and scaled with it; the fonts keep their size)
-    gx, gw = hx(725), round(280 * HS)
-    W.append(text('o_gear', gx, hy(291), gw, 101, '{{stage}}', 'm_gear', align='center', toggle='mapUp'))
-    W.append(text('o_speed', hx(735) - 20, hy(449), 170, 40, '{{speed}}', 'm_spd', 'fg', 'right', toggle='mapUp'))
-    W.append(text('o_speed_unit', hx(735) + 156, hy(449) + 12, 80, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'left', toggle='mapUp'))
+    gx, gw = hx(725), round(400 * HS)   # 400 wide, same as the normal view: "330" is 330 px in m_gear regardless of the hexagon's scale
+    sy = hy(291)
+    W.append(text('o_speed', gx, sy, gw, 101, '{{speed}}', 'm_gear', align='center', toggle='mapUp'))
+    uy = sy + 101 + 1
+    W.append(text('o_speed_unit', hx(845), uy, round(160 * HS), 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'center', toggle='mapUp'))
+    gy = uy + 32 + 4
+    W.append(text('o_gear', hx(735) - 20, gy, 170, 60, '{{stage}}', 'm_gear_p', 'fg', 'center', toggle='mapUp'))
     W.append(text('o_power', hx(735) - 15, hy(528), 120, 29, '{{powerKw}}', 'm_mid', 'fg', 'right', 1, toggle='powerOpen'))
     W.append(text('o_power_unit', hx(735) + 111, hy(528), 50, 36, 'kW', 'm_unit', 'dim', 'left', 1, toggle='powerOpen'))
     W.append(text('o_drive_mode', 860, 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='mapUp', readyHides=True))
@@ -494,7 +502,7 @@ def navi():
     }
 
 
-SHEETS = {'mblade': 14, 'navi': 10}      # image sheets per theme: the memory a theme takes is the sum of their boxes (tools/pack_sheets.py)
+SHEETS = {'mblade': 13, 'navi': 10}      # image sheets per theme: the memory a theme takes is the sum of their boxes (tools/pack_sheets.py)
 
 if __name__ == '__main__':
     for name, L in (('mblade', mblade()), ('navi', navi())):

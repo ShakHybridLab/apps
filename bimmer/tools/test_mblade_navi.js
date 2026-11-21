@@ -59,15 +59,15 @@ NAMES.forEach((n) => {
             ["require('./hybrid_tach')", "case 'tachUnit'", "case 'chargeNote'", "w.hybridTach === true"].forEach((s) => assert(hud.includes(s), 'hud.js lacks ' + s));
             assert(/uniform vec4 u_red;/.test(sh) && sh.includes('ft < u_red.a'), 'the shader does not read the charge');
         });
-        check(n + ': the hexagon as in the photo: the gear letter big in the void, the speed small right under it with its unit beside it, kW below, in both views', () => {
+        check(n + ': the hexagon, inverted from the photo on the owner\'s request (21 Nov 2026): the speed big in the void, its unit under it, the gear letter small below that, kW below the gear, in both views', () => {
             ['', 'o_'].forEach((pre) => {
                 const g = by(pre + 'gear'), s = by(pre + 'speed'), u = by(pre + 'speed_unit'), k = by(pre + 'power');
                 assert(g && s && u && k, pre + ': a gear, speed, unit or kW widget is missing');
-                assert(g.text === '{{stage}}' && g.font === 'm_gear', pre + 'gear: not the big selector letter');
-                assert(s.text === '{{speed}}' && s.font === 'm_spd' && s.align === 'right', pre + 'speed: not the small speed');
-                assert(s.y >= g.y + g.h - 10, pre + 'speed is not under the gear letter');
-                assert(u.x >= s.x + s.w && Math.abs((u.y + u.h) - (s.y + s.h)) <= 20, pre + 'unit is not beside the speed');
-                assert(k.y >= s.y + s.h, pre + 'kW is not below the speed');
+                assert(s.text === '{{speed}}' && s.font === 'm_gear' && s.align === 'center', pre + 'speed: not the big speed');
+                assert(g.text === '{{stage}}' && g.font === 'm_gear_p' && g.align === 'center', pre + 'gear: not the small selector letter');
+                assert(u.y >= s.y + s.h - 10, pre + 'unit is not under the speed');
+                assert(g.y >= u.y + u.h - 10, pre + 'gear is not under the unit');
+                assert(k.y >= g.y + g.h, pre + 'kW is not below the gear');
             });
         });
         check('mblade: the oil and the battery strips are side by side, aligned (same top, bottom, slope), 130 px apart; the fuel strip has its own', () => {

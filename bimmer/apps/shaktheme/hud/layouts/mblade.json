@@ -444,14 +444,14 @@
       "sheet": "s0"
     },
     {
-      "id": "gear",
+      "id": "speed",
       "type": "text",
       "z": 5,
       "x": 725,
       "y": 291,
-      "w": 280,
+      "w": 400,
       "h": 101,
-      "text": "{{stage}}",
+      "text": "{{speed}}",
       "font": "m_gear",
       "color": "fg",
       "align": "center",
@@ -459,32 +459,32 @@
       "sheet": "s1"
     },
     {
-      "id": "speed",
-      "type": "text",
-      "z": 5,
-      "x": 735,
-      "y": 449,
-      "w": 170,
-      "h": 40,
-      "text": "{{speed}}",
-      "font": "m_spd",
-      "color": "fg",
-      "align": "right",
-      "toggle": "!mapUp",
-      "sheet": "s2"
-    },
-    {
       "id": "speed_unit",
       "type": "text",
       "z": 5,
-      "x": 915,
-      "y": 461,
-      "w": 80,
+      "x": 845,
+      "y": 393,
+      "w": 160,
       "h": 32,
       "text": "{{u:speedLc}}",
       "font": "m_tiny",
       "color": "fg",
-      "align": "left",
+      "align": "center",
+      "toggle": "!mapUp",
+      "sheet": "s2"
+    },
+    {
+      "id": "gear",
+      "type": "text",
+      "z": 5,
+      "x": 735,
+      "y": 439,
+      "w": 170,
+      "h": 60,
+      "text": "{{stage}}",
+      "font": "m_gear_p",
+      "color": "fg",
+      "align": "center",
       "toggle": "!mapUp",
       "sheet": "s2"
     },
@@ -501,7 +501,8 @@
       "color": "fg",
       "align": "right",
       "toggle": "powerShut",
-      "sheet": "s3"
+      "sheet": "xs_power",
+      "conn": 2
     },
     {
       "id": "power_unit",
@@ -516,7 +517,8 @@
       "color": "dim",
       "align": "left",
       "toggle": "powerShut",
-      "sheet": "s3"
+      "sheet": "xs_power",
+      "conn": 2
     },
     {
       "id": "drive_mode",
@@ -532,7 +534,7 @@
       "align": "center",
       "toggle": "!mapUp",
       "readyHides": true,
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "ready_flag",
@@ -547,7 +549,7 @@
       "conn": 1,
       "toggle": "!mapUp",
       "readyBy": "plain",
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "ready_text",
@@ -564,52 +566,52 @@
       "conn": 1,
       "toggle": "!mapUp",
       "readyBy": "plain",
-      "sheet": "s5"
-    },
-    {
-      "id": "o_gear",
-      "type": "text",
-      "z": 5,
-      "x": 281,
-      "y": 284,
-      "w": 238,
-      "h": 101,
-      "text": "{{stage}}",
-      "font": "m_gear",
-      "color": "fg",
-      "align": "center",
-      "toggle": "mapUp",
-      "sheet": "s3"
+      "sheet": "s4"
     },
     {
       "id": "o_speed",
       "type": "text",
       "z": 5,
-      "x": 269,
-      "y": 419,
-      "w": 170,
-      "h": 40,
+      "x": 281,
+      "y": 284,
+      "w": 340,
+      "h": 101,
       "text": "{{speed}}",
-      "font": "m_spd",
+      "font": "m_gear",
       "color": "fg",
-      "align": "right",
+      "align": "center",
       "toggle": "mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_speed_unit",
       "type": "text",
       "z": 5,
-      "x": 445,
-      "y": 431,
-      "w": 80,
+      "x": 383,
+      "y": 386,
+      "w": 136,
       "h": 32,
       "text": "{{u:speedLc}}",
       "font": "m_tiny",
       "color": "fg",
-      "align": "left",
+      "align": "center",
       "toggle": "mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
+    },
+    {
+      "id": "o_gear",
+      "type": "text",
+      "z": 5,
+      "x": 269,
+      "y": 422,
+      "w": 170,
+      "h": 60,
+      "text": "{{stage}}",
+      "font": "m_gear_p",
+      "color": "fg",
+      "align": "center",
+      "toggle": "mapUp",
+      "sheet": "s2"
     },
     {
       "id": "o_power",
@@ -624,7 +626,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "powerOpen",
-      "sheet": "s2"
+      "sheet": "s5"
     },
     {
       "id": "o_power_unit",
@@ -639,7 +641,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "powerOpen",
-      "sheet": "s2"
+      "sheet": "s5"
     },
     {
       "id": "o_drive_mode",
@@ -655,7 +657,7 @@
       "align": "center",
       "toggle": "mapUp",
       "readyHides": true,
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_ready_flag",
@@ -670,7 +672,7 @@
       "conn": 1,
       "toggle": "mapUp",
       "readyBy": "plain",
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "o_ready_text",
@@ -687,7 +689,7 @@
       "conn": 1,
       "toggle": "mapUp",
       "readyBy": "plain",
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "n0",
@@ -802,7 +804,7 @@
         1,
         4
       ],
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -831,7 +833,7 @@
         1,
         4
       ],
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -860,7 +862,7 @@
         1,
         4
       ],
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -889,7 +891,7 @@
         1,
         4
       ],
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -918,7 +920,7 @@
         1,
         4
       ],
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -934,7 +936,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -950,7 +952,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_n0",
@@ -1065,7 +1067,7 @@
         1,
         4
       ],
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1094,7 +1096,7 @@
         1,
         4
       ],
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1123,7 +1125,7 @@
         1,
         4
       ],
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1152,7 +1154,7 @@
         1,
         4
       ],
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1181,7 +1183,7 @@
         1,
         4
       ],
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1197,7 +1199,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
-      "sheet": "s7",
+      "sheet": "s6",
       "conn": 1
     },
     {
@@ -1243,7 +1245,7 @@
       "color": "fg",
       "align": "left",
       "toggle": "!mapUp&viewSel=none",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1273,7 +1275,7 @@
       "color": "fg",
       "toggle": "!mapUp&viewSel=none",
       "lowWhen": "fuel",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1604,7 +1606,7 @@
       "color": "fg",
       "toggle": "mapUp",
       "lowWhen": "fuel",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_f_lo",
@@ -1619,7 +1621,7 @@
       "color": "fg",
       "align": "left",
       "toggle": "mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_f_mid",
@@ -1664,7 +1666,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "ampm",
@@ -1678,7 +1680,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "range_icon",
@@ -1692,7 +1694,7 @@
       "color": "fg",
       "toggle": "!mapUp&viewSel=none",
       "lowWhen": "fuel",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1709,7 +1711,7 @@
       "align": "right",
       "lowWhen": "fuel",
       "toggle": "!mapUp&viewSel=none",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1724,7 +1726,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp&viewSel=none",
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1740,7 +1742,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "mapUp",
-      "sheet": "s5",
+      "sheet": "s4",
       "conn": 1
     },
     {
@@ -1755,7 +1757,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "mapUp",
-      "sheet": "s5",
+      "sheet": "s4",
       "conn": 1
     },
     {
@@ -1772,7 +1774,7 @@
       "align": "right",
       "lowWhen": "fuel",
       "toggle": "mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_range_unit",
@@ -1786,7 +1788,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "lim_ring",
@@ -1800,7 +1802,7 @@
       "color": "dim",
       "toggle": "!mapUp&viewSel=none",
       "limitBy": true,
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1817,7 +1819,7 @@
       "align": "center",
       "toggle": "!mapUp&viewSel=none",
       "limitBy": true,
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1832,7 +1834,7 @@
       "color": "dim",
       "toggle": "!mapUp&viewSel=none",
       "nextBy": true,
-      "sheet": "s8",
+      "sheet": "s7",
       "conn": 1
     },
     {
@@ -1849,7 +1851,7 @@
       "align": "center",
       "toggle": "!mapUp&viewSel=none",
       "nextBy": true,
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1864,7 +1866,7 @@
       "color": "dim",
       "toggle": "!mapUp&viewSel=none",
       "alertBy": true,
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1879,7 +1881,7 @@
       "color": "dim",
       "toggle": "!mapUp&viewSel=none",
       "laneBy": true,
-      "sheet": "s9",
+      "sheet": "s8",
       "conn": 1
     },
     {
@@ -1930,7 +1932,7 @@
       ],
       "evShareBy": true,
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "ev_share",
@@ -1945,7 +1947,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "ev_share_unit",
@@ -1959,7 +1961,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_ev_share_icon",
@@ -1978,7 +1980,7 @@
       ],
       "evShareBy": true,
       "toggle": "mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_ev_share",
@@ -1993,7 +1995,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_ev_share_unit",
@@ -2007,7 +2009,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "oil",
@@ -2023,7 +2025,7 @@
       "align": "right",
       "tempBy": "oil",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "oil_unit",
@@ -2037,7 +2039,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "ev_range",
@@ -2053,7 +2055,7 @@
       "align": "right",
       "lowWhen": "battery",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "ev_range_unit",
@@ -2067,7 +2069,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_oil",
@@ -2144,7 +2146,7 @@
       "h": 34,
       "color": "fg",
       "tempBy": "coolant",
-      "sheet": "s10",
+      "sheet": "s9",
       "conn": 1,
       "toggle": "viewSel=none"
     },
@@ -2161,7 +2163,7 @@
       "color": "fg",
       "align": "right",
       "tempBy": "coolant",
-      "sheet": "s10",
+      "sheet": "s9",
       "conn": 1,
       "toggle": "viewSel=none"
     },
@@ -2176,7 +2178,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s10",
+      "sheet": "s9",
       "conn": 1,
       "toggle": "viewSel=none"
     },
@@ -2191,7 +2193,7 @@
       "h": 32,
       "color": "dim",
       "iceBy": true,
-      "sheet": "s5",
+      "sheet": "s4",
       "conn": 1
     },
     {
@@ -2207,7 +2209,7 @@
       "color": "fg",
       "align": "right",
       "iceBy": true,
-      "sheet": "s5",
+      "sheet": "s4",
       "conn": 1
     },
     {
@@ -2221,7 +2223,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s5",
+      "sheet": "s4",
       "conn": 1
     },
     {
@@ -2290,8 +2292,8 @@
         255
       ],
       "toggle": "danger",
-      "sheet": "s11",
-      "conn": 2
+      "sheet": "s10",
+      "conn": 1
     },
     {
       "id": "al_title",
@@ -2311,8 +2313,8 @@
       ],
       "align": "left",
       "toggle": "danger",
-      "sheet": "s11",
-      "conn": 2
+      "sheet": "s10",
+      "conn": 1
     },
     {
       "id": "al_dist",
@@ -2327,8 +2329,8 @@
       "color": "fg",
       "align": "right",
       "toggle": "dangerAhead",
-      "sheet": "s11",
-      "conn": 2
+      "sheet": "s10",
+      "conn": 1
     },
     {
       "id": "al_unit",
@@ -2343,8 +2345,8 @@
       "color": "dim",
       "align": "left",
       "toggle": "dangerAhead",
-      "sheet": "s11",
-      "conn": 2
+      "sheet": "s10",
+      "conn": 1
     },
     {
       "id": "al_in",
@@ -2359,8 +2361,8 @@
       "color": "fg",
       "align": "left",
       "toggle": "dangerInside",
-      "sheet": "s11",
-      "conn": 2
+      "sheet": "s10",
+      "conn": 1
     },
     {
       "id": "al_ring",
@@ -2378,7 +2380,7 @@
         255
       ],
       "toggle": "dangerLimit",
-      "sheet": "s12",
+      "sheet": "s11",
       "conn": 2
     },
     {
@@ -2394,7 +2396,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "dangerLimit",
-      "sheet": "s13",
+      "sheet": "s12",
       "conn": 2
     },
     {
@@ -2503,7 +2505,7 @@
       "h": 34,
       "color": "fg",
       "tempBy": "coolant",
-      "sheet": "s10",
+      "sheet": "s9",
       "toggle": "mapUp&!viewSel=none&!viewSel=gauges",
       "conn": 1
     },
@@ -2535,7 +2537,7 @@
       "color": "fg",
       "align": "right",
       "tempBy": "coolant",
-      "sheet": "s10",
+      "sheet": "s9",
       "toggle": "mapUp&!viewSel=none&!viewSel=gauges",
       "conn": 1
     },
@@ -2567,7 +2569,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s10",
+      "sheet": "s9",
       "toggle": "mapUp&!viewSel=none&!viewSel=gauges",
       "conn": 1
     },
