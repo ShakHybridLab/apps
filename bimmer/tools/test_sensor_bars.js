@@ -106,7 +106,8 @@ THEMES.forEach((name) => {
                 const cx = p.bar[0] + i * (p.bar[1] - p.bar[0]), rr = p.card[0] + p.card[1] / 2 + 7;
                 return { x: cx - rr, y: r.y - rr, w: 2 * rr, h: 2 * rr };
             }) : [p]);
-            mine.forEach((a) => L.widgets.filter((o) => !o.id.startsWith('xb_') && box(o) && on(o, map, view, sport)).forEach((o) => {
+            // (the limit's ring beside the map, o_lim_: no view shows with the map since 21 Nov 2026, hud.js setting('viewSel'), so the two never meet)
+            mine.forEach((a) => L.widgets.filter((o) => !o.id.startsWith('xb_') && !o.id.startsWith('o_lim_') && box(o) && on(o, map, view, sport)).forEach((o) => {
                 assert(a.type === 'mpanel' ? !inPanel(a, o) : !discs(a).some((q) => hit(q, o)), a.id + ' recouvre ' + o.id + ' (vue ' + view + (sport ? ', Sport' : '') + (map ? ', carte ouverte' : '') + ')');
             }));
             mine.filter((w) => !PANEL(w)).forEach((a, i, m) => m.slice(i + 1).forEach((b) => {
@@ -159,7 +160,7 @@ check('nextView : chaque appui passe à la vue suivante, le dernier revient à a
         const o = { layoutViews: views, viewNow: null, saved, rebuilt: 0, _rebuild() { this.rebuilt++; rebuilt.push(this.viewNow); }, setting(k) { return HudApp.prototype.setting.call(this, k); } };
         o.ctx = { settings: { item: () => null, get: (k) => (k === 'viewSel' ? saved : undefined) } };
         o._wazeMapOn = () => false;
-        o.nextView = HudApp.prototype.nextView; o.views = HudApp.prototype.views;
+        o.nextView = HudApp.prototype.nextView; o.views = HudApp.prototype.views; o._mapOpen = HudApp.prototype._mapOpen;
         return o;
     };
     const t = mk(['gauges', 'tyres'], 'none');
@@ -170,6 +171,15 @@ check('nextView : chaque appui passe à la vue suivante, le dernier revient à a
     const saved = mk(['gauges', 'tyres'], 'tyres');          // un choix gardé dans les réglages : le premier appui passe à la suite
     assert.strictEqual(saved.nextView(), 'none');
     assert.deepStrictEqual(t.views(), ['gauges', 'tyres']);
+    // carte ouverte (propriétaire, 21 nov. 2026 : « quand il y a Waze, on supprime tout ce qui est lié au BC ») : aucune vue, la touche attend,
+    // et la vue choisie revient quand la carte part
+    const m = mk(['gauges', 'tyres'], 'none');
+    m.nextView(); assert.strictEqual(m.setting('viewSel'), 'gauges');
+    m._wazeMapOn = () => true;
+    assert.strictEqual(m.setting('viewSel'), 'none', 'une vue reste avec la carte');
+    const before = m.rebuilt; assert.strictEqual(m.nextView(), 'none'); assert.strictEqual(m.rebuilt, before, 'la touche ne doit rien refaire avec la carte');
+    m._wazeMapOn = () => false; m.windowOpen = true; assert.strictEqual(m.setting('viewSel'), 'none', 'ni avec la fenêtre de Cluster Centre');
+    m.windowOpen = false; assert.strictEqual(m.setting('viewSel'), 'gauges', 'la vue ne revient pas quand la carte part');
 });
 check('les dessins des vues reçoivent tous les mêmes réglages : ils sont bâtis sur la source de mpanel (un réglage oublié vaut 0 : la voiture des pneus de Sport avait disparu, 0.21.53)', () => {
     const src = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8'), sh = require('../shared/shaders');

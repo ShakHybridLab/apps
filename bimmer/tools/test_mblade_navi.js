@@ -191,9 +191,9 @@ NAMES.forEach((n) => {
                 return kp.indexOf('viewSel=') === 0 && kq.indexOf('viewSel=') === 0 && !np && !nq;
             }));
             // the danger alert (al_), the limit ring (lim_), the 0-100 timer (run_) and the launch cue (ready_, over the drive mode's name) share their places by design: they take turns
-            const own = (w) => /^(al_|(xb_v)?lim_|run_|(o_)?ready_)/.test(w.id);
+            const own = (w) => /^(al_|(xb_v|o_)?lim_|run_|(o_)?ready_)/.test(w.id);
             const ws = L.widgets.filter((w) => /^(text|icon)$/.test(w.type) && !own(w));
-            L.widgets.filter((w) => /^((xb_v)?lim_|run_|(o_)?ready_)/.test(w.id)).forEach((a) => ws.forEach((b) => {
+            L.widgets.filter((w) => /^((xb_v|o_)?lim_|run_|(o_)?ready_)/.test(w.id)).forEach((a) => ws.forEach((b) => {
                 if (/ready_/.test(a.id) && /drive_mode$/.test(b.id)) return;      // the launch cue takes the drive mode name's place
                 if (excl(a, b)) return;
                 assert(!(a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y), a.id + ' overlaps ' + b.id);

@@ -471,7 +471,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s2"
+      "sheet": "s1"
     },
     {
       "id": "gear",
@@ -486,7 +486,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s2"
+      "sheet": "s1"
     },
     {
       "id": "power",
@@ -534,7 +534,7 @@
       "align": "center",
       "toggle": "!mapUp",
       "readyHides": true,
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "ready_flag",
@@ -549,7 +549,7 @@
       "conn": 1,
       "toggle": "!mapUp",
       "readyBy": "plain",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "ready_text",
@@ -566,7 +566,7 @@
       "conn": 1,
       "toggle": "!mapUp",
       "readyBy": "plain",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_speed",
@@ -581,7 +581,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
-      "sheet": "s2"
+      "sheet": "s4"
     },
     {
       "id": "o_speed_unit",
@@ -596,7 +596,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
-      "sheet": "s2"
+      "sheet": "s4"
     },
     {
       "id": "o_gear",
@@ -611,7 +611,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
-      "sheet": "s2"
+      "sheet": "s4"
     },
     {
       "id": "o_power",
@@ -626,7 +626,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "powerOpen",
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "o_power_unit",
@@ -641,7 +641,7 @@
       "color": "dim",
       "align": "left",
       "toggle": "powerOpen",
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "o_drive_mode",
@@ -657,7 +657,7 @@
       "align": "center",
       "toggle": "mapUp",
       "readyHides": true,
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_ready_flag",
@@ -672,7 +672,7 @@
       "conn": 1,
       "toggle": "mapUp",
       "readyBy": "plain",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "o_ready_text",
@@ -689,7 +689,7 @@
       "conn": 1,
       "toggle": "mapUp",
       "readyBy": "plain",
-      "sheet": "s4"
+      "sheet": "s3"
     },
     {
       "id": "n0",
@@ -717,8 +717,7 @@
         1,
         4
       ],
-      "sheet": "s6",
-      "conn": 1
+      "sheet": "s5"
     },
     {
       "id": "n1",
@@ -952,7 +951,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s2"
+      "sheet": "s5"
     },
     {
       "id": "o_n0",
@@ -1215,7 +1214,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "mapUp",
-      "sheet": "s2"
+      "sheet": "s4"
     },
     {
       "id": "f_hi",
@@ -1606,7 +1605,7 @@
       "color": "fg",
       "toggle": "mapUp",
       "lowWhen": "fuel",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_f_lo",
@@ -1621,7 +1620,7 @@
       "color": "fg",
       "align": "left",
       "toggle": "mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_f_mid",
@@ -1666,7 +1665,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "ampm",
@@ -1680,7 +1679,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "range_icon",
@@ -1742,7 +1741,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "mapUp",
-      "sheet": "s4",
+      "sheet": "s3",
       "conn": 1
     },
     {
@@ -1757,7 +1756,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "mapUp",
-      "sheet": "s4",
+      "sheet": "s3",
       "conn": 1
     },
     {
@@ -1774,7 +1773,7 @@
       "align": "right",
       "lowWhen": "fuel",
       "toggle": "mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_range_unit",
@@ -1788,7 +1787,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "lim_ring",
@@ -1916,6 +1915,36 @@
       "sheet": "s1"
     },
     {
+      "id": "o_lim_ring",
+      "type": "icon",
+      "icon": "ring",
+      "z": 5,
+      "x": 110,
+      "y": 570,
+      "w": 72,
+      "h": 72,
+      "color": "dim",
+      "toggle": "mapUp",
+      "limitBy": true,
+      "sheet": "s2"
+    },
+    {
+      "id": "o_lim_num",
+      "type": "text",
+      "z": 5,
+      "x": 110,
+      "y": 592,
+      "w": 72,
+      "h": 29,
+      "text": "{{limit}}",
+      "font": "m_tiny",
+      "color": "fg",
+      "align": "center",
+      "toggle": "mapUp",
+      "limitBy": true,
+      "sheet": "s5"
+    },
+    {
       "id": "ev_share_icon",
       "type": "icon",
       "icon": "leaf",
@@ -1932,7 +1961,7 @@
       ],
       "evShareBy": true,
       "toggle": "!mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "ev_share",
@@ -1947,7 +1976,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "ev_share_unit",
@@ -1961,7 +1990,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_ev_share_icon",
@@ -1980,7 +2009,7 @@
       ],
       "evShareBy": true,
       "toggle": "mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_ev_share",
@@ -1995,7 +2024,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_ev_share_unit",
@@ -2009,7 +2038,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "oil",
@@ -2025,7 +2054,7 @@
       "align": "right",
       "tempBy": "oil",
       "toggle": "!mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "oil_unit",
@@ -2039,7 +2068,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "ev_range",
@@ -2055,7 +2084,7 @@
       "align": "right",
       "lowWhen": "battery",
       "toggle": "!mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "ev_range_unit",
@@ -2069,7 +2098,7 @@
       "font": "m_tiny",
       "color": "dim",
       "toggle": "!mapUp",
-      "sheet": "s3"
+      "sheet": "s2"
     },
     {
       "id": "o_oil",
@@ -2193,7 +2222,7 @@
       "h": 32,
       "color": "dim",
       "iceBy": true,
-      "sheet": "s4",
+      "sheet": "s3",
       "conn": 1
     },
     {
@@ -2209,7 +2238,7 @@
       "color": "fg",
       "align": "right",
       "iceBy": true,
-      "sheet": "s4",
+      "sheet": "s3",
       "conn": 1
     },
     {
@@ -2223,7 +2252,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s4",
+      "sheet": "s3",
       "conn": 1
     },
     {

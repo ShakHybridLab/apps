@@ -1281,6 +1281,36 @@
       "sheet": "s2"
     },
     {
+      "id": "o_lim_ring",
+      "type": "icon",
+      "icon": "ring",
+      "z": 5,
+      "x": 1690,
+      "y": 505,
+      "w": 72,
+      "h": 72,
+      "color": "dim",
+      "toggle": "mapUp",
+      "limitBy": true,
+      "sheet": "s4"
+    },
+    {
+      "id": "o_lim_num",
+      "type": "text",
+      "z": 5,
+      "x": 1690,
+      "y": 527,
+      "w": 72,
+      "h": 29,
+      "text": "{{limit}}",
+      "font": "m_tiny",
+      "color": "fg",
+      "align": "center",
+      "toggle": "mapUp",
+      "limitBy": true,
+      "sheet": "s5"
+    },
+    {
       "id": "ready_flag",
       "type": "icon",
       "icon": "flag",

@@ -1199,6 +1199,37 @@
       "conn": 1
     },
     {
+      "id": "o_lim_ring",
+      "type": "icon",
+      "icon": "ring",
+      "z": 5,
+      "x": 360,
+      "y": 414,
+      "w": 72,
+      "h": 72,
+      "color": "dim",
+      "limitBy": true,
+      "toggle": "mapUp",
+      "sheet": "s1"
+    },
+    {
+      "id": "o_lim_num",
+      "type": "text",
+      "z": 5,
+      "x": 360,
+      "y": 436,
+      "w": 72,
+      "h": 29,
+      "text": "{{limit}}",
+      "font": "m_tiny",
+      "color": "fg",
+      "align": "center",
+      "limitBy": true,
+      "toggle": "mapUp",
+      "sheet": "s10",
+      "conn": 1
+    },
+    {
       "id": "lim_nxt_ring",
       "type": "icon",
       "icon": "ring",

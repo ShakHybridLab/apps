@@ -297,7 +297,7 @@ check('the map shows in the theme with a route, or when the car says nothing; no
     const hudSrc = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
     const grab = (name) => { const m = hudSrc.match(new RegExp('\\n    ' + name + '\\([^)]*\\) \\{[\\s\\S]*?\\n    \\}\\n')); assert(m, 'hud.js has no ' + name); return m[0]; };
     const Hud = { prototype: new Function('guidanceOf', 'return class {' + grab('_routeOk') + grab('_wazeMapOn') + grab('_guidance') + '}')(guidanceOf).prototype };
-    assert(/if \(key === 'mapUp'\) return !!\(this\._wazeMapOn\(\) \|\| this\.windowOpen === true\);/.test(hudSrc), "setting('mapUp') no longer goes through _wazeMapOn");
+    assert(/if \(key === 'mapUp'\) return this\._mapOpen\(\);/.test(hudSrc) && /_mapOpen\(\) \{ return !!\(this\._wazeMapOn\(\) \|\| this\.windowOpen === true\); \}/.test(hudSrc), "setting('mapUp') no longer goes through _wazeMapOn");
     const mk = (opts) => {
         const set = Object.assign({ mapInTheme: true, mapOnlyWithRoute: true }, opts.set || {});
         const o = { routeActive: opts.route === undefined ? null : opts.route, windowOpen: !!opts.window, waze: { up: opts.up !== false },

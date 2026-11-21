@@ -840,12 +840,18 @@ class HudApp {
     /** Where the HUD sits now, for the page: { x, y, scale, box } (box: the layout's own, unmoved). */
     placeInfo() { return { x: this._offset().x, y: this._offset().y, scale: this._scale(), box: this._placedBox() }; }
 
+    /** The centre window is open: the phone's map shows inside the theme, or Cluster Centre / Cluster Info asked for the window. */
+    _mapOpen() { return !!(this._wazeMapOn() || this.windowOpen === true); }
+
     /** A setting's value, or its default when the saved value isn't one the schema allows. */
     setting(key) {
         // "mapUp": not saved, the centre window is open now: the Waze map shows inside the theme (the setting on, waze.js
         // says so, and a route is on when the setting "mapOnlyWithRoute" asks for it), or Cluster Centre / Cluster Info asked for the window (centreWindow)
-        if (key === 'mapUp') return !!(this._wazeMapOn() || this.windowOpen === true);
+        if (key === 'mapUp') return this._mapOpen();
         // "viewSel": the view showing: the button's step when it has been pressed, else the saved choice ("none" = nothing extra)
+        // No view while the map window is open (owner, 21 Nov 2026, the first photo of the map inside M Blade on the car: "quand il y a Waze
+        // c'est mieux, on supprime tout ce qui est lie au BC, ca rend moche"): the view picked comes back when the map goes.
+        if (key === 'viewSel' && this._mapOpen()) return 'none';
         if (key === 'viewSel' && this.viewNow !== null) return this.viewNow;
         // a view this theme does not have counts as none: M has no tyres' view of its own (its tyres are part of the dial), and with "tyres"
         // picked on the page its left side stayed empty, the tyres gone and nothing in their place (bench, 20 Nov 2026)
@@ -1306,6 +1312,7 @@ class HudApp {
      */
     nextView() {
         if (!this.layoutViews.length) return 'none';
+        if (this._mapOpen()) return 'none';             // (no view beside the map: the button waits, the view picked before is kept)
         const list = ['none'].concat(this.layoutViews), now = this.setting('viewSel');
         const next = list[(Math.max(0, list.indexOf(now)) + 1) % list.length];
         this.viewNow = next;

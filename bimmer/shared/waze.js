@@ -121,7 +121,7 @@ class Waze {
             fs.readFile(this.statusPath, 'utf8', (e, txt) => {
                 this.polling = false;
                 let s = null;
-                try { if (!e) { const j = JSON.parse(txt); s = { state: String(j.state || ''), target: j.target == null ? null : String(j.target), raw: rawOf(j), keys: Object.keys(j).join(',') }; } } catch (x) { s = null; }
+                try { if (!e) { const j = JSON.parse(txt); s = { state: String(j.state || ''), target: j.target == null ? null : String(j.target), raw: rawOf(j), detail: (typeof j.page === 'string' ? j.page : '').slice(0, 300), keys: Object.keys(j).join(',') }; } } catch (x) { s = null; }
                 this._safeUpdate(s);
             });
         });

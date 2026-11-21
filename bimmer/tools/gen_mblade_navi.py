@@ -375,6 +375,10 @@ def mblade():
         W.append(text(pre + 'range', 348, y, 112, 29, '{{rangeTotal}}', 'm_mid', 'fg', 'right', 1, toggle=tog))
         W.append(text(pre + 'range_unit', 466, y + 3, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1, toggle=tog))
     W.extend(limit_and_timer(672, 318, 76, True, ring=(234, 540, 72), next_at=(-68, 4)))   # the timer in the black void left of the gear letter; the ring small, bottom left above the clock (no clean place by the speed there)
+    # with the map up the limit's ring is back (owner, 21 Nov 2026, the first photo of the map on the car: "je ne vois plus les limitations quand
+    # il y a Waze"; Waze's cluster map does not show it): bottom left, under the small hexagon and above the clock, the ring and its number only
+    W.append(icon('o_lim_ring', 'ring', 110, 570, 72, 72, 'dim', toggle='mapUp', limitBy=True))
+    W.append(text('o_lim_num', 110, 570 + (72 - 29) // 2 + 1, 72, 29, '{{limit}}', 'm_tiny', 'fg', 'center', toggle='mapUp', limitBy=True))
     W.extend(ev_share(662, ROW - 3, 26, 34, 692, ROW + 3, 52, 32, 'm_tiny', 748, ROW + 3, 26, 32, 'm_tiny', '', '!mapUp'))   # the normal view: right of the speed scale's 0
     W.extend(ev_share(632, ROW_O - 3, 26, 34, 662, ROW_O + 3, 52, 32, 'm_tiny', 718, ROW_O + 3, 26, 32, 'm_tiny', 'o_', 'mapUp'))   # the map view: between the belt light and the fuel scale's 1/2
     # the oil and the electric range sit centred under their strips (they follow the strips 30 px right in the map view); the coolant and the outside
@@ -467,6 +471,9 @@ def navi():
     W.append(text('range', 226, 630, 114, 34, '{{rangeTotal}}', 'm_mid', 'fg', 'right'))
     W.append(text('range_unit', 346, 636, 48, 29, '{{u:distLc}}', 'm_tiny', 'dim'))
     W.extend(limit_and_timer(960, 420, 92, ring=(703, 236, 72)))   # the timer under the speed; the ring small, left of the speed digits
+    # with the map up the limit's ring stays, as in the three other themes (owner, 21 Nov 2026): in the right column, under the outside temperature
+    W.append(icon('o_lim_ring', 'ring', 1690, 505, 72, 72, 'dim', toggle='mapUp', limitBy=True))
+    W.append(text('o_lim_num', 1690, 505 + (72 - 29) // 2 + 1, 72, 29, '{{limit}}', 'm_tiny', 'fg', 'center', toggle='mapUp', limitBy=True))
     W.extend(bottom_cue(661))                                      # the bottom centre, between the clock and the battery bar
     W.extend(ev_share(632, 664, 29, 34, 664, 664, 90, 34, 'm_mid', 758, 670, 36, 29, 'm_tiny'))   # bottom row, between the clock and the battery bar
     W.append(text('time', 395, 664, 140, 34, '{{time}}', 'm_mid', 'fg', 'right'))

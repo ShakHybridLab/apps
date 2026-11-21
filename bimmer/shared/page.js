@@ -468,11 +468,15 @@ class Page {
         if (this.get('mapInTheme') && !this.hud.mapLayout && this.hud.activeName !== 'off') text = 'This theme has no map version (Sport, M, M Blade and Navi do)';
         // the whole status file under it (this app reads only state and target; whether the file holds a position decides if the radar list can work)
         const raw = (this.hud.waze && this.hud.waze.st && this.hud.waze.st.raw) || '';
-        const rows = raw ? Math.min(2, Math.ceil(raw.length / 100)) : 0, ch = 46 + rows * 15;
+        // and the tool's own account of its capture and decoder in full ("page": bytes received, frames decoded, what the stream looks like):
+        // cut short in the line above, it is what says why no map comes (owner's photos of 21 Nov 2026, "receiving, not decoding")
+        const det = (this.hud.waze && this.hud.waze.st && this.hud.waze.st.detail) || '', drows = det ? Math.min(3, Math.ceil(det.length / 100)) : 0;
+        const rows = raw ? Math.min(2, Math.ceil(raw.length / 100)) : 0, ch = 46 + (rows + drows) * 15;
         glass(cv, CX, y, w, ch, false);
         cv.circle(CX + 26, y + 23, 7, info.up ? C.live : info.ok ? C.dim : '#e0a340');
         cv.text(text, CX + 46, y + 30, 18, info.up ? C.live : C.text, { literal: true });
         for (let i = 0; i < rows; i++) cv.text(raw.slice(i * 100, (i + 1) * 100), CX + 46, y + 51 + i * 15, 12, C.dim, { literal: true });
+        for (let i = 0; i < drows; i++) cv.text(det.slice(i * 100, (i + 1) * 100), CX + 46, y + 51 + (rows + i) * 15, 12, C.text, { literal: true });
         y += ch + 6;
         // only while a route is on (the car's CarPlay guidance signal, hud.js _guidance); what the car says sits left of the switch
         const rowY = y;
