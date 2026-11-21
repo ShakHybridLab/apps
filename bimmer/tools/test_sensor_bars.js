@@ -275,7 +275,7 @@ check('le panneau de M Blade : les barres suivent leurs capteurs, avec la couleu
             _ice: () => ({ on: !!ice }) };
         HudApp.prototype._update.call(fake, x, now || 0, false);
         const get = (nm) => (calls.find((c) => c[0] === nm) || [])[1];
-        return { v: get('u_v'), t: get('u_tone'), x };
+        return { v: get('u_lvl'), t: get('u_tone'), x };
     };
     const r = go({ boost: 1, oil: 60, coolant: 95, ambient: 15 });
     assert(same(r.v, [0.5, 0.1, 0.45, 0.5]), 'niveaux : ' + r.v);

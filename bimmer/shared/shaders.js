@@ -1289,7 +1289,7 @@ uniform vec2 u_size;
 uniform vec4 u_pan;    // the point's y, the sides' slope (x per y px), the band's width, the point's x (layer px)
 uniform vec2 u_bx;     // the bars' left and right ends x
 uniform vec4 u_ry;     // each bar's middle y (< 0: no bar)
-uniform vec4 u_v;      // each bar's level 0..1
+uniform vec4 u_lvl;      // each bar's level 0..1
 uniform vec4 u_rz;     // where each bar's red end starts 0..1 (>= 1: none)
 uniform vec4 u_tone;   // each bar's colour: 0 white, 1 cold blue, 2 warm green, 3 red, 4 dark red, 5 light blue
 uniform float u_div;   // the marks cut each bar in this many parts (2: the ends and the middle)
@@ -1416,10 +1416,10 @@ void main() {
     if (u_mode > 0.5) c = tyresView(p, c);
     else {
         c = rule(p, u_ry.y, u, c); c = rule(p, u_ry.z, u, c); c = rule(p, u_ry.w, u, c);
-        c = bar(p, u_ry.x, u_v.x, u_rz.x, u_tone.x, c);
-        c = bar(p, u_ry.y, u_v.y, u_rz.y, u_tone.y, c);
-        c = bar(p, u_ry.z, u_v.z, u_rz.z, u_tone.z, c);
-        c = bar(p, u_ry.w, u_v.w, u_rz.w, u_tone.w, c);
+        c = bar(p, u_ry.x, u_lvl.x, u_rz.x, u_tone.x, c);
+        c = bar(p, u_ry.y, u_lvl.y, u_rz.y, u_tone.y, c);
+        c = bar(p, u_ry.z, u_lvl.z, u_rz.z, u_tone.z, c);
+        c = bar(p, u_ry.w, u_lvl.w, u_rz.w, u_tone.w, c);
     }
     gl_FragColor = vec4(c.rgb, c.a * inside);
 }
@@ -1446,10 +1446,10 @@ void main() {
     if (u_mode > 0.5) c = tyresView(p, c);
     else {
         c = rule(p, u_ry.y, u, c); c = rule(p, u_ry.z, u, c); c = rule(p, u_ry.w, u, c);
-        c = bar(p, u_ry.x, u_v.x, u_rz.x, u_tone.x, c);
-        c = bar(p, u_ry.y, u_v.y, u_rz.y, u_tone.y, c);
-        c = bar(p, u_ry.z, u_v.z, u_rz.z, u_tone.z, c);
-        c = bar(p, u_ry.w, u_v.w, u_rz.w, u_tone.w, c);
+        c = bar(p, u_ry.x, u_lvl.x, u_rz.x, u_tone.x, c);
+        c = bar(p, u_ry.y, u_lvl.y, u_rz.y, u_tone.y, c);
+        c = bar(p, u_ry.z, u_lvl.z, u_rz.z, u_tone.z, c);
+        c = bar(p, u_ry.w, u_lvl.w, u_rz.w, u_tone.w, c);
     }
     gl_FragColor = vec4(c.rgb, c.a * inside);
 }
@@ -1491,10 +1491,10 @@ void main() {
         c = tyresView(p, c);
     } else {
         float sp = u_bx.y - u_bx.x;
-        c = ring(p, u_bx.x, u_ry.x, u_v.x, u_rz.x, u_tone.x, c);
-        c = ring(p, u_bx.x + sp, u_ry.y, u_v.y, u_rz.y, u_tone.y, c);
-        c = ring(p, u_bx.x + 2.0 * sp, u_ry.z, u_v.z, u_rz.z, u_tone.z, c);
-        c = ring(p, u_bx.x + 3.0 * sp, u_ry.w, u_v.w, u_rz.w, u_tone.w, c);
+        c = ring(p, u_bx.x, u_ry.x, u_lvl.x, u_rz.x, u_tone.x, c);
+        c = ring(p, u_bx.x + sp, u_ry.y, u_lvl.y, u_rz.y, u_tone.y, c);
+        c = ring(p, u_bx.x + 2.0 * sp, u_ry.z, u_lvl.z, u_rz.z, u_tone.z, c);
+        c = ring(p, u_bx.x + 3.0 * sp, u_ry.w, u_lvl.w, u_rz.w, u_tone.w, c);
     }
     gl_FragColor = c;
 }
@@ -1574,10 +1574,10 @@ void main() {
     c = over(vec4(1.0, 1.0, 1.0, 0.85 * fade * cov(abs(p.y - yl) - thick) * step(0.5, sh)), c);
     if (u_mode > 0.5) c = lineTyres(p, c);
     else {
-        c = lrow(p, u_ry.x, u_v.x, u_rz.x, u_tone.x, c);
-        c = lrow(p, u_ry.y, u_v.y, u_rz.y, u_tone.y, c);
-        c = lrow(p, u_ry.z, u_v.z, u_rz.z, u_tone.z, c);
-        c = lrow(p, u_ry.w, u_v.w, u_rz.w, u_tone.w, c);
+        c = lrow(p, u_ry.x, u_lvl.x, u_rz.x, u_tone.x, c);
+        c = lrow(p, u_ry.y, u_lvl.y, u_rz.y, u_tone.y, c);
+        c = lrow(p, u_ry.z, u_lvl.z, u_rz.z, u_tone.z, c);
+        c = lrow(p, u_ry.w, u_lvl.w, u_rz.w, u_tone.w, c);
     }
     gl_FragColor = c;
 }
@@ -1605,10 +1605,10 @@ vec4 blade(vec2 p, float y, float v, float rz, float t, vec4 c) {
 void main() {
     vec2 p = v_uv * u_size;
     vec4 c = vec4(0.0);
-    c = blade(p, u_ry.x, u_v.x, u_rz.x, u_tone.x, c);
-    c = blade(p, u_ry.y, u_v.y, u_rz.y, u_tone.y, c);
-    c = blade(p, u_ry.z, u_v.z, u_rz.z, u_tone.z, c);
-    c = blade(p, u_ry.w, u_v.w, u_rz.w, u_tone.w, c);
+    c = blade(p, u_ry.x, u_lvl.x, u_rz.x, u_tone.x, c);
+    c = blade(p, u_ry.y, u_lvl.y, u_rz.y, u_tone.y, c);
+    c = blade(p, u_ry.z, u_lvl.z, u_rz.z, u_tone.z, c);
+    c = blade(p, u_ry.w, u_lvl.w, u_rz.w, u_tone.w, c);
     gl_FragColor = c;
 }
 `;
@@ -2185,7 +2185,7 @@ const MSTYLE = `// M Style HUD rev counter for a cluster-render "effect" layer (
 //   u_A    P0 (the bar's start) and P1 (the bend), x0 y0 x1 y1
 //   u_B    P2 (the bar's end)
 //   u_g    bar width, the share of the scale at the bend (0..1), ticks (thousands of rpm on the scale), where the red zone starts (0..1)
-//   u_v    value 0..1, the held peak 0..1 (0 = none), the zone (0 = the bar is white, 1 = orange in the run-up to the redline, 2 = red), spare
+//   u_lvl    value 0..1, the held peak 0..1 (0 = none), the zone (0 = the bar is white, 1 = orange in the run-up to the redline, 2 = red), spare
 //   u_hy   rgb the lit colour while the battery drives or charges, a = 1 then (0 = the engine's rpm, lit white, orange, u_hot by the zone)
 //   u_hot rgb;  u_fg, u_track rgba (straight alpha)
 precision mediump float;
@@ -2194,7 +2194,7 @@ uniform vec2 u_size;
 uniform vec4 u_A;
 uniform vec2 u_B;
 uniform vec4 u_g;
-uniform vec4 u_v;
+uniform vec4 u_lvl;
 uniform vec4 u_hy;
 uniform vec3 u_hot;
 uniform vec4 u_fg;
@@ -2222,17 +2222,17 @@ void main() {
     float f = first ? t1 * u_g.y : u_g.y + t2 * (1.0 - u_g.y);
     float s = first ? t1 * l1 : l1 + t2 * l2;
     float hw = u_g.x * 0.5;
-    vec3 lit = u_hy.a > 0.5 ? u_hy.rgb : mix(mix(vec3(1.0), vec3(1.0, 0.68, 0.1), clamp(u_v.z, 0.0, 1.0)), u_hot, clamp(u_v.z - 1.0, 0.0, 1.0));
-    vec4 fill = f <= u_v.x ? vec4(lit, 1.0) : (f >= u_g.w ? vec4(u_hot, 0.45) : u_track);
+    vec3 lit = u_hy.a > 0.5 ? u_hy.rgb : mix(mix(vec3(1.0), vec3(1.0, 0.68, 0.1), clamp(u_lvl.z, 0.0, 1.0)), u_hot, clamp(u_lvl.z - 1.0, 0.0, 1.0));
+    vec4 fill = f <= u_lvl.x ? vec4(lit, 1.0) : (f >= u_g.w ? vec4(u_hot, 0.45) : u_track);
     vec4 col = vec4(fill.rgb, fill.a * clamp(hw + 0.5 - d, 0.0, 1.0));
     // the outline, 2 px at the bar's edge
     col = over(vec4(u_fg.rgb, clamp(2.0 - abs(d - hw + 1.0), 0.0, 1.0)), col);
     // the needle: the bright edge of the fill, a little wider than the bar
-    float sv = u_v.x <= u_g.y ? u_v.x / u_g.y * l1 : l1 + (u_v.x - u_g.y) / (1.0 - u_g.y) * l2;
-    if (u_v.x > 0.01) col = over(vec4(1.0, 1.0, 1.0, clamp(2.5 - abs(s - sv), 0.0, 1.0) * clamp(hw + 3.5 - d, 0.0, 1.0)), col);
-    // the held peak (u_v.y, 0 = none): a thin tick across the bar above the lit part
-    float sq = u_v.y <= u_g.y ? u_v.y / u_g.y * l1 : l1 + (u_v.y - u_g.y) / (1.0 - u_g.y) * l2;
-    if (u_v.y > u_v.x + 0.02) col = over(vec4(1.0, 1.0, 1.0, 0.8 * clamp(1.8 - abs(s - sq), 0.0, 1.0) * clamp(hw + 3.5 - d, 0.0, 1.0)), col);
+    float sv = u_lvl.x <= u_g.y ? u_lvl.x / u_g.y * l1 : l1 + (u_lvl.x - u_g.y) / (1.0 - u_g.y) * l2;
+    if (u_lvl.x > 0.01) col = over(vec4(1.0, 1.0, 1.0, clamp(2.5 - abs(s - sv), 0.0, 1.0) * clamp(hw + 3.5 - d, 0.0, 1.0)), col);
+    // the held peak (u_lvl.y, 0 = none): a thin tick across the bar above the lit part
+    float sq = u_lvl.y <= u_g.y ? u_lvl.y / u_g.y * l1 : l1 + (u_lvl.y - u_g.y) / (1.0 - u_g.y) * l2;
+    if (u_lvl.y > u_lvl.x + 0.02) col = over(vec4(1.0, 1.0, 1.0, 0.8 * clamp(1.8 - abs(s - sq), 0.0, 1.0) * clamp(hw + 3.5 - d, 0.0, 1.0)), col);
     // ticks under the bar, longer on the even thousands
     for (int i = 0; i < 9; i++) {
         float fi = float(i);
@@ -2286,6 +2286,9 @@ function hardened(src, highp) {
     if (highp && out.indexOf('GL_FRAGMENT_PRECISION_HIGH') < 0) out = out.replace('precision mediump float;', HIGHP);
     return out;
 }
+// cluster-render keeps six uniform names for its own matrices (PROTOCOL.md: u_mvp, u_mv, u_m, u_v, u_p, u_normal) and hands them to RAMSES as
+// matrices wherever a shader mentions them. The views' drawings named their bars' levels "u_v" (a vec4): on the car RAMSES then refused the
+// whole effect ("effect did not compile", owner's photo of 21 Nov 2026) while the bench drew it. Renamed u_lvl; tools/test_shader_names.js keeps watch.
 const VIEW_SHADERS = { mpanel: true, mblades: true, sring: true, nline: true, vcard: true };
 module.exports = { mblades: MBLADES, nline: NLINE, sring: SRING, vcard: VCARD, slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, mpanel: MPANEL, navi: NAVI, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, accented, ACCENT_LITERALS };
 Object.keys(module.exports).forEach((k) => { if (typeof module.exports[k] === 'string') module.exports[k] = hardened(module.exports[k], VIEW_SHADERS[k] === true); });

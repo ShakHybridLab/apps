@@ -1963,7 +1963,7 @@ class HudApp {
     /**
      * The rev counter's held peak 0..1 for the bar's own state x: the highest value of the last PEAK_HOLD_MS, held there, then eased down onto the
      * value; 0 while it is not clearly above the value (a tick that sat on the marker would only blur it), and 0 when the bar shows the hybrid's
-     * power ("off": the peak starts again when the engine runs). The tick is drawn by the shaders (u_peak; mstyle's u_v.y).
+     * power ("off": the peak starts again when the engine runs). The tick is drawn by the shaders (u_peak; mstyle's u_lvl.y).
      */
     _peakRev(x, v, now, off) {
         if (off) { x.pk = null; return 0; }
@@ -2966,7 +2966,7 @@ class HudApp {
             c.uniform(ref, 'u_bx', w.bar ? [w.bar[0] - w.x, w.bar[1] - w.x] : [0, 1]);
             c.uniform(ref, 'u_ry', pad((r) => r.y - w.y, -1));
             c.uniform(ref, 'u_rz', pad((r) => (isNum(r.red) ? r.red : 2), 2));
-            c.uniform(ref, 'u_v', [0, 0, 0, 0]);
+            c.uniform(ref, 'u_lvl', [0, 0, 0, 0]);
             c.uniform(ref, 'u_tone', [0, 0, 0, 0]);
             c.uniform(ref, 'u_div', [w.div || 2]);
             // "seg": each bar's segments (24); "mode": "tyres" draws the car from above with "tiles" [left x, right x, front y, rear y] (the plates' middles)
@@ -3178,7 +3178,7 @@ class HudApp {
             c.uniform(ref, 'u_A', [P[0][0], P[0][1], P[1][0], P[1][1]]);
             c.uniform(ref, 'u_B', [P[2][0], P[2][1]]);
             c.uniform(ref, 'u_g', [w.bar, Math.min(0.95, Math.max(0.05, (w.corner || 2000) / max)), max / 1000, this._redMarks(max)[0]]);
-            c.uniform(ref, 'u_v', [0, 0, 0, 0]);
+            c.uniform(ref, 'u_lvl', [0, 0, 0, 0]);
             c.uniform(ref, 'u_hy', [0, 0, 0, 0]);
             c.uniform(ref, 'u_hot', rgb(t.hot));
             c.uniform(ref, 'u_fg', rgba(t.fg));
@@ -3780,7 +3780,7 @@ class HudApp {
             const key = v + '|' + bar + '|' + Math.round(zone * 20) + '|' + pk;
             if (!force && key === x.last) return;
             x.last = key;
-            x.c.uniform(x.ref, 'u_v', [v, pk, zone, 0]);
+            x.c.uniform(x.ref, 'u_lvl', [v, pk, zone, 0]);
             x.c.uniform(x.ref, 'u_hy', bar === 1 ? [0.3, 0.75, 1.0, 1] : bar === 2 ? [0.2, 0.85, 0.5, 1] : [0, 0, 0, 0]);
         } else if (VIEW_PANEL[w.type]) {
             // the panel's bars: each row's reading between its min and max, in its tone: "temp" (oil, coolant) blue while cold, green once warm, flashing
@@ -3802,7 +3802,7 @@ class HudApp {
             const key = v.join(',') + '|' + tn.join(',') + '|' + wh.join(',');
             if (!force && key === x.last) return;
             x.last = key;
-            x.c.uniform(x.ref, 'u_v', v);
+            x.c.uniform(x.ref, 'u_lvl', v);
             x.c.uniform(x.ref, 'u_tone', tn);
             if (w.mode === 'tyres') x.c.uniform(x.ref, 'u_wh', wh);
         } else if (w.type === 'box' && w.ring && w.ringWhen) {

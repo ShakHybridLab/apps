@@ -2,6 +2,13 @@
 
 ## 21 novembre 2026
 
+### ShakTheme 0.21.60, ShakHUD 0.6.42 : la vraie cause des dessins de vues refusés par la voiture, un nom réservé
+- **La 0.21.59 (boucle retirée) n'a rien changé** : photos du propriétaire à 22:17, la vue électrique de M Blade toujours sans panneau, ligne d'état « 15 couches affichées sur 16 ».
+- **Cause trouvée dans le code de cluster-render** (`src/graph_ramses19.cpp`, `PROTOCOL.md`) : il garde six noms d'uniformes pour ses matrices (`u_mvp`, `u_mv`, `u_m`, `u_v`, `u_p`, `u_normal`) et, dès qu'un dessin mentionne l'un d'eux, le déclare à RAMSES comme une matrice. Or les dessins des vues (`mpanel`, `mblades`, `sring`, `nline`, `vcard`) et le compte-tours `mstyle` de ShakHUD nommaient `u_v` le niveau de leurs barres (un `vec4`). Sur la voiture, RAMSES refuse alors tout l'effet : « effect did not compile ». Le banc n'a pas cette règle, donc tout s'y affichait. Les fonds, eux, n'ont pas d'uniforme de ce nom : ils s'affichent.
+- **Correctif** : `u_v` renommé `u_lvl` dans `shared/shaders.js` et `shared/hud.js`. Nouveau contrôle `tools/test_shader_names.js` : aucun dessin ni envoi d'uniforme ne peut reprendre un des six noms.
+- **ShakHUD** : son compte-tours `mstyle` avait le même nom ; s'il ne s'affichait pas sur le HUD, c'était la même cause.
+- **Vérifié** : les 28 dessins compilent (Mesa, GLSL ES), suite complète (seuls les trois échecs connus). **Pas vu sur la voiture.** Le « refusé : drop: no such layer » de la ligne d'état est la suite du même refus (le thème retire une couche que la voiture n'a jamais créée).
+
 ### ShakTheme 0.21.59 : les dessins des vues BC refusés par la voiture (« effect did not compile »)
 - **Photo du propriétaire (21 nov., 22:08), ligne d'état de l'onglet Réglages** : « 20 couches affichées sur 21, refusé : xb_card_e: effect did not compile ». La voiture ne compile pas le dessin des vues ; c'est pour ça que les textes s'affichent et pas les panneaux, barres et voiture (défaut noté le 20 nov., cause inconnue jusqu'ici).
 - **Cause probable** : les cinq dessins de vues (`mpanel`, `mblades`, `sring`, `nline`, `vcard`) sont les seuls du thème à utiliser une boucle `for` avec un compteur `int` (les quatre roues de la vue des pneus). Aucun dessin qui s'affiche sur la voiture (fonds, shiftlight, cartes d'alerte) n'en contient. Le compilateur du banc (Mesa, GLSL ES) les accepte tous, donc le banc ne pouvait pas le voir.
