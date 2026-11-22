@@ -2,7 +2,7 @@
   "id": "shaklimites",
   "title": "ShakLimites (essai)",
   "description": "La limitation de vitesse de la route d'après une carte (OpenStreetMap) et le GPS de la voiture, pour les voitures dont la caméra ne lit pas les panneaux. Elle s'affiche dans le rond de limitation de ShakTheme. Là où la carte ne sait pas, 50 km/h par défaut ; ne connaît ni les travaux ni les limites temporaires.",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "vendor": "custom",
   "startType": "autostart",
   "loggingId": "OALM",

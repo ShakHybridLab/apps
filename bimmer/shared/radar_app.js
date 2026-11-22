@@ -34,6 +34,7 @@ class RadarApp {
         this.dir = deps.dir || THEMES_DIR;
         this.file = deps.file || FILE;          // (ShakTheme writes its own file: ShakRadar, if it is still installed, keeps its own)
         this.app = deps.app || 'ShakRadar';
+        this.onZone = deps.onZone || null;      // (o | null): the zone handed over in memory too (ShakTheme's own alert, danger.js feed)
         this.pos = null;             // { lat, lon, how, at }
         this.from = null; this.heading = null;      // see position()
         this.ext = null;             // gps.extended() of the last GPSPositionExtendedCAN
@@ -104,13 +105,17 @@ class RadarApp {
         if (!this.zone) { this._clear(); return; }
         const o = { t, app: this.app, distance: Math.max(0, Math.round(this.zone.edgeM)) };
         if (this.zone.limit) o.limit = this.zone.limit;
+        if (this.onZone) { try { this.onZone(o); } catch (e) { /* the theme's own matter */ } }
         this._write(o);
     }
 
     _write(o) {
         const f = path.join(this.dir, this.file);
         try {
-            try { fs.mkdirSync(this.dir); } catch (e) { /* already there */ }
+            // the folder is shared by several apps, each its own user on the car: made open to all (the umask would leave it the maker's alone, and
+            // the others got EACCES: the owner's car, 22 Nov 2026); chmod works only for its maker, so it is tried every time and may fail
+            try { fs.mkdirSync(this.dir, 0o777); } catch (e) { /* already there */ }
+            try { fs.chmodSync(this.dir, 0o777); } catch (e) { /* not ours */ }
             fs.writeFileSync(f + '.tmp', JSON.stringify(o), { mode: 0o644 });
             fs.renameSync(f + '.tmp', f);
             this.writing = true; this.writtenAt = o.t; this.writeError = null;
@@ -118,6 +123,7 @@ class RadarApp {
     }
 
     _clear() {
+        if (this.onZone) { try { this.onZone(null); } catch (e) { /* the theme's own matter */ } }
         if (!this.writing) return;
         this.writing = false;
         try { fs.unlinkSync(path.join(this.dir, this.file)); } catch (e) { /* gone */ }

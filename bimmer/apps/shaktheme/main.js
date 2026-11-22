@@ -32,7 +32,9 @@ mgu.run({
             const { RadarZones } = require('./radar_zones');
             const { RadarApp } = require('./radar_app');
             const zones = new RadarZones(require('./kit/pack').open(require('path').join(__dirname, 'zones')).json('radars_fr_zones.json'));
-            radar = new RadarApp({ zones, log: ctx.log, file: 'danger-shaktheme.json', app: 'ShakTheme', enabled: () => ctx.settings.get('dangerAlert') === true, everyMs: 1900 });
+            radar = new RadarApp({ zones, log: ctx.log, file: 'danger-shaktheme.json', app: 'ShakTheme', enabled: () => ctx.settings.get('dangerAlert') === true, everyMs: 1900,
+                // la zone passe aussi en mémoire au thème : sur la voiture, le fichier ne pouvait pas être écrit (« écriture EACCES », 22 nov. 2026)
+                onZone: (o) => { if (hud.danger) { hud.danger.feed(o); hud.danger.scan(); } } });
             radar.start();
             hud.radar = radar;
             ctx.signals.watch('de.bmw.infotainment.GPSData', '1', {

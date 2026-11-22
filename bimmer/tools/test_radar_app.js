@@ -109,6 +109,23 @@ check('le fichier écrit est celui que lit l\'alerte du thème (danger.js), avec
     assert(s && s.on && Math.abs(s.distM - 300) < 10 && s.limit === 70 && s.app === 'ShakRadar', JSON.stringify(s));
     R.app.stop(); assert.strictEqual(R.read(), null, 'arrêtée : le fichier part');
 });
+check('dossier partagé interdit en écriture (« écriture EACCES » sur la voiture, 22 nov. 2026) : l\'alerte du thème arrive quand même, en mémoire', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ro-'));
+    fs.chmodSync(dir, 0o555);
+    let t = 1000000; const got = [];
+    const app = new RadarApp({ zones: ZONES, dir, now: () => t, log: { warn() {}, info() {} }, onZone: (o) => got.push(o) });
+    const d = new Danger({ dir, now: () => t }, { info() {}, warn() {} }, () => {});
+    app.position({ latitude: 45.44 + 2300 / M_LAT, longitude: 4.39 }); app.tick();
+    if (process.getuid && process.getuid() !== 0) assert(app.state().writeError, 'le fichier ne devait pas pouvoir s\'écrire');
+    const o = got[got.length - 1];
+    assert(o && Math.abs(o.distance - 300) < 10 && o.limit === 70, JSON.stringify(o));
+    d.feed(o); d.scan();
+    assert(d.state().on && d.state().limit === 70, JSON.stringify(d.state()));
+    t += 6000; app.tick();
+    assert.strictEqual(got[got.length - 1], null, 'plus de position : la zone est retirée en mémoire aussi');
+    d.feed(null); d.scan(); assert.strictEqual(d.state().on, false);
+    fs.chmodSync(dir, 0o755); fs.rmSync(dir, { recursive: true, force: true });
+});
 check('l\'appli : GPSData seul (déclaré à part, comme ShakGPS), ses fichiers partagés existent, la liste des zones est celle de data/', () => {
     // (ShakRadar, l'appli à part, a été supprimée le 19 nov. 2026 : l'alerte est dans ShakTheme)
     assert(!fs.existsSync(path.join(ROOT, 'apps', 'shakradar')), 'ShakRadar est revenue');

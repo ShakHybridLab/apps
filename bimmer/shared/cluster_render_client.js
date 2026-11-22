@@ -187,6 +187,7 @@ class ClusterRender extends EventEmitter {
             if (this.sock !== sock) return;
             const wasReady = this.ready;
             this.sock = null;
+            if (this.pendingUni) this.pendingUni.clear();       // (the replay on the next connect sends every layer's newest uniforms)
             this.ready = false;
             this.connected = false;
             this.corked = 0;
@@ -265,6 +266,16 @@ class ClusterRender extends EventEmitter {
      * the newest video frame of each layer. */
     _pump() {
         if (!this.sock || !this.ready) return;
+        /* the newest value of each uniform held while the socket was full (see uniform): first, they are small and they are the gauges */
+        if (this.pendingUni && this.pendingUni.size) {
+            for (const [k, m] of Array.from(this.pendingUni.entries())) {
+                if (this.blocked) break;
+                this.pendingUni.delete(k);
+                const l = this.layers.get(m.ref);
+                if (!l) continue;
+                if (!this.sock.write(jsonMessage(m))) this.blocked = true;
+            }
+        }
         /* Round robin: start after the layer written last. In the map's order, a layer that changes all the time
          * (ShakTheme's speed limit ring flashing over the limit) and comes first took every write the socket
          * allowed while the service throttled us, and a layer after it on the same connection (the speed) waited:
@@ -411,6 +422,11 @@ class ClusterRender extends EventEmitter {
          * l.uniforms): a gauge loop that sets every uniform of every layer at 50 Hz sends only the ones that changed. */
         if (prev && prev.v === m.v && prev.type === m.type) return;
         l.uniforms[key] = m;
+        /* While the service is not taking our writes (the socket is full), a uniform is not queued behind the others: only its newest
+         * value waits, and goes out first when the socket drains. Queued, every value of a 50 Hz gauge loop waited its turn behind the
+         * older ones, and the cluster showed the speed and the rpm seconds late (the owner's car, 22 Nov 2026: "tout est lent, il y a
+         * de la latence"). */
+        if (this.blocked && this.sock && this.connected) { (this.pendingUni || (this.pendingUni = new Map())).set(ref + '|' + key, m); return; }
         this._send(m);
     }
 

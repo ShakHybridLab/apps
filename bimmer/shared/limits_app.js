@@ -101,7 +101,8 @@ class LimitsApp {
         if (said === null) { this._clear(); return; }
         const f = path.join(this.dir, FILE);
         try {
-            try { fs.mkdirSync(this.dir); } catch (e) { /* there */ }
+            try { fs.mkdirSync(this.dir, 0o777); } catch (e) { /* there */ }
+            try { fs.chmodSync(this.dir, 0o777); } catch (e) { /* not ours: another app made it (radar_app.js says why) */ }
             fs.writeFileSync(f + '.tmp', JSON.stringify(this.guess ? { t, app: 'ShakLimites', limit: said, guess: true } : { t, app: 'ShakLimites', limit: said }), { mode: 0o644 });
             fs.renameSync(f + '.tmp', f);
             this.writing = true; this.writeError = null;

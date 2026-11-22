@@ -34,7 +34,15 @@ class Danger {
         this.onChange = onChange || (() => {});
         this.timer = null;
         this.cur = null;                 // { distance, limit, app } while an alert is on
+        this.inner = null;               // the same object as a source's file, handed over in memory (feed)
     }
+
+    /**
+     * A zone found inside this app (ShakTheme's own detection, radar_app.js): the object a source writes to its file, handed over in
+     * memory, or null when there is none. On the owner's car the file could not be written (22 Nov 2026, the Signals tab: "write EACCES":
+     * /dev/shm/cluster-themes belonged to another app), so the alert never showed; this way the theme's own alert does not need it.
+     */
+    feed(o) { this.inner = o || null; }
 
     start() {
         this.stop();
@@ -63,14 +71,18 @@ class Danger {
             const t = this.now();
             let names = [];
             try { names = fs.readdirSync(this.dir); } catch (e) { names = []; }
-            names.forEach((n) => {
-                if (!/^danger-[\w.-]+\.json$/.test(n)) return;
-                let j = null;
-                try { j = JSON.parse(fs.readFileSync(this.dir + '/' + n, 'utf8')); } catch (e) { return; }
+            const take = (j, n) => {
                 if (!j || typeof j.t !== 'number' || t - j.t >= STALE_MS || j.t - t > STALE_MS) return;
                 if (typeof j.distance !== 'number' || !isFinite(j.distance) || j.distance < 0 || j.distance > MAX_M) return;
                 const limit = typeof j.limit === 'number' && isFinite(j.limit) && j.limit >= 5 && j.limit <= 200 ? Math.round(j.limit) : null;
                 if (!best || j.distance < best.distance) best = { distance: j.distance, limit, app: typeof j.app === 'string' ? j.app.slice(0, 30) : n };
+            };
+            if (this.inner) take(this.inner, 'inner');
+            names.forEach((n) => {
+                if (!/^danger-[\w.-]+\.json$/.test(n)) return;
+                let j = null;
+                try { j = JSON.parse(fs.readFileSync(this.dir + '/' + n, 'utf8')); } catch (e) { return; }
+                take(j, n);
             });
         } catch (e) { best = null; }
         const before = this.cur;

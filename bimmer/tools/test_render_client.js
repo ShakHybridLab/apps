@@ -100,6 +100,23 @@ check('un socket qui freine n\'affame aucune couche : les écritures d\'images p
     assert(sentB, 'la couche B est restée en attente derrière A');
 });
 
+check('socket plein : une jauge n\'empile pas ses valeurs, seule la plus récente part, en premier, quand il se vide (22 nov. 2026 : « tout est lent, il y a de la latence »)', () => {
+    const c = new ClusterRender('test', '/nonexistent');
+    let full = false; const sent = [];
+    c.sock = { write(m) { sent.push(Buffer.isBuffer(m) ? m.toString('utf8') : String(m)); return !full; } };
+    c.connected = true; c.ready = true;
+    const ref = c.effect({ x: 0, y: 0, w: 10, h: 10, fs: 'void main(){}' });
+    c.uniform(ref, 'u_value', [0.1]);
+    full = true; c.uniform(ref, 'u_value', [0.2]);          // ce message-ci remplit le socket
+    const before = sent.length;
+    for (let i = 3; i < 100; i++) c.uniform(ref, 'u_value', [i / 100]);
+    assert.strictEqual(sent.length, before, 'socket plein : rien ne doit s\'empiler');
+    full = false; c.blocked = false; c._pump();
+    const after = sent.slice(before).filter((m) => /"op":"uniform"/.test(m));
+    assert.strictEqual(after.length, 1, 'une seule valeur à la reprise, pas ' + after.length);
+    assert(/"v":"0.99"/.test(after[0]), 'la plus récente : ' + after[0]);
+});
+
 check('hud.js : _rebuild retient les écritures de chaque connexion pendant la reconstruction et les relâche même sur une erreur', () => {
     const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
     assert(/const corked = this\.clients\.filter\(\(c\) => typeof c\.cork === 'function' && c\.cork\(\)\);/.test(src));
