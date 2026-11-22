@@ -41,7 +41,9 @@ const RAIL = { x: 16, y: 54, w: 252, h: 66, gap: 8 };
 const RAIL7 = { x: 16, y: 54, w: 252, h: 54, gap: 6 };     // six tabs: a little shorter, so they fit (and the app's mark below)
 const RAIL8 = { x: 16, y: 54, w: 252, h: 50, gap: 4 };     // seven tabs or more
 const CX = 300, CR = 1584, CW = CR - CX;
-const MODES = [['inHybrid', 'Hybrid'], ['inEco', 'Hybrid Eco Pro'], ['inSport', 'Sport Plus']];
+// the three cells of "change with the drive mode": named for what the car does in them (the owner, 23 Nov 2026: "there is Hybrid twice, put
+// hybrid, electric and sport"; BMW calls the second one Hybrid Eco Pro, which also covers Electric and Electric Individual)
+const MODES = [['inHybrid', 'Hybrid'], ['inEco', 'Electric'], ['inSport', 'Sport']];
 const MODE_KEY = { hybrid: 'inHybrid', electric: 'inEco', eco: 'inEco', sport: 'inSport', comfort: 'inHybrid' };
 const TAB = {
     look: { icon: 'screen' },
@@ -299,7 +301,7 @@ class Page {
     modeCell(cv, x, y, w, name, key) {
         const h = 52;
         glass(cv, x, y, w, h, false);
-        cv.text(name, x + 14, y + 20, 14, C.dim, { literal: true });
+        cv.text(name, x + 14, y + 20, 14, C.dim);          // (translated: "Hybride  ·  actuel")
         cv.text(this.layoutName(this.get(key)), x + 14, y + 42, 18, C.blueHi, { font: 'bold', literal: true });
         chevron(cv, x + w - 18, y + h / 2, C.dim);
         cv.target(x, y, w, h, () => { this.picker = { key, title: name, fmt: (v) => this.layoutName(v) }; this.kick(); }, 'set:' + key, 14);
@@ -478,14 +480,9 @@ class Page {
         for (let i = 0; i < rows; i++) cv.text(raw.slice(i * 100, (i + 1) * 100), CX + 46, y + 51 + i * 15, 12, C.dim, { literal: true });
         for (let i = 0; i < drows; i++) cv.text(det.slice(i * 100, (i + 1) * 100), CX + 46, y + 51 + (rows + i) * 15, 12, C.text, { literal: true });
         y += ch + 6;
-        // only while a route is on (the car's CarPlay guidance signal, hud.js _guidance); what the car says sits left of the switch
-        const rowY = y;
-        y = this.toggleRow(cv, CX, y, w, 'Show the map only with a route', 'mapOnlyWithRoute', 44);
-        const route = this.hud.routeActive, gd = this.hud.probes && this.hud.probes.get(probes.GUIDE.id), gv = gd && gd.vals[0] ? ' · ' + String(gd.vals[0]).slice(0, 16) : '';
-        const gsub = (this.hud.car && this.hud.car.subs || []).find((x) => x && x.iface === probes.GUIDE.iface), gsig = this.hud.ctx && this.hud.ctx.signals;
-        const gtext = !probes.declaredIn(this.hud.ctx && this.hud.ctx.spec, probes.GUIDE) ? 'Not read in this version' : route === true ? 'Route on' + gv : route === false ? 'No route' + gv : gd ? 'Value not understood' + gv
-            : probes.stateOf(gsub, probes.GUIDE.field, probes.GUIDE.iface, gsig && gsig.busyWith ? gsig.busyWith() : null);
-        cv.text(gtext, CX + w - 100, rowY + 29, 16, route === true ? C.live : route === false ? C.dim : '#e0a340', { align: 'right', literal: true });
+        // the map always, or only after a press of the BC button (owner, 23 Nov 2026); "Show the map only with a route" went: the car refuses the
+        // CarPlay guidance signal it needed (docs/car_catalog_notes.md)
+        y = this.toggleRow(cv, CX, y, w, 'Map only with the BC button (else always shown)', 'mapByBc');
         y = this.toggleRow(cv, CX, y, w, 'Centre window for Cluster Centre / Cluster Info', 'centreWindow');
         const ci = this.hud.windowOpen ? 'Window open: Cluster Centre / Cluster Info draw in it' : this.hud.ci && this.hud.ci.wantsWindow() ? 'Asked for, opening' : 'Closed (nothing asks for it)';
         note(cv, CX, y + 14, [ci + '. It is the same window the phone\'s map shows in (Sport, M, M Blade and Navi).']);

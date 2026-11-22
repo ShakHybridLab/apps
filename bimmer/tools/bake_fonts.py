@@ -86,9 +86,13 @@ CLUSTER_FONTS = [
     # the numbers of the road signs (the speed limit, the danger alert's limit) in DIN 1451, the lettering of European road signs (DINish, SIL
     # OFL; the owner, 23 Nov 2026: "la police du chiffre du panneau est bizarre, mets la police des panneaux de limitation européens"): l in the
     # 92 px sign, m in the 64 px ones (M Blade, Navi), s in Sport's and M's alert card (a 54 px ring)
-    ('sign_l', 'DINish-Bold.ttf', 42, DIGITS),
-    ('sign_m', 'DINish-Bold.ttf', 29, DIGITS),
+    # (23 Nov 2026, "with 3 digits it is too tight, as the original": digits about 0.38 of the sign, three digits in the condensed cut, "3")
+    ('sign_l', 'DINish-Bold.ttf', 50, DIGITS),
+    ('sign_l3', 'DINishCondensed-Bold.ttf', 50, DIGITS),
+    ('sign_m', 'DINish-Bold.ttf', 35, DIGITS),
+    ('sign_m3', 'DINishCondensed-Bold.ttf', 35, DIGITS),
     ('sign_s', 'DINish-Bold.ttf', 24, DIGITS),
+    ('sign_s3', 'DINishCondensed-Bold.ttf', 24, DIGITS),
 ]
 FONTS = {'idrive_hud_widgets': HUD_FONTS, 'shaktheme': CLUSTER_FONTS, 'shakhud': [
     # the owner, 22 Nov 2026, with a photo of an M car's HUD: "I want all the writing to look like that": the squared numbers of the M theme
@@ -97,7 +101,8 @@ FONTS = {'idrive_hud_widgets': HUD_FONTS, 'shaktheme': CLUSTER_FONTS, 'shakhud':
     ('rnum', 'Orbitron[wght].ttf', 20, DIGITS, 0, 'Black', {'0': 'O'}),   # the rev counter's numbers, under the bar
     ('big', 'Orbitron[wght].ttf', 42, DIGITS + '-%', 0, 'Black', {'0': 'O'}),      # the battery's percent, the danger distance
     ('mid', 'Orbitron[wght].ttf', 17, LOWER + UPPER + DIGITS + '/.:-°%>· ', 0, 'Bold', {'0': 'O'}),   # ranges, temperatures, the alert's words
-    ('sign_m', 'DINish-Bold.ttf', 28, DIGITS),     # the danger alert's limit on its white sign (60 px), in the road signs' DIN 1451
+    ('sign_m', 'DINish-Bold.ttf', 33, DIGITS),     # the danger alert's limit on its white sign (60 px), in the road signs' DIN 1451
+    ('sign_m3', 'DINishCondensed-Bold.ttf', 33, DIGITS),   # three digits: the condensed cut
 ]}
 PAD = 2
 ATLAS_W = 1024

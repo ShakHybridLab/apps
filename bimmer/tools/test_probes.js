@@ -13,7 +13,8 @@ const theme = app('shaktheme'), hud = app('shakhud');
 
 // "get notify" in the catalog photos is "rs", "notify" alone "s" (a notifier without getter)
 // (sign, next, wheel, pdrive, pdrive2 and rpme left the list on 19 Nov 2026: dead on the owner's car)
-const FLAGS = { rpm: 'rs', engt: 'rs', speed: 'rs', fas: 'rs', fasx: 'rs', rel: 'rs', pdist: 'rs', erange: 'rs', cc: 'rs', rpm2: 'rs' };
+// (fas, fasx and pdist left on 23 Nov 2026: only shown on the Signals tab, nothing drew from them)
+const FLAGS = { rpm: 'rs', engt: 'rs', speed: 'rs', rel: 'rs', erange: 'rs', cc: 'rs', rpm2: 'rs' };
 
 check('every probe is declared in ShakTheme\'s app.json with the flags the catalog lists (a signal the car does not have breaks the installation)', () => {
     assert.deepStrictEqual(PROBES.map((p) => p.id).sort(), Object.keys(FLAGS).sort(), 'the probes are not the ones listed here');
@@ -83,8 +84,8 @@ check('a value is kept newest first, three at most, a repeat changes nothing, an
     ['2', '3', '4'].forEach((a, i) => p.feed('cc', { a }, 2000 + i));
     const d = p.get('cc');
     assert.deepStrictEqual(d.vals, ['a=4', 'a=3', 'a=2']); assert.strictEqual(d.n, 5); assert.strictEqual(d.at, 2002);
-    p.feed('fasx', null, 3000); assert.strictEqual(p.heard(), 1, 'a null reading is not a value'); p.feed('fasx', {}, 3000); assert.deepStrictEqual(p.get('fasx').vals, ['(empty)']); p.by.fasx = undefined;
-    p.feed('pdist', { x: 1 }, 3000); assert.strictEqual(p.heard(), 2);
+    p.feed('erange', null, 3000); assert.strictEqual(p.heard(), 1, 'a null reading is not a value'); p.feed('erange', {}, 3000); assert.deepStrictEqual(p.get('erange').vals, ['(empty)']); p.by.erange = undefined;
+    p.feed('rel', { x: 1 }, 3000); assert.strictEqual(p.heard(), 2);
     assert.strictEqual(SHOWN.length, PROBES.length);
 });
 check('the log gets the first 12 distinct values, then one a minute, and never more than two a second', () => {
@@ -104,7 +105,7 @@ check('a value is one line of key=value, long ones cut', () => {
     assert.strictEqual(rawOf([1, 2]), '[1,2]'); assert.strictEqual(rawOf(null), '');
     assert(rawOf(JSON.parse('[' + '1,'.repeat(400) + '1]')).length <= 500, 'an array is not cut');
 });
-check('the Signals tab: two pages that hold every probe once, each row fits above the app\'s mark, and what the app understood is shown', () => {
+check('the Signals tab: its page(s) hold every probe once, each row fits above the app\'s mark, and what the app understood is shown', () => {
     const { PAGES, meaningOf } = require('../shared/probes');
     assert.deepStrictEqual(PAGES.reduce((a, b) => a.concat(b), []).sort(), PROBES.map((p) => p.id).concat([GUIDE.id]).sort(), 'the pages do not hold every probe once');
     const page = fs.readFileSync(path.join(__dirname, '..', 'shared', 'page.js'), 'utf8');
@@ -150,7 +151,7 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
         const odd = run(0, { rel: { displayActualValuePowerRelativeDrivingElectric: 300 } }).text.map((t) => t.t);
         assert(odd.indexOf('= above 100 %: scale to confirm') >= 0 && !odd.some((t) => /not used|· bar/.test(t)), 'an unknown scale shows alone: ' + odd.join('|'));
     }
-    [0, 1].forEach((pg) => [false, true].forEach((fed) => {
+    PAGES.forEach((ids, pg) => [false, true].forEach((fed) => {
         const c = run(pg, fed ? { rpm: 2500, speed: 62, sign: 70, guide: true, cc: { numberDisplayControlCheckControlMessage: 3 } } : null);
         assert.strictEqual(c.chips.join(), Array.from({ length: NPAGES }, (_, i) => (i + 1) + '/' + NPAGES).join());
         const last = c.glass[c.glass.length - 1];
@@ -189,16 +190,16 @@ check('the Signals tab: two pages that hold every probe once, each row fits abov
             const mfl = cat.groups[0].rows.find((r) => r.field === 'statusMFLButtons');
             assert.strictEqual(mfl.flags, 'get notify'); assert.deepStrictEqual(mfl.members, ['buttonPlus', 'buttonMinus']);
             assert(catalog.find('/nonexistent/catalog.json').error, 'a missing catalogue is an error, not a crash');
-            Array.from({ length: catalog.GROUPS.length }, (_, i) => i + 2).forEach((pg) => {
+            Array.from({ length: catalog.GROUPS.length }, (_, i) => i + PAGES.length).forEach((pg) => {
                 const c = run(pg, null, cat);
                 assert.strictEqual(c.chips.length, NPAGES);
-                assert.strictEqual(c.glass.length, Math.max(1, cat.groups[pg - 2].rows.length), 'rows on catalogue page ' + pg);
+                assert.strictEqual(c.glass.length, Math.max(1, cat.groups[pg - PAGES.length].rows.length), 'rows on catalogue page ' + pg);
                 const last = c.glass[c.glass.length - 1];
                 assert(last.y + last.h <= 512 && c.note.y + (c.note.n - 1) * 26 + 6 <= 512, 'catalogue page ' + pg + ' runs past 512');
                 c.text.forEach((t) => assert(t.y <= 512, 'text below the page: ' + t.t));
                 assert(c.logs.length === 1 && /^catalogue: /.test(c.logs[0]), 'the catalogue is logged once');
             });
-            assert(run(2, null, cat).text.some((t) => /SteeringWheelButtons · statusMFLButtons$/.test(t.t)));
+            assert(run(PAGES.length, null, cat).text.some((t) => /SteeringWheelButtons · statusMFLButtons$/.test(t.t)));
             // not read yet (the car's file is big: it is read a moment after the frame, the page says so meanwhile, then it is drawn again)
             const wait = run(3, null, 'READING');
             assert(wait.text.some((t) => t.t === "Reading the car's catalog (once, a few seconds)..."), 'the page does not say the catalogue is being read');
@@ -326,14 +327,18 @@ check('the map shows in the theme with a route, or when the car says nothing; no
     o._guidance(undefined); o._guidance(null); assert.strictEqual(o.routeActive, false, 'no value keeps the last one');
     assert(o.logs.some((l) => /CarPlay guidance active/.test(l)) && o.logs.some((l) => /inactive: no route/.test(l)));
 });
-check('hud.js wires the guidance probe (GUIDE joins the probes of the app) and the Map tab shows it', () => {
+check('hud.js wires the guidance probe (GUIDE joins the probes of the app); the Map tab has the BC button option in place of the route one', () => {
     const hudJs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8'), pageJs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'page.js'), 'utf8');
     assert(/PROBES\.concat\(\[GUIDE\]\)\.forEach/.test(hudJs) && /p\.id === 'guide'\) this\._guard\('guidance'/.test(hudJs), 'hud.js does not feed the guidance');
     assert(/this\.ctx\.settings\.get\('mapOnlyWithRoute'\)/.test(hudJs));
-    assert(/'mapOnlyWithRoute'/.test(pageJs) && /probes\.GUIDE/.test(pageJs), 'the Map tab does not show the setting and the state');
-    const item = theme.settings.find((x) => x.key === 'mapOnlyWithRoute');
-    assert(item && item.type === 'bool' && item.default === true && /itinéraire/.test(item.label), 'the setting is missing or not in French');
-    assert(!hud.settings.some((x) => x.key === 'mapOnlyWithRoute'), 'ShakHUD has the setting');
+    // (23 Nov 2026: "Map only with a route" could never work, the car refuses the guidance signal: off the page and the settings; the owner asked
+    // for "the map only with the BC button, or always" instead)
+    assert(!/'mapOnlyWithRoute'/.test(pageJs) && /'mapByBc'/.test(pageJs), 'the Map tab shows the wrong setting');
+    assert(!theme.settings.some((x) => x.key === 'mapOnlyWithRoute'), 'the route setting is back');
+    const item = theme.settings.find((x) => x.key === 'mapByBc');
+    assert(item && item.type === 'bool' && item.default === false && /touche BC/.test(item.label), 'the BC setting is missing or not in French');
+    assert(!hud.settings.some((x) => x.key === 'mapByBc'), 'ShakHUD has the setting');
+    assert.strictEqual(fr.tr('Map only with the BC button (else always shown)'), 'Carte seulement avec la touche BC (sinon toujours affichée)');
 });
 check('the Map tab texts are in French', () => {
     assert.strictEqual(fr.tr('Show the map only with a route'), 'Carte seulement avec un itinéraire');
@@ -391,7 +396,7 @@ check('boucle des jauges : _tick mesure chaque image (durée, attente entre deux
 check('régime : hud.js le relit toutes les 100 ms en plus des notifications, seulement si l\'appli le déclare ; le kit passe pollMs à l\'abonnement du CDS', () => {
     const src = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
     assert(/const RPM_POLL_MS = 100;/.test(src));
-    assert(/if \(decl\[CDS_IFACE\] && decl\[CDS_IFACE\]\.statusEngineSpeed2\) \(extra\[CDS_IFACE\] = extra\[CDS_IFACE\] \|\| \{\}\)\.\$pollMs = RPM_POLL_MS;/.test(src), 'la relecture est liée à la déclaration du signal');
+    assert(/if \(decl\[CDS_IFACE\] && decl\[CDS_IFACE\]\.statusEngineSpeed2\) Object\.assign\(extra\[CDS_IFACE\] = extra\[CDS_IFACE\] \|\| \{\}, \{ \$pollMs: RPM_POLL_MS, \$pollOnly: \['statusEngineSpeed2'\] \}\);/.test(src), 'la relecture est liée à la déclaration du signal, et ne relit que le régime');
     ['shaktheme', 'shakhud'].forEach((a) => {
         const spec = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', a, 'app.json'), 'utf8'));
         assert(spec.signals['de.bmw.infotainment.vehicle.CDS'].statusEngineSpeed2, a + ' déclare le régime');

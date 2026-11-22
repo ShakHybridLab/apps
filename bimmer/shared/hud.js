@@ -663,8 +663,12 @@ class HudApp {
         this.mapLayout = false;          // the active layout has a map window (a widget with holeWhen "mapUp")
         // the Waze map inside the theme (ShakTheme, config.waze; waze.js): "mapUp" is on while it shows
         this.waze = this.config.waze ? new Waze(Object.assign({ dataDir: ctx.dataDir }, this.config.waze), this.log, () => this._guard('waze', () => {
-            // the map gone (Waze closed, the trip over): the BC button's "map hidden" ends with it, so the next map shows by itself again
-            if (this.mapOff && !(this.waze && this.waze.up === true)) this.mapOff = false;
+            // the map gone (Waze closed, the trip over): the BC button's "map hidden" ends with it, so the next map shows by itself again; with the
+            // setting "mapByBc" (owner, 23 Nov 2026: "an option: Waze only with the BC button, or always on") a map that comes stays hidden until a press
+            const up = !!(this.waze && this.waze.up === true);
+            if (up && !this.wazeWasUp) this.mapOff = this.setting('mapByBc') === true;
+            else if (!up && this.mapOff) this.mapOff = false;
+            this.wazeWasUp = up;
             if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuild(); else this._status();
         })) : null;
         this.viewNow = null;             // the view the steering wheel's button stepped to (null: the setting "viewSel" decides), see nextView()
@@ -719,6 +723,7 @@ class HudApp {
             // a theme or layout picked anywhere (the page asks first, the kit's All settings list doesn't): no longer stepping aside
             if (['hudLayout', 'inHybrid', 'inSport', 'inEco', 'byMode'].indexOf(key) >= 0 && this.screen.yielded) this.screen.release();
             if (key === 'viewSel') this.viewNow = null;           // a choice made on the page wins over the button's last step
+            if (key === 'mapByBc') this.mapOff = this.setting('mapByBc') === true;   // turned on: the map hides now (BC brings it); off: it shows
             if (PLACE_KEYS.indexOf(key) >= 0) this._guard('place', () => this._place());
             else if (LIVE_KEYS.indexOf(key) >= 0) this.widgets.forEach((x) => { x.last = null; });
             else if (key !== 'demo') this._rebuild(); else this._status();
@@ -1028,11 +1033,14 @@ class HudApp {
         // the rev counter is told when it changes, which on a car that notifies it rarely (or only the first value) leaves the bar where it was: read it
         // as well, RPM_POLL_MS apart (the kit re-reads the interface's fields that often; the same values twice change nothing). The Signals tab's
         // "msg · x/s" beside the rev counter shows how often the car really sends it.
-        if (decl[CDS_IFACE] && decl[CDS_IFACE].statusEngineSpeed2) (extra[CDS_IFACE] = extra[CDS_IFACE] || {}).$pollMs = RPM_POLL_MS;
+        if (decl[CDS_IFACE] && decl[CDS_IFACE].statusEngineSpeed2) Object.assign(extra[CDS_IFACE] = extra[CDS_IFACE] || {}, { $pollMs: RPM_POLL_MS, $pollOnly: ['statusEngineSpeed2'] });
         // the speed too (Vehicle2.statusCarSpeed2): told only when the car decides to, it could lag behind by seconds (owner, 22 Nov 2026: "the
         // speed is always slow", photo of M Blade); read SPEED_POLL_MS apart as well, as the rev counter
         (extra[SPEED_IFACE] = extra[SPEED_IFACE] || {}).$pollMs = SPEED_POLL_MS;
-        this.car = new Car(this.ctx, ['rpm', 'speed', 'temps', 'accel', 'gear', 'torque'], extra);
+        // the crank torque only for an app that declares it (HUD Widgets' readouts; ShakTheme and ShakHUD draw nothing from it and stopped asking
+        // the car for it on 23 Nov 2026)
+        const torque = !!(decl[FES] && decl[FES].statusActualValueTorque2);
+        this.car = new Car(this.ctx, ['rpm', 'speed', 'temps', 'accel', 'gear'].concat(torque ? ['torque'] : []), extra);
         this.car.setRedline(this.setting('redline'));
         this.gBuf = [];                  // [t, lat, long] of the last G_AVG_MS
         this.gSm = null;                 // { lat, long, at }: their average
@@ -1958,10 +1966,11 @@ class HudApp {
             }
         };
         put(paintIcon('signDisc', W, H, LIMIT_WHITE));
-        put(paintIcon('ring', W, H, color(this.theme, role)));
+        put(paintIcon('signRing', W, H, color(this.theme, role)));
         if (text) {
             // the European road signs' DIN 1451 (DINish): "sign_l" in the 92 px signs, "sign_m" in the smaller ones
-            const font = w.limitFont || (w.w >= 80 ? 'sign_l' : 'sign_m'), cell = textRaster.loadFont(font).metrics.cellHeight;
+            // (three digits in the condensed cut, "3", as on the road: 110, 130)
+            const font = w.limitFont || (w.w >= 80 ? 'sign_l' : 'sign_m') + (text.length >= 3 ? '3' : ''), cell = textRaster.loadFont(font).metrics.cellHeight;
             const ink = isOver ? color(this.theme, role) : LIMIT_BLACK;
             put(textRaster.drawText(W, H, text, { font, color: ink, align: 'center', offsetY: Math.round((H - cell) / 2) }));
         }
@@ -3614,7 +3623,7 @@ class HudApp {
                 }
             }
             // the danger alert's limit in Sport's and M's card, on the white disc of the card's ring: the road signs' DIN 1451, centred in its box
-            if (w.text === '{{dangerLimit}}' && s) { font = 'sign_s'; offsetY = Math.round((w.h - textRaster.loadFont(font).metrics.cellHeight) / 2); }
+            if (w.text === '{{dangerLimit}}' && s) { font = s.length >= 3 ? 'sign_s3' : 'sign_s'; offsetY = Math.round((w.h - textRaster.loadFont(font).metrics.cellHeight) / 2); }
             const has = (n) => { const g = textRaster.loadFont(n).metrics.glyphs; return s.split('').every((ch) => ch === ' ' || g[ch]); };
             if (w.fit && (textRaster.measure(s, font, w.spacing) > w.w || !has(font))) {
                 const f = w.fit.find((n) => has(n) && textRaster.measure(s, n, w.spacing) <= w.w) || w.fit[w.fit.length - 1];

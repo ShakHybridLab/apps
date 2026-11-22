@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte du téléphone, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.21.73",
+  "version": "0.21.74",
   "vendor": "custom",
   "startType": "autostart",
   "loggingId": "OAC1",
@@ -43,12 +43,25 @@
     "catalog.js",
     "car_extras.js",
     "bottom_strip.js",
-    "gear_window.js", "survive.js", "gps_pos.js", "radar_zones.js", "radar_app.js"
+    "gear_window.js",
+    "survive.js",
+    "gps_pos.js",
+    "radar_zones.js",
+    "radar_app.js"
   ],
   "signals": {
-    "de.bmw.body.Light": {"IndicatorSteeringColumn": "s", "_optional": "le commodo des clignotants : la touche BC au bout fait passer à la vue suivante (operationColumnStalks vaut 64 pendant l'appui, vu sur la voiture du propriétaire avec ShakManette, photo du 19 nov. 2026)"},
-    "de.bmw.infotainment.GPSData": {"GPSPositionCAN": "s", "_optional": "la position GPS de la voiture, pour l'alerte zone de danger (vue acceptée et disponible sur la voiture du propriétaire avec ShakGPS, photo du 19 nov. 2026)"},
-    "de.bmw.infotainment.displaydataserver.DisplayDataServer": {"functionalLibraryData": "rs", "_optional": "le régime moteur sous son autre nom (membre rpm, catalogue de la voiture, 19 nov. 2026) : affiché dans l'onglet Signaux en attendant de savoir ce qu'il vaut moteur allumé"},
+    "de.bmw.body.Light": {
+      "IndicatorSteeringColumn": "s",
+      "_optional": "le commodo des clignotants : la touche BC au bout fait passer à la vue suivante (operationColumnStalks vaut 64 pendant l'appui, vu sur la voiture du propriétaire avec ShakManette, photo du 19 nov. 2026)"
+    },
+    "de.bmw.infotainment.GPSData": {
+      "GPSPositionCAN": "s",
+      "_optional": "la position GPS de la voiture, pour l'alerte zone de danger (vue acceptée et disponible sur la voiture du propriétaire avec ShakGPS, photo du 19 nov. 2026)"
+    },
+    "de.bmw.infotainment.displaydataserver.DisplayDataServer": {
+      "functionalLibraryData": "rs",
+      "_optional": "ce que dessine le cluster BMW (functionalLibraryData) : sa vitesse (speed.kmH, la source des chiffres de vitesse depuis le 22 nov. 2026) et le régime moteur sous son autre nom (rpm), relus toutes les 50 ms"
+    },
     "de.bmw.infotainment.vehicle.CDS": {
       "statusEngineSpeed2": "rs",
       "statusEngineTemperature": "rs"
@@ -62,7 +75,6 @@
     },
     "de.bmw.infotainment.drivingexcitement.FES": {
       "statusSwitchDriveDynamicSport2": "rs",
-      "statusActualValueTorque2": "rs",
       "statusFESVehicleDynamicSwitchHMI": "rs"
     },
     "de.bmw.infrastructure.VehicleInformation": {
@@ -81,9 +93,8 @@
     "de.bmw.infotainment.KombiIF": {
       "statusRangeTankStatus": "rs",
       "displayRangeElectricVehicle": "rs",
-      "statusDisplayElectricalPowerDistribution": "rs",
       "statusActiveCCMessage": "rs",
-      "_optional": "the last two are only read, for the Signals tab: the power of the drive and of the air conditioning, and the check control message showing (names and flags as on the owner's car, photos of Nov 15 2026)"
+      "_optional": "statusActiveCCMessage: the check control message showing (the warning triangle beside the speed limit); the fuel and electric ranges. statusDisplayElectricalPowerDistribution (only shown on the Signals tab) was taken off on 23 Nov 2026: nothing drew from it"
     },
     "de.bmw.infotainment.vehicle.Vehicle": {
       "statusNewCurrentUnitsStatusExt": "rs",
@@ -100,11 +111,6 @@
     },
     "de.bmw.infrastructure.EnvironmentalInformation": {
       "ExteriorTemperature": "s"
-    },
-    "de.bmw.infotainment.fasus.FASuS": {
-      "statusIDriveFAS": "rs",
-      "statusIDriveFASExtended": "rs",
-      "_optional": "the next limit the camera recognised (nextClassLimitSpeed, nextWithdrawalLimitSpeed) and the driver assistance's lane warnings and steering wheel light: only read, shown on the Signals tab, until a drive shows what they mean"
     },
     "de.bmw.infotainment.drivingexcitement.Efficiencytainment2": {
       "statusPowerRelativHybrid": "rs",
@@ -163,13 +169,13 @@
     },
     {
       "key": "byMode",
-      "label": "Changer avec le mode de conduite (Hybrid Eco Pro / Hybrid / Sport Plus)",
+      "label": "Changer avec le mode de conduite (Hybride / Électrique / Sport)",
       "type": "bool",
       "default": true
     },
     {
       "key": "inHybrid",
-      "label": "En Hybrid (et Battery Control ; le cluster de BMW par défaut)",
+      "label": "En Hybride (Hybrid, Battery Control ; le cluster de BMW par défaut)",
       "type": "choice",
       "default": "off",
       "options": [
@@ -197,7 +203,7 @@
     },
     {
       "key": "inSport",
-      "label": "En Sport Plus (et Sport, Sport Individual, Xtraboost)",
+      "label": "En Sport (Sport, Sport Plus, Sport Individual, Xtraboost)",
       "type": "choice",
       "default": "m",
       "options": [
@@ -225,7 +231,7 @@
     },
     {
       "key": "inEco",
-      "label": "En Hybrid Eco Pro (et Electric, Electric Individual)",
+      "label": "En Électrique (Hybrid Eco Pro, Electric, Electric Individual)",
       "type": "choice",
       "default": "sport",
       "options": [
@@ -258,10 +264,10 @@
       "default": false
     },
     {
-      "key": "mapOnlyWithRoute",
-      "label": "Carte seulement avec un itinéraire",
+      "key": "mapByBc",
+      "label": "Carte seulement avec la touche BC (sinon toujours affichée)",
       "type": "bool",
-      "default": true
+      "default": false
     },
     {
       "key": "centreWindow",

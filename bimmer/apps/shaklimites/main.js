@@ -2,7 +2,7 @@
 /**
  * ShakLimites (essai) : la limitation de vitesse de la route d'après une carte (shared/limits_map.js, fabriquée depuis OpenStreetMap par
  * tools/build_limits.py) et la position GPS de la voiture ; ShakTheme l'affiche dans son rond de limitation (shared/limits_app.js écrit le
- * fichier que shared/speedlimit.js lit ; le panneau lu par la caméra de la voiture, quand elle en lit, passe devant).
+ * fichier que shared/speedlimit.js lit ; le panneau lu par la caméra de la voiture n'est plus lu depuis le 19 nov. 2026 : la voiture refusait le signal).
  * Appli à part : la carte pèse plusieurs Mo, le thème ne doit ni grossir ni dépendre d'elle. L'écran montre tout pour une photo.
  */
 const path = require('path');
@@ -59,7 +59,6 @@ mgu.run({
                 cv.text(s.said === null ? '--' : s.said + ' km/h', 900, 220, 54, s.said === null ? G : HI, { font: 'bold' });
                 cv.text((WHY[s.why] || s.why) + (s.guess ? ' : 50 km/h par défaut' : ''), 900, 256, 16, D);
                 cv.text(s.writing ? 'Envoyée au thème (ShakTheme, rond de limitation)' : s.writeError ? 'Écriture impossible : ' + s.writeError : 'Rien envoyé au thème', 900, 300, 16, s.writing ? OK : s.writeError ? BAD : G, { font: 'bold' });
-                cv.text('Le panneau lu par la caméra de la voiture passe devant la carte.', 900, 326, 14, G);
                 cv.text('Sans route connue : 50 km/h par défaut. Ni travaux ni limites temporaires. Carte : contributeurs d\'OpenStreetMap (ODbL).', 40, 500, 14, G);
                 return ctx.ui.image('MAIN_GFX', cv);
             };

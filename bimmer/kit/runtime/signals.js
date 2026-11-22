@@ -74,7 +74,8 @@ async function watch(iface, instance, handlers, log, opts) {
         // one read at a time per field: a car slow to answer (3 s at most) does not get a pile of reads asked every pollMs (a field read
         // 20 times a second could have had 60 waiting); the next poll after the answer asks again
         const waiting = {};
-        const fetchAll = () => fields.forEach((f) => {
+        const fetchAll = (only) => fields.forEach((f) => {
+            if (only && only.indexOf(f) < 0) return;
             if (cfg.fields && cfg.fields[f] && cfg.fields[f].getter && !waiting[f]) {
                 waiting[f] = true;
                 p.getValue(f, 3000).then((v) => { waiting[f] = false; handlers[f](v); }, (e) => { waiting[f] = false; res.getFailed[f] = String(e && e.message || e).slice(0, 60); });
@@ -92,7 +93,10 @@ async function watch(iface, instance, handlers, log, opts) {
             }
         }
         if (p.isAvailable && p.isAvailable()) { res.available = true; fetchAll(); }
-        if (opts && opts.pollMs) setInterval(() => { if (res.available) setImmediate(fetchAll); }, opts.pollMs);
+        // opts.pollOnly: re-read only those fields (the others come by their notifications; the engine's temperatures were read 10 times a second
+        // beside the rev counter for nothing, 23 Nov 2026)
+        const only = opts && Array.isArray(opts.pollOnly) ? opts.pollOnly : null;
+        if (opts && opts.pollMs) setInterval(() => { if (res.available) setImmediate(() => fetchAll(only)); }, opts.pollMs);
     } catch (e) {
         res.error = String(e);
         if (log) log.warn('signals ' + iface + ': ' + e);

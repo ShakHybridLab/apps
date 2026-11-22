@@ -29,12 +29,9 @@ const PROBES = [
     { id: 'rpm', iface: CDS, field: 'statusEngineSpeed2', name: 'Engine speed (rev counter)' },
     { id: 'engt', iface: CDS, field: 'statusEngineTemperature', name: 'Engine temperatures (oil, coolant)' },
     { id: 'speed', iface: VEHICLE2, field: 'statusCarSpeed2', name: 'Car speed' },
-    { id: 'fas', iface: FAS, field: 'statusIDriveFAS', name: 'Driver assistance: lane warnings' },
-    { id: 'fasx', iface: FAS, field: 'statusIDriveFASExtended', name: 'Driver assistance: steering wheel light' },
     // the stock cluster's own power meter (a percentage of drive and of recuperation): the name is already declared by the Cluster apps installed on the
     // owner's car, so the car accepts it; hud.js draws the hybrid rev bar from it (_relPower) when eDrive Live shares no power
     { id: 'rel', iface: EFF, field: 'statusPowerRelativHybrid', name: 'Power meter: cluster (drive and recuperation, %)' },
-    { id: 'pdist', iface: KOMBI, field: 'statusDisplayElectricalPowerDistribution', name: 'Electric power: drive and air conditioning' },
     { id: 'erange', iface: KOMBI, field: 'displayRangeElectricVehicle', name: 'Electric range (cluster)' },
     { id: 'cc', iface: KOMBI, field: 'statusActiveCCMessage', name: 'Check control message showing' },
     // the engine's speed under its other name (the car's catalog, photo of 19 Nov 2026: functionalLibraryData has a member "rpm"; the name is accepted,
@@ -53,8 +50,12 @@ const PROBES = [
 const GUIDE = { id: 'guide', iface: CARPLAY, field: 'projectedGuidanceActive', name: 'CarPlay guidance active (route)' };
 const SHOWN = PROBES.map((p) => p.id);
 // the Signals tab's two pages (ids; 'guide' is the one probe above): the engine and the energy first, then the road signs and the assistance
-const PAGES = [['rpm', 'rpm2', 'engt', 'speed', 'rel', 'pdist', 'erange', 'guide'], ['fas', 'fasx', 'cc']];
+// (the driver assistance's two signals and the electric power's split were only shown here, nothing drew from them: no longer declared nor asked
+// for since 23 Nov 2026, the owner: "supprime les trucs inutiles, les signaux dont on n'a pas besoin")
+const PAGES = [['rpm', 'rpm2', 'engt', 'speed', 'rel', 'erange', 'guide', 'cc']];
 const KEEP = 3;               // distinct values kept for each (the page shows the newest first)
+const RAW_MS = 200;           // a value's text is made at most this often (feed), for the signals hud.js reads again and again
+const POLLED = { rpm: true, rpm2: true, speed: true, rel: true };
 const LOG_FIRST = 12;         // distinct values of each that go to the log, then one a minute at most
 const LOG_EVERY_MS = 60000;
 const STUCK_MS = 8000;        // a native step this long without an end is shown as stuck (they normally take well under a second)
@@ -194,10 +195,14 @@ class Probes {
     feed(id, v, now) {
         if (v === null || v === undefined) return false;
         now = now || Date.now();
-        const raw = rawOf(v) || '(empty)';
         const p = this.by[id] || (this.by[id] = { at: 0, n: 0, vals: [], logs: 0, logAt: 0, last: null });
         p.at = now; p.n++; p.last = v;
         p.ts = p.ts || []; p.ts.push(now); if (p.ts.length > RATE_KEEP) p.ts.shift();
+        // the text of a value at most 5 times a second: the display data (rpm2) is read 20 times a second and its text is long (23 Nov 2026)
+        // (only the ones read over and over: the next reading comes soon, nothing stays behind)
+        if (POLLED[id] && p.rawAt && now >= p.rawAt && now - p.rawAt < RAW_MS) return false;
+        p.rawAt = now;
+        const raw = rawOf(v) || '(empty)';
         if (p.vals[0] === raw) return false;
         p.vals.unshift(raw);
         if (p.vals.length > KEEP) p.vals.length = KEEP;

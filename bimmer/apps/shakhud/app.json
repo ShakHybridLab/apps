@@ -2,7 +2,7 @@
   "id": "shakhud",
   "title": "ShakHUD",
   "description": "ShakHUD : un HUD pour le pare-brise, le compte-tours M Style (une barre brisée, rouge dans la zone rouge, bleu clair en électrique, verte en recharge), avec la batterie, les autonomies et les températures en bas à droite ; il se cache tout seul quand la carte Waze du HUD est affichée",
-  "version": "0.6.53",
+  "version": "0.6.54",
   "vendor": "custom",
   "startType": "autostart",
   "loggingId": "OAS1",
@@ -42,10 +42,14 @@
     "catalog.js",
     "car_extras.js",
     "bottom_strip.js",
-    "gear_window.js", "survive.js"
+    "gear_window.js",
+    "survive.js"
   ],
   "signals": {
-    "de.bmw.infotainment.displaydataserver.DisplayDataServer": {"functionalLibraryData": "rs", "_optional": "le régime moteur sous son autre nom (membre rpm, catalogue de la voiture, 19 nov. 2026) : affiché dans l'onglet Signaux en attendant de savoir ce qu'il vaut moteur allumé"},
+    "de.bmw.infotainment.displaydataserver.DisplayDataServer": {
+      "functionalLibraryData": "rs",
+      "_optional": "ce que dessine le cluster BMW (functionalLibraryData) : sa vitesse (speed.kmH, la source des chiffres de vitesse depuis le 22 nov. 2026) et le régime moteur sous son autre nom (rpm), relus toutes les 50 ms"
+    },
     "de.bmw.infotainment.vehicle.CDS": {
       "statusEngineSpeed2": "rs",
       "statusEngineTemperature": "rs"
@@ -59,7 +63,6 @@
     },
     "de.bmw.infotainment.drivingexcitement.FES": {
       "statusSwitchDriveDynamicSport2": "rs",
-      "statusActualValueTorque2": "rs",
       "statusFESVehicleDynamicSwitchHMI": "rs"
     },
     "de.bmw.infrastructure.VehicleInformation": {

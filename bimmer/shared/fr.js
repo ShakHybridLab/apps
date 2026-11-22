@@ -9,7 +9,9 @@ const EXACT = {
     // onglets et titres
     'Readouts': 'Données', 'Position': 'Position', 'Map': 'Carte', 'Badge': 'Badge', 'Alerts': 'Alertes', 'G-meter': 'Capteur G',
     'Colours': 'Couleurs', 'Display': 'Affichage', 'Settings': 'Réglages', 'Layouts': 'Thèmes', 'Themes': 'Thèmes',
-    'Now showing': 'Affichage actuel', 'Change with the drive mode': 'Changer avec le mode de conduite',
+    'Map only with the BC button (else always shown)': 'Carte seulement avec la touche BC (sinon toujours affichée)',
+    'Now showing': 'Affichage actuel', 'Hybrid': 'Hybride', 'Electric': 'Électrique', 'Hybrid  ·  now': 'Hybride  ·  actuel',
+    'Electric  ·  now': 'Électrique  ·  actuel', 'Sport  ·  now': 'Sport  ·  actuel', 'Change with the drive mode': 'Changer avec le mode de conduite',
     'Theme': 'Thème', 'Layout': 'Disposition', 'Otherwise': 'Sinon', 'Off': 'Désactivé', 'On': 'Activé',
     "BMW's own": 'Celui de BMW', "BMW's own HUD": 'Le HUD de BMW', "BMW's own cluster": 'Le cluster de BMW',
     'HUD is off': 'HUD éteint', 'Tap to turn the HUD off': 'Touche pour éteindre le HUD',
