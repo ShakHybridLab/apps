@@ -1043,7 +1043,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s2"
+      "sheet": "s0"
     },
     {
       "id": "speed_unit",
@@ -1058,7 +1058,7 @@
       "color": "dim",
       "align": "center",
       "toggle": "!mapUp",
-      "sheet": "s2"
+      "sheet": "s0"
     },
     {
       "id": "mspeed",
@@ -1152,10 +1152,10 @@
       "type": "icon",
       "icon": "ring",
       "z": 5,
-      "x": 703,
-      "y": 236,
-      "w": 72,
-      "h": 72,
+      "x": 44,
+      "y": 452,
+      "w": 92,
+      "h": 92,
       "color": "dim",
       "toggle": "!mapUp",
       "limitBy": true,
@@ -1165,12 +1165,12 @@
       "id": "lim_num",
       "type": "text",
       "z": 5,
-      "x": 703,
-      "y": 258,
-      "w": 72,
-      "h": 29,
+      "x": 44,
+      "y": 480,
+      "w": 92,
+      "h": 37,
       "text": "{{limit}}",
-      "font": "m_tiny",
+      "font": "unit",
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
@@ -1182,21 +1182,21 @@
       "type": "icon",
       "icon": "ring",
       "z": 5,
-      "x": 707,
-      "y": 312,
+      "x": 58,
+      "y": 550,
       "w": 64,
       "h": 64,
       "color": "dim",
       "toggle": "!mapUp",
       "nextBy": true,
-      "sheet": "s4"
+      "sheet": "s1"
     },
     {
       "id": "lim_nxt_num",
       "type": "text",
       "z": 5,
-      "x": 707,
-      "y": 330,
+      "x": 58,
+      "y": 568,
       "w": 64,
       "h": 29,
       "text": "{{nextLimit}}",
@@ -1205,7 +1205,7 @@
       "align": "center",
       "toggle": "!mapUp",
       "nextBy": true,
-      "sheet": "s5"
+      "sheet": "s4"
     },
     {
       "id": "lim_alert",
@@ -1219,7 +1219,8 @@
       "color": "dim",
       "toggle": "!mapUp",
       "alertBy": true,
-      "sheet": "s4"
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "lim_lane",
@@ -1233,7 +1234,8 @@
       "color": "dim",
       "toggle": "!mapUp",
       "laneBy": true,
-      "sheet": "s4"
+      "sheet": "s6",
+      "conn": 1
     },
     {
       "id": "run_icon",
@@ -1285,10 +1287,10 @@
       "type": "icon",
       "icon": "ring",
       "z": 5,
-      "x": 1690,
-      "y": 505,
-      "w": 72,
-      "h": 72,
+      "x": 1680,
+      "y": 508,
+      "w": 92,
+      "h": 92,
       "color": "dim",
       "toggle": "mapUp",
       "limitBy": true,
@@ -1298,12 +1300,12 @@
       "id": "o_lim_num",
       "type": "text",
       "z": 5,
-      "x": 1690,
-      "y": 527,
-      "w": 72,
-      "h": 29,
+      "x": 1680,
+      "y": 536,
+      "w": 92,
+      "h": 37,
       "text": "{{limit}}",
-      "font": "m_tiny",
+      "font": "unit",
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
@@ -1502,8 +1504,7 @@
       "h": 34,
       "color": "dim",
       "tempBy": "oil",
-      "sheet": "s6",
-      "conn": 1
+      "sheet": "s2"
     },
     {
       "id": "oil",
@@ -1518,8 +1519,7 @@
       "color": "fg",
       "align": "right",
       "tempBy": "oil",
-      "sheet": "s6",
-      "conn": 1
+      "sheet": "s2"
     },
     {
       "id": "oil_unit",
@@ -1532,8 +1532,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s6",
-      "conn": 1
+      "sheet": "s2"
     },
     {
       "id": "outside",
@@ -1548,8 +1547,7 @@
       "color": "fg",
       "align": "right",
       "iceBy": true,
-      "sheet": "s6",
-      "conn": 1
+      "sheet": "s2"
     },
     {
       "id": "ice_icon",
@@ -1562,8 +1560,7 @@
       "h": 34,
       "color": "dim",
       "iceBy": true,
-      "sheet": "s6",
-      "conn": 1
+      "sheet": "s2"
     },
     {
       "id": "outside_unit",
@@ -1576,8 +1573,7 @@
       "text": "{{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
-      "sheet": "s6",
-      "conn": 1
+      "sheet": "s2"
     },
     {
       "id": "al_card",

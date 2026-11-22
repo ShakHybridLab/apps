@@ -533,33 +533,30 @@ check('limit ring and timer: in the four layouts, blank-safe, clear of the map a
     assert(set.indexOf('limitRing') >= 0 && set.indexOf('launchTimer') >= 0);
     assert(typeof require(path.join(tmp, 'shared', 'icons.js')).ICONS.stopwatch === 'function');
 });
-check('limit ring: small, beside the speed digits (Sport, Navi), under the tyre block (M) or in the bottom left corner (M Blade), clear of every other widget and of BMW\'s gear box and belt light; the timer keeps the middle', () => {
+check('limit ring: small, in the lower left part of every theme (under the tyre block on M), clear of every other widget and of BMW\'s gear box and belt light; the timer keeps the middle', () => {
     const visible = require(path.join(tmp, 'shared', 'visible.js'));
     const SHADERS = ['sdash', 'mdash', 'mblade', 'navi', 'shiftlight', 'emblem'];
     ['sport', 'm', 'mblade', 'navi'].forEach((id) => {
         const L = lay(id), by = (i) => L.widgets.find((w) => w.id === i), r = by('lim_ring'), n = by('lim_num');
-        assert.strictEqual(r.w, 72, id + ': ring size'); assert.strictEqual(r.h, 72);
+        assert(r.w === 92 && r.h === 92, id + ': ring size (92 since 22 Nov 2026: three digits with room round them)');
         assert(n.x >= r.x && n.x + n.w <= r.x + r.w && n.y >= r.y && n.y + n.h <= r.y + r.h, id + ': the number sits inside the ring');
         assert(Math.abs((n.y + n.h / 2) - (r.y + r.h / 2)) <= 3, id + ': the number is centred in the ring');
-        assert.strictEqual(n.font, 'm_tiny', id + ': the digits in the alert ring\'s font');
+        assert.strictEqual(n.font, 'unit', id + ': the digits in the larger font (34 px) since the ring grew to 92 px');
         assert.strictEqual(r.color, 'dim', id + ': the ring is the quiet colour (red when over the limit)');
-        if (id === 'mblade') {
-            assert(r.y >= 530 && r.y + r.h <= by('time').y - 4 && r.x + r.w <= 320, id + ': bottom left, just above the clock\'s row (which sits above the gear letter since 0.20.6)');
+        // The owner (22 Nov 2026) circled on the bench pictures where he wants the ring: in the lower left part of every theme (left of the speed
+        // scale's numbers on Sport and Navi, bottom left on M Blade, under the tyres on M), and larger where there is room.
+        assert(r.x + r.w / 2 >= 60 && r.x + r.w / 2 <= 520 && r.y >= 400 && r.y + r.h <= 660, id + ': the ring is not in the lower left part (' + r.x + ', ' + r.y + ')');
+        if (id === 'mblade' || id === 'sport' || id === 'navi') {
+            const sp = by('speed');
+            assert(r.y >= sp.y + sp.h || r.x + r.w <= sp.x || r.x >= sp.x + sp.w, id + ': the ring is over the speed\'s box');
         } else if (id === 'm') {
             // as the M3 cluster's own (owner's photo, Nov 16 2026): right under the tyre pressures, centred on them, with the next limit beside it
             const tp = ['tp_FL', 'tp_FR', 'tp_RL', 'tp_RR'].map(by), left = Math.min(...tp.map((w) => w.x)), right = Math.max(...tp.map((w) => w.x + w.w)), low = Math.max(...tp.map((w) => w.y + w.h));
             assert(Math.abs(r.x + r.w / 2 - (left + right) / 2) <= 8, id + ': the ring is not centred under the tyre block');
             assert(r.y >= low + 12 && r.y - low <= 70, id + ': the ring is not right under the tyre block (its lowest line ends y ' + low + ', the ring starts y ' + r.y + ')');
-            assert(r.y + r.h <= 520, id + ': the ring runs into the card\'s lower rim (y 535)');
+            assert(r.y + r.h <= 528, id + ': the ring runs into the card\'s lower rim (y 535)');
             const nx = by('lim_nxt_ring');
             assert(nx.x >= r.x + r.w + 8 && Math.abs((nx.y + nx.h / 2) - (r.y + r.h / 2)) <= 3, id + ': the next limit is not beside the ring');
-        } else {
-            // beside the speed digits: level with them, 16 px off the widest speed (three digits), on the side the layout leaves free
-            const sp = by('speed'), f = font(sp.font), g = f.glyphs['0'], adv = typeof g === 'object' ? g.advance : g;
-            const mid = sp.x + sp.w / 2, half = 1.5 * adv;
-            assert(Math.abs((r.y + r.h / 2) - (sp.y + sp.h / 2)) <= 14, id + ': the ring is level with the speed');
-            assert(r.x + r.w <= mid - half - 16 || r.x >= mid + half + 16, id + ': the ring clears three speed digits');
-            assert(Math.abs(r.x + r.w / 2 - mid) < 330, id + ': and stays next to them');
         }
         const box = [r.x, r.y, r.x + r.w, r.y + r.h], hit = (w) => w.x < box[2] && w.x + w.w > box[0] && w.y < box[3] && w.y + w.h > box[1];
         L.widgets.forEach((w) => {

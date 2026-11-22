@@ -45,7 +45,8 @@ const VIEWS = [[null, false], ['gauges', false], ['tyres', false], ['drive', tru
         const loose = L.widgets.filter((w) => IMAGE[w.type] && w.own !== true && !(typeof w.sheet === 'string' && w.sheet));
         assert.strictEqual(loose.length, 0, loose.slice(0, 5).map((w) => w.id).join(', ') + ' sans feuille');
     });
-    [false, true].forEach((map) => VIEWS.forEach(([view, sport]) => {
+    // (avec la carte, aucune vue ne s'affiche depuis le 21 nov. 2026, hud.js setting('viewSel') : seul l'état « carte, sans vue » existe)
+    [false, true].forEach((map) => VIEWS.filter(([view]) => !map || !view).forEach(([view, sport]) => {
         check(name + ' (' + (map ? 'avec' : 'sans') + ' la carte, vue ' + (view || 'aucune') + (view === 'drive' ? (sport ? ', en Sport' : ', hors Sport') : '') + ') : mémoire de pixels, couches par connexion', () => {
             const plan = h._plan(shownIn(L.widgets, map, view, sport), Infinity, Infinity);
             let px = 0; const per = [];

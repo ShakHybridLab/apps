@@ -1886,6 +1886,9 @@ class HudApp {
         return { text, over: isNum(v) && Math.round(us ? v * 0.621371 : v) > Number(text) };
     }
 
+    /** The colour of the speed limit's ring and number while the car is over the limit: the bright red and the dark one in turn. */
+    _limitFlash(now) { return Math.floor(now / WARN_FLASH_MS) % 2 === 0 ? 'hot' : WARN_DIM; }
+
     /** `id` (oil / coolant / boost) if that reading is over its warning limit now, else null. */
     _overLimit(id) {
         if (!WARN[id]) return null;
@@ -3452,7 +3455,7 @@ class HudApp {
                 else if (this._warmPulse(w.tempBy, now)) role = 'fg';       // just warm: a few white flashes
             }
             if (w.tyreBy) role = this._tyreRole(w.tyreBy, role);               // a low tyre pressure: yellow, then red
-            if (w.limitBy) { const l = this._limitNow(now); if (l && l.over) role = 'hot'; }                         // over the speed limit: the shift red
+            if (w.limitBy) { const l = this._limitNow(now); if (l && l.over) role = this._limitFlash(now); }          // over the speed limit: it flashes with its ring
             if (w.accentBy) role = this._accentColor() || role;                                                       // the drive mode's own text: in the mode's colour
             if (w.iceBy && this._ice(now).on) role = VERDICT.COLD;                                                    // ice: the outside temperature in the cold blue
             if (w.launchBy && this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];            // a new best time: green
@@ -3525,8 +3528,10 @@ class HudApp {
             // a tyre pressure warning icon: yellow, then red, and nothing at all while the tyres are fine ("tyreOnly")
             let hide = false;
             if (w.tyreBy) { role = this._tyreRole(w.tyreBy, role); hide = w.tyreOnly === true && this._tyreLevel(w.tyreBy) === 0; }
-            // the speed limit ring (white, red while over) shows only with a limit; the stopwatch only while the 0-100 timer shows
-            if (w.limitBy) { const l = this._limitNow(now); hide = !l; if (l && l.over) role = 'hot'; }
+            // the speed limit ring shows only with a limit; the stopwatch only while the 0-100 timer shows
+            // (owner, 21 Nov 2026: "je veux que l'anneau soit rouge, et qu'il clignote quand je depasse la limite": red as the road sign's, always;
+            // over the limit the ring and its number flash together between the bright red and the dark one, as a reading over its warning limit does)
+            if (w.limitBy) { const l = this._limitNow(now); hide = !l; role = l && l.over ? this._limitFlash(now) : 'hot'; }
             if (w.nextBy) hide = !this._nextLimitNow(now);                                                            // the small ring of the next limit
             if (w.alertBy) { hide = !this._alertNow(); role = VERDICT.EARLY; }                                         // the car's check control message: the warning triangle in yellow
             if (w.laneBy) { const ln = this._laneNow(); hide = !ln; if (ln) role = ln; }                              // the lane assist's steering wheel, in the car's own colour

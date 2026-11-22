@@ -42,9 +42,8 @@ HUD_FONTS = [
 ]
 # ShakTheme, 1920x720 LCD: the shared small print in Barlow Condensed, then each theme's own numbers.
 CLUSTER_FONTS = [
+    # ('big', 124 px) and ('small', 50 px) went on 21 Nov 2026 with 'm_spd': no theme used them any more
     ('gear', 'BarlowCondensed-Bold.ttf', 330, DIGITS + 'PRND-'),
-    ('big', 'BarlowCondensed-Bold.ttf', 124, DIGITS + '.:-'),   # 124: "20.3 PSI" fits a 280 px box beside the hood; ':' for a clock in a readout slot
-    ('small', 'BarlowCondensed-Bold.ttf', 50, DIGITS + '.:-° '),
     ('unit', 'BarlowCondensed-SemiBold.ttf', 34, UPPER + DIGITS + '/°%>·.: -'),
     ('head', 'BarlowCondensed-SemiBold.ttf', 24, UPPER + DIGITS + '/°%>·.: -'),
     ('scale', 'BarlowCondensed-SemiBold.ttf', 30, DIGITS),
@@ -61,7 +60,7 @@ CLUSTER_FONTS = [
     ('m_gl_m', 'Orbitron[wght].ttf', 28, DIGITS, 0, 'Black', {'0': 'O'}),   # 1.1 times: the middle step of the zone zoom
     ('m_gl_z', 'Orbitron[wght].ttf', 30, DIGITS, 0, 'Black', {'0': 'O'}),   # the same, 1.2 times larger (zone zoom of the rev number)
     ('m_big', 'Orbitron[wght].ttf', 100, DIGITS + '-', 3, 'Black', {'0': 'O'}),   # M Blade's speed in the void: three digits (110 km/h and up) fit it, 264 px
-    ('m_spd', 'Orbitron[wght].ttf', 50, DIGITS + '-', 0, 'Black', {'0': 'O'}),     # M Blade's small speed under the gear, as the photo has it
+    ('m_band', 'Orbitron[wght].ttf', 92, DIGITS + '-', 3, 'Black', {'0': 'O'}),   # M Blade's speed inside the hexagon's dark band with km/h beside it: "330" is about 243 px (21 Nov 2026)
     ('m_mid', 'Orbitron[wght].ttf', 34, DIGITS + ':+-.', 0, 'Bold', {'0': 'O'}),
     ('m_tyre', 'Orbitron[wght].ttf', 25, DIGITS + '.-', 0, 'Bold', {'0': 'O'}),
     ('lim_num', 'BarlowSemiCondensed-SemiBold.ttf', 27, DIGITS),      # the speed limit in the danger alert's ring (Sport, M): three digits in 46 px

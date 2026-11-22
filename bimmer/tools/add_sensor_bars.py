@@ -297,13 +297,15 @@ def _mblade_views(d, SA, SB, SL, SF):
             new.append(dict(o, id='xb_mc_' + k, toggle='mapUp&!viewSel=none&!viewSel=gauges', sheet=o.get('sheet')))
             new.append(dict(o, id='xb_vc_' + k, x=x, y=y + (o['y'] - by['cool']['y']), toggle='!mapUp&!viewSel=none&!viewSel=gauges', sheet=SF))
     # the speed limit's ring under the panel, bottom left, and in a row right of it the next limit, the car's warning and the lane assist
-    for src, nid, x, y, sz in (('lim_ring', 'xb_vlim_ring', 52, 596, 66), ('lim_nxt_ring', 'xb_vlim_nxt_ring', 126, 599, 60),
-                               ('lim_alert', 'xb_vlim_alert', 194, 601, 56), ('lim_lane', 'xb_vlim_lane', 258, 601, 56)):
+    # (where the owner circled it on the bench pictures, 22 Nov 2026: under the panel's right end, on the bottom row; larger, 92 px, so three digits
+    # have room; the next limit, the triangle and the wheel to its left, right of the clock)
+    for src, nid, x, y, sz in (('lim_ring', 'xb_vlim_ring', 440, 598, 92), ('lim_nxt_ring', 'xb_vlim_nxt_ring', 370, 614, 60),
+                               ('lim_alert', 'xb_vlim_alert', 306, 616, 56), ('lim_lane', 'xb_vlim_lane', 242, 616, 56)):
         if src in by:
             new.append(dict(by[src], id=nid, x=x, y=y, w=sz, h=sz, toggle=V_ON, sheet=SL))
             num = {'lim_ring': 'lim_num', 'lim_nxt_ring': 'lim_nxt_num'}.get(src)
             if num in by:
-                new.append(dict(by[num], id=nid.replace('_ring', '_num'), x=x, y=y + (sz - 29) // 2 + 1, w=sz, toggle=V_ON, sheet=SL))
+                new.append(dict(by[num], id=nid.replace('_ring', '_num'), x=x, y=y + (sz - by[num]['h']) // 2 + 1, w=sz, toggle=V_ON, sheet=SL))
     # the engine view: four rows, each an icon, the scale over its bar (the max red where the bar's end is red), the unit, the value right of the bar
     for vname, pfx, ROWS, NAMES in (('gauges', 'xb_vg_', GAUGE_ROWS, GAUGE_NAMES), ('electric', 'xb_ve_', ELEC_ROWS_MB, ELEC_NAMES)):
       tg = 'viewSel=%s&!mapUp' % vname

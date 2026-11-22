@@ -132,7 +132,7 @@ def tab_cue(cx, pre, toggle, plain):
             text(pre + 'ready_text', x0 + 36, 668, 212, 24, '{{launchReady}}', 'mode', 'fg', 'left', 1, toggle=toggle, readyBy=mark)]
 
 
-def limit_and_timer(cx, top, R, compact=False, ring=None, next_at=None):
+def limit_and_timer(cx, top, R, compact=False, ring=None, next_at=None, extras_at=None):
     """The speed limit ring (a ring with the limit in it, white, red while the car is over it) and the 0-100 timer (a stopwatch, the time, an s):
     both are blank until they have something to show, and neither is drawn while the Waze map is up (Waze shows the limit itself).
     The timer takes the place cx, top, R in the middle; `compact`: the timer stacked (the stopwatch over the time) to fit the narrow place it has.
@@ -141,15 +141,16 @@ def limit_and_timer(cx, top, R, compact=False, ring=None, next_at=None):
     if ring:
         rx, ry, rs = ring
         out = [icon('lim_ring', 'ring', rx, ry, rs, rs, 'dim', toggle='!mapUp', limitBy=True),
-               text('lim_num', rx, ry + (rs - 29) // 2 + 1, rs, 29, '{{limit}}', 'm_tiny', 'fg', 'center', toggle='!mapUp', limitBy=True)]
+               text('lim_num', rx, ry + (rs - 37) // 2 + 1, rs, 37, '{{limit}}', 'unit', 'fg', 'center', toggle='!mapUp', limitBy=True)]      # 'unit' (34 px): "130" is 48 px in the ring's 68 px hole
         # the next limit the camera recognised: a smaller ring under it (blank until there is one), and the car's check control message: a warning
         # triangle above it (yellow, only with the setting "carAlert"); and the lane assist's steering wheel above it (setting "carLane"); the same in the Sport and M themes (hud/layouts/*.json)
         nx = 64
+        ex, ey = extras_at or (rx + (rs - 56) // 2, ry - 60)      # the warning triangle, the lane assist's wheel above it (`extras_at`: when there is no room above the ring)
         dx, dy = next_at or ((rs - nx) // 2, rs + 4)          # the next limit's ring sits under the ring, or where `next_at` = (dx, dy) says (BMW's black box takes the bottom)
         out += [icon('lim_nxt_ring', 'ring', rx + dx, ry + dy, nx, nx, 'dim', toggle='!mapUp', nextBy=True),
                 text('lim_nxt_num', rx + dx, ry + dy + (nx - 29) // 2 + 1, nx, 29, '{{nextLimit}}', 'm_tiny', 'dim', 'center', toggle='!mapUp', nextBy=True),
-                icon('lim_alert', 'warn', rx + (rs - 56) // 2, ry - 60, 56, 56, 'dim', toggle='!mapUp', alertBy=True),
-                icon('lim_lane', 'wheel', rx + (rs - 56) // 2, ry - 120, 56, 56, 'dim', toggle='!mapUp', laneBy=True)]       # the lane assist's steering wheel (setting "carLane"), above the triangle
+                icon('lim_alert', 'warn', ex, ey, 56, 56, 'dim', toggle='!mapUp', alertBy=True),
+                icon('lim_lane', 'wheel', ex, ey - 60, 56, 56, 'dim', toggle='!mapUp', laneBy=True)]       # the lane assist's steering wheel (setting "carLane"), above the triangle
     else:
         out = [icon('lim_ring', 'ring', cx - R // 2, top, R, R, 'fg', toggle='!mapUp', limitBy=True),
                text('lim_num', cx - R // 2, top + (R - 37) // 2, R, 37, '{{limit}}', 'unit', 'fg', 'center', toggle='!mapUp', limitBy=True)]
@@ -324,12 +325,14 @@ def mblade():
         W.append(text('spd%d' % i, round(spd_line_x(y, SP, SQ) - 22 - sw), round(y - 15), sw, 30, '{{ms:%d}}' % i, 'm_num', 'fg', 'right',
                       toggle='!mapUp'))
     W.append(text('spd_unit', 599, 92, 70, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'center', toggle='!mapUp'))
-    # the hexagon, inverted from the photo on the owner's request: the speed big in the void (BMW's own box still shows the
-    # gear letter, so it is not lost by moving it out), its unit under it, the selector letter (D, or S / M by the shifter
-    # programme, P R N) small below that, the battery's power in kW one line lower when eDrive Live shares it, the drive mode
-    # on the tabs
-    W.append(text('speed', 725, 291, 400, 101, '{{speed}}', 'm_gear', align='center', toggle='!mapUp'))   # 400 wide: "330" is 330 px in m_gear; grows right (left is the 0-100 timer's void)
-    W.append(text('speed_unit', 845, 393, 160, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'center', toggle='!mapUp'))
+    # the hexagon, inverted from the photo on the owner's request: the speed in the dark band, the selector letter (D, or S / M by the shifter
+    # programme, P R N) small below it (BMW's own box shows the letter too), the battery's power in kW one line lower, the drive mode on the tabs
+    # The speed and its unit sit INSIDE the dark band (owner, 21 Nov 2026: "les chiffres sont dans le fond noir mais le km/h depasse, ca ne rend pas
+    # tres beau ... pas trop serre"). The band is a slanted strip, measured on the bench picture: rows y 272..410, 368 px wide, its left edge at
+    # x 699 - 0.565 (y - 270). m_band (92 px, a 76 px cell, "330" = 249 px) is centred in its height (y 303..379); the unit goes beside the digits at
+    # their top, where the slant leaves the most room on the right: 15 px clear on both sides with three digits.
+    W.append(text('speed', 690, 303, 249, 76, '{{speed}}', 'm_band', 'fg', 'right', toggle='!mapUp'))
+    W.append(text('speed_unit', 949, 306, 62, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'left', toggle='!mapUp'))
     W.append(text('gear', 735, 439, 170, 60, '{{stage}}', 'm_gear_p', 'fg', 'center', toggle='!mapUp'))
     # kW changes continuously while driving on the battery: its own sheet (xs_, kept out of the main pool, as the sensor bars are), so it
     # never shares a sheet with the gear letter or the unit below it and makes them blink too (the 20 Nov 2026 fix, for the same reason)
@@ -338,14 +341,11 @@ def mblade():
     # (its name stays white: it sits on the hexagon's tab, which already takes the mode's colour)
     W.append(text('drive_mode', 851, 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='!mapUp', readyHides=True))
     W.extend(tab_cue(851 + 100, '', '!mapUp', PLAIN))
-    # in the small hexagon's void, as in the normal view's (the same boxes, moved and scaled with it; the fonts keep their size)
-    gx, gw = hx(725), round(400 * HS)   # 400 wide, same as the normal view: "330" is 330 px in m_gear regardless of the hexagon's scale
-    sy = hy(291)
-    W.append(text('o_speed', gx, sy, gw, 101, '{{speed}}', 'm_gear', align='center', toggle='mapUp'))
-    uy = sy + 101 + 1
-    W.append(text('o_speed_unit', hx(845), uy, round(160 * HS), 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'center', toggle='mapUp'))
-    gy = uy + 32 + 4
-    W.append(text('o_gear', hx(735) - 20, gy, 170, 60, '{{stage}}', 'm_gear_p', 'fg', 'center', toggle='mapUp'))
+    # the small hexagon's band (measured the same way: rows y 268..386, 316 px wide, left edge x 256 - 0.57 (y - 270)): m_speed_p (68 px, a 60 px cell,
+    # "330" = 189 px) centred in its height, the unit beside it at the top, 19 px clear on both sides with three digits
+    W.append(text('o_speed', 260, 297, 189, 60, '{{speed}}', 'm_speed_p', 'fg', 'right', toggle='mapUp'))
+    W.append(text('o_speed_unit', 459, 299, 62, 32, '{{u:speedLc}}', 'm_tiny', 'fg', 'left', toggle='mapUp'))
+    W.append(text('o_gear', hx(735) - 20, 422, 170, 60, '{{stage}}', 'm_gear_p', 'fg', 'center', toggle='mapUp'))
     W.append(text('o_power', hx(735) - 15, hy(528), 120, 29, '{{powerKw}}', 'm_mid', 'fg', 'right', 1, toggle='powerOpen'))
     W.append(text('o_power_unit', hx(735) + 111, hy(528), 50, 36, 'kW', 'm_unit', 'dim', 'left', 1, toggle='powerOpen'))
     W.append(text('o_drive_mode', 860, 668, 200, 24, '{{modeName}}', 'mode', 'fg', 'center', 1, toggle='mapUp', readyHides=True))
@@ -374,11 +374,7 @@ def mblade():
         W.append(icon(pre + 'range_icon', 'fuelBolt', 313, y - 3, 29, 34, 'fg', 1, toggle=tog))
         W.append(text(pre + 'range', 348, y, 112, 29, '{{rangeTotal}}', 'm_mid', 'fg', 'right', 1, toggle=tog))
         W.append(text(pre + 'range_unit', 466, y + 3, 44, 32, '{{u:distLc}}', 'm_tiny', 'dim', conn=1, toggle=tog))
-    W.extend(limit_and_timer(672, 318, 76, True, ring=(234, 540, 72), next_at=(-68, 4)))   # the timer in the black void left of the gear letter; the ring small, bottom left above the clock (no clean place by the speed there)
-    # with the map up the limit's ring is back (owner, 21 Nov 2026, the first photo of the map on the car: "je ne vois plus les limitations quand
-    # il y a Waze"; Waze's cluster map does not show it): bottom left, under the small hexagon and above the clock, the ring and its number only
-    W.append(icon('o_lim_ring', 'ring', 110, 570, 72, 72, 'dim', toggle='mapUp', limitBy=True))
-    W.append(text('o_lim_num', 110, 570 + (72 - 29) // 2 + 1, 72, 29, '{{limit}}', 'm_tiny', 'fg', 'center', toggle='mapUp', limitBy=True))
+    W.extend(limit_and_timer(900, 92, 76, ring=(224, 530, 92), next_at=(-68, 14)))   # the 0-100 timer in one line above the hexagon, under the shift light (the band's left end, its old place, is the speed's since 21 Nov 2026); the ring small, bottom left above the clock
     W.extend(ev_share(662, ROW - 3, 26, 34, 692, ROW + 3, 52, 32, 'm_tiny', 748, ROW + 3, 26, 32, 'm_tiny', '', '!mapUp'))   # the normal view: right of the speed scale's 0
     W.extend(ev_share(632, ROW_O - 3, 26, 34, 662, ROW_O + 3, 52, 32, 'm_tiny', 718, ROW_O + 3, 26, 32, 'm_tiny', 'o_', 'mapUp'))   # the map view: between the belt light and the fuel scale's 1/2
     # the oil and the electric range sit centred under their strips (they follow the strips 30 px right in the map view); the coolant and the outside
@@ -387,6 +383,11 @@ def mblade():
     W.extend(mb_under_strips('o_', 'mapUp', round(strip_x(G1o, G1o[2]) + 33), round(strip_x(G2o, G2o[2]) + 33)))
     W.extend(mb_side_block())
     W += danger_alert(1612, 340, 78)       # right of BMW's black box (x < 1597), above the strips (y 443)
+    # with the map up the limit's ring is back (owner, 21 Nov 2026, the first photo of the map on the car: "je ne vois plus les limitations quand
+    # il y a Waze"; Waze's cluster map does not show it): bottom left, under the small hexagon and above the clock, the ring and its number only
+    W.append(icon('o_lim_ring', 'ring', 340, 560, 92, 92, 'dim', toggle='mapUp', limitBy=True))
+    W.append(text('o_lim_num', 340, 560 + (92 - 37) // 2 + 1, 92, 37, '{{limit}}', 'unit', 'fg', 'center', toggle='mapUp', limitBy=True))
+    # (last in the list: the number's sheet must come after the ring's in the engine's order, or the engine cuts a sheet in two)
     return {
         'schemaVersion': 2, 'name': 'M Blade', 'theme': 'mblade', 'runUp': False,
         '_about': "M Blade, traced off a photo of a BMW M cluster (Nov 14 2026; the photo was warped to the panel and measured), generated by "
@@ -470,10 +471,10 @@ def navi():
     W.append(icon('range_icon', 'fuelBolt', 214, 632, 29, 34))                # the total range: fuel and electric
     W.append(text('range', 226, 630, 114, 34, '{{rangeTotal}}', 'm_mid', 'fg', 'right'))
     W.append(text('range_unit', 346, 636, 48, 29, '{{u:distLc}}', 'm_tiny', 'dim'))
-    W.extend(limit_and_timer(960, 420, 92, ring=(703, 236, 72)))   # the timer under the speed; the ring small, left of the speed digits
+    W.extend(limit_and_timer(960, 420, 92, ring=(44, 452, 92), next_at=(14, 98), extras_at=(711, 176)))   # the ring where the owner circled it (22 Nov 2026): bottom left, left of the speed scale's numbers; the next limit under it; the triangle and the wheel stay left of the speed   # the timer under the speed; the ring small, left of the speed digits
     # with the map up the limit's ring stays, as in the three other themes (owner, 21 Nov 2026): in the right column, under the outside temperature
-    W.append(icon('o_lim_ring', 'ring', 1690, 505, 72, 72, 'dim', toggle='mapUp', limitBy=True))
-    W.append(text('o_lim_num', 1690, 505 + (72 - 29) // 2 + 1, 72, 29, '{{limit}}', 'm_tiny', 'fg', 'center', toggle='mapUp', limitBy=True))
+    W.append(icon('o_lim_ring', 'ring', 1680, 508, 92, 92, 'dim', toggle='mapUp', limitBy=True))
+    W.append(text('o_lim_num', 1680, 508 + (92 - 37) // 2 + 1, 92, 37, '{{limit}}', 'unit', 'fg', 'center', toggle='mapUp', limitBy=True))
     W.extend(bottom_cue(661))                                      # the bottom centre, between the clock and the battery bar
     W.extend(ev_share(632, 664, 29, 34, 664, 664, 90, 34, 'm_mid', 758, 670, 36, 29, 'm_tiny'))   # bottom row, between the clock and the battery bar
     W.append(text('time', 395, 664, 140, 34, '{{time}}', 'm_mid', 'fg', 'right'))
@@ -509,7 +510,7 @@ def navi():
     }
 
 
-SHEETS = {'mblade': 13, 'navi': 10}      # image sheets per theme: the memory a theme takes is the sum of their boxes (tools/pack_sheets.py)
+SHEETS = {'mblade': 12, 'navi': 10}      # image sheets per theme: the memory a theme takes is the sum of their boxes (tools/pack_sheets.py)
 
 if __name__ == '__main__':
     for name, L in (('mblade', mblade()), ('navi', navi())):

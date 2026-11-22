@@ -59,14 +59,22 @@ NAMES.forEach((n) => {
             ["require('./hybrid_tach')", "case 'tachUnit'", "case 'chargeNote'", "w.hybridTach === true"].forEach((s) => assert(hud.includes(s), 'hud.js lacks ' + s));
             assert(/uniform vec4 u_red;/.test(sh) && sh.includes('ft < u_red.a'), 'the shader does not read the charge');
         });
-        check(n + ': the hexagon, inverted from the photo on the owner\'s request (21 Nov 2026): the speed big in the void, its unit under it, the gear letter small below that, kW below the gear, in both views', () => {
+        check(n + ': the hexagon, inverted from the photo on the owner\'s request (21 Nov 2026): the speed and its unit inside the dark band, the gear letter small below, kW below the gear, in both views', () => {
+            // the band, measured on the bench pictures: [top, bottom, width, left edge x at y 270, its slope], normal view and beside the map
+            const BAND = { '': [272, 410, 368, 699, 0.565], o_: [268, 386, 316, 256, 0.57] };
+            const fontOf = { '': 'm_band', o_: 'm_speed_p' };
             ['', 'o_'].forEach((pre) => {
-                const g = by(pre + 'gear'), s = by(pre + 'speed'), u = by(pre + 'speed_unit'), k = by(pre + 'power');
+                const g = by(pre + 'gear'), s = by(pre + 'speed'), u = by(pre + 'speed_unit'), k = by(pre + 'power'), B = BAND[pre];
                 assert(g && s && u && k, pre + ': a gear, speed, unit or kW widget is missing');
-                assert(s.text === '{{speed}}' && s.font === 'm_gear' && s.align === 'center', pre + 'speed: not the big speed');
+                assert(s.text === '{{speed}}' && s.font === fontOf[pre] && s.align === 'right', pre + 'speed: not the band\'s speed');
                 assert(g.text === '{{stage}}' && g.font === 'm_gear_p' && g.align === 'center', pre + 'gear: not the small selector letter');
-                assert(u.y >= s.y + s.h - 10, pre + 'unit is not under the speed');
-                assert(g.y >= u.y + u.h - 10, pre + 'gear is not under the unit');
+                // every corner of the speed's and the unit's boxes is inside the band, 8 px clear of its slanted sides
+                [s, u].forEach((w) => [[w.x, w.y], [w.x + w.w, w.y], [w.x, w.y + w.h], [w.x + w.w, w.y + w.h]].forEach(([x, y]) => {
+                    const left = B[3] - B[4] * (y - 270);
+                    assert(y >= B[0] && y <= B[1] && x >= left + 8 && x <= left + B[2] - 8, pre + w.id + ' leaves the dark band at ' + x + ',' + y);
+                }));
+                assert(u.x >= s.x + s.w, pre + 'unit is not beside the speed');
+                assert(g.y >= s.y + s.h, pre + 'gear is not under the speed');
                 assert(k.y >= g.y + g.h, pre + 'kW is not below the gear');
             });
         });
