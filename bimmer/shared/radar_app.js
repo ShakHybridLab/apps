@@ -110,14 +110,23 @@ class RadarApp {
     }
 
     _write(o) {
-        const f = path.join(this.dir, this.file);
         try {
             // the folder is shared by several apps, each its own user on the car: made open to all (the umask would leave it the maker's alone, and
             // the others got EACCES: the owner's car, 22 Nov 2026); chmod works only for its maker, so it is tried every time and may fail
-            try { fs.mkdirSync(this.dir, 0o777); } catch (e) { /* already there */ }
-            try { fs.chmodSync(this.dir, 0o777); } catch (e) { /* not ours */ }
-            fs.writeFileSync(f + '.tmp', JSON.stringify(o), { mode: 0o644 });
-            fs.renameSync(f + '.tmp', f);
+            // when the folder is another app's and closed, the file goes to a second folder ("<folder>.shak") that only these apps make, so it
+            // is always open; shared/danger.js reads both
+            let err = null;
+            for (const d of [this.dir, this.dir + '.shak']) {
+                try {
+                    try { fs.mkdirSync(d, 0o777); } catch (e) { /* already there */ }
+                    try { fs.chmodSync(d, 0o777); } catch (e) { /* not ours */ }
+                    const g = path.join(d, this.file);
+                    fs.writeFileSync(g + '.tmp', JSON.stringify(o), { mode: 0o644 });
+                    fs.renameSync(g + '.tmp', g);
+                    err = null; break;
+                } catch (e) { if (!err) err = e; }
+            }
+            if (err) throw err;
             this.writing = true; this.writtenAt = o.t; this.writeError = null;
         } catch (e) { this.writeError = String(e && e.code || e); }
     }
@@ -127,6 +136,7 @@ class RadarApp {
         if (!this.writing) return;
         this.writing = false;
         try { fs.unlinkSync(path.join(this.dir, this.file)); } catch (e) { /* gone */ }
+        try { fs.unlinkSync(path.join(this.dir + '.shak', this.file)); } catch (e) { /* gone */ }
     }
 
     /** What the screen shows. */

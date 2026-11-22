@@ -69,8 +69,9 @@ class Danger {
         let best = null;
         try {
             const t = this.now();
-            let names = [];
-            try { names = fs.readdirSync(this.dir); } catch (e) { names = []; }
+            // the folder and its second one (shared/radar_app.js, limits_app.js: written there when the first is another app's and closed)
+            const names = [];
+            [this.dir, this.dir + '.shak'].forEach((d) => { try { fs.readdirSync(d).forEach((n) => names.push(d + '/' + n)); } catch (e) { /* none */ } });
             const take = (j, n) => {
                 if (!j || typeof j.t !== 'number' || t - j.t >= STALE_MS || j.t - t > STALE_MS) return;
                 if (typeof j.distance !== 'number' || !isFinite(j.distance) || j.distance < 0 || j.distance > MAX_M) return;
@@ -78,10 +79,11 @@ class Danger {
                 if (!best || j.distance < best.distance) best = { distance: j.distance, limit, app: typeof j.app === 'string' ? j.app.slice(0, 30) : n };
             };
             if (this.inner) take(this.inner, 'inner');
-            names.forEach((n) => {
+            names.forEach((fn) => {
+                const n = fn.slice(fn.lastIndexOf('/') + 1);
                 if (!/^danger-[\w.-]+\.json$/.test(n)) return;
                 let j = null;
-                try { j = JSON.parse(fs.readFileSync(this.dir + '/' + n, 'utf8')); } catch (e) { return; }
+                try { j = JSON.parse(fs.readFileSync(fn, 'utf8')); } catch (e) { return; }
                 take(j, n);
             });
         } catch (e) { best = null; }

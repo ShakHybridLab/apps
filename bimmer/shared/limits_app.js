@@ -99,12 +99,21 @@ class LimitsApp {
         this.guess = this.limit === null && said !== null;
         this.said = said;
         if (said === null) { this._clear(); return; }
-        const f = path.join(this.dir, FILE);
         try {
-            try { fs.mkdirSync(this.dir, 0o777); } catch (e) { /* there */ }
-            try { fs.chmodSync(this.dir, 0o777); } catch (e) { /* not ours: another app made it (radar_app.js says why) */ }
-            fs.writeFileSync(f + '.tmp', JSON.stringify(this.guess ? { t, app: 'ShakLimites', limit: said, guess: true } : { t, app: 'ShakLimites', limit: said }), { mode: 0o644 });
-            fs.renameSync(f + '.tmp', f);
+            // the folder, then the second one when the first is another app's and closed (radar_app.js says why); shared/speedlimit.js reads both
+            const body = JSON.stringify(this.guess ? { t, app: 'ShakLimites', limit: said, guess: true } : { t, app: 'ShakLimites', limit: said });
+            let err = null;
+            for (const d of [this.dir, this.dir + '.shak']) {
+                try {
+                    try { fs.mkdirSync(d, 0o777); } catch (e) { /* there */ }
+                    try { fs.chmodSync(d, 0o777); } catch (e) { /* not ours: another app made it */ }
+                    const g = path.join(d, FILE);
+                    fs.writeFileSync(g + '.tmp', body, { mode: 0o644 });
+                    fs.renameSync(g + '.tmp', g);
+                    err = null; break;
+                } catch (e) { if (!err) err = e; }
+            }
+            if (err) throw err;
             this.writing = true; this.writeError = null;
         } catch (e) { this.writeError = String(e && e.code || e); }
     }
@@ -113,6 +122,7 @@ class LimitsApp {
         if (!this.writing) return;
         this.writing = false;
         try { fs.unlinkSync(path.join(this.dir, FILE)); } catch (e) { /* gone */ }
+        try { fs.unlinkSync(path.join(this.dir + '.shak', FILE)); } catch (e) { /* gone */ }
     }
 
     state() {

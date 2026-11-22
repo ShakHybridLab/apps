@@ -106,12 +106,14 @@ class SpeedLimit {
         let best = null;
         try {
             const t = this.now();
-            let names = [];
-            try { names = fs.readdirSync(this.dir); } catch (e) { names = []; }
-            names.forEach((n) => {
+            // the folder and its second one (shared/radar_app.js, limits_app.js: written there when the first is another app's and closed)
+            const names = [];
+            [this.dir, this.dir + '.shak'].forEach((d) => { try { fs.readdirSync(d).forEach((n) => names.push(d + '/' + n)); } catch (e) { /* none */ } });
+            names.forEach((fn) => {
+                const n = fn.slice(fn.lastIndexOf('/') + 1);
                 if (!/^speedlimit-[\w.-]+\.json$/.test(n)) return;
                 let j = null;
-                try { j = JSON.parse(fs.readFileSync(this.dir + '/' + n, 'utf8')); } catch (e) { return; }
+                try { j = JSON.parse(fs.readFileSync(fn, 'utf8')); } catch (e) { return; }
                 if (!j || typeof j.t !== 'number' || t - j.t >= STALE_MS || j.t - t > STALE_MS) return;
                 if (typeof j.limit !== 'number' || !isFinite(j.limit) || j.limit < MIN_KMH || j.limit > MAX_KMH) return;
                 if (!best || j.t > best.t) best = { limit: Math.round(j.limit), app: typeof j.app === 'string' ? j.app.slice(0, 30) : n, t: j.t };

@@ -126,6 +126,21 @@ check('dossier partagé interdit en écriture (« écriture EACCES » sur la voi
     d.feed(null); d.scan(); assert.strictEqual(d.state().on, false);
     fs.chmodSync(dir, 0o755); fs.rmSync(dir, { recursive: true, force: true });
 });
+check('dossier partagé à une autre appli et fermé : le fichier va dans le second dossier (« .shak »), que ShakHUD lit aussi', () => {
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'sh-'));
+    const dir = path.join(base, 'cluster-themes');
+    fs.writeFileSync(dir, 'pas un dossier');            // ni mkdir ni écriture n'y marchent, même en root
+    let t = 1000000;
+    const app = new RadarApp({ zones: ZONES, dir, now: () => t, log: { warn() {}, info() {} } });
+    const d = new Danger({ dir, now: () => t }, { info() {}, warn() {} }, () => {});
+    app.position({ latitude: 45.44 + 2300 / M_LAT, longitude: 4.39 }); app.tick();
+    assert.strictEqual(app.state().writeError, null, String(app.state().writeError));
+    assert(fs.readdirSync(dir + '.shak').some((n) => /^danger-/.test(n)), 'rien dans le second dossier');
+    d.scan(); assert(d.state().on && d.state().limit === 70, JSON.stringify(d.state()));
+    t += 6000; app.tick(); d.scan();
+    assert.strictEqual(d.state().on, false, 'le fichier de secours doit être effacé aussi');
+    fs.rmSync(base, { recursive: true, force: true });
+});
 check('l\'appli : GPSData seul (déclaré à part, comme ShakGPS), ses fichiers partagés existent, la liste des zones est celle de data/', () => {
     // (ShakRadar, l'appli à part, a été supprimée le 19 nov. 2026 : l'alerte est dans ShakTheme)
     assert(!fs.existsSync(path.join(ROOT, 'apps', 'shakradar')), 'ShakRadar est revenue');
