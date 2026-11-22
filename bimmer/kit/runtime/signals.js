@@ -71,9 +71,13 @@ async function watch(iface, instance, handlers, log, opts) {
         res.proxy = p;
         res.shutdown = () => Promise.resolve().then(() => p.shutdown && p.shutdown()).catch(() => {});
         const fields = Object.keys(handlers || {});
+        // one read at a time per field: a car slow to answer (3 s at most) does not get a pile of reads asked every pollMs (a field read
+        // 20 times a second could have had 60 waiting); the next poll after the answer asks again
+        const waiting = {};
         const fetchAll = () => fields.forEach((f) => {
-            if (cfg.fields && cfg.fields[f] && cfg.fields[f].getter) {
-                p.getValue(f, 3000).then((v) => handlers[f](v)).catch((e) => { res.getFailed[f] = String(e && e.message || e).slice(0, 60); });
+            if (cfg.fields && cfg.fields[f] && cfg.fields[f].getter && !waiting[f]) {
+                waiting[f] = true;
+                p.getValue(f, 3000).then((v) => { waiting[f] = false; handlers[f](v); }, (e) => { waiting[f] = false; res.getFailed[f] = String(e && e.message || e).slice(0, 60); });
             }
         });
         await nativeTick(() => {

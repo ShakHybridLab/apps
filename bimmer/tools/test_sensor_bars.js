@@ -159,7 +159,8 @@ check('nextView : chaque appui passe à la vue suivante, le dernier revient à a
     const mk = (views, saved) => {
         const o = { layoutViews: views, viewNow: null, saved, rebuilt: 0, _rebuild() { this.rebuilt++; rebuilt.push(this.viewNow); }, setting(k) { return HudApp.prototype.setting.call(this, k); } };
         o.ctx = { settings: { item: () => null, get: (k) => (k === 'viewSel' ? saved : undefined) } };
-        o._wazeMapOn = () => false;
+        o.can = false; o.mapLayout = true; o.mapOff = false;
+        o._mapCan = function () { return this.can; }; o._wazeMapOn = HudApp.prototype._wazeMapOn;
         o.nextView = HudApp.prototype.nextView; o.views = HudApp.prototype.views; o._mapOpen = HudApp.prototype._mapOpen;
         return o;
     };
@@ -171,15 +172,27 @@ check('nextView : chaque appui passe à la vue suivante, le dernier revient à a
     const saved = mk(['gauges', 'tyres'], 'tyres');          // un choix gardé dans les réglages : le premier appui passe à la suite
     assert.strictEqual(saved.nextView(), 'none');
     assert.deepStrictEqual(t.views(), ['gauges', 'tyres']);
-    // carte ouverte (propriétaire, 21 nov. 2026 : « quand il y a Waze, on supprime tout ce qui est lié au BC ») : aucune vue, la touche attend,
-    // et la vue choisie revient quand la carte part
+    // carte ouverte (propriétaire, 21 nov. 2026 : « quand il y a Waze, on supprime tout ce qui est lié au BC ») : aucune vue avec la carte
     const m = mk(['gauges', 'tyres'], 'none');
     m.nextView(); assert.strictEqual(m.setting('viewSel'), 'gauges');
-    m._wazeMapOn = () => true;
+    m.can = true;
     assert.strictEqual(m.setting('viewSel'), 'none', 'une vue reste avec la carte');
-    const before = m.rebuilt; assert.strictEqual(m.nextView(), 'none'); assert.strictEqual(m.rebuilt, before, 'la touche ne doit rien refaire avec la carte');
-    m._wazeMapOn = () => false; m.windowOpen = true; assert.strictEqual(m.setting('viewSel'), 'none', 'ni avec la fenêtre de Cluster Centre');
-    m.windowOpen = false; assert.strictEqual(m.setting('viewSel'), 'gauges', 'la vue ne revient pas quand la carte part');
+    // la touche BC cache la carte puis la ramène (propriétaire, 22 nov. 2026 : « le BC active la vue Waze, et quand je suis dans la vue Waze
+    // je veux la désactiver aussi avec le BC ») : carte -> aucune -> vues -> carte
+    assert.strictEqual(m.nextView(), 'none'); assert.strictEqual(m._wazeMapOn(), false, 'la carte devait se cacher');
+    assert.deepStrictEqual([m.nextView(), m.nextView(), m.nextView()], ['gauges', 'tyres', 'map']);
+    assert.strictEqual(m._wazeMapOn(), true, 'la carte devait revenir'); assert.strictEqual(m.setting('viewSel'), 'none');
+    assert.strictEqual(m.nextView(), 'none'); assert.strictEqual(m._wazeMapOn(), false);
+    // sans Waze, la carte n'est pas une étape
+    const n = mk(['gauges'], 'none');
+    assert.deepStrictEqual([n.nextView(), n.nextView()], ['gauges', 'none']);
+    // un thème sans vue mais avec la carte : la touche bascule carte / sans carte
+    const w = mk([], 'none'); w.can = true;
+    assert.deepStrictEqual([w.nextView(), w.nextView(), w.nextView()], ['none', 'map', 'none']);
+    // la fenêtre d'une autre appli (Cluster Centre) : pas de vue, la touche attend
+    const o = mk(['gauges'], 'none'); o.windowOpen = true;
+    assert.strictEqual(o.setting('viewSel'), 'none', 'ni avec la fenêtre de Cluster Centre');
+    const b = o.rebuilt; assert.strictEqual(o.nextView(), 'none'); assert.strictEqual(o.rebuilt, b);
 });
 check('les dessins des vues reçoivent tous les mêmes réglages : ils sont bâtis sur la source de mpanel (un réglage oublié vaut 0 : la voiture des pneus de Sport avait disparu, 0.21.53)', () => {
     const src = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8'), sh = require('../shared/shaders');

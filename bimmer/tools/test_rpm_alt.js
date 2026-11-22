@@ -62,7 +62,7 @@ check('la vitesse affichée par BMW (DisplayDataServer « speed.kmH ») est la s
     assert.strictEqual(dispSpeedOf({ rpm: 900 }), null);
     assert.strictEqual(dispSpeedOf({ speed: { kmH: 'x' } }), null);
     assert.strictEqual(dispSpeedOf(null), null);
-    assert(/if \(p\.id === 'rpm2'\) \{ const k = dispSpeedOf\(v\)/.test(hud) && /const RPM2_POLL_MS = 100;/.test(hud));
+    assert(/if \(p\.id === 'rpm2'\) \{ const k = dispSpeedOf\(v\)/.test(hud) && /const RPM2_POLL_MS = 50;/.test(hud));
     assert(/const raw = this\._raw\('speed'\)/.test(hud), 'les barres doivent suivre la même vitesse que les chiffres');
 });
 console.log(bad ? 'rpm alt: FAILED' : 'rpm alt: all ' + n + ' checks pass');

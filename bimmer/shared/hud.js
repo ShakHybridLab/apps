@@ -351,7 +351,7 @@ function rpmAltOf(v) {
 // on the owner's car (19 Nov 2026). Read as often as the rev counter, the bar follows the pedal.
 const REL_POLL_MS = 250;
 const RPM_POLL_MS = 100;           // the rev counter, read this often on top of the car's notifications (the owner's car hardly sends them: its Signals tab, 22 Nov 2026, showed 4 msg/s for the rev counter and 4.9 for the speed, our reads alone; 250 ms apart the bar moved in steps, "it isn't smooth")
-const RPM2_POLL_MS = 100;          // the rev counter's second source (DisplayDataServer), which also carries the speed BMW's own cluster shows (see dispSpeedOf)
+const RPM2_POLL_MS = 50;          // the rev counter's second source (DisplayDataServer), which also carries the speed BMW's own cluster shows (see dispSpeedOf)
 const DISP_SPEED_MS = 600;         // that speed is used while this fresh
 const SPEED_POLL_MS = 100;         // how often the speed is read on top of the car's own notifications
 const SPEED_IFACE = 'de.bmw.infotainment.vehicle.Vehicle2';
@@ -362,7 +362,7 @@ const EST = { massKg: 2150, drag: 0.5, roll: 0.010, etaDrive: 0.85, etaRegen: 0.
 const SPEED_FILTER_MS = 90;      // the speed bars' own smoothing (the car sends the speed a few times a second): the bars glide, the digits stay the car's own
 const ZOOM_MS = 60;              // the scale numbers that grow or change colour re-draw this often while they ease
 const TEXT_MS = 200;             // text re-draws at most 5 times a second (what BMW's own readouts do)
-const SPEED_TEXT_MS = 100;       // the speed's digits: 10 times a second (the speed is read that often, SPEED_POLL_MS)
+const SPEED_TEXT_MS = 40;        // the speed's digits: up to 25 times a second, so a new reading (DisplayDataServer every RPM2_POLL_MS) shows at once
 const TARGET_SIZES = { hud: [800, 480], panel: [1920, 720] };
 // X3 30e (plug-in hybrid): three modes, Hybrid / Hybrid Eco Pro / Sport, no Comfort (a Comfort number, if the car
 // ever sends one, counts as Hybrid). There is no "Electric Eco Pro" (the owner, Nov 16 2026): its Eco Pro is the Hybrid Eco Pro; every
@@ -661,9 +661,12 @@ class HudApp {
         this.mapLayout = false;          // the active layout has a map window (a widget with holeWhen "mapUp")
         // the Waze map inside the theme (ShakTheme, config.waze; waze.js): "mapUp" is on while it shows
         this.waze = this.config.waze ? new Waze(Object.assign({ dataDir: ctx.dataDir }, this.config.waze), this.log, () => this._guard('waze', () => {
+            // the map gone (Waze closed, the trip over): the BC button's "map hidden" ends with it, so the next map shows by itself again
+            if (this.mapOff && !(this.waze && this.waze.up === true)) this.mapOff = false;
             if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuild(); else this._status();
         })) : null;
         this.viewNow = null;             // the view the steering wheel's button stepped to (null: the setting "viewSel" decides), see nextView()
+        this.mapOff = false;             // the BC button hid the Waze map (nextView): the theme shows without its window until the next press or the map goes
         this.layoutViews = [];           // the views the active layout has
         this.mapShown = false;           // "mapUp" when the layout was built
         this.routeActive = null;         // a route is guided on the phone (CarPlay), from GUIDE (probes.js); null until the car says
@@ -1199,6 +1202,11 @@ class HudApp {
 
     /** The Waze map shows in the theme's window now (it is up on the panel, the setting is on, and a route is on if that is asked). */
     _wazeMapOn() {
+        return this._mapCan() && !this.mapOff;
+    }
+
+    /** The map could show in the theme now (Waze up, the setting on, the route if asked, a layout with a window), hidden by the BC button or not. */
+    _mapCan() {
         return !!this.waze && this.waze.up === true && this.ctx.settings.get('mapInTheme') === true && this._routeOk();
     }
 
@@ -1332,11 +1340,15 @@ class HudApp {
      * without a view). Returns the name now showing ("none" included). A theme without views does nothing.
      */
     nextView() {
-        if (!this.layoutViews.length) return 'none';
-        if (this._mapOpen()) return 'none';             // (no view beside the map: the button waits, the view picked before is kept)
-        const list = ['none'].concat(this.layoutViews), now = this.setting('viewSel');
+        // the Waze map is a step of the round too (owner, 22 Nov 2026: "BC turns the Waze view on, and off again when I am in it"): while it
+        // shows, a press hides it (the theme without its window, no view); after the last view, a press brings it back. Only while it can show.
+        const mapCan = !!this.mapLayout && this._mapCan();
+        if (mapCan && !this.mapOff) { this.mapOff = true; this.viewNow = 'none'; this._rebuild(); return 'none'; }
+        if (this.windowOpen === true) return 'none';    // (another app's window, a video: no view beside it, the button waits)
+        const list = ['none'].concat(this.layoutViews).concat(mapCan ? ['map'] : []), now = this.setting('viewSel');
+        if (list.length < 2) return 'none';
         const next = list[(Math.max(0, list.indexOf(now)) + 1) % list.length];
-        this.viewNow = next;
+        if (next === 'map') { this.mapOff = false; this.viewNow = 'none'; } else this.viewNow = next;
         this._rebuild();
         return next;
     }

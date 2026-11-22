@@ -2,6 +2,15 @@
 
 ## 22 novembre 2026
 
+### ShakTheme 0.21.70 : la touche BC affiche et cache aussi la carte Waze
+- **Demande du propriétaire (22 nov., 18:57)** : « le BC active la vue Waze, et quand je suis dans la vue Waze je veux la désactiver aussi avec le BC » ; l'ordre voulu : toutes les vues du BC, puis la carte, puis le thème sans vue, et ainsi de suite.
+- **Ce qui change** (`nextView`) : la carte devient une étape du tour de la touche BC, seulement quand elle peut s'afficher (Waze en route, réglage « carte dans le thème » activé). Carte affichée → un appui la cache (le thème sans fenêtre et sans vue) → les vues une à une → la carte revient → etc. Quand Waze s'arrête (fin du trajet), la carte cachée redevient visible d'elle-même au trajet suivant. Un thème sans vue bascule simplement carte / sans carte. La fenêtre d'une autre appli (Cluster Centre) bloque toujours la touche. Au banc (M Blade, faux Waze) : carte, aucune, jauges, pneus, conduite, électrique, carte. `tools/test_sensor_bars.js` vérifie le tour.
+
+### ShakTheme 0.21.70, ShakHUD 0.6.50 : la vitesse lue 20 fois par seconde, sans risque d'embouteillage
+- **Propriétaire (22 nov., 18:55)** : « toujours un petit peu de latence, mais c'est beaucoup mieux » puis « optimise au maximum et que ce soit stable ».
+- **Plus rapide** : la vitesse affichée par BMW (DisplayDataServer, qui donne aussi la seconde source du régime) est relue toutes les 50 ms au lieu de 100, et les chiffres de la vitesse peuvent se redessiner toutes les 40 ms au lieu de 100 : une nouvelle valeur s'affiche à la boucle suivante (20 ms). Retard moyen ajouté par l'appli : environ 25 ms de lecture et 20 ms de boucle, au lieu d'environ 100 à 150 ms.
+- **Stable** (`kit/runtime/signals.js`) : une relecture ne demande plus un champ tant que la lecture précédente n'a pas répondu. Avant, une voiture lente à répondre (jusqu'à 3 s) pouvait accumuler des dizaines de lectures en attente ; maintenant il n'y en a jamais plus d'une par champ, et le rythme reprend dès la réponse. Nouveau test `tools/test_signals_poll.js` (il échoue avec l'ancien code : 12 lectures en attente).
+
 ### ShakTheme 0.21.69, ShakHUD 0.6.49 : la vitesse que BMW affiche
 - **Propriétaire (22 nov., 17:50)** : « c'est pas mal, mais il y a toujours un peu de latence sur la vitesse ». La vitesse lue jusqu'ici (`Vehicle2.statusCarSpeed2`) est celle que la voiture calcule ; le cluster BMW, lui, dessine celle de `DisplayDataServer.functionalLibraryData` (`"speed": { "kmH": … }`, visible dans l'onglet Signaux), déjà lue par nos applis pour la seconde source du régime.
 - **Correctif** : les chiffres et les barres de vitesse prennent maintenant cette vitesse-là tant qu'elle a moins de 600 ms (`dispSpeedOf`, `DISP_SPEED_MS`), sinon celle de la voiture ; un 0 de ce côté alors que la voiture roule à plus de 5 km/h est ignoré. Cette source est relue toutes les 100 ms (au lieu de 250). Les chiffres doivent donc suivre ceux de BMW, au même arrondi. Contrôle ajouté à `tools/test_rpm_alt.js`.

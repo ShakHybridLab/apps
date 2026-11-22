@@ -296,14 +296,14 @@ check('the map shows in the theme with a route, or when the car says nothing; no
     // hud.js needs the kit around it (it is only built into dist), so the three methods are cut out of its source and run on a stand-in
     const hudSrc = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
     const grab = (name) => { const m = hudSrc.match(new RegExp('\\n    ' + name + '\\([^)]*\\) \\{[\\s\\S]*?\\n    \\}\\n')); assert(m, 'hud.js has no ' + name); return m[0]; };
-    const Hud = { prototype: new Function('guidanceOf', 'return class {' + grab('_routeOk') + grab('_wazeMapOn') + grab('_guidance') + '}')(guidanceOf).prototype };
+    const Hud = { prototype: new Function('guidanceOf', 'return class {' + grab('_routeOk') + grab('_wazeMapOn') + grab('_mapCan') + grab('_guidance') + '}')(guidanceOf).prototype };
     assert(/if \(key === 'mapUp'\) return this\._mapOpen\(\);/.test(hudSrc) && /_mapOpen\(\) \{ return !!\(this\._wazeMapOn\(\) \|\| this\.windowOpen === true\); \}/.test(hudSrc), "setting('mapUp') no longer goes through _wazeMapOn");
     const mk = (opts) => {
         const set = Object.assign({ mapInTheme: true, mapOnlyWithRoute: true }, opts.set || {});
         const o = { routeActive: opts.route === undefined ? null : opts.route, windowOpen: !!opts.window, waze: { up: opts.up !== false },
             ctx: { settings: { item: (k) => (set[k] !== undefined ? { key: k } : undefined), get: (k) => set[k] } }, mapShown: false, mapLayout: true, rebuilt: 0, statused: 0, logs: [],
             log: { info: (m) => o.logs.push(m) }, _rebuild() { o.rebuilt++; }, _status() { o.statused++; } };
-        ['_routeOk', '_wazeMapOn', '_guidance'].forEach((m) => { o[m] = Hud.prototype[m]; });
+        ['_routeOk', '_wazeMapOn', '_mapCan', '_guidance'].forEach((m) => { o[m] = Hud.prototype[m]; });
         o.setting = (k) => (k === 'mapUp' ? !!(o._wazeMapOn() || o.windowOpen === true) : set[k]);       // the line checked above
         return o;
     };
