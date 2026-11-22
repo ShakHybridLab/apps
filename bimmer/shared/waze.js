@@ -56,7 +56,10 @@ const STALE_MS = 10000;          // a status file older than this: the service i
 // the map stays "up" this long after the status file last said "showing": a short "frozen" (the phone's stream stalls), a file read half
 // written, or a late rewrite no longer closes the theme's window and opens it again a second later (each is a whole rebuild of the theme's
 // layers on the cluster: the owner saw the themes flicker). Turning the map off (the setting, "off", unsupported) is at once.
-const DOWN_HOLD_MS = 4000;
+// 10 s since 22 Nov 2026 (owner: "les thèmes buggent des fois, il n'y a plus aucun chiffre"; on the bench every change of the map is a whole new set
+// of text sheets, a second or more with no number on the cluster, and Maps on Cluster's stream had been stalling on and off): a stall under 10 s
+// leaves the theme as it is, the window black meanwhile
+const DOWN_HOLD_MS = 10000;
 
 class Waze {
     /**

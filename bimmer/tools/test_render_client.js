@@ -80,6 +80,26 @@ check('cork / uncork : une reconstruction part d\'un bloc, dans l\'ordre ; imbri
     assert.strictEqual(d.cork(), false, 'pas de socket : rien à retenir');
     d.uncork();
 });
+check('un socket qui freine n\'affame aucune couche : les écritures d\'images passent à tour de rôle (22 nov. 2026, la vitesse figée pendant que l\'anneau clignotait)', () => {
+    const c = new ClusterRender('test', '/nonexistent');
+    const order = [];
+    c.sock = { write(m) { order.push(m.readUInt32LE ? m.readUInt32LE(4) : -1); return false; } };       // chaque écriture remplit le socket
+    c.connected = true; c.ready = true;
+    const a = c.image({ x: 0, y: 0, w: 4, h: 4, iw: 4, ih: 4 }), b = c.image({ x: 10, y: 0, w: 4, h: 4, iw: 4, ih: 4 });
+    assert(a > 0 && b > 0);
+    const px = Buffer.alloc(4 * 4 * 4, 255);
+    const got = [];
+    c.sock.write = (m) => { got.push(m); return false; };
+    for (let i = 0; i < 6; i++) {
+        // la couche A change à chaque fois (l'anneau qui clignote), B une seule fois au début (la vitesse)
+        px[0] = i; c.blocked = false; c.pixels(a, null, Buffer.from(px));
+        if (i === 0) c.pixels(b, null, Buffer.from(px));
+    }
+    // B a bien été écrite, alors que A avait toujours quelque chose à envoyer
+    const sentB = c.layers.get(b).whole === false;            // B's whole picture went out (it is no longer waiting)
+    assert(sentB, 'la couche B est restée en attente derrière A');
+});
+
 check('hud.js : _rebuild retient les écritures de chaque connexion pendant la reconstruction et les relâche même sur une erreur', () => {
     const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
     assert(/const corked = this\.clients\.filter\(\(c\) => typeof c\.cork === 'function' && c\.cork\(\)\);/.test(src));

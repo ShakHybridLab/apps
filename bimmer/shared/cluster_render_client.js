@@ -265,7 +265,13 @@ class ClusterRender extends EventEmitter {
      * the newest video frame of each layer. */
     _pump() {
         if (!this.sock || !this.ready) return;
-        this.layers.forEach((l, ref) => {
+        /* Round robin: start after the layer written last. In the map's order, a layer that changes all the time
+         * (ShakTheme's speed limit ring flashing over the limit) and comes first took every write the socket
+         * allowed while the service throttled us, and a layer after it on the same connection (the speed) waited:
+         * the owner saw the speed freeze while the ring flashed (22 Nov 2026). */
+        const all = Array.from(this.layers.entries());
+        const start = all.length ? (all.findIndex(([ref]) => ref === this.lastPumped) + 1) % all.length : 0;
+        all.slice(start).concat(all.slice(0, start)).forEach(([ref, l]) => {
             if (this.blocked || (l.kind !== 'image' && l.kind !== 'asset') || !(l.whole || l.dirty.length)) return;
             const rects = l.whole ? [] : l.dirty;
             let px;
@@ -284,6 +290,7 @@ class ClusterRender extends EventEmitter {
             l.whole = false;
             l.dirty = [];
             l.dirtyBytes = 0;
+            this.lastPumped = ref;
             if (!this.sock.write(frameMessage(ref, 0, rects, px))) this.blocked = true;
         });
         for (const ref of Array.from(this.pendingFrames.keys())) {

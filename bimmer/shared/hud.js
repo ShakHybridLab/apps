@@ -386,6 +386,7 @@ const WARM_PULSE_MS = 2400, WARM_FLASH_MS = 400;   // a temperature that reaches
 const TYRE_RED_BAR = 0.4;               // a tyre pressure this far under the setting "tyreLow" is red (yellow from the setting)
 const WARN_DIM = [120, 16, 22, 255];   // the dark red a temperature flashes from, up to the shift red, while over its warning limit
 const WARN_FLASH_MS = 300;
+const LIMIT_FLASH_MS = 500;    // the speed limit's ring over the limit (see _limitFlash)
 // the sensors a slanted bar can show ("sensor"): the colour of the boost's bar (the oil's and the coolant's follow their temperature)
 const SENSOR_BAR = { oil: true, coolant: true, boost: [79, 180, 255, 255] };
 // The views a theme shows one at a time in place of its empty slot ("viewSel=<name>" in a widget's toggle; the setting "viewSel" picks one by hand, and the
@@ -1887,7 +1888,8 @@ class HudApp {
     }
 
     /** The colour of the speed limit's ring and number while the car is over the limit: the bright red and the dark one in turn. */
-    _limitFlash(now) { return Math.floor(now / WARN_FLASH_MS) % 2 === 0 ? 'hot' : WARN_DIM; }
+    // (500 ms a half: half the writes of the temperatures' 300 ms, the ring and its number are a 92 px icon and a text; still a clear blink)
+    _limitFlash(now) { return Math.floor(now / LIMIT_FLASH_MS) % 2 === 0 ? 'hot' : WARN_DIM; }
 
     /** `id` (oil / coolant / boost) if that reading is over its warning limit now, else null. */
     _overLimit(id) {

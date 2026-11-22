@@ -22,7 +22,7 @@ check('la carte s\'ouvre tout de suite', () => {
     w._update(SHOW);
     assert.strictEqual(w.up, true);
 });
-check('un « frozen » ou un fichier illisible de moins de 4 s ne la ferme pas', () => {
+check('un « frozen » ou un fichier illisible de quelques secondes ne la ferme pas', () => {
     const { w, step, changes } = make();
     w._update(SHOW); const c0 = changes();
     step(1000); w._update(FROZEN); assert.strictEqual(w.up, true);
@@ -30,11 +30,12 @@ check('un « frozen » ou un fichier illisible de moins de 4 s ne la ferme pas',
     step(1000); w._update(SHOW); assert.strictEqual(w.up, true);
     assert(changes() - c0 <= 3, 'seul le texte de la page change');
 });
-check('arrêtée plus de 4 s : la carte se ferme', () => {
-    const { w, step } = make();
+check('arrêtée plus de DOWN_HOLD_MS (10 s depuis le 22 nov. 2026) : la carte se ferme', () => {
+    const { w, step } = make(), H = Waze.DOWN_HOLD_MS;
+    assert.strictEqual(H, 10000);
     w._update(SHOW);
-    for (let i = 0; i < 3; i++) { step(1000); w._update(FROZEN); }
-    assert.strictEqual(w.up, true, 'encore dans les 4 s');
+    for (let i = 0; i < H / 1000 - 1; i++) { step(1000); w._update(FROZEN); }
+    assert.strictEqual(w.up, true, 'encore dans le délai');
     step(1000); w._update(FROZEN);
     assert.strictEqual(w.up, false);
 });

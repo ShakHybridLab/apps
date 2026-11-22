@@ -57,25 +57,4 @@ module.exports = {
             'de.bmw.infotainment.entertainment.mediaplayer.MediaPlayer': ['subtitle', 'availableSubtitles', 'playlistNumAlbums', 'playlistNumArtists'],
         },
     },
-    // Le guidage CarPlay (« Carte seulement avec un itinéraire », propriétaire, 21 nov. 2026). ShakTheme 0.21.12 avait déclaré projectedGuidanceActive
-    // en « rs » et la voiture avait refusé toute l'installation (cause inconnue) ; le catalogue lu le 19 nov. montre aussi
-    // projectedGuidanceMetadataAvailable. Un nom par appli : celle qui s'installe dit lequel la voiture accepte, sans toucher aux thèmes.
-    shakguidage: {
-        title: 'ShakGuidage', glyph: 'GDA', logId: 'OAGD', version: '0.1.0',
-        description: "Essai : la voiture dit-elle qu'un itinéraire CarPlay est en cours (Waze, Plans, Google Maps) ? Premier nom : projectedGuidanceActive.",
-        note: 'CarPlay branché : lance un itinéraire dans Waze, photographie, puis arrête l\'itinéraire et photographie encore. La valeur doit changer.',
-        live: 'EN DIRECT : ce que la voiture envoie',
-        signals: {
-            'de.bmw.infotainment.a4a.carplay.CarPlayManager': ['projectedGuidanceActive'],
-        },
-    },
-    shakguidage2: {
-        title: 'ShakGuidage 2', glyph: 'GDB', logId: 'OAGE', version: '0.1.0',
-        description: "Essai : la voiture dit-elle qu'un itinéraire CarPlay est en cours ? Second nom : projectedGuidanceMetadataAvailable.",
-        note: 'CarPlay branché : lance un itinéraire dans Waze, photographie, puis arrête l\'itinéraire et photographie encore. La valeur doit changer.',
-        live: 'EN DIRECT : ce que la voiture envoie',
-        signals: {
-            'de.bmw.infotainment.a4a.carplay.CarPlayManager': ['projectedGuidanceMetadataAvailable'],
-        },
-    },
 };
