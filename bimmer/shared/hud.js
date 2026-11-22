@@ -1084,6 +1084,7 @@ class HudApp {
             if (op === 'layer' || op === 'asset') this._retryRefused();
             this._statusSoon();
         });
+        on('stalled', (why) => { this.log.warn('cluster-render connection' + tag + ' stalled (' + why + '): connecting again'); this._statusSoon(); });
         on('budget', (capKb, maxKb, reason) => this.log.info('budget' + tag + ' ' + capKb + '/' + maxKb + ' kb/s (' + reason + ')'));
         on('status', (text) => {
             this.log.info('cluster-render status: ' + text);
@@ -1697,13 +1698,18 @@ class HudApp {
         const d = this.car.data();
         const demo = d.demo ? ', demo data' : '';
         const drawn = this._drawnNote();
+        // how late cluster-render answers (its answers come after everything we sent before: the delay of the screen), and the stalled
+        // connections made again (cluster_render_client.js _watch)
+        let lag = 0, again = 0;
+        this.clients.forEach((c) => { if (c && isNum(c.rtt)) lag = Math.max(lag, c.rtt); if (c) again += c.restarts || 0; });
+        const late = (this.clients.some((c) => c && isNum(c.rtt)) ? ', cluster delay ' + lag + ' ms' : '') + (again ? ', ' + again + ' stalled connections made again' : '');
         const conns = this._connCount();
         const layers = ', ' + this._layerCount(this._layerRefs().length) + (conns > 1 ? ' on ' + conns + ' connections' : '')
             + (this.pixelBytes ? ', ' + mib(this.pixelBytes) + ' of 16 MiB pixels' : '');
-        if (this.layoutTheme) return this.label + ' on' + mode + ': ' + name + ' theme' + layers + demo + drawn;
+        if (this.layoutTheme) return this.label + ' on' + mode + ': ' + name + ' theme' + layers + demo + drawn + late;
         const theme = THEMES[this.themeName] ? THEMES[this.themeName].name : this.themeName;
         const auto = this.setting('hudTheme') === 'auto' ? ' (Auto)' : '';
-        return this.label + ' on' + mode + ': ' + name + ' layout, ' + theme + ' theme' + auto + layers + demo + drawn;
+        return this.label + ' on' + mode + ': ' + name + ' layout, ' + theme + ' theme' + auto + layers + demo + drawn + late;
     }
 
     _status() {

@@ -57,6 +57,14 @@ const HELLO_MS = 15000;                /* connected but no hello from the servic
 /* Bytes the socket may hold unsent before the connection is made again (a service that stopped reading). Well over the
  * biggest message there is (a whole 1920x720 image, 5.3 MiB, waits there for a moment after every rebuild). */
 const BACKLOG_MAX = 16 * 1024 * 1024;
+/* The watchdog (see _watch): a socket full that moves nothing for STALL_MS, or a ping (a status request) unanswered for PING_LOST_MS on a
+ * connection that has answered before, and the connection is made again (the replay redraws everything). Since the newest value of each
+ * uniform waits in memory while the socket is full (0.21.64), the backlog never reached BACKLOG_MAX any more: a service that stopped reading
+ * left the cluster frozen for good (the owner's photos, 22 Nov 2026: R and 3 km/h shown in P, standing). */
+const WATCH_MS = 1000;
+const STALL_MS = 4000;
+const PING_MS = 3000;
+const PING_LOST_MS = 6000;
 const SET_KEYS = ['klass', 'z', 'x', 'y', 'w', 'h', 'visible', 'exclusive', 'prewarm', 'contend', 'guide_hold',
     'opacity', 'rotate', 'sx', 'sy', 'px', 'py'];
 const MESH_KEYS = ['projection', 'fov', 'ortho_h', 'near', 'far', 'cx', 'cy', 'cz', 'crx', 'cry', 'crz'];
@@ -143,9 +151,40 @@ class ClusterRender extends EventEmitter {
         this.timer = null;
         if (this.helloTimer) clearTimeout(this.helloTimer);
         this.helloTimer = null;
+        if (this.watchT) clearInterval(this.watchT);
+        this.watchT = null;
         if (this.sock) this.sock.destroy();
         this.sock = null;
         this.ready = false;
+    }
+
+    /* Once a second: a stalled connection is made again (see STALL_MS). */
+    _watch() {
+        const s = this.sock;
+        if (!s || !this.connected || this.corked) { this.stallAt = 0; return; }
+        const now = Date.now();
+        const n = s.bufferSize !== undefined ? s.bufferSize : s.writableLength;
+        if (this.blocked && n > 0) {
+            if (!this.stallAt || n < this.stallLen) { this.stallAt = now; this.stallLen = n; }      // (bytes leaving: it moves, slowly)
+            else if (now - this.stallAt >= STALL_MS) { this._restart('socket full, nothing read for ' + Math.round((now - this.stallAt) / 1000) + ' s'); return; }
+        } else this.stallAt = 0;
+        if (!this.ready) return;
+        const q = this.asked || [];
+        const first = q.find((a) => a.kind === 'ping');
+        if (first && this.pongs > 0 && now - first.t >= PING_LOST_MS) { this._restart('no answer for ' + Math.round((now - first.t) / 1000) + ' s'); return; }
+        if (now - (this.pingAt || 0) >= PING_MS && q.length < 4) {
+            this.pingAt = now;
+            q.push({ kind: 'ping', t: now }); this.asked = q;
+            this._send({ op: 'status' });
+        }
+    }
+
+    _restart(why) {
+        this.restarts = (this.restarts || 0) + 1;
+        this.lastRestart = why;
+        this.stallAt = 0; this.asked = []; this.pongs = 0;
+        this.emit('stalled', why);
+        if (this.sock) this.sock.destroy();
     }
 
     _open() {
@@ -162,6 +201,8 @@ class ClusterRender extends EventEmitter {
             this.helloTimer = setTimeout(() => { this.helloTimer = null; if (this.sock === sock && !this.ready) sock.destroy(); }, HELLO_MS);
             if (this.helloTimer.unref) this.helloTimer.unref();
             this._send({ op: 'hello', app: this.app, proto: PROTO });
+            this.asked = []; this.pongs = 0; this.stallAt = 0; this.stallLen = 0; this.pingAt = Date.now();
+            if (!this.watchT) { this.watchT = setInterval(() => this._watch(), WATCH_MS); if (this.watchT.unref) this.watchT.unref(); }
             /* Assets first, so binds find them; binds and animations once
              * every layer and part is made. */
             [true, false].forEach((assets) => this.layers.forEach((l, ref) => {
@@ -188,6 +229,7 @@ class ClusterRender extends EventEmitter {
             const wasReady = this.ready;
             this.sock = null;
             if (this.pendingUni) this.pendingUni.clear();       // (the replay on the next connect sends every layer's newest uniforms)
+            this.asked = [];
             this.ready = false;
             this.connected = false;
             this.corked = 0;
@@ -240,6 +282,9 @@ class ClusterRender extends EventEmitter {
         } else if (ev.ev === 'error') {
             this.emit('refused', ev.op, ev.ref, ev.reason);
         } else if (ev.ev === 'status') {
+            /* the answers come in the order asked: our pings (see _watch) are not passed on */
+            const a = this.asked && this.asked.length ? this.asked.shift() : null;
+            if (a && a.kind === 'ping') { this.pongs++; this.rtt = Date.now() - a.t; return; }
             this.emit('status', ev.text);
         }
     }
@@ -589,7 +634,7 @@ class ClusterRender extends EventEmitter {
         return true;
     }
 
-    status() { this._send({ op: 'status' }); }
+    status() { if (this.connected) (this.asked = this.asked || []).push({ kind: 'user' }); this._send({ op: 'status' }); }
 
     /* Holds every write until uncork(): the messages go out together, in the same order. A theme rebuilt drops its layers and makes new
      * ones; written one by one, the service could draw a frame between the drops and the new layers (the cluster showed nothing for a

@@ -126,6 +126,8 @@ const STATUS = [
     [/, (\d+) layers? on (\d+) connections/, ', $1 couches sur $2 connexions'], [/, (\d+) layers?(?=,|;|$)/, ', $1 couches'],
     [/, ([\d.]+) MiB of 16 MiB pixels/, ', $1 Mio de pixels sur 16'], [/, demo data/, ', données de démo'],
     [/, (\d+) of (\d+) layers? drawn/, ', $1 couches affichées sur $2'],
+    [/, cluster delay (\d+) ms/, ', délai du cluster $1 ms'],
+    [/, (\d+) stalled connections made again/, ', $1 connexions figées refaites'],
     [/\((\d+) waiting: /, '($1 en attente : '], [/, waiting: another app has this display/, ', en attente : une autre appli a cet écran'],
     [/, waiting: BMW is using this display/, ', en attente : BMW utilise cet écran'], [/, refused /, ', refusé : '],
     [/: connecting to cluster-render/, ' : connexion à cluster-render'], [/: cluster-render is not installed or not running/, " : cluster-render n'est pas installé ou ne tourne pas"],
