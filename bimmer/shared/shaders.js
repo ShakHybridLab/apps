@@ -367,7 +367,13 @@ void main() {
     vec4 c = p.y < u_headH ? u_head : u_fill;
     float edge = clamp(d + u_border + 0.5, 0.0, 1.0);                       // 1 within the frame
     vec4 col = mix(c, u_line, edge);
-    if (u_ring.z > 0.0) col = mix(col, u_line, clamp(0.5 - (abs(length(p - u_ring.xy) - u_ring.z) - 0.5 * u_ring.w), 0.0, 1.0));
+    // the sign: a white disc inside the ring (owner, 23 Nov 2026: "le panneau avec le fond blanc", the number on it in black, hud.js), then the
+    // ring (the distance in units of 16 px: no square over half precision's 65504 on the car's GPU)
+    if (u_ring.z > 0.0) {
+        float rd = length((p - u_ring.xy) / 16.0) * 16.0;
+        col = mix(col, vec4(0.965, 0.965, 0.965, 1.0), clamp(0.5 - (rd - u_ring.z), 0.0, 1.0));
+        col = mix(col, u_line, clamp(0.5 - (abs(rd - u_ring.z) - 0.5 * u_ring.w), 0.0, 1.0));
+    }
     gl_FragColor = vec4(col.rgb, col.a * outer);
 }
 `;
@@ -2185,7 +2191,8 @@ const MSTYLE = `// M Style HUD rev counter for a cluster-render "effect" layer (
 //   u_A    P0 (the bar's start) and P1 (the bend), x0 y0 x1 y1
 //   u_B    P2 (the bar's end)
 //   u_g    bar width, the share of the scale at the bend (0..1), ticks (thousands of rpm on the scale), where the red zone starts (0..1)
-//   u_lvl    value 0..1, the held peak 0..1 (0 = none), the zone (0 = the bar is white, 1 = orange in the run-up to the redline, 2 = red), spare
+//   u_lvl    value 0..1, the held peak 0..1 (0 = none), the zone (0 = the bar is white, 1 = orange in the run-up to the redline, 2 = red),
+//            where the yellow marks start (0..1: the 700 rpm before the red zone)
 //   u_hy   rgb the lit colour while the battery drives or charges, a = 1 then (0 = the engine's rpm, lit white, orange, u_hot by the zone)
 //   u_hot rgb;  u_fg, u_track rgba (straight alpha)
 precision mediump float;
@@ -2205,10 +2212,13 @@ vec4 over(vec4 top, vec4 under) {           // straight-alpha "top over under"
     return vec4((top.rgb * top.a + under.rgb * k) / max(a, 0.0001), a);
 }
 
+// (in units of 64 px: the car's GPU works this shader in half precision, where a square over 65504 overflows. The level run is about 385 px
+// long, 385 x 385 = 148225: its dot product came out infinite, the run shrank to the bend and the bar stopped at 2, engine and electric alike
+// (owner's HUD photo, 22 Nov 2026); the bench's GPU works in full precision and drew it whole)
 float seg(vec2 p, vec2 a, vec2 b, out float t) {
-    vec2 ab = b - a;
-    t = clamp(dot(p - a, ab) / dot(ab, ab), 0.0, 1.0);
-    return length(p - a - ab * t);
+    vec2 ab = (b - a) / 64.0, ap = (p - a) / 64.0;
+    t = clamp(dot(ap, ab) / dot(ab, ab), 0.0, 1.0);
+    return length(ap - ab * t) * 64.0;
 }
 
 void main() {
@@ -2216,7 +2226,7 @@ void main() {
     vec2 a = u_A.xy, b = u_A.zw, c = u_B;
     float t1, t2;
     float d1 = seg(p, a, b, t1), d2 = seg(p, b, c, t2);
-    float l1 = length(b - a), l2 = length(c - b);
+    float l1 = length((b - a) / 64.0) * 64.0, l2 = length((c - b) / 64.0) * 64.0;
     bool first = d1 < d2;
     float d = first ? d1 : d2;
     float f = first ? t1 * u_g.y : u_g.y + t2 * (1.0 - u_g.y);
@@ -2239,18 +2249,23 @@ void main() {
         if (fi <= u_g.z) {
             float fr = fi / u_g.z;
             bool in1 = fr <= u_g.y;
-            vec2 dir = abs(fr - u_g.y) < 0.001 ? normalize(normalize(b - a) + normalize(c - b)) : (in1 ? normalize(b - a) : normalize(c - b));
+            vec2 da = normalize((b - a) / 64.0), db = normalize((c - b) / 64.0);
+            vec2 dir = abs(fr - u_g.y) < 0.001 ? normalize(da + db) : (in1 ? da : db);
             vec2 tp = in1 ? mix(a, b, fr / u_g.y) : mix(b, c, (fr - u_g.y) / (1.0 - u_g.y));
             vec2 n = vec2(-dir.y, dir.x);
             bool even = mod(fi, 2.0) < 0.5;
             vec2 s0 = tp + n * (hw + 3.0), s1 = s0 + n * (even ? 10.0 : 5.0);
             vec2 q = s1 - s0;
             float u = clamp(dot(p - s0, q) / dot(q, q), 0.0, 1.0);
-            float dt = length(p - s0 - q * u);
+            float dt = length((p - s0 - q * u) / 64.0) * 64.0;
             vec3 tc = fr >= u_g.w - 0.001 ? u_hot : u_fg.rgb;
             col = over(vec4(tc, clamp((even ? 1.9 : 1.3) - dt, 0.0, 1.0)), col);
         }
     }
+    // small yellow dashes inside the bar over the 700 rpm before the red zone, as on an M's own HUD (owner, 23 Nov 2026: "les petits traits
+    // jaunes ... dedans directement"); the lit part covers them, as it covers the red zone's dark red
+    if (f >= u_lvl.w && f < u_g.w && f > u_lvl.x && u_lvl.w > 0.0 && d < hw * 0.2 && mod(s, 11.0) < 7.0)
+        col = over(vec4(1.0, 0.85, 0.1, 1.0), col);
     gl_FragColor = col;
 }
 `;
@@ -2289,6 +2304,6 @@ function hardened(src, highp) {
 // cluster-render keeps six uniform names for its own matrices (PROTOCOL.md: u_mvp, u_mv, u_m, u_v, u_p, u_normal) and hands them to RAMSES as
 // matrices wherever a shader mentions them. The views' drawings named their bars' levels "u_v" (a vec4): on the car RAMSES then refused the
 // whole effect ("effect did not compile", owner's photo of 21 Nov 2026) while the bench drew it. Renamed u_lvl; tools/test_shader_names.js keeps watch.
-const VIEW_SHADERS = { mpanel: true, mblades: true, sring: true, nline: true, vcard: true };
+const VIEW_SHADERS = { mpanel: true, mblades: true, sring: true, nline: true, vcard: true, mstyle: true };   // (high precision where the GPU has it)
 module.exports = { mblades: MBLADES, nline: NLINE, sring: SRING, vcard: VCARD, slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, mpanel: MPANEL, navi: NAVI, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, accented, ACCENT_LITERALS };
 Object.keys(module.exports).forEach((k) => { if (typeof module.exports[k] === 'string') module.exports[k] = hardened(module.exports[k], VIEW_SHADERS[k] === true); });

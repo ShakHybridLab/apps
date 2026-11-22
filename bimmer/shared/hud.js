@@ -1936,9 +1936,18 @@ class HudApp {
      * The speed limit sign, w.w x w.h straight RGBA: a white disc, the red ring (role: 'hot', or while over the limit the flash's colour) and
      * the number centred, black, or in the ring's colour while over the limit. Font "limitFont" on the ring widget, else "unit".
      */
-    _paintLimitSign(w, text, role) {
+    /** The danger alert's ring icon ("ring", shown with the alert's limit): it is drawn as the white sign. */
+    _dangerSign(w) { return w.type === 'icon' && w.icon === 'ring' && /(^|&)dangerLimit($|&)/.test(w.toggle || ''); }
+
+    /** The layout's danger ring icon, if it has one (M Blade, Navi, ShakHUD; Sport's and M's ring is their card's own drawing). */
+    _dangerRingIcon() {
+        for (const x of this.widgets.values()) if (this._dangerSign(x.w)) return true;     // (asked only for that one text, at most 5 times a second)
+        return false;
+    }
+
+    _paintLimitSign(w, text, role, opt) {
         const W = w.w, H = w.h, out = Buffer.alloc(W * H * 4, 0);
-        const l = this._limitNow(Date.now()), isOver = !!(l && l.over);
+        const l = opt ? null : this._limitNow(Date.now()), isOver = !!(l && l.over);
         const put = (src) => {                          // src over out, straight alpha
             for (let i = 0; i < W * H; i++) {
                 const o = i * 4, a = src[o + 3] / 255;
@@ -1951,7 +1960,8 @@ class HudApp {
         put(paintIcon('signDisc', W, H, LIMIT_WHITE));
         put(paintIcon('ring', W, H, color(this.theme, role)));
         if (text) {
-            const font = w.limitFont || 'unit', cell = textRaster.loadFont(font).metrics.cellHeight;
+            // the European road signs' DIN 1451 (DINish): "sign_l" in the 92 px signs, "sign_m" in the smaller ones
+            const font = w.limitFont || (w.w >= 80 ? 'sign_l' : 'sign_m'), cell = textRaster.loadFont(font).metrics.cellHeight;
             const ink = isOver ? color(this.theme, role) : LIMIT_BLACK;
             put(textRaster.drawText(W, H, text, { font, color: ink, align: 'center', offsetY: Math.round((H - cell) / 2) }));
         }
@@ -3263,11 +3273,11 @@ class HudApp {
             c.uniform(ref, 'u_A', [P[0][0], P[0][1], P[1][0], P[1][1]]);
             c.uniform(ref, 'u_B', [P[2][0], P[2][1]]);
             c.uniform(ref, 'u_g', [w.bar, Math.min(0.95, Math.max(0.05, (w.corner || 2000) / max)), max / 1000, this._redMarks(max)[0]]);
-            c.uniform(ref, 'u_lvl', [0, 0, 0, 0]);
+            c.uniform(ref, 'u_lvl', [0, 0, 0, this._redMarks(max)[1]]);
             c.uniform(ref, 'u_hy', [0, 0, 0, 0]);
             c.uniform(ref, 'u_hot', rgb(t.hot));
             c.uniform(ref, 'u_fg', rgba(t.fg));
-            c.uniform(ref, 'u_track', rgba(t.track));
+            c.uniform(ref, 'u_track', rgba(color(t, w.trackColor || 'track')));
         } else if (w.type === 'lights') {
             c.uniform(ref, 'u_size', [w.w, w.h]);
             // driver camera wings: half the lights (and the blue tail) on each side, filling in towards the camera
@@ -3533,6 +3543,9 @@ class HudApp {
             let s = w.readyHides && this._launchReady(now) ? '' : this._resolve(w.text);                              // (M Blade: the cue takes the drive mode's name's place)
             // the speed limit's number: drawn inside its ring now, on the white sign (_paintLimitSign); this box stays empty
             if (w.limitBy && w.text === '{{limit}}') s = '';
+            // the danger alert's limit: inside its ring icon when the layout has one (M Blade, Navi, the HUD), else black on the white disc that the
+            // card's own layer draws inside its ring (Sport, M: BOX u_ring)
+            if (w.text === '{{dangerLimit}}' && this._dangerRingIcon()) s = '';
             let role = w.color || 'fg';
             if (w.colorBy === 'verdict' && this.score.last) role = VERDICT[this.score.last.verdict] || role;
             const here = !!(w.near && this._nearMark(w.near[0]) === w.near[1]);
@@ -3553,6 +3566,7 @@ class HudApp {
             }
             if (w.tyreBy) role = this._tyreRole(w.tyreBy, role);               // a low tyre pressure: yellow, then red
             if (w.limitBy) { const l = this._limitNow(now); if (l && l.over) role = this._limitFlash(now); }          // over the speed limit: it flashes with its ring
+            if (w.text === '{{dangerLimit}}') role = LIMIT_BLACK;                                                     // on the white sign
             if (w.accentBy) role = this._accentColor() || role;                                                       // the drive mode's own text: in the mode's colour
             if (w.iceBy && this._ice(now).on) role = VERDICT.COLD;                                                    // ice: the outside temperature in the cold blue
             if (w.launchBy && this.runs.state !== 'run' && this.runs.record) role = VERDICT['SPOT ON'];            // a new best time: green
@@ -3599,6 +3613,8 @@ class HudApp {
                     shiftX = w.align === 'right' ? -gr[2] : w.align === 'left' ? gr[0] : Math.round((gr[0] - gr[2]) / 2);
                 }
             }
+            // the danger alert's limit in Sport's and M's card, on the white disc of the card's ring: the road signs' DIN 1451, centred in its box
+            if (w.text === '{{dangerLimit}}' && s) { font = 'sign_s'; offsetY = Math.round((w.h - textRaster.loadFont(font).metrics.cellHeight) / 2); }
             const has = (n) => { const g = textRaster.loadFont(n).metrics.glyphs; return s.split('').every((ch) => ch === ' ' || g[ch]); };
             if (w.fit && (textRaster.measure(s, font, w.spacing) > w.w || !has(font))) {
                 const f = w.fit.find((n) => has(n) && textRaster.measure(s, n, w.spacing) <= w.w) || w.fit[w.fit.length - 1];
@@ -3611,7 +3627,7 @@ class HudApp {
                 glow: w.glow ? this.theme.glow : 0,
             });
             this._blitDiff(x, buf);
-        } else if (w.type === 'icon' && ((w.tempBy && COLD_BELOW[w.tempBy]) || w.lowWhen || w.tyreBy || w.limitBy || w.launchBy || w.iceBy || w.evShareBy || w.nextBy || w.alertBy || w.laneBy || w.readyBy || w.readyHides)) {
+        } else if (w.type === 'icon' && ((w.tempBy && COLD_BELOW[w.tempBy]) || w.lowWhen || w.tyreBy || w.limitBy || w.launchBy || w.iceBy || w.evShareBy || w.nextBy || w.alertBy || w.laneBy || w.readyBy || w.readyHides || this._dangerSign(w))) {
             // an oil or coolant icon in the colour of its number (blue while cold, green once warm, flashing red over the limit);
             // a fuel or battery icon in the shift red while that is in reserve ("lowWhen")
             let role = w.color || 'fg';
@@ -3643,12 +3659,15 @@ class HudApp {
             // the speed limit: the road sign itself, a white disc in its red ring with the number in black; over the limit the ring and the number
             // flash red (owner, 22 Nov 2026, with a photo of BMW's own HUD sign: "fond blanc, écriture en noir ; quand on dépasse, il clignote avec
             // l'écriture en rouge dedans, mais toujours fond blanc", every theme, with and without the map)
-            const sign = w.limitBy && w.icon === 'ring';
-            const num = sign && !hide ? this._limitNow(now).text : '';
+            // (the danger alert's ring too, with the zone's limit: owner, 23 Nov 2026, "zone de danger, le panneau avec le fond blanc aussi, dans les
+            // thèmes et le HUD"; its own number box stays empty, _dangerSign)
+            const dsign = this._dangerSign(w);
+            const sign = (w.limitBy && w.icon === 'ring') || dsign;
+            const num = !sign || hide ? '' : dsign ? this._resolve('{{dangerLimit}}') : this._limitNow(now).text;
             const key = JSON.stringify(role) + hide + num;
             if (!force && key === x.last) return;
             x.last = key;
-            if (sign && !hide) { this._blitDiff(x, this._paintLimitSign(w, num, role)); return; }
+            if (sign && !hide) { this._blitDiff(x, this._paintLimitSign(w, num, dsign ? (w.color || 'hot') : role, dsign ? { danger: true } : null)); return; }
             this._blitDiff(x, hide ? Buffer.alloc(w.w * w.h * 4) : paintIcon(w.icon, w.w, w.h, color(this.theme, role)));
         } else if (w.type === 'badge') {
             if (!force && now - x.lastPaint < TEXT_MS) return;
@@ -3890,12 +3909,16 @@ class HudApp {
             this.hybridEv = bar > 0; this.hybridCharge = bar === 2;
             this.hybridPow = bar > 0 ? { kw: Math.abs(hy.kw), chg: bar === 2 } : null;
             const v = Math.round(Math.min(1, Math.max(0, bar ? Math.abs(hy.kw) * 100 / max : isNum(rpm) ? rpm / max : 0)) * 500) / 500;
-            const zone = this._ease(w.id, bar ? 0 : this._zoneRev(max), now);
+            // "whiteRev": the engine's rpm stays white up the scale (ShakHUD, owner 23 Nov 2026: "blanc en thermique, bleu en électrique, vert quand
+            // ça recharge"); the shift light under the bar does the warning
+            // (and red as soon as the rpm reaches the red zone, owner 23 Nov 2026: "je veux aussi que ça devienne rouge quand j'atteins la zone rouge")
+            const white = w.whiteRev === true ? (isNum(rpm) && rpm / max >= this._redMarks(max)[0] ? 2 : 0) : null;
+            const zone = this._ease(w.id, bar ? 0 : white !== null ? white : this._zoneRev(max), now);
             const pk = this._peakRev(x, v, now, bar > 0 || this.sweepAt !== null);
             const key = v + '|' + bar + '|' + Math.round(zone * 20) + '|' + pk;
             if (!force && key === x.last) return;
             x.last = key;
-            x.c.uniform(x.ref, 'u_lvl', [v, pk, zone, 0]);
+            x.c.uniform(x.ref, 'u_lvl', [v, pk, zone, this._redMarks(max)[1]]);           // (.w: where the yellow marks start)
             x.c.uniform(x.ref, 'u_hy', bar === 1 ? [0.3, 0.75, 1.0, 1] : bar === 2 ? [0.2, 0.85, 0.5, 1] : [0, 0, 0, 0]);
         } else if (VIEW_PANEL[w.type]) {
             // the panel's bars: each row's reading between its min and max, in its tone: "temp" (oil, coolant) blue while cold, green once warm, flashing

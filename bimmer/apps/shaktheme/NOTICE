@@ -156,3 +156,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+5. The DINish typeface (hud.pack, fonts/sign_*): pre-rendered digits of DINish Bold, a DIN 1451 revival, Copyright 2021 The DINish Project
+   Authors (https://github.com/playbeing/dinish), SIL Open Font License 1.1 (bimmer/tools/fonts-src/DINish-OFL.txt in the repository).

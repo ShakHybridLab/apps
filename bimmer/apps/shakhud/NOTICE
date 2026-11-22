@@ -20,3 +20,6 @@ The app's own code is MIT (the LICENSE in the repository). Besides it, the app s
    apps/idrive_hud_widgets/NOTICE (the pixel-diff text update after PenguinDukeYDAuto/idrive7-EVAHUD, MIT).
 
 The M Style rev counter is an original drawing; it copies no BMW or M logo, lettering or artwork.
+
+5. The DINish typeface (hud.pack, fonts/sign_m): pre-rendered digits of DINish Bold, a DIN 1451 revival, Copyright 2021 The DINish Project
+   Authors (https://github.com/playbeing/dinish), SIL Open Font License 1.1 (bimmer/tools/fonts-src/DINish-OFL.txt in the repository).

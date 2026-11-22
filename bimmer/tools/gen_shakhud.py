@@ -48,7 +48,7 @@ widgets = [{
     'id': 'revcounter', 'type': 'mstyle', 'class': 'overlay', 'z': 10,
     'x': RECT[0], 'y': RECT[1], 'w': RECT[2], 'h': RECT[3],
     'pts': [list(P0), list(P1), list(P2)], 'bar': BAR, 'corner': CORNER, 'rpmMax': RPM_MAX,
-    'hybridTach': True, 'chgOnBar': True,
+    'hybridTach': True, 'chgOnBar': True, 'whiteRev': True, 'trackColor': [44, 52, 64, 255],
 }]
 widgets += [label(k) for k in (0, 2, 4, 6)]
 # the shift light, BMW's modern one (the M cars' own): slanted lights on each side of a red block, filling from the outer ends in as the
@@ -71,16 +71,20 @@ widgets += [
 # the fuel range beside it, a slanted battery bar (light blue, green while charging, red in reserve: 10 %, as the numbers and the ranges: 90 km of fuel), the oil and coolant
 # temperatures under it (an oil can and a thermometer, no words). Hidden with the setting "showBattery". All inside x 372..676, y 246..361.
 BX, BW = 372, 304
+# the colours (owner, 23 Nov 2026: "change toutes les couleurs du HUD pour que ce soit beau, par exemple la batterie en bleu"): the battery and
+# everything electric in the light blue of the rev bar's electric power, the fuel in amber, the rest white; the temperatures keep their own
+# (blue while cold, green once warm, red over the limit), a low battery or fuel turns red
+BLUE, AMBER = [79, 180, 255, 255], [255, 178, 64, 255]
 widgets += [
-    {'id': 'soc', 'lowWhen': 'battery', 'type': 'text', 'font': 'big', 'color': 'fg', 'align': 'left', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+    {'id': 'soc', 'lowWhen': 'battery', 'type': 'text', 'font': 'big', 'color': BLUE, 'align': 'left', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'x': BX, 'y': 246, 'w': 150, 'h': 46, 'text': '{{hvSoc}}%'},
-    {'id': 'ev_icon', 'lowWhen': 'battery', 'type': 'icon', 'icon': 'battBolt', 'color': 'dim', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+    {'id': 'ev_icon', 'lowWhen': 'battery', 'type': 'icon', 'icon': 'battBolt', 'color': BLUE, 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'x': 546, 'y': 247, 'w': 28, 'h': 28},
-    {'id': 'ev_range', 'lowWhen': 'battery', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'right', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+    {'id': 'ev_range', 'lowWhen': 'battery', 'type': 'text', 'font': 'mid', 'color': BLUE, 'align': 'right', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'x': 576, 'y': 247, 'w': 100, 'h': 29, 'text': '{{evRange}} {{u:distLc}}'},
-    {'id': 'fuel_icon', 'lowWhen': 'fuel', 'type': 'icon', 'icon': 'fuelBolt', 'color': 'dim', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+    {'id': 'fuel_icon', 'lowWhen': 'fuel', 'type': 'icon', 'icon': 'fuelBolt', 'color': AMBER, 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'x': 546, 'y': 277, 'w': 28, 'h': 28},
-    {'id': 'fuel_range', 'lowWhen': 'fuel', 'type': 'text', 'font': 'mid', 'color': 'fg', 'align': 'right', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
+    {'id': 'fuel_range', 'lowWhen': 'fuel', 'type': 'text', 'font': 'mid', 'color': AMBER, 'align': 'right', 'class': 'content', 'z': 10, 'toggle': 'showBattery',
      'x': 576, 'y': 276, 'w': 100, 'h': 29, 'text': '{{rangeTotal}} {{u:distLc}}'},
     {'id': 'batbar', 'lowWhen': 'battery', 'type': 'slantbar', 'class': 'overlay', 'z': 10, 'toggle': 'showBattery', 'signal': 'hvSoc',
      'x': BX, 'y': 310, 'w': BW, 'h': 16, 'slant': 12, 'low': 15},

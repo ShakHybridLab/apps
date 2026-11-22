@@ -30,7 +30,14 @@
       "corner": 2000,
       "rpmMax": 7000,
       "hybridTach": true,
-      "chgOnBar": true
+      "chgOnBar": true,
+      "whiteRev": true,
+      "trackColor": [
+        44,
+        52,
+        64,
+        255
+      ]
     },
     {
       "id": "rev0",
@@ -176,7 +183,12 @@
       "lowWhen": "battery",
       "type": "text",
       "font": "big",
-      "color": "fg",
+      "color": [
+        79,
+        180,
+        255,
+        255
+      ],
       "align": "left",
       "class": "content",
       "z": 10,
@@ -193,7 +205,12 @@
       "lowWhen": "battery",
       "type": "icon",
       "icon": "battBolt",
-      "color": "dim",
+      "color": [
+        79,
+        180,
+        255,
+        255
+      ],
       "class": "content",
       "z": 10,
       "toggle": "showBattery&!danger",
@@ -208,7 +225,12 @@
       "lowWhen": "battery",
       "type": "text",
       "font": "mid",
-      "color": "fg",
+      "color": [
+        79,
+        180,
+        255,
+        255
+      ],
       "align": "right",
       "class": "content",
       "z": 10,
@@ -225,7 +247,12 @@
       "lowWhen": "fuel",
       "type": "icon",
       "icon": "fuelBolt",
-      "color": "dim",
+      "color": [
+        255,
+        178,
+        64,
+        255
+      ],
       "class": "content",
       "z": 10,
       "toggle": "showBattery&!danger",
@@ -240,7 +267,12 @@
       "lowWhen": "fuel",
       "type": "text",
       "font": "mid",
-      "color": "fg",
+      "color": [
+        255,
+        178,
+        64,
+        255
+      ],
       "align": "right",
       "class": "content",
       "z": 10,
