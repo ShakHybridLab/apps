@@ -331,6 +331,16 @@ const CDS_IFACE = 'de.bmw.infotainment.vehicle.CDS';
  * The engine's speed in DisplayDataServer.functionalLibraryData (member "rpm", whole rpm: 900 at idle on the owner's car, 19 Nov 2026), or null: not a
  * number, the invalid values (0xFFFF and up) or out of an engine's range.
  */
+/** The speed BMW's own cluster shows, from DisplayDataServer.functionalLibraryData ("speed": { "kmH": n, "mlsH": n }), in km/h, or null.
+ * The owner, 22 Nov 2026, after the speed was read 10 times a second: "still a little latency on the speed"; Vehicle2's speed is the car's
+ * computed one, this one is what the cluster itself draws, so the digits match BMW's. */
+function dispSpeedOf(v) {
+    if (!v || typeof v !== 'object') return null;
+    const k = Object.keys(v).find((n) => /^speed$/i.test(n));
+    const o = k === undefined ? null : v[k];
+    const n = o && typeof o === 'object' ? Number(o.kmH) : NaN;
+    return isFinite(n) && n >= 0 && n <= 400 ? n : null;
+}
 function rpmAltOf(v) {
     if (!v || typeof v !== 'object') return null;
     const k = Object.keys(v).find((n) => /^rpm$/i.test(n));
@@ -341,9 +351,10 @@ function rpmAltOf(v) {
 // on the owner's car (19 Nov 2026). Read as often as the rev counter, the bar follows the pedal.
 const REL_POLL_MS = 250;
 const RPM_POLL_MS = 100;           // the rev counter, read this often on top of the car's notifications (the owner's car hardly sends them: its Signals tab, 22 Nov 2026, showed 4 msg/s for the rev counter and 4.9 for the speed, our reads alone; 250 ms apart the bar moved in steps, "it isn't smooth")
-const RPM2_POLL_MS = 250;          // the rev counter's second source (DisplayDataServer: a big message), as before
+const RPM2_POLL_MS = 100;          // the rev counter's second source (DisplayDataServer), which also carries the speed BMW's own cluster shows (see dispSpeedOf)
+const DISP_SPEED_MS = 600;         // that speed is used while this fresh
 const SPEED_POLL_MS = 100;         // how often the speed is read on top of the car's own notifications
-const SPEED_IFACE = 'de.bmw.infotainment.vehicle.Vehicle2';           // how often the rev counter is read on top of the car's own notifications
+const SPEED_IFACE = 'de.bmw.infotainment.vehicle.Vehicle2';
 // the electric power estimated from the speed (setting "estPower", the rev bar in electric when nobody gives the real power): the X3 xDrive30e's
 // own figures, rounded. mass kg with a driver, drag = half rho Cd A in N per (m/s)^2, rolling resistance, the drive and recuperation efficiencies,
 // the motor's power in kW (the most it can show), the most it can recover, and the filters of the speed and of the acceleration (ms)
@@ -1006,6 +1017,7 @@ class HudApp {
                 if (p.id === 'pdrive' || p.id === 'pdrive2') this._guard('carPower', () => this._carPowerSet(v));
                 if (p.id === 'rel') this._guard('relPower', () => this._relSet(v));
                 if (p.id === 'rpm2') this._guard('rpm2', () => { const n = rpmAltOf(v); if (n !== null && this.car && this.car.feedRpmAlt) this.car.feedRpmAlt(n); });
+                if (p.id === 'rpm2') { const k = dispSpeedOf(v); if (k !== null) this.dispSpeed = { v: k, at: Date.now() }; }
             };
         });
         // the rev counter is told when it changes, which on a car that notifies it rarely (or only the first value) leaves the bar where it was: read it
@@ -2152,6 +2164,12 @@ class HudApp {
             return this.car.data().demo ? 31 : null;
         }
         if (name === 'rpm' && isNum(this.rpmF)) return this.rpmF;
+        if (name === 'speed') {
+            // the speed BMW's cluster shows while DisplayDataServer gives it (fresh); not a 0 there while the car says it moves (a field left empty)
+            const d = this.car.data(), ds = this.dispSpeed;
+            if (ds && !d.demo && Date.now() - ds.at < DISP_SPEED_MS && !(ds.v === 0 && isNum(d.speed) && d.speed > 5)) return ds.v;
+            return d.speed;
+        }
         if (name === 'hvSoc') {
             if (isNum(this.hvSoc) && Date.now() - this.hvSocAt < HV_STALE_MS) return this.hvSoc;     // read here
             const shared = this.ci.sharedSoc();                                                        // or shared by eDrive Live / the other app
@@ -3433,7 +3451,7 @@ class HudApp {
 
     /** The speed the bars see: the car's, eased over about SPEED_FILTER_MS so a bar glides between two readings instead of stepping (the readouts keep the car's own). */
     _smoothSpeed(now) {
-        const raw = this.car.data().speed, dt = this.lastSpdT ? Math.min(500, now - this.lastSpdT) : 0;
+        const raw = this._raw('speed'), dt = this.lastSpdT ? Math.min(500, now - this.lastSpdT) : 0;
         this.lastSpdT = now;
         if (!isNum(raw)) { this.speedF = null; return; }
         // (a jump of 40 km/h or more at once is not a drive: the demo restarting, a unit change: no easing through it)

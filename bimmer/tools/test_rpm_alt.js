@@ -53,5 +53,17 @@ check('la vitesse est relue toutes les 100 ms (« la vitesse est toujours lente 
         assert.strictEqual(spec.signals['de.bmw.infotainment.vehicle.Vehicle2'].statusCarSpeed2, 'rs', a);
     });
 });
+check('la vitesse affichée par BMW (DisplayDataServer « speed.kmH ») est la source des chiffres tant qu\'elle est fraîche', () => {
+    const hud = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
+    const m = hud.match(/function dispSpeedOf\(v\) \{[\s\S]*?\n\}/);
+    assert(m, 'dispSpeedOf absent');
+    const dispSpeedOf = new Function(m[0] + '; return dispSpeedOf;')();
+    assert.strictEqual(dispSpeedOf({ rpm: 900, speed: { kmH: 47, mlsH: 29 } }), 47);
+    assert.strictEqual(dispSpeedOf({ rpm: 900 }), null);
+    assert.strictEqual(dispSpeedOf({ speed: { kmH: 'x' } }), null);
+    assert.strictEqual(dispSpeedOf(null), null);
+    assert(/if \(p\.id === 'rpm2'\) \{ const k = dispSpeedOf\(v\)/.test(hud) && /const RPM2_POLL_MS = 100;/.test(hud));
+    assert(/const raw = this\._raw\('speed'\)/.test(hud), 'les barres doivent suivre la même vitesse que les chiffres');
+});
 console.log(bad ? 'rpm alt: FAILED' : 'rpm alt: all ' + n + ' checks pass');
 process.exit(bad ? 1 : 0);

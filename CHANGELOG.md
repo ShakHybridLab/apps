@@ -2,6 +2,10 @@
 
 ## 22 novembre 2026
 
+### ShakTheme 0.21.69, ShakHUD 0.6.49 : la vitesse que BMW affiche
+- **Propriétaire (22 nov., 17:50)** : « c'est pas mal, mais il y a toujours un peu de latence sur la vitesse ». La vitesse lue jusqu'ici (`Vehicle2.statusCarSpeed2`) est celle que la voiture calcule ; le cluster BMW, lui, dessine celle de `DisplayDataServer.functionalLibraryData` (`"speed": { "kmH": … }`, visible dans l'onglet Signaux), déjà lue par nos applis pour la seconde source du régime.
+- **Correctif** : les chiffres et les barres de vitesse prennent maintenant cette vitesse-là tant qu'elle a moins de 600 ms (`dispSpeedOf`, `DISP_SPEED_MS`), sinon celle de la voiture ; un 0 de ce côté alors que la voiture roule à plus de 5 km/h est ignoré. Cette source est relue toutes les 100 ms (au lieu de 250). Les chiffres doivent donc suivre ceux de BMW, au même arrondi. Contrôle ajouté à `tools/test_rpm_alt.js`.
+
 ### ShakTheme 0.21.68, ShakHUD 0.6.48 : vitesse et régime lus 10 fois par seconde
 - **Photos du propriétaire (22 nov., 17:40)** : la ligne d'état dit « délai du cluster 6 ms » (l'écran suit, le retard n'est pas là) et l'onglet Signaux montre **4 messages/s pour le régime et 4,9 pour la vitesse**, c'est-à-dire seulement nos propres relectures (250 et 200 ms) : la voiture n'envoie presque rien d'elle-même. Les barres avançaient donc par à-coups (« ce n'est pas fluide »).
 - **Correctif** : régime (`RPM_POLL_MS`) et vitesse (`SPEED_POLL_MS`) relus toutes les 100 ms ; les chiffres de la vitesse se redessinent jusqu'à 10 fois par seconde (`SPEED_TEXT_MS`, les autres textes restent à 5). La seconde source du régime (DisplayDataServer, un gros message) reste à 250 ms. Au banc, le débit vers le cluster reste vers 100 à 200 Ko/s.
