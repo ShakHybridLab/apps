@@ -39,15 +39,15 @@ check('valeurs hors d\'un moteur (65535, négatif, pas un nombre) : ignorées', 
 });
 check('hud.js lit le membre rpm et le donne à la voiture ; les deux applis déclarent le signal', () => {
     const hud = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
-    assert(/p\.id === 'rpm2'\) group\.\$pollMs = RPM_POLL_MS/.test(hud) && /feedRpmAlt\(n\)/.test(hud) && /function rpmAltOf/.test(hud));
+    assert(/p\.id === 'rpm2'\) group\.\$pollMs = RPM2_POLL_MS/.test(hud) && /feedRpmAlt\(n\)/.test(hud) && /function rpmAltOf/.test(hud));
     ['shakhud', 'shaktheme'].forEach((a) => {
         const spec = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', a, 'app.json'), 'utf8'));
         assert.strictEqual(spec.signals['de.bmw.infotainment.displaydataserver.DisplayDataServer'].functionalLibraryData, 'rs', a);
     });
 });
-check('la vitesse est relue toutes les 200 ms (« la vitesse est toujours lente », 22 nov. 2026) ; les deux applis déclarent Vehicle2', () => {
+check('la vitesse est relue toutes les 100 ms (« la vitesse est toujours lente », 22 nov. 2026) ; les deux applis déclarent Vehicle2', () => {
     const hud = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
-    assert(/const SPEED_POLL_MS = 200;/.test(hud) && /\(extra\[SPEED_IFACE\] = extra\[SPEED_IFACE\] \|\| \{\}\)\.\$pollMs = SPEED_POLL_MS/.test(hud));
+    assert(/const SPEED_POLL_MS = 100;/.test(hud) && /\(extra\[SPEED_IFACE\] = extra\[SPEED_IFACE\] \|\| \{\}\)\.\$pollMs = SPEED_POLL_MS/.test(hud));
     ['shakhud', 'shaktheme'].forEach((a) => {
         const spec = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', a, 'app.json'), 'utf8'));
         assert.strictEqual(spec.signals['de.bmw.infotainment.vehicle.Vehicle2'].statusCarSpeed2, 'rs', a);

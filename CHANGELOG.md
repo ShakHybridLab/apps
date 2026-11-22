@@ -2,6 +2,11 @@
 
 ## 22 novembre 2026
 
+### ShakTheme 0.21.68, ShakHUD 0.6.48 : vitesse et régime lus 10 fois par seconde
+- **Photos du propriétaire (22 nov., 17:40)** : la ligne d'état dit « délai du cluster 6 ms » (l'écran suit, le retard n'est pas là) et l'onglet Signaux montre **4 messages/s pour le régime et 4,9 pour la vitesse**, c'est-à-dire seulement nos propres relectures (250 et 200 ms) : la voiture n'envoie presque rien d'elle-même. Les barres avançaient donc par à-coups (« ce n'est pas fluide »).
+- **Correctif** : régime (`RPM_POLL_MS`) et vitesse (`SPEED_POLL_MS`) relus toutes les 100 ms ; les chiffres de la vitesse se redessinent jusqu'à 10 fois par seconde (`SPEED_TEXT_MS`, les autres textes restent à 5). La seconde source du régime (DisplayDataServer, un gros message) reste à 250 ms. Au banc, le débit vers le cluster reste vers 100 à 200 Ko/s.
+- **Le rapport** (R affiché alors que la voiture est en D) : la voiture n'accepte pour lui que l'abonnement (`statusGearboxDrive`, `DataPowerTrain2` en « s » dans `tools/car_accepted_signals.json`), pas la relecture : on ne peut pas le relire comme la vitesse. À voir avec la page de l'onglet Signaux qui montre le rapport.
+
 ### ShakTheme 0.21.67, ShakHUD 0.6.47 : le cluster ne reste plus figé
 - **Photos du propriétaire (22 nov., 17:30)** : à l'arrêt, frein de parc serré, BMW affiche P mais le thème montre encore **R et 3 km/h** ; quelques instants plus tôt, BMW en D, le thème en R. Ce n'est pas un retard : l'affichage est figé. Cause trouvée dans `shared/cluster_render_client.js` : depuis la 0.21.64, quand Cluster renderer cesse de lire, seules les dernières valeurs attendent en mémoire ; la file ne grossit donc plus jusqu'à 16 Mo, et c'est ce seuil qui faisait refaire la connexion. Un service qui s'arrêtait de lire laissait le cluster figé pour de bon.
 - **Correctif : un chien de garde** (`_watch`, une fois par seconde, par connexion). Socket plein dont rien ne sort pendant 4 s, ou question d'état (« ping », toutes les 3 s) sans réponse pendant 6 s alors que la connexion répondait jusque-là : la connexion est refaite et tout est renvoyé. Les réponses aux pings ne sont pas transmises au thème ; un service qui ne répond jamais aux pings ne provoque pas de reconnexion en boucle. `tools/test_render_client.js` vérifie les quatre cas.

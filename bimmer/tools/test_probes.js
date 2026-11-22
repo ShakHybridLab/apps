@@ -388,9 +388,9 @@ check('boucle des jauges : _tick mesure chaque image (durée, attente entre deux
     assert(/perfShown\(\) \{/.test(src));
 });
 
-check('régime : hud.js le relit toutes les 250 ms en plus des notifications, seulement si l\'appli le déclare ; le kit passe pollMs à l\'abonnement du CDS', () => {
+check('régime : hud.js le relit toutes les 100 ms en plus des notifications, seulement si l\'appli le déclare ; le kit passe pollMs à l\'abonnement du CDS', () => {
     const src = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
-    assert(/const RPM_POLL_MS = 250;/.test(src));
+    assert(/const RPM_POLL_MS = 100;/.test(src));
     assert(/if \(decl\[CDS_IFACE\] && decl\[CDS_IFACE\]\.statusEngineSpeed2\) \(extra\[CDS_IFACE\] = extra\[CDS_IFACE\] \|\| \{\}\)\.\$pollMs = RPM_POLL_MS;/.test(src), 'la relecture est liée à la déclaration du signal');
     ['shaktheme', 'shakhud'].forEach((a) => {
         const spec = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', a, 'app.json'), 'utf8'));

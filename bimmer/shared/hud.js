@@ -340,8 +340,9 @@ function rpmAltOf(v) {
 // The cluster's power meter was read every 2 s (as eroobeeroo's apps do): the hybrid rev bar then jumped up and fell away in one step, "pas fluide"
 // on the owner's car (19 Nov 2026). Read as often as the rev counter, the bar follows the pedal.
 const REL_POLL_MS = 250;
-const RPM_POLL_MS = 250;
-const SPEED_POLL_MS = 200;         // how often the speed is read on top of the car's own notifications
+const RPM_POLL_MS = 100;           // the rev counter, read this often on top of the car's notifications (the owner's car hardly sends them: its Signals tab, 22 Nov 2026, showed 4 msg/s for the rev counter and 4.9 for the speed, our reads alone; 250 ms apart the bar moved in steps, "it isn't smooth")
+const RPM2_POLL_MS = 250;          // the rev counter's second source (DisplayDataServer: a big message), as before
+const SPEED_POLL_MS = 100;         // how often the speed is read on top of the car's own notifications
 const SPEED_IFACE = 'de.bmw.infotainment.vehicle.Vehicle2';           // how often the rev counter is read on top of the car's own notifications
 // the electric power estimated from the speed (setting "estPower", the rev bar in electric when nobody gives the real power): the X3 xDrive30e's
 // own figures, rounded. mass kg with a driver, drag = half rho Cd A in N per (m/s)^2, rolling resistance, the drive and recuperation efficiencies,
@@ -350,6 +351,7 @@ const EST = { massKg: 2150, drag: 0.5, roll: 0.010, etaDrive: 0.85, etaRegen: 0.
 const SPEED_FILTER_MS = 90;      // the speed bars' own smoothing (the car sends the speed a few times a second): the bars glide, the digits stay the car's own
 const ZOOM_MS = 60;              // the scale numbers that grow or change colour re-draw this often while they ease
 const TEXT_MS = 200;             // text re-draws at most 5 times a second (what BMW's own readouts do)
+const SPEED_TEXT_MS = 100;       // the speed's digits: 10 times a second (the speed is read that often, SPEED_POLL_MS)
 const TARGET_SIZES = { hud: [800, 480], panel: [1920, 720] };
 // X3 30e (plug-in hybrid): three modes, Hybrid / Hybrid Eco Pro / Sport, no Comfort (a Comfort number, if the car
 // ever sends one, counts as Hybrid). There is no "Electric Eco Pro" (the owner, Nov 16 2026): its Eco Pro is the Hybrid Eco Pro; every
@@ -992,7 +994,7 @@ class HudApp {
             // the cluster's power meter is not told again while it holds one value: read it every 2 s (eroobeeroo's apps do the same)
             if (p.id === 'rel') group.$pollMs = REL_POLL_MS;
             // the second source of the rev counter is told about every 2.5 s on the owner's car (0.4 msg/s): read it as often as the first one
-            if (p.id === 'rpm2') group.$pollMs = RPM_POLL_MS;
+            if (p.id === 'rpm2') group.$pollMs = RPM2_POLL_MS;
             group[p.field] = (v) => {
                 if (prev) prev(v);
                 this.probes.feed(p.id, v);
@@ -3449,7 +3451,7 @@ class HudApp {
             x.last = s; x.lastPaint = now;
             x.c.uniform(x.ref, 'u_text', this._atlasCodes(x, s), { type: 'vec4' });
         } else if (w.type === 'text') {
-            if (!force && now - x.lastPaint < (w.nearFont ? ZOOM_MS : (w.rate || TEXT_MS))) return;
+            if (!force && now - x.lastPaint < (w.nearFont ? ZOOM_MS : (w.rate || (w.text === '{{speed}}' ? SPEED_TEXT_MS : TEXT_MS)))) return;
             const s = w.readyHides && this._launchReady(now) ? '' : this._resolve(w.text);                              // (M Blade: the cue takes the drive mode's name's place)
             let role = w.color || 'fg';
             if (w.colorBy === 'verdict' && this.score.last) role = VERDICT[this.score.last.verdict] || role;
