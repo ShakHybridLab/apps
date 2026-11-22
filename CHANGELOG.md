@@ -2,6 +2,11 @@
 
 ## 22 novembre 2026
 
+### ShakTheme 0.21.72 : la limitation comme un vrai panneau
+- **Demande du propriétaire (22 nov., 23:36)**, avec la photo du panneau de limitation de l'affichage tête haute BMW : « fond blanc, écriture en noir ; quand on dépasse la limite, il clignote avec l'écriture en rouge dedans, mais toujours fond blanc, sur tous les thèmes, avec et sans Waze ».
+- **Ce qui change** : l'anneau de limitation devient le panneau entier (`_paintLimitSign`) : disque blanc, anneau rouge, chiffre noir au centre. Au-dessus de la limite, l'anneau et le chiffre clignotent entre le rouge vif et le rouge sombre, le fond reste blanc. Le chiffre est maintenant dessiné dans l'anneau lui-même, sur la même couche : il ne peut plus passer sous le disque blanc ; les cases de chiffre à part restent vides. Partout où la limitation s'affiche : Sport, M, M Blade (avec ou sans vue), Navi, avec et sans la carte. Le petit anneau de la prochaine limite et celui de l'alerte danger ne changent pas.
+- Vérifié au banc sur les 4 thèmes avec et sans carte, à 70 et à 112 km/h pour une limite de 90 ; `tools/test_sensor_bars.js` contrôle le fond blanc, l'anneau rouge et la couleur du chiffre.
+
 ### ShakHUD 0.6.52 : l'écriture du style M
 - **Demande du propriétaire (22 nov., 19:34)**, avec la photo d'un affichage tête haute de voiture M : « l'écriture, je veux que tout ressemble à ça ». Tous les chiffres et les mots de ShakHUD passent à la police carrée du thème M (Orbitron, SIL OFL, le zéro dessiné comme un O plein) : graduations du compte-tours plus grandes et plus grasses (nouvelle police `rnum`, Orbitron Black 20 px), pourcentage de batterie et distance du danger (`big`, Orbitron Black 42 px), autonomies, températures et textes de l'alerte (`mid`, Orbitron Bold 17 px). Seule la petite mention « tr/min x 1000 » reste en Barlow. Aucune lettre ni logo de BMW n'est copié.
 - Case de la distance du danger élargie (112 px) pour « 990 » ; `tools/test_text_fit.js` vérifie que chaque texte tient dans sa case. Licence d'Orbitron ajoutée au NOTICE de ShakHUD.

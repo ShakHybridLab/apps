@@ -284,7 +284,6 @@ check('la barre de capteur : rien n\'est renvoyé si rien n\'a changé (sauf for
     assert(r.calls.length > 0, 'forcé : doit repartir');
 });
 
-fs.rmSync && fs.rmSync(tmp, { recursive: true, force: true });
 // dans CHAQUE vue (et carte ouverte ou non), aucun widget sous le voyant de ceinture ni sous la lettre de rapport de BMW : la fenêtre du rapport
 // efface ce qui y passe (la barre du liquide de M, 176 px, y mordait : elle n'apparaissait jamais, 18 nov. 2026)
 // le panneau des vues de M Blade (mpanel) : chaque rangée sa valeur entre min et max, son ton (froid, chaud, au-delà de la limite, turbo, gel)
@@ -343,5 +342,32 @@ check('aucune vue ne met un widget sur les zones que BMW dessine (ceinture, lett
     assert.deepStrictEqual(bad, []);
 });
 
+check('la limitation : panneau à fond blanc, anneau rouge, chiffre noir ; au-dessus de la limite, chiffre rouge, fond toujours blanc (22 nov. 2026)', () => {
+    const { THEMES: TH } = require(path.join(tmp, 'shared', 'hud_themes.js'));
+    if (!fs.existsSync(path.join(tmp, 'shared', 'hud'))) fs.symlinkSync(path.join(root, 'apps', 'shaktheme', 'hud'), path.join(tmp, 'shared', 'hud'));   // ShakTheme's fonts
+    let over = false;
+    const o = { theme: TH[Object.keys(TH)[0]], _limitNow: () => ({ text: '90', over }) };
+    const w = { w: 92, h: 92, limitBy: true, icon: 'ring' };
+    const px = (b, x, y) => Array.from(b.slice((y * 92 + x) * 4, (y * 92 + x) * 4 + 4));
+    const inkOf = (b) => {     // the darkest and the reddest pixels inside the white disc
+        let dark = 0, red = 0;
+        for (let y = 30; y < 62; y++) for (let x = 25; x < 67; x++) { const [r, g, bl, a] = px(b, x, y); if (a > 200 && r < 80 && g < 80) dark++; if (a > 200 && r > 150 && g < 90) red++; }
+        return { dark, red };
+    };
+    const under = HudApp.prototype._paintLimitSign.call(o, w, '90', 'hot');
+    const [r0, g0, b0, a0] = px(under, 46, 14);                 // inside the ring, above the number: white
+    assert(a0 === 255 && r0 > 230 && g0 > 230 && b0 > 230, 'fond blanc : ' + [r0, g0, b0, a0]);
+    const [r1, g1, , a1] = px(under, 46, 3);                    // on the ring: red
+    assert(a1 > 200 && r1 > 150 && g1 < 90, 'anneau rouge : ' + [r1, g1, a1]);
+    const iu = inkOf(under); assert(iu.dark > 40 && iu.red === 0, 'chiffre noir : ' + JSON.stringify(iu));
+    over = true;
+    const hot = HudApp.prototype._paintLimitSign.call(o, w, '90', 'hot');
+    const io = inkOf(hot); assert(io.red > 40 && io.dark === 0, 'au-dessus : chiffre rouge : ' + JSON.stringify(io));
+    const [r2, g2, b2] = px(hot, 46, 14); assert(r2 > 230 && g2 > 230 && b2 > 230, 'au-dessus : fond toujours blanc');
+    // le chiffre à part n'est plus dessiné : c'est l'anneau qui l'a
+    const src = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
+    assert(/if \(w\.limitBy && w\.text === '\{\{limit\}\}'\) s = '';/.test(src));
+});
+fs.rmSync && fs.rmSync(tmp, { recursive: true, force: true });
 console.log(failed ? failed + ' FAILED' : 'sensor bars: ' + n + ' checks pass');
 if (failed) process.exitCode = 1;

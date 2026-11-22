@@ -80,6 +80,7 @@ const ICONS = {
     cam: (x, y) => Math.min(Math.abs(rect(x, y, 0.44, 0.36, 0.34, 0.2)) - 0.045, ring(x, y, 0.34, 0.36, 0.1) - 0.04, disc(x, y, 0.34, 0.36, 0.04), seg(x, y, 0.7, 0.3, 0.74, 0.3) - 0.03, seg(x, y, 0.5, 0.56, 0.5, 0.92) - 0.055, seg(x, y, 0.3, 0.93, 0.7, 0.93) - 0.045),
     // the round outline of a speed-limit sign (the number sits inside it as text)
     ring: (x, y) => ring(x, y, 0.5, 0.5, 0.435) - 0.065,
+    signDisc: (x, y) => disc(x, y, 0.5, 0.5, 0.44),     // the white inside of the speed limit sign, under the ring (hud.js _paintLimitSign)
     // the ice alert: a snowflake (three arms through the middle, a V on each end)
     snow: (x, y) => {
         let d = 9;

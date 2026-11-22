@@ -402,6 +402,8 @@ const TYRE_RED_BAR = 0.4;               // a tyre pressure this far under the se
 const WARN_DIM = [120, 16, 22, 255];   // the dark red a temperature flashes from, up to the shift red, while over its warning limit
 const WARN_FLASH_MS = 300;
 const LIMIT_FLASH_MS = 500;    // the speed limit's ring over the limit (see _limitFlash)
+const LIMIT_WHITE = [246, 246, 246, 255];   // the speed limit sign's white disc (_paintLimitSign)
+const LIMIT_BLACK = [16, 16, 16, 255];      // and its number while under the limit
 // the sensors a slanted bar can show ("sensor"): the colour of the boost's bar (the oil's and the coolant's follow their temperature)
 const SENSOR_BAR = { oil: true, coolant: true, boost: [79, 180, 255, 255] };
 // The views a theme shows one at a time in place of its empty slot ("viewSel=<name>" in a widget's toggle; the setting "viewSel" picks one by hand, and the
@@ -1929,6 +1931,32 @@ class HudApp {
     /** The colour of the speed limit's ring and number while the car is over the limit: the bright red and the dark one in turn. */
     // (500 ms a half: half the writes of the temperatures' 300 ms, the ring and its number are a 92 px icon and a text; still a clear blink)
     _limitFlash(now) { return Math.floor(now / LIMIT_FLASH_MS) % 2 === 0 ? 'hot' : WARN_DIM; }
+
+    /**
+     * The speed limit sign, w.w x w.h straight RGBA: a white disc, the red ring (role: 'hot', or while over the limit the flash's colour) and
+     * the number centred, black, or in the ring's colour while over the limit. Font "limitFont" on the ring widget, else "unit".
+     */
+    _paintLimitSign(w, text, role) {
+        const W = w.w, H = w.h, out = Buffer.alloc(W * H * 4, 0);
+        const l = this._limitNow(Date.now()), isOver = !!(l && l.over);
+        const put = (src) => {                          // src over out, straight alpha
+            for (let i = 0; i < W * H; i++) {
+                const o = i * 4, a = src[o + 3] / 255;
+                if (a <= 0) continue;
+                const b = out[o + 3] / 255, ra = a + b * (1 - a);
+                for (let k = 0; k < 3; k++) out[o + k] = Math.round((src[o + k] * a + out[o + k] * b * (1 - a)) / ra);
+                out[o + 3] = Math.round(ra * 255);
+            }
+        };
+        put(paintIcon('signDisc', W, H, LIMIT_WHITE));
+        put(paintIcon('ring', W, H, color(this.theme, role)));
+        if (text) {
+            const font = w.limitFont || 'unit', cell = textRaster.loadFont(font).metrics.cellHeight;
+            const ink = isOver ? color(this.theme, role) : LIMIT_BLACK;
+            put(textRaster.drawText(W, H, text, { font, color: ink, align: 'center', offsetY: Math.round((H - cell) / 2) }));
+        }
+        return out;
+    }
 
     /** `id` (oil / coolant / boost) if that reading is over its warning limit now, else null. */
     _overLimit(id) {
@@ -3502,7 +3530,9 @@ class HudApp {
             x.c.uniform(x.ref, 'u_text', this._atlasCodes(x, s), { type: 'vec4' });
         } else if (w.type === 'text') {
             if (!force && now - x.lastPaint < (w.nearFont ? ZOOM_MS : (w.rate || (w.text === '{{speed}}' ? SPEED_TEXT_MS : TEXT_MS)))) return;
-            const s = w.readyHides && this._launchReady(now) ? '' : this._resolve(w.text);                              // (M Blade: the cue takes the drive mode's name's place)
+            let s = w.readyHides && this._launchReady(now) ? '' : this._resolve(w.text);                              // (M Blade: the cue takes the drive mode's name's place)
+            // the speed limit's number: drawn inside its ring now, on the white sign (_paintLimitSign); this box stays empty
+            if (w.limitBy && w.text === '{{limit}}') s = '';
             let role = w.color || 'fg';
             if (w.colorBy === 'verdict' && this.score.last) role = VERDICT[this.score.last.verdict] || role;
             const here = !!(w.near && this._nearMark(w.near[0]) === w.near[1]);
@@ -3610,9 +3640,15 @@ class HudApp {
             }
             if (w.readyBy) { hide = !this._launchReady(now); if (w.readyBy === true) role = VERDICT['SPOT ON']; }       // the chequered flag, only while ready
             if (w.readyHides && this._launchReady(now)) hide = true;                                                  // an icon the cue takes the place of (the HUD's oil and coolant row)
-            const key = JSON.stringify(role) + hide;
+            // the speed limit: the road sign itself, a white disc in its red ring with the number in black; over the limit the ring and the number
+            // flash red (owner, 22 Nov 2026, with a photo of BMW's own HUD sign: "fond blanc, écriture en noir ; quand on dépasse, il clignote avec
+            // l'écriture en rouge dedans, mais toujours fond blanc", every theme, with and without the map)
+            const sign = w.limitBy && w.icon === 'ring';
+            const num = sign && !hide ? this._limitNow(now).text : '';
+            const key = JSON.stringify(role) + hide + num;
             if (!force && key === x.last) return;
             x.last = key;
+            if (sign && !hide) { this._blitDiff(x, this._paintLimitSign(w, num, role)); return; }
             this._blitDiff(x, hide ? Buffer.alloc(w.w * w.h * 4) : paintIcon(w.icon, w.w, w.h, color(this.theme, role)));
         } else if (w.type === 'badge') {
             if (!force && now - x.lastPaint < TEXT_MS) return;
