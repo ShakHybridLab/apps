@@ -2,6 +2,10 @@
 
 ## 22 novembre 2026
 
+### ShakHUD 0.6.52 : l'écriture du style M
+- **Demande du propriétaire (22 nov., 19:34)**, avec la photo d'un affichage tête haute de voiture M : « l'écriture, je veux que tout ressemble à ça ». Tous les chiffres et les mots de ShakHUD passent à la police carrée du thème M (Orbitron, SIL OFL, le zéro dessiné comme un O plein) : graduations du compte-tours plus grandes et plus grasses (nouvelle police `rnum`, Orbitron Black 20 px), pourcentage de batterie et distance du danger (`big`, Orbitron Black 42 px), autonomies, températures et textes de l'alerte (`mid`, Orbitron Bold 17 px). Seule la petite mention « tr/min x 1000 » reste en Barlow. Aucune lettre ni logo de BMW n'est copié.
+- Case de la distance du danger élargie (112 px) pour « 990 » ; `tools/test_text_fit.js` vérifie que chaque texte tient dans sa case. Licence d'Orbitron ajoutée au NOTICE de ShakHUD.
+
 ### ShakTheme 0.21.71, ShakHUD 0.6.51 : la boucle des jauges tient ses 50 images par seconde
 - **Propriétaire (22 nov., 19:17)** : « ajoute des fps sur le cluster, j'ai l'impression que ça lag ». L'onglet Signaux du même jour disait « Boucle : 33/s, moyenne 7,3 ms » : la boucle est réglée sur 50 images par seconde (`TICK_MS` 20), et chaque image ne prend que 7 ms, donc le temps ne manque pas. C'est la minuterie qui perdait des images : `setInterval` arrive en retard sur la voiture et ne rattrape jamais ce retard.
 - **Correctif** (`_loopStart`) : la boucle suit sa propre horloge, une image toutes les 20 ms ; une image en retard fait attendre la suivante d'autant moins. Après un vrai blocage (reconstruction du thème, voiture occupée), elle repart de l'instant présent, sans rafale d'images pour rattraper. Les barres, aiguilles et zones bougent donc jusqu'à 50 fois par seconde au lieu de 33. Nouveau test `tools/test_loop_rate.js` (horloge simulée : minuteries au tic de 10 ms, 7 ms de travail par image).

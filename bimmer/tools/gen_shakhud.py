@@ -14,7 +14,7 @@ P0, P1, P2 = (136, 190), (246, 116), (626, 116)       # the bar's start, its ben
 BAR = 20                                               # its width
 RPM_MAX, CORNER = 7000, 2000                           # the scale's end, the rpm at the bend
 TICK_GAP, TICK_LEN = 3, 10                             # the long tick (even thousands), from the bar's edge
-LAB_W, LAB_H = 24, 18                                  # a number's box (font "small")
+LAB_W, LAB_H = 26, 22                                  # a number's box (font "rnum": Orbitron Black, the M look)
 RECT = (120, 100, 530, 128)                            # the effect layer, x y w h
 
 def unit(v):
@@ -41,7 +41,7 @@ def label(k):
     p, n = tick(k)
     r = BAR / 2.0 + TICK_GAP + TICK_LEN + 2 + LAB_H / 2.0
     cx, cy = p[0] + n[0] * r, p[1] + n[1] * r
-    return {'id': 'rev%d' % k, 'type': 'text', 'font': 'small', 'color': 'fg', 'align': 'center', 'class': 'content', 'z': 10,
+    return {'id': 'rev%d' % k, 'type': 'text', 'font': 'rnum', 'color': 'fg', 'align': 'center', 'class': 'content', 'z': 10,
             'x': int(round(cx - LAB_W / 2.0)), 'y': int(round(cy - LAB_H / 2.0)), 'w': LAB_W, 'h': LAB_H, 'text': str(k)}
 
 widgets = [{
@@ -107,7 +107,7 @@ AL = {'class': 'content', 'z': 10, 'toggle': 'danger'}
 widgets += [
     dict(AL, id='al_cam', type='icon', icon='cam', color=RED, x=BX, y=258, w=52, h=52),
     dict(AL, id='al_title', type='text', font='mid', color=RED, align='left', x=BX + 64, y=244, w=180, h=29, text='ZONE DE DANGER'),
-    dict(AL, id='al_dist', type='text', font='big', color='fg', align='right', x=BX + 60, y=276, w=104, h=46, text='{{dangerDist}}', toggle='dangerAhead'),
+    dict(AL, id='al_dist', type='text', font='big', color='fg', align='right', x=BX + 52, y=276, w=112, h=46, text='{{dangerDist}}', toggle='dangerAhead'),
     dict(AL, id='al_unit', type='text', font='mid', color='fg', align='left', x=BX + 170, y=292, w=40, h=29, text='{{dangerUnit}}', toggle='dangerAhead'),
     dict(AL, id='al_in', type='text', font='mid', color='fg', align='left', x=BX + 64, y=286, w=176, h=29, text='DANS LA ZONE', toggle='dangerInside'),
     dict(AL, id='al_ring', type='icon', icon='ring', color=RED, x=BX + BW - 62, y=258, w=60, h=60, toggle='dangerLimit'),

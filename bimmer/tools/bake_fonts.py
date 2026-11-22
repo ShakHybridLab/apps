@@ -85,9 +85,12 @@ CLUSTER_FONTS = [
     ('s_gl', 'Michroma-Regular.ttf', 21, DIGITS + '/', 1),
 ]
 FONTS = {'idrive_hud_widgets': HUD_FONTS, 'shaktheme': CLUSTER_FONTS, 'shakhud': [
+    # the owner, 22 Nov 2026, with a photo of an M car's HUD: "I want all the writing to look like that": the squared numbers of the M theme
+    # (Orbitron, its zero drawn as the plain O) for every number and word; Barlow stays only for the small print (tr/min x 1000)
     ('small', 'Barlow-Medium.ttf', 13, LOWER + UPPER + DIGITS + '/.:-°%>· '),
-    ('big', 'BarlowSemiCondensed-SemiBold.ttf', 60, DIGITS + '-%'),      # the battery's percent
-    ('mid', 'BarlowSemiCondensed-Medium.ttf', 24, LOWER + UPPER + DIGITS + '/.:-°%>· '),   # ranges, temperatures
+    ('rnum', 'Orbitron[wght].ttf', 20, DIGITS, 0, 'Black', {'0': 'O'}),   # the rev counter's numbers, under the bar
+    ('big', 'Orbitron[wght].ttf', 42, DIGITS + '-%', 0, 'Black', {'0': 'O'}),      # the battery's percent, the danger distance
+    ('mid', 'Orbitron[wght].ttf', 17, LOWER + UPPER + DIGITS + '/.:-°%>· ', 0, 'Bold', {'0': 'O'}),   # ranges, temperatures, the alert's words
 ]}
 PAD = 2
 ATLAS_W = 1024

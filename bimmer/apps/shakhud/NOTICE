@@ -12,6 +12,10 @@ The app's own code is MIT (the LICENSE in the repository). Besides it, the app s
 3. The Barlow typeface (hud.pack, fonts/small): pre-rendered glyphs of Barlow Medium, Copyright 2017 The Barlow Project Authors,
    SIL Open Font License 1.1 (bimmer/tools/fonts-src/OFL.txt in the repository).
 
+3a. The Orbitron typeface (hud.pack, fonts/rnum, fonts/big, fonts/mid): pre-rendered glyphs of Orbitron, Copyright 2018 The Orbitron
+   Project Authors (https://github.com/theleagueof/orbitron), with Reserved Font Name "Orbitron", SIL Open Font License 1.1
+   (bimmer/tools/fonts-src/Orbitron-OFL.txt in the repository).
+
 4. The shared engine (hud.js and the files next to it) is HUD Widgets' and ShakTheme's, with the notices of
    apps/idrive_hud_widgets/NOTICE (the pixel-diff text update after PenguinDukeYDAuto/idrive7-EVAHUD, MIT).
 
