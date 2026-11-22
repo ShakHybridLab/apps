@@ -2,6 +2,11 @@
 
 ## 22 novembre 2026
 
+### ShakTheme 0.21.71, ShakHUD 0.6.51 : la boucle des jauges tient ses 50 images par seconde
+- **Propriétaire (22 nov., 19:17)** : « ajoute des fps sur le cluster, j'ai l'impression que ça lag ». L'onglet Signaux du même jour disait « Boucle : 33/s, moyenne 7,3 ms » : la boucle est réglée sur 50 images par seconde (`TICK_MS` 20), et chaque image ne prend que 7 ms, donc le temps ne manque pas. C'est la minuterie qui perdait des images : `setInterval` arrive en retard sur la voiture et ne rattrape jamais ce retard.
+- **Correctif** (`_loopStart`) : la boucle suit sa propre horloge, une image toutes les 20 ms ; une image en retard fait attendre la suivante d'autant moins. Après un vrai blocage (reconstruction du thème, voiture occupée), elle repart de l'instant présent, sans rafale d'images pour rattraper. Les barres, aiguilles et zones bougent donc jusqu'à 50 fois par seconde au lieu de 33. Nouveau test `tools/test_loop_rate.js` (horloge simulée : minuteries au tic de 10 ms, 7 ms de travail par image).
+- À vérifier sur la voiture : la ligne « Boucle » de l'onglet Signaux doit approcher 50/s.
+
 ### ShakTheme 0.21.70 : la touche BC affiche et cache aussi la carte Waze
 - **Demande du propriétaire (22 nov., 18:57)** : « le BC active la vue Waze, et quand je suis dans la vue Waze je veux la désactiver aussi avec le BC » ; l'ordre voulu : toutes les vues du BC, puis la carte, puis le thème sans vue, et ainsi de suite.
 - **Ce qui change** (`nextView`) : la carte devient une étape du tour de la touche BC, seulement quand elle peut s'afficher (Waze en route, réglage « carte dans le thème » activé). Carte affichée → un appui la cache (le thème sans fenêtre et sans vue) → les vues une à une → la carte revient → etc. Quand Waze s'arrête (fin du trajet), la carte cachée redevient visible d'elle-même au trajet suivant. Un thème sans vue bascule simplement carte / sans carte. La fenêtre d'une autre appli (Cluster Centre) bloque toujours la touche. Au banc (M Blade, faux Waze) : carte, aucune, jauges, pneus, conduite, électrique, carte. `tools/test_sensor_bars.js` vérifie le tour.

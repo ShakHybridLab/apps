@@ -1120,7 +1120,7 @@ class HudApp {
         this.log.info('connecting to cluster-render at ' + this.socketPath);
         this.started = true;
         this.clients.forEach((c) => c.connect());
-        this.tickTimer = setInterval(() => this._guard('tick', () => this._tick()), TICK_MS);
+        this._loopStart();
         // Auto theme: check for sunrise / sunset once a minute; the status line too
         this.themeTimer = setInterval(() => this._guard('theme check', () => {
             if (this._themeName() !== this.themeName || this._nightDim() !== this.nightOn) this._rebuild();
@@ -1483,7 +1483,7 @@ class HudApp {
     }
 
     stop() {
-        clearInterval(this.tickTimer);
+        clearTimeout(this.tickTimer); this.tickTimer = null; this.loopStopped = true;
         clearInterval(this.themeTimer);
         clearInterval(this.statusTimer);
         clearInterval(this.dmeTimer);
@@ -3393,6 +3393,26 @@ class HudApp {
     _facets() { return this.ctx.settings.item('sportFacets') ? Math.min(1, Math.max(0, this.setting('sportFacets') / 100)) : 1; }
 
     /** One gauge frame, timed (perfShown, for the Signals tab): a frame that takes longer than TICK_MS, or a timer that fires late, is what a flicker or a stutter on the car is made of. */
+    /**
+     * The loop, on a clock of its own: each frame is due TICK_MS after the one before, and a frame that came late makes the next wait less.
+     * A plain setInterval(20) ran 33 times a second on the car (Signals tab, 22 Nov 2026: 7.3 ms of work a frame, so not for want of time):
+     * its timers come late by the system's tick, and setInterval never catches up. The owner: "add some fps, it seems to lag". Never two
+     * frames back to back for more than a moment: after a long stall (a rebuild, the car busy) the clock starts again from now.
+     */
+    _loopStart() {
+        this.loopStopped = false;
+        let due = Date.now() + TICK_MS;
+        const step = () => {
+            if (this.loopStopped) return;
+            this._guard('tick', () => this._tick());
+            const now = Date.now();
+            due += TICK_MS;
+            if (due < now - TICK_MS) due = now + TICK_MS / 2;          // far behind: no burst of frames to catch up
+            this.tickTimer = setTimeout(step, Math.max(1, due - now));
+        };
+        this.tickTimer = setTimeout(step, TICK_MS);
+    }
+
     _tick() {
         const t0 = Date.now();
         try { this._tickBody(); } finally { this._perfNote(t0, Date.now()); }
