@@ -45,5 +45,13 @@ check('hud.js lit le membre rpm et le donne à la voiture ; les deux applis déc
         assert.strictEqual(spec.signals['de.bmw.infotainment.displaydataserver.DisplayDataServer'].functionalLibraryData, 'rs', a);
     });
 });
+check('la vitesse est relue toutes les 200 ms (« la vitesse est toujours lente », 22 nov. 2026) ; les deux applis déclarent Vehicle2', () => {
+    const hud = fs.readFileSync(path.join(__dirname, '..', 'shared', 'hud.js'), 'utf8');
+    assert(/const SPEED_POLL_MS = 200;/.test(hud) && /\(extra\[SPEED_IFACE\] = extra\[SPEED_IFACE\] \|\| \{\}\)\.\$pollMs = SPEED_POLL_MS/.test(hud));
+    ['shakhud', 'shaktheme'].forEach((a) => {
+        const spec = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', a, 'app.json'), 'utf8'));
+        assert.strictEqual(spec.signals['de.bmw.infotainment.vehicle.Vehicle2'].statusCarSpeed2, 'rs', a);
+    });
+});
 console.log(bad ? 'rpm alt: FAILED' : 'rpm alt: all ' + n + ' checks pass');
 process.exit(bad ? 1 : 0);

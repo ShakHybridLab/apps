@@ -340,7 +340,9 @@ function rpmAltOf(v) {
 // The cluster's power meter was read every 2 s (as eroobeeroo's apps do): the hybrid rev bar then jumped up and fell away in one step, "pas fluide"
 // on the owner's car (19 Nov 2026). Read as often as the rev counter, the bar follows the pedal.
 const REL_POLL_MS = 250;
-const RPM_POLL_MS = 250;           // how often the rev counter is read on top of the car's own notifications
+const RPM_POLL_MS = 250;
+const SPEED_POLL_MS = 200;         // how often the speed is read on top of the car's own notifications
+const SPEED_IFACE = 'de.bmw.infotainment.vehicle.Vehicle2';           // how often the rev counter is read on top of the car's own notifications
 // the electric power estimated from the speed (setting "estPower", the rev bar in electric when nobody gives the real power): the X3 xDrive30e's
 // own figures, rounded. mass kg with a driver, drag = half rho Cd A in N per (m/s)^2, rolling resistance, the drive and recuperation efficiencies,
 // the motor's power in kW (the most it can show), the most it can recover, and the filters of the speed and of the acceleration (ms)
@@ -1008,6 +1010,9 @@ class HudApp {
         // as well, RPM_POLL_MS apart (the kit re-reads the interface's fields that often; the same values twice change nothing). The Signals tab's
         // "msg · x/s" beside the rev counter shows how often the car really sends it.
         if (decl[CDS_IFACE] && decl[CDS_IFACE].statusEngineSpeed2) (extra[CDS_IFACE] = extra[CDS_IFACE] || {}).$pollMs = RPM_POLL_MS;
+        // the speed too (Vehicle2.statusCarSpeed2): told only when the car decides to, it could lag behind by seconds (owner, 22 Nov 2026: "the
+        // speed is always slow", photo of M Blade); read SPEED_POLL_MS apart as well, as the rev counter
+        (extra[SPEED_IFACE] = extra[SPEED_IFACE] || {}).$pollMs = SPEED_POLL_MS;
         this.car = new Car(this.ctx, ['rpm', 'speed', 'temps', 'accel', 'gear', 'torque'], extra);
         this.car.setRedline(this.setting('redline'));
         this.gBuf = [];                  // [t, lat, long] of the last G_AVG_MS
@@ -1668,7 +1673,9 @@ class HudApp {
             if (st && st.state === 'shown') shown++;
             else if (st) { whyN++; if (!why) why = st.state + (st.reason ? ': ' + st.reason : ''); }
         });
-        if (shown === refs.length || (!why && !shown)) return refused;
+        // (a layer cluster-render said nothing about is not counted as missing: the car's status read "1 of 16 layers drawn" with every layer
+        // on screen, 22 Nov 2026; only a layer it says waits or failed makes the note)
+        if (shown === refs.length || !why) return refused;
         return ', ' + shown + ' of ' + this._layerCount(refs.length) + ' drawn' + (why ? ' (' + whyN + ' ' + why + ')' : '') + refused;
     }
 
