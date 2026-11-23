@@ -26,7 +26,7 @@ OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'apps', 'sh
 REV = [144, 302, 125, 52, 62, 42, 56]          # the revs: bends down at both ends (ends at x 523 / 1397, y 241)
 SPD = [594, 290, 140, 36, 30, 36, 48]          # (lowered 34 px, 23 Nov 2026 "optimise l'espace": its numbers now sit above it, the room under it was empty)          # the speed: the same upside down, shallower (ends at x 564 / 1356, y 516)
 VISOR = [272, 220, 70, 42, 70, 0, 1]           # the line under the revs' numbers (ends at x 641 / 1279, y 337), run out to the sides
-HOLE = [624, 280, 660, 228]   # down to the speed band's numbers, which stay with the map (owner, 23 Nov 2026: "garder la vitesse"), clear of its 0 and 320                    # the map's window: as much of the hexagon as its bands' numbers leave (Waze draws the map there)
+HOLE = [624, 280, 660, 238]   # down to the speed band's numbers, which stay with the map (owner, 23 Nov 2026: "garder la vitesse"), clear of its 0 and 320                    # the map's window: as much of the hexagon as its bands' numbers leave (Waze draws the map there)
 # the bottom row, as on the picture: one line each (icon, value, unit, then a bar of slanted blocks), fuel on the left, oil and coolant in the
 # middle tray (its sides run from x 618 / 1302 at the ledge down to 652 / 1268), the battery on the right; the bars have their own layer
 BAR_Y = 667
@@ -86,7 +86,7 @@ def evo():
     for k in range(9):
         # above the band, inside the hexagon, as the revs' numbers sit inside theirs (owner, 23 Nov 2026: "mets les chiffres au-dessus de la barre,
         # là on dirait qu'ils sont décalés"): over the band's ticks, centred on them
-        x, y = path_point(SPD, -1, k / 8.0, SPD[5] + 32)
+        x, y = path_point(SPD, -1, k / 8.0, SPD[5] + 24)
         W.append(label('spd%d' % k, x, y, 76 if 0 < k < 8 else 60, 24, '{{spd:%d}}' % k, 'e_snum', 'fg', near=['speed', k]))
     # in the hexagon: the speed and the gear (while the map is down), the launch cue over them
     W.append(text('speed', 660, 290, 600, 85, '{{speed}}', 'e_speed', 'fg', 'center', toggle='!mapUp'))
@@ -106,9 +106,9 @@ def evo():
     W.append(text('lim_num', 272, 461, 74, 37, '{{limit}}', 'unit', 'fg', 'center', limitBy=True))
     W.append(icon('lim_nxt_ring', 'ring', 360, 454, 52, 52, 'dim', nextBy=True))
     W.append(text('lim_nxt_num', 360, 466, 52, 29, '{{nextLimit}}', 'm_tiny', 'dim', 'center', nextBy=True))
-    W.append(icon('run_icon', 'stopwatch', 1384, 172, 32, 36, 'dim', launchBy=True))      # the 0-100 timer in the top row, left of the drive mode's name
-    W.append(text('run_time', 1418, 177, 96, 27, '{{launch}}', 'e_val', 'fg', 'right', launchBy=True, rate=100))
-    W.append(text('run_unit', 1516, 177, 24, 27, '{{launchUnit}}', 'e_unit', 'dim'))
+    W.append(icon('run_icon', 'stopwatch', 1360, 176, 32, 36, 'dim', launchBy=True))      # the 0-100 timer in the top row, left of the drive mode's name
+    W.append(text('run_time', 1394, 181, 96, 27, '{{launch}}', 'e_val', 'fg', 'right', launchBy=True, rate=100))
+    W.append(text('run_unit', 1492, 181, 24, 27, '{{launchUnit}}', 'e_unit', 'dim'))
     # with the map (owner, 23 Nov 2026: "Waze au milieu, la vitesse en numérique avec sa boîte à droite à la place du BC"): the right panel
     W.append(text('mspeed', 1470, 282, 290, 51, '{{speed}}', 'e_big', 'fg', 'center', toggle='mapUp'))
     W.append(text('mspeed_unit', 1565, 336, 100, 27, '{{u:speedLc}}', 'e_unit', 'dim', 'center', toggle='mapUp'))
@@ -129,7 +129,7 @@ def evo():
     W.append(icon('lim_lane', 'wheel', 214, 538, 56, 56, 'dim', laneBy=True))
     W += ev_share(300, 550, 29, 34, 332, 554, 90, 27, 'e_val', 428, 554, 40, 27, 'e_unit')      # (value and unit on one baseline)
     # the right panel's top row: the drive mode (the BC views open under it, tools/add_sensor_bars.py evo_views)
-    W.append(text('drive_mode', 1550, 174, 230, 35, '{{modeName}}', 'e_mode', 'accent', 'right', accentBy=True))      # (room for "Electric Individual": it was cut)
+    W.append(text('drive_mode', 1520, 178, 216, 35, '{{modeName}}', 'e_mode', 'accent', 'right', accentBy=True))      # (room for "Electric Individual", ending left of the outline's corner: it crossed it, the car's photo of 23 Nov 2026)
     # the bottom row: fuel (left), oil and coolant (the middle tray), the battery (right), each on one line before its bar
     Y = 653                                    # values and units on one baseline (same cell, same baseline), centred on the 34 px icons and the bars
     W.append(icon('fuel_icon', 'fuel', 96, Y - 3, 29, 34, 'fg'))

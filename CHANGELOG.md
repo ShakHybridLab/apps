@@ -2,6 +2,12 @@
 
 ## 23 novembre 2026
 
+### ShakTheme 0.22.7 : Shak, carte plus basse et mode de conduite dans le cadre
+- **Photo de la voiture (19:12)** : « Electric Individual dépasse toujours, et Waze, trouve un moyen de descendre un tout petit peu plus ».
+- **Mode de conduite** : la case finit avant le coin du contour néon (elle le traversait) ; le chrono 0-100 se décale à sa gauche.
+- **Waze** : la fenêtre descend de 10 px (660 × 238) : les chiffres de la vitesse se rapprochent de leur bande et ses traits sont plus courts.
+- Vues BC : nom, valeur et unité côte à côte sans se chevaucher (une couche de moins).
+
 ### ShakTheme 0.22.6 : Shak corrigé d'après la photo de la voiture
 - **Demande du propriétaire (18:59, photo de la voiture)** : « corrige Waze, le mode de conduite est un peu effacé, et à droite le néon touche le logo du frein de parking : réduis un peu ».
 - **Frein de parking** : BMW affiche son voyant en haut à droite (vers x 1845..1900, y 225..270). Le contour néon et les deux panneaux de côté sont rentrés de 50 px (le panneau de droite finit à x 1802) ; les vues BC suivent.

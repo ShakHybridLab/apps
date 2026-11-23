@@ -1921,7 +1921,7 @@ void main() {
         c.a *= clamp(hd + 0.5, 0.0, 1.0);
     }
     c = band(aR, u_rb, u_rev, u_zone.y, u_redFrom, u_hy, vec3(7.0, u_rb.y + 5.0, u_rb.y + 17.0), u_peak, c);
-    c = band(aS, u_sb, u_speed, 0.0, u_szone, vec4(0.0), vec3(8.0, u_sb.y + 5.0, u_sb.y + 17.0), 0.0, c);
+    c = band(aS, u_sb, u_speed, 0.0, u_szone, vec4(0.0), vec3(8.0, u_sb.y + 5.0, u_sb.y + 11.0), 0.0, c);      // (short ticks: the numbers sit close, the map window reaches lower)
     gl_FragColor = c;
 }
 `;

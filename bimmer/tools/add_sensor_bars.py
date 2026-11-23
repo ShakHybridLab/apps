@@ -737,9 +737,9 @@ def evo_views(pre, conn, cconn):
         for r, (k, ic, name, tok, unit, sig, mn, mx, red, tone) in enumerate(ROWS):
             T = EV['t0'] + r * EV['pitch']
             new += [icon(pre + vp + '_%s_ic' % k, x0, T - 18, 28, 34, ic, 'fg', S, conn, toggle=tg),
-                    text(pre + vp + '_%s_name' % k, x0 + 38, T - 13, 180, 24, name, 'm_name', 'dim', 'left', S, conn, toggle=tg),
-                    text(pre + vp + '_%s' % k, x1 - 146, T - 19, 84, 27, tok, 'e_val', 'fg', 'right', S, conn, toggle=tg),
-                    text(pre + vp + '_%s_unit' % k, x1 - 58, T - 19, 58, 27, unit, 'e_unit', 'dim', 'left', S, conn, toggle=tg)]      # (the value's baseline)
+                    text(pre + vp + '_%s_name' % k, x0 + 38, T - 13, 164, 24, name, 'm_name', 'dim', 'left', S, conn, toggle=tg),
+                    text(pre + vp + '_%s' % k, x1 - 124, T - 19, 78, 27, tok, 'e_val', 'fg', 'right', S, conn, toggle=tg),      # (boxes side by side: one sheet, one layer)
+                    text(pre + vp + '_%s_unit' % k, x1 - 44, T - 19, 54, 27, unit, 'e_unit', 'dim', 'left', S, conn, toggle=tg)]      # (the value's baseline)
             if sig:                       # a reading with a scale: its bar under it; the others are a value alone
                 rows.append(dict({'y': T + 26, 'signal': sig, 'min': mn, 'max': mx}, **({'low': True} if sig == 'hvSoc' else {})))      # (the charge: red when low)
         new.append(evbars(pre + vp + '_bars', tg, cconn, rows))
