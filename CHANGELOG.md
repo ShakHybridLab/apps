@@ -2,6 +2,12 @@
 
 ## 23 novembre 2026
 
+### ShakTheme 0.22.6 : Shak corrigé d'après la photo de la voiture
+- **Demande du propriétaire (18:59, photo de la voiture)** : « corrige Waze, le mode de conduite est un peu effacé, et à droite le néon touche le logo du frein de parking : réduis un peu ».
+- **Frein de parking** : BMW affiche son voyant en haut à droite (vers x 1845..1900, y 225..270). Le contour néon et les deux panneaux de côté sont rentrés de 50 px (le panneau de droite finit à x 1802) ; les vues BC suivent.
+- **Waze** : la fenêtre de la carte descend jusqu'aux chiffres de la bande de vitesse, qui restent affichés (19:05, « garder la vitesse ») : 660 × 228 au lieu de 708 × 198, plus haute, sans toucher le 0 ni le 320. La ligne en visière sous les chiffres du régime et ses deux traits vers les côtés ne sont plus dessinés quand la carte est là (19:06 : on les voyait autour de la carte).
+- **Mode de conduite** : police plus grasse (Barlow SemiCondensed SemiBold 28) et place pour les noms longs (« Electric Individual » était coupé).
+
 ### ShakTheme 0.22.5 : vérification de l'effet loupe dans tous les thèmes
 - **Demande du propriétaire (11:58)** : « regarde si tout est bien aligné, avec l'effet loupe que ça ne touche pas quelque part, qu'il n'y ait pas de bug et que tout soit stable ».
 - Vérifié pour les cinq thèmes : aucun chiffre grossi ne recouvre un autre texte ou une icône (contrôle de toutes les boîtes, carte ouverte et fermée), captures au banc à 256 km/h et 6150 tr/min, aucune erreur dans le journal du banc, toute la suite de tests passe (sauf les trois échecs connus).

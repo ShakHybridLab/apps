@@ -96,7 +96,7 @@ CLUSTER_FONTS = [
     ('e_snum_z', 'Orbitron[wght].ttf', 28, DIGITS + '-', 0, 'Black', {'0': 'O'}),
     ('e_val', 'Orbitron[wght].ttf', 26, DIGITS + ':+-.,/ ', 0, 'Bold', {'0': 'O'}),        # the readouts (clock, temperatures, ranges)
     ('e_unit', 'Barlow-Medium.ttf', 22, LOWER + UPPER + DIGITS + '°/-.,:%· x'),             # units and captions
-    ('e_mode', 'Barlow-Medium.ttf', 26, UPPER + LOWER + DIGITS + " -+'éèêàçùôîÉ"),            # the drive mode
+    ('e_mode', 'BarlowSemiCondensed-SemiBold.ttf', 28, UPPER + LOWER + DIGITS + " -+'éèêàçùôîÉ"),            # the drive mode
     ('sign_xl', 'DINish-Bold.ttf', 84, DIGITS),                 # the big speed limit sign on Evo's left (150 px)
     ('sign_xl3', 'DINishCondensed-Bold.ttf', 84, DIGITS),
 ]

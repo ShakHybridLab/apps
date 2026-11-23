@@ -1860,22 +1860,23 @@ void main() {
     vec2 p = v_uv * u_rect + u_org;
     vec4 c = vec4(0.0, 0.0, 0.0, 1.0);
     // the cluster's outline, the ledge over the bottom row, the dividers under the side panels' top rows
-    float o = segD(p, vec2(40.0, 616.0), vec2(60.0, 260.0));
-    o = min(o, segD(p, vec2(60.0, 260.0), vec2(160.0, 168.0)));
-    o = min(o, segD(p, vec2(160.0, 168.0), vec2(700.0, 76.0)));
+    // (the sides 50 px further in than at first: BMW's parking brake light sits at the top right, x ~1845..1900, y ~225..270, the car's photo of 23 Nov 2026)
+    float o = segD(p, vec2(90.0, 616.0), vec2(105.0, 262.0));
+    o = min(o, segD(p, vec2(105.0, 262.0), vec2(190.0, 163.0)));
+    o = min(o, segD(p, vec2(190.0, 163.0), vec2(700.0, 76.0)));
     o = min(o, segD(p, vec2(700.0, 76.0), vec2(830.0, 76.0)));
     o = min(o, segD(p, vec2(830.0, 76.0), vec2(872.0, 36.0)));
     o = min(o, segD(p, vec2(1048.0, 36.0), vec2(1090.0, 76.0)));
     o = min(o, segD(p, vec2(1090.0, 76.0), vec2(1220.0, 76.0)));
-    o = min(o, segD(p, vec2(1220.0, 76.0), vec2(1760.0, 168.0)));
-    o = min(o, segD(p, vec2(1760.0, 168.0), vec2(1860.0, 260.0)));
-    o = min(o, segD(p, vec2(1860.0, 260.0), vec2(1880.0, 616.0)));
+    o = min(o, segD(p, vec2(1220.0, 76.0), vec2(1730.0, 163.0)));
+    o = min(o, segD(p, vec2(1730.0, 163.0), vec2(1815.0, 262.0)));
+    o = min(o, segD(p, vec2(1815.0, 262.0), vec2(1830.0, 616.0)));
     // the ledge over the bottom row, dipping into the middle tray (oil, coolant) whose sides run down to the bottom edge, as on the picture
-    o = min(o, segD(p, vec2(40.0, 616.0), vec2(588.0, 616.0)));
+    o = min(o, segD(p, vec2(90.0, 616.0), vec2(588.0, 616.0)));
     o = min(o, segD(p, vec2(588.0, 616.0), vec2(618.0, 628.0)));
     o = min(o, segD(p, vec2(618.0, 628.0), vec2(1302.0, 628.0)));
     o = min(o, segD(p, vec2(1302.0, 628.0), vec2(1332.0, 616.0)));
-    o = min(o, segD(p, vec2(1332.0, 616.0), vec2(1880.0, 616.0)));
+    o = min(o, segD(p, vec2(1332.0, 616.0), vec2(1830.0, 616.0)));
     o = min(o, segD(p, vec2(618.0, 628.0), vec2(652.0, 716.0)));
     o = min(o, segD(p, vec2(1302.0, 628.0), vec2(1268.0, 716.0)));
     // the hexagon's slanted sides, from the rev band's ends to the speed band's, on their neon lines
@@ -1885,10 +1886,10 @@ void main() {
     // the side panels, as on the picture: a chamfered panel on each side (the right one mirrors the left), dark inside with a faint diagonal
     // hatch and a magenta glow along its edge, outlined in neon; the time row sits above the left one, the drive mode above the right one
     vec2 m = vec2(p.x < 960.0 ? p.x : 1920.0 - p.x, p.y);
-    float pd = max(max(max(hp(m, vec2(70.0, 290.0), vec2(130.0, 214.0)), hp(m, vec2(130.0, 214.0), vec2(480.0, 214.0))),
+    float pd = max(max(max(hp(m, vec2(118.0, 290.0), vec2(165.0, 214.0)), hp(m, vec2(165.0, 214.0), vec2(480.0, 214.0))),
                        max(hp(m, vec2(480.0, 214.0), vec2(502.0, 238.0)), hp(m, vec2(502.0, 238.0), vec2(540.0, 520.0)))),
-                   max(max(hp(m, vec2(540.0, 520.0), vec2(520.0, 600.0)), hp(m, vec2(520.0, 600.0), vec2(120.0, 600.0))),
-                       max(hp(m, vec2(120.0, 600.0), vec2(70.0, 540.0)), hp(m, vec2(70.0, 540.0), vec2(70.0, 290.0)))));
+                   max(max(hp(m, vec2(540.0, 520.0), vec2(520.0, 600.0)), hp(m, vec2(520.0, 600.0), vec2(160.0, 600.0))),
+                       max(hp(m, vec2(160.0, 600.0), vec2(118.0, 540.0)), hp(m, vec2(118.0, 540.0), vec2(118.0, 290.0)))));
     float hatch = 0.5 + 0.5 * step(fract((p.x + p.y) / 7.0), 0.45);
     c = over(vec4(mix(vec3(0.03, 0.01, 0.035), vec3(0.06, 0.015, 0.06), hatch), step(pd, 0.0)), c);
     c = over(vec4(MAG, 0.32 * exp(pd / 16.0) * step(pd, 0.0)), c);
@@ -1904,7 +1905,7 @@ void main() {
     vec3 vs = pathAt(p, u_va, u_vb);
     vec2 ve = pathEnd(u_va, u_vb, 0.0);
     float vl = min(abs(vs.x) + step(vs.z - 0.01, abs(vs.y)) * 99.0, min(segD(p, ve, vec2(ve.x + 110.0, ve.y)), segD(p, vec2(1920.0 - ve.x, ve.y), vec2(1810.0 - ve.x, ve.y))));
-    c = neon(vl, 1.0, c);
+    if (u_hole < 0.5) c = neon(vl, 1.0, c);         // (not with the map: its three lines showed through round the map, the car's photo of 23 Nov 2026)
     // the gear's slanted box (in the hexagon, or on the left while the map is up)
     vec2 gc = u_hole > 0.5 ? vec2(1615.0, 425.0) : vec2(960.0, 454.0);     // (with the map: the right panel, in place of the BC views)
     vec2 gq = p - gc;
