@@ -38,7 +38,7 @@ function shownIn(widgets, map, view, sport) {
 // la vue « drive » montre autre chose en Sport (la G-force) et hors Sport (les réglages des modes) : les deux sont comptés
 const VIEWS = [[null, false], ['gauges', false], ['tyres', false], ['drive', true], ['drive', false]];
 
-['sport', 'm', 'mblade', 'navi'].forEach((name) => {
+['sport', 'm', 'mblade', 'navi', 'evo'].forEach((name) => {
     const L = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'hud', 'layouts', name + '.json'), 'utf8'));
     const h = Object.create(HudApp.prototype);
     check(name + ': chaque texte et icône a sa feuille ("sheet") : sans cela le moteur rangerait par taille et la mémoire redeviendrait celle d\'avant', () => {
@@ -46,7 +46,8 @@ const VIEWS = [[null, false], ['gauges', false], ['tyres', false], ['drive', tru
         assert.strictEqual(loose.length, 0, loose.slice(0, 5).map((w) => w.id).join(', ') + ' sans feuille');
     });
     // (avec la carte, aucune vue ne s'affiche depuis le 21 nov. 2026, hud.js setting('viewSel') : seul l'état « carte, sans vue » existe)
-    [false, true].forEach((map) => VIEWS.filter(([view]) => !map || !view).forEach(([view, sport]) => {
+    // (the Shak theme, "viewsWithMap", keeps its views beside the map: it is checked in every state)
+    [false, true].forEach((map) => VIEWS.filter(([view]) => !map || !view || L.viewsWithMap === true).forEach(([view, sport]) => {
         check(name + ' (' + (map ? 'avec' : 'sans') + ' la carte, vue ' + (view || 'aucune') + (view === 'drive' ? (sport ? ', en Sport' : ', hors Sport') : '') + ') : mémoire de pixels, couches par connexion', () => {
             const plan = h._plan(shownIn(L.widgets, map, view, sport), Infinity, Infinity);
             let px = 0; const per = [];

@@ -100,20 +100,20 @@ check('un effet qui commence dans le trou est retiré, celui qui le traverse est
     assert(!k.widgets.some((w) => w.follow));
 });
 
-check('les quatre shaders de fond lisent u_rect et u_org (un morceau de l\'image), et hud.js les règle pour chaque fond ; le shader de M Blade reste sous les 8748 jetons qui tiennent sur la voiture', () => {
+check('les cinq shaders de fond lisent u_rect et u_org (un morceau de l\'image), et hud.js les règle pour chaque fond ; le shader de M Blade reste sous les 8748 jetons qui tiennent sur la voiture', () => {
     const sh = require('../shared/shaders');
-    ['sdash', 'mdash', 'mblade', 'navi'].forEach((t) => {
+    ['sdash', 'mdash', 'mblade', 'navi', 'evo'].forEach((t) => {
         const src = sh[t];
         assert(/uniform vec2 u_rect;/.test(src) && /uniform vec2 u_org;/.test(src), t + ' : uniformes');
         assert(src.indexOf('vec2 p = v_uv * u_rect + u_org;') >= 0, t + ' : p');
         assert(!/vec2 p = v_uv \* u_size;/.test(src), t + ' : ancienne ligne');
     });
     const hud = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
-    assert(/BACKDROP_TYPES = \{ sdash: true, mdash: true, mblade: true, navi: true \}/.test(hud));
+    assert(/BACKDROP_TYPES = \{ sdash: true, mdash: true, mblade: true, navi: true, evo: true \}/.test(hud));
     assert(hud.indexOf("c.uniform(ref, 'u_rect', [r.w, r.h]);") >= 0 && hud.indexOf("c.uniform(ref, 'u_org', [r.x - w.x, r.y - w.y]);") >= 0);
     // le budget : aucun fond ne dépasse 8748 jetons (le plus grand qui tienne sur une X3 G01, tools/shader_budget.js)
     const sb = require('../tools/shader_budget');
-    ['sdash', 'mdash', 'mblade', 'navi'].forEach((t) => {
+    ['sdash', 'mdash', 'mblade', 'navi', 'evo'].forEach((t) => {
         const l = sb.layer(sh[t], 1920, 720);
         assert(l.tokens <= 8748 && l.level === 'ok', t + ' : ' + l.text);
     });

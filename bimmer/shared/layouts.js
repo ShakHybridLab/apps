@@ -39,6 +39,8 @@ const TYPES = {
     nline: ['card'],
     mblades: [],
     navi: ['band', 'line', 'barL', 'barR'],
+    evo: ['revPath', 'spdPath', 'visor'],
+    evobars: ['barF', 'barB', 'barO', 'barC'],
     mtach: ['side', 'y0', 'y8', 'ym', 'xm', 'kTop', 'kBot', 'wBot', 'wTop'],
     icon: ['icon'],
     emblem: [],

@@ -538,7 +538,7 @@ check('limit ring: small, in the lower left part of every theme (under the tyre 
     const SHADERS = ['sdash', 'mdash', 'mblade', 'navi', 'shiftlight', 'emblem'];
     ['sport', 'm', 'mblade', 'navi'].forEach((id) => {
         const L = lay(id), by = (i) => L.widgets.find((w) => w.id === i), r = by('lim_ring'), n = by('lim_num');
-        assert(r.w === 92 && r.h === 92, id + ': ring size (92 since 22 Nov 2026: three digits with room round them)');
+        assert(r.w === 74 && r.h === 74, id + ': ring size (74 since 23 Nov 2026: the white sign at 92 was too big, the owner)');
         assert(n.x >= r.x && n.x + n.w <= r.x + r.w && n.y >= r.y && n.y + n.h <= r.y + r.h, id + ': the number sits inside the ring');
         assert(Math.abs((n.y + n.h / 2) - (r.y + r.h / 2)) <= 3, id + ': the number is centred in the ring');
         assert.strictEqual(n.font, 'unit', id + ': the digits in the larger font (34 px) since the ring grew to 92 px');

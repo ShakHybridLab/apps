@@ -99,6 +99,17 @@ const THEMES = {
         ink: [12, 12, 14, 255], accent: [150, 120, 255, 255], well: [0, 0, 0, 255],
         faint: [110, 124, 160, 255],
     },
+    // Shak (layout evo.json, tools/gen_evo.py): a race cluster on black, white numbers, neon magenta lines and accents. Extra roles: faint.
+    evo: {
+        name: 'Shak',
+        fg: [246, 247, 252, 255], dim: [178, 182, 198, 255], track: [60, 62, 72, 255], arc: [255, 46, 194, 255],
+        glow: 0, stripe: false,
+        bar: { low: [80, 150, 255], mid: [246, 247, 252], high: [255, 42, 42], midAt: 'shift' },
+        rev: { from: [80, 150, 255], to: [255, 90, 190] },
+        bg: [0, 0, 0, 255], panel: [0, 0, 0, 255], line: [255, 46, 194, 255], head: [226, 228, 232, 255],
+        ink: [12, 12, 14, 255], accent: [255, 60, 200, 255], well: [0, 0, 0, 255],
+        faint: [120, 124, 140, 255],
+    },
     // Minimal (layout minimal.json): white on black, nothing but the speed, the gear and a fuel line.
     minimal: {
         name: 'Minimal',

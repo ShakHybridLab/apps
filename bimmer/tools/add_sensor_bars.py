@@ -299,7 +299,8 @@ def _mblade_views(d, SA, SB, SL, SF):
     # the speed limit's ring under the panel, bottom left, and in a row right of it the next limit, the car's warning and the lane assist
     # (where the owner circled it on the bench pictures, 22 Nov 2026: under the panel's right end, on the bottom row; larger, 92 px, so three digits
     # have room; the next limit, the triangle and the wheel to its left, right of the clock)
-    for src, nid, x, y, sz in (('lim_ring', 'xb_vlim_ring', 440, 598, 92), ('lim_nxt_ring', 'xb_vlim_nxt_ring', 370, 614, 60),
+    # (23 Nov 2026, "la limitation est trop grande depuis la dernière mise à jour": the white sign 74 px, the next one 50, on the same centres)
+    for src, nid, x, y, sz in (('lim_ring', 'xb_vlim_ring', 449, 607, 74), ('lim_nxt_ring', 'xb_vlim_nxt_ring', 375, 619, 50),
                                ('lim_alert', 'xb_vlim_alert', 306, 616, 56), ('lim_lane', 'xb_vlim_lane', 242, 616, 56)):
         if src in by:
             new.append(dict(by[src], id=nid, x=x, y=y, w=sz, h=sz, toggle=V_ON, sheet=SL))
@@ -700,7 +701,60 @@ def _navi(d):
     d['widgets'] += new
 
 
-BUILD = {'m': _m, 'mblade': _mblade, 'sport': _sport, 'navi': _navi}
+# Shak (23 Nov 2026, the owner: "à droite on mettra les thèmes BC"): every view in the right panel, the same with the map up or not,
+# under the drive mode and its divider (y 190), right of BMW's black box (x 1597), the hood leaves it from y 196 at the far right. Each row: its
+# icon, its value and unit, a hairline with the sliding ring under them (the neon line of the theme's frame round it).
+EV = dict(x=1440, y=232, w=392, h=330, x0=1454, x1=1816, t0=272, pitch=72, glass=[0.05, 0.0, 0.05], edge=[1.0, 0.45, 0.86], step=[300, 12, 0])
+
+
+def evo_views(pre, conn, cconn):
+    """The Shak theme's views, in its right panel (as the picture's right panel): each row its icon and name on the left, the value and unit on
+    the right, a hairline with a sliding ring under them; the tyres as four corners round the car's tyre; the G-meter or the drive settings."""
+    new = []
+    S = 'xs_ev'
+    x0, x1 = EV['x0'], EV['x1']
+
+    def col(id, tog, rows=None, **kw):
+        return nline(id, tog, cconn, rows, x=EV['x'], y=EV['y'], w=EV['w'], h=EV['h'], bar=[x0, x1], card=EV['step'],
+                     glass=EV['glass'], edge=EV['edge'], **kw)
+
+    for vname, vp, ROWS, NAMES in (('gauges', 'g', CARD_ROWS, GAUGE_NAMES), ('electric', 'e', ELEC_ROWS, ELEC_NAMES)):
+        tg = 'viewSel=%s' % vname
+        rows = []
+        for r, (k, ic, sig, mn, mx, tok, unit, red, tone) in enumerate(ROWS):
+            T = EV['t0'] + r * EV['pitch']
+            tb = {'tempBy': sig} if tone == 'temp' else {'iceBy': True} if tone == 'ice' else {}
+            new += [icon(pre + vp + '_%s_ic' % k, x0, T - 18, 28, 34, ic, 'fg', S, conn, toggle=tg, **({'tempBy': sig} if tone == 'temp' else {})),
+                    text(pre + vp + '_%s_name' % k, x0 + 38, T - 13, 190, 24, NAMES[k], 'm_name', 'dim', 'left', S, conn, toggle=tg),
+                    text(pre + vp + '_%s' % k, x0 + 228, T - 19, 84, 33, tok, 'e_val', 'fg', 'right', S, conn, toggle=tg, **tb),
+                    text(pre + vp + '_%s_unit' % k, x0 + 316, T - 15, 46, 29, unit, 'e_unit', 'dim', 'left', S, conn, toggle=tg)]
+            rows.append({'y': T + 24, 'signal': sig, 'min': mn, 'max': mx, 'red': red if red else 2, 'tone': tone})
+        new.append(col(pre + vp + '_col', tg, rows))
+    # the tyres: pressure over temperature at each corner, the tyre glyph in the middle, the units on top
+    tt = 'viewSel=tyres'
+    new.append(text(pre + 't_u', x0, 250, x1 - x0, 29, '{{u:pressure}} · {{u:temp}}', 'e_unit', 'dim', 'center', S, conn, toggle=tt))
+    for corner, cx, cy in (('FL', x0 + 60, 300), ('FR', x1 - 60, 300), ('RL', x0 + 60, 420), ('RR', x1 - 60, 420)):
+        new += [text(pre + 't_p' + corner, cx - 60, cy, 120, 33, '{{tyreP:%s}}' % corner, 'e_val', 'fg', 'center', S, conn, toggle=tt, tyreBy=corner),
+                text(pre + 't_t' + corner, cx - 60, cy + 38, 120, 29, '{{tyreT:%s}}' % corner, 'e_unit', 'dim', 'center', S, conn, toggle=tt)]
+    new.append(icon(pre + 't_ic', (x0 + x1) // 2 - 30, 360, 60, 60, 'tyre', 'dim', S, conn, toggle=tt))
+    new.append(col(pre + 't_col', tt, mode='tyres', tiles=[x0 + 60, x1 - 60, 316, 436]))
+    ds, dn = 'viewSel=drive&driveSport', 'viewSel=drive&!driveSport'
+    new += drive_g(pre + 'dg', x0 + 10, 262, 190, x0 + 214, 330, 148, S, conn, ds, stacked=True)
+    rows = []
+    for r, (k, ic) in enumerate(SETUP_ROWS):
+        T = EV['t0'] + r * EV['pitch']
+        new += [icon(pre + 'dr_%s_ic' % k, x0, T - 18, 28, 34, ic, 'fg', S, conn, toggle=dn),
+                text(pre + 'dr_%s' % k, x0 + 40, T - 14, 300, 29, '{{setup:%s}}' % k, 'e_unit', 'fg', 'left', S, conn, toggle=dn)]
+        rows.append({'y': T + 24, 'signal': 'setupLevel:' + k, 'min': 0, 'max': 3})
+    new.append(col(pre + 'dr_col', dn, rows, seg=3, div=3))
+    return new
+
+
+def _evo(d):
+    d['widgets'] += evo_views('xb_ev', 1, 2)
+
+
+BUILD = {'m': _m, 'mblade': _mblade, 'sport': _sport, 'navi': _navi, 'evo': _evo}
 CAP = pack_sheets.CAP
 
 

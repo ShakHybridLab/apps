@@ -2,7 +2,8 @@
 /**
  * emblems.js - an emblem image widget ("type": "emblem"): lettering baked on the Mac (tools/bake_emblems.py, hud/emblems/<name>.json:
  * { w, h, alpha } one byte of coverage a pixel) and painted here in a gradient of the M theme's colours (light blue, dark blue, red),
- * left to right across the ink, centred in the widget's box. Our own lettering, not a brand's logo.
+ * left to right across the ink, centred in the widget's box. Our own lettering, not a brand's logo. A baked { w, h, rgba } is a picture in its
+ * own colours (the owner's SHAK logo, tools/bake_logo.py), drawn as it is.
  */
 const { M_STRIPE } = require('./hud_themes');
 // The M theme's own three colours (hud_themes M_STRIPE): light blue fading to dark blue, then a short blend into red.
@@ -24,8 +25,16 @@ function at(stops, t) {
 /** RGBA (straight) for a w x h box; `mask` is the baked { w, h, alpha (base64) }; a missing mask gives a clear box. */
 function paintEmblem(mask, w, h, stops) {
     const out = Buffer.alloc(w * h * 4, 0);
-    if (!mask || !mask.alpha || !mask.w || !mask.h || mask.w > w || mask.h > h) return out;
-    const a = Buffer.from(mask.alpha, 'base64'), ox = Math.floor((w - mask.w) / 2), oy = Math.floor((h - mask.h) / 2);
+    if (!mask || !(mask.alpha || mask.rgba) || !mask.w || !mask.h || mask.w > w || mask.h > h) return out;
+    const ox = Math.floor((w - mask.w) / 2), oy = Math.floor((h - mask.h) / 2);
+    if (mask.rgba) {
+        // a picture in its own colours (tools/bake_logo.py: the owner's SHAK logo), straight RGBA rows, centred
+        const px = Buffer.from(mask.rgba, 'base64');
+        if (px.length !== mask.w * mask.h * 4) return out;
+        for (let y = 0; y < mask.h; y++) px.copy(out, ((oy + y) * w + ox) * 4, y * mask.w * 4, (y + 1) * mask.w * 4);
+        return out;
+    }
+    const a = Buffer.from(mask.alpha, 'base64');
     const ramp = [];
     for (let x = 0; x < mask.w; x++) ramp.push(at(stops || STOPS, mask.w > 1 ? x / (mask.w - 1) : 0));
     for (let y = 0; y < mask.h; y++) {

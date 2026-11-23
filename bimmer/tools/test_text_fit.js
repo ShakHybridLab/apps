@@ -24,7 +24,7 @@ function width(font, t, sp) {
     const cs = String(t).split('');
     return cs.reduce((w, c, i) => w + (font.glyphs[c] || font.glyphs[' '] || { advance: 0 }).advance + (i < cs.length - 1 ? (sp || 0) : 0), 0);
 }
-[['shaktheme', ['sport', 'm', 'mblade', 'navi']], ['shakhud', ['mstyle']]].forEach(([app, names]) => {
+[['shaktheme', ['sport', 'm', 'mblade', 'navi', 'evo']], ['shakhud', ['mstyle']]].forEach(([app, names]) => {
     const font = fontsOf(app);
     names.forEach((name) => check(app + ' ' + name + ' : la valeur la plus large de chaque texte tient dans sa boîte', () => {
         const L = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', app, 'hud', 'layouts', name + '.json'), 'utf8'));

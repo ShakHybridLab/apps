@@ -2,7 +2,7 @@
 
 <img src="icon.png" width="72" align="left" alt="ShakTheme logo">
 
-By shakzer. Redraws the whole instrument cluster of an iDrive 7 BMW in one of four themes: **Sport**, **M**, **M Blade** and **Navi**. Open **ShakTheme** from the apps menu on the center screen: its own menu (after BMW's iDrive 8.5) has the themes with pictures, the badge, the phone's map, warnings, display and settings.
+By shakzer. Redraws the whole instrument cluster of an iDrive 7 BMW in one of four themes: **Sport**, **M**, **M Blade** and **Navi** (a fifth, **Shak**, is being made and is not offered yet). Open **ShakTheme** from the apps menu on the center screen: its own menu (after BMW's iDrive 8.5) has the themes with pictures, the badge, the phone's map, warnings, display and settings.
 
 <p align="center"><img src="../../docs/images/page-cluster-themes.png" width="900" alt="The ShakTheme page on the center screen"></p>
 
@@ -55,6 +55,18 @@ A diagonal speed band on the left, a big rounded window in the middle for the ma
 - **Middle:** the map window (Maps on Cluster, or the pages of Cluster Centre and Cluster Info). Black with a thin outline when nothing shows in it.
 - **Bottom:** a fuel bar with its range at the left, the clock, and a hybrid battery bar with its charge and electric range at the right. Oil and outside temperature are in the free space on the right.
 - **Top:** the shift light, and under it, centred above the speed, the ONE OF ONE lettering (from the "lettering" setting). The lettering goes away while the middle window is open, so it never covers the map.
+
+### Shak (en préparation, pas encore proposé dans les réglages)
+
+Le thème du propriétaire, d'après sa photo d'un cluster de course, sans ses badges : fond noir, lignes néon magenta, chiffres en italique gras.
+
+- **En haut :** le logo **SHAK** au milieu (toujours affiché, carte ou pas), et dessous le shiftlight redessiné en **pastilles** (bleu à gauche, blanc, rose à droite ; tout rouge quand il clignote). Il garde les réglages du shiftlight d'origine (début, rouge, clignotement).
+- **Au milieu :** le régime en **bande de blocs tendue** en haut (droite au milieu, les deux bouts qui plongent sur des épaules arrondies ; 0 à 7, bleu → blanc → rose, rouge après la zone rouge ; bleu en électrique, vert en recharge) et la vitesse en bande tendue à l'envers en bas (0 à 320 km/h, rouge dans la zone de vitesse), reliées par des côtés penchés en hexagone, avec une visière sous les chiffres du régime. Dans l'hexagone : la vitesse en grand et le rapport dans son cadre penché. Avec Waze, la **carte s'affiche dans l'hexagone** et la vitesse et le rapport passent à gauche.
+- **À gauche :** l'heure et la température extérieure ; sans carte, la **limitation de vitesse en grand panneau** (150 px), la suivante à côté, le chrono 0-100, et l'**alerte de zone de danger** dessous ; avec la carte, la vitesse, le rapport et un panneau plus petit.
+- **À droite :** le mode de conduite, et dessous les **vues de la touche BC** (jauges, pneus, conduite, électrique). Elles restent affichées à côté de la carte.
+- **En bas :** comme sur la photo, une ligne par jauge suivie d'une barre de blocs penchés : l'essence à gauche (bleu → blanc), l'**huile** et le **liquide de refroidissement** dans un bac au milieu (bleus à froid, verts chauds, rouges au-delà de leur limite), la **batterie** à droite.
+
+Même réglages que les autres thèmes. Le logo vient de `tools/logo-src/shak.png` (`tools/bake_logo.py`), la mise en page de `tools/gen_evo.py`, le dessin de `shared/shaders.js` (`evo`, `shiftpills`). Vérifié au banc seulement.
 
 Neither theme has been tried on a car; they are checked on the bench against the screenshot and for BMW's black gear box, seat-belt light and the hood. The gear letters use the app's own font, not the boxed one of the screenshot.
 

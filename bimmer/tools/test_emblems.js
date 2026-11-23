@@ -27,10 +27,21 @@ const dir = path.join(__dirname, '..', 'apps', 'shaktheme', 'hud', 'emblems');
 const layout = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'shaktheme', 'hud', 'layouts', 'sport.json'), 'utf8'));
 const box = layout.widgets.filter((x) => x.type === 'emblem')[0];
 ok('sport.json has the emblem widget', !!box);
-fs.readdirSync(dir).filter((f) => /\.json$/.test(f)).forEach((f) => {
+fs.readdirSync(dir).filter((f) => /\.json$/.test(f) && f !== 'shak.json').forEach((f) => {
     const e = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
     ok(f + ' fits the box', box && e.w <= box.w && e.h <= box.h && Buffer.from(e.alpha, 'base64').length === e.w * e.h);
 });
+// the owner's SHAK logo (tools/bake_logo.py): a picture in its own colours, drawn as it is, fits the Shak theme's "logo" widget
+const logo = JSON.parse(fs.readFileSync(path.join(dir, 'shak.json'), 'utf8'));
+const evo = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'shaktheme', 'hud', 'layouts', 'evo.json'), 'utf8'));
+const lw = evo.widgets.filter((x) => x.type === 'emblem' && x.name === 'shak')[0];
+ok('evo.json has the logo', !!lw && lw.keepWithMap === true);
+ok('shak.json is RGBA and fits the logo box', !!lw && Buffer.from(logo.rgba, 'base64').length === logo.w * logo.h * 4 && logo.w <= lw.w && logo.h <= lw.h);
+const painted = paintEmblem(logo, lw.w, lw.h);
+const ox = Math.floor((lw.w - logo.w) / 2), oy = Math.floor((lw.h - logo.h) / 2), src = Buffer.from(logo.rgba, 'base64');
+let same = true;
+for (let i = 0; i < 4; i++) same = same && painted[((oy + 40) * lw.w + ox + 40) * 4 + i] === src[(40 * logo.w + 40) * 4 + i];
+ok('the logo keeps its own colours', same);
 // every choice of the setting has a file
 const app = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'shaktheme', 'app.json'), 'utf8'));
 app.settings.filter((s) => s.key === 'emblem')[0].options.forEach((o) => ok('option ' + o[0] + ' has a file', o[0] === 'off' || fs.existsSync(path.join(dir, o[0] + '.json'))));

@@ -510,10 +510,26 @@ def navi():
     }
 
 
+LIMIT_SIZE = {92: 74, 64: 52, 60: 50}
+
+
+def shrink_limits(widgets):
+    """The speed limit's white sign and the next limit's, smaller on the same centres (owner, 23 Nov 2026: "la limitation depuis la dernière mise
+    à jour est trop grande"): 92 -> 74 px, 64 -> 52, 60 -> 50. The places above are the old sizes' (the owner circled them on 22 Nov)."""
+    for w in widgets:
+        if (w.get('limitBy') or w.get('nextBy')) and w['w'] in LIMIT_SIZE:
+            nw = LIMIT_SIZE[w['w']]
+            cx, cy = w['x'] + w['w'] / 2.0, w['y'] + w['h'] / 2.0
+            w['x'], w['w'] = round(cx - nw / 2.0), nw
+            if w['type'] == 'icon':
+                w['y'], w['h'] = round(cy - nw / 2.0), nw
+
+
 SHEETS = {'mblade': 12, 'navi': 10}      # image sheets per theme: the memory a theme takes is the sum of their boxes (tools/pack_sheets.py)
 
 if __name__ == '__main__':
     for name, L in (('mblade', mblade()), ('navi', navi())):
+        shrink_limits(L['widgets'])                        # the speed limit signs at their size of 23 Nov 2026
         zoomify(name, L['widgets'])                        # the scale numbers that grow in their zone: bigger boxes (tools/zoom_labels.py)
         # M Blade: what gives way to a view (the speed scale, the fuel strip's marks, the limit...) keeps sheets apart from what stays (the gear,
         # the speed, the clock): opening a view then leaves those sheets as they are, and the theme does not blink (owner, 20 Nov 2026)

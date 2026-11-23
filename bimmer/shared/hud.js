@@ -105,6 +105,12 @@
  *             "scale" [y of the top mark, y of 0] (SPEED_SCALE, the marker rides it), the line under the map "line" [x0, y, x of the
  *             step up, x where it is back level] and "line2" [upper y, x where it starts to fade, x where it ends], the two bottom bars
  *             "barL" (fuel) and "barR" (hybrid battery) [x, y, width]; the window is cut with "hole" / "holeWhen" as fill
+ *   evo       effect layer; the Shak theme (shaders.js evo): neon frame, the rev band "revPath" and the speed band "spdPath" (paths symmetric about
+ *             x 960: [y of the straight middle, its half length, the shoulder's radius, the end's angle in degrees, the end's length, the band's
+ *             width, blocks]; the revs bend down, the speed up), the visor line "visor" (same, no blocks), the map's window "hole" [x, y, w, h]
+ *             (cut while "holeWhen" is on)
+ *   evobars   effect layer; the Shak theme's bottom bars of slanted blocks (shaders.js evobars): "barF" (fuel), "barB" (battery), "barO" (oil),
+ *             "barC" (coolant) [left x, middle y, width] in panel px
  *   segbar    effect layer; "max" segments, the first round(signal) lit (e.g. "setupLevel:engine"), "slant" px
  *   emblem    image layer; lettering baked by tools/bake_emblems.py (hud/emblems/<name>.json), painted in a light blue / dark blue /
  *             red gradient (emblems.js); "setting" names the choice setting that picks which (off = none; hidden while the Waze map is up,
@@ -309,7 +315,7 @@ const BOOST_SCALE = { factor: 0.01, offset: 0, invalid: 255 }; // see header com
 // the widget types drawn as pixels (image layers, packed into sheets unless "own": true); the rest are shaders
 // the effect layers the views' readings sit on: M Blade's panel, Navi's card, Sport's round gauges (the same rows, the same tyres' view)
 const VIEW_PANEL = { mpanel: true, vcard: true, sring: true, nline: true, mblades: true };
-const BACKDROP_TYPES = { sdash: true, mdash: true, mblade: true, navi: true };   // the shaders that read u_rect / u_org (a piece of the picture)
+const BACKDROP_TYPES = { sdash: true, mdash: true, mblade: true, navi: true, evo: true };   // the shaders that read u_rect / u_org (a piece of the picture)
 const IMAGE_TYPES = { text: true, scale: true, stripe: true, badge: true, gridlabels: true, icon: true, emblem: true, swatchimg: true };
 const STATUS_ASK_MS = 2000;      // after a rebuild: ask cluster-render for its own status text
 // an image layer is "stalled" until its first pixels reach cluster-render, which after a rebuild takes a second or two
@@ -677,6 +683,7 @@ class HudApp {
         this.viewNow = null;             // the view the steering wheel's button stepped to (null: the setting "viewSel" decides), see nextView()
         this.mapOff = false;             // the BC button hid the Waze map (nextView): the theme shows without its window until the next press or the map goes
         this.layoutViews = [];           // the views the active layout has
+        this.viewsWithMap = false;       // the active layout keeps its views beside the map window ("viewsWithMap": true, the Shak theme)
         this.mapShown = false;           // "mapUp" when the layout was built
         this.routeActive = null;         // a route is guided on the phone (CarPlay), from GUIDE (probes.js); null until the car says
         // what the car's own signals say (car_extras.js; the values were not seen yet, so each is read tolerantly): the next limit the camera
@@ -881,7 +888,8 @@ class HudApp {
         // "viewSel": the view showing: the button's step when it has been pressed, else the saved choice ("none" = nothing extra)
         // No view while the map window is open (owner, 21 Nov 2026, the first photo of the map inside M Blade on the car: "quand il y a Waze
         // c'est mieux, on supprime tout ce qui est lie au BC, ca rend moche"): the view picked comes back when the map goes.
-        if (key === 'viewSel' && this._mapOpen()) return 'none';
+        // (the Shak theme keeps its views in the right panel beside the map, owner, 23 Nov 2026: "Waze au milieu et à droite les thèmes BC")
+        if (key === 'viewSel' && this._mapOpen() && !this.viewsWithMap) return 'none';
         if (key === 'viewSel' && this.viewNow !== null) return this.viewNow;
         // a view this theme does not have counts as none: M has no tyres' view of its own (its tyres are part of the dial), and with "tyres"
         // picked on the page its left side stayed empty, the tyres gone and nothing in their place (bench, 20 Nov 2026)
@@ -1979,9 +1987,9 @@ class HudApp {
         put(paintIcon('signDisc', W, H, LIMIT_WHITE));
         put(paintIcon('signRing', W, H, color(this.theme, role)));
         if (text) {
-            // the European road signs' DIN 1451 (DINish): "sign_l" in the 92 px signs, "sign_m" in the smaller ones
+            // the European road signs' DIN 1451 (DINish): "sign_xl" in Evo's big sign (150 px), "sign_l" in the 92 px signs, "sign_m" in the smaller ones
             // (three digits in the condensed cut, "3", as on the road: 110, 130)
-            const font = w.limitFont || (w.w >= 80 ? 'sign_l' : 'sign_m') + (text.length >= 3 ? '3' : ''), cell = textRaster.loadFont(font).metrics.cellHeight;
+            const font = (w.limitFont || (w.w >= 140 ? 'sign_xl' : w.w >= 80 ? 'sign_l' : 'sign_m')) + (text.length >= 3 ? '3' : ''), cell = textRaster.loadFont(font).metrics.cellHeight;
             const ink = isOver ? color(this.theme, role) : LIMIT_BLACK;
             put(textRaster.drawText(W, H, text, { font, color: ink, align: 'center', offsetY: Math.round((H - cell) / 2) }));
         }
@@ -2654,6 +2662,7 @@ class HudApp {
         this.problem = null;
         this.mapLayout = layout.widgets.some((w) => w.holeWhen === 'mapUp');
         this.layoutViews = viewsOf(layout.widgets);
+        this.viewsWithMap = layout.viewsWithMap === true;
         if (this.viewNow !== null && this.viewNow !== 'none' && this.layoutViews.indexOf(this.viewNow) < 0) this.viewNow = null;      // this theme doesn't have it
         this.dangerLayout = layout.widgets.some((w) => /(^|&)!?danger/.test(w.toggle || ''));
         this.driveLayout = layout.widgets.some((w) => /(^|&)!?driveSport(&|$)/.test(w.toggle || ''));
@@ -2979,7 +2988,7 @@ class HudApp {
             const keep = this.reuse; this.reuse = null;
             if (keep) ref = keep.ref;                                   // the same layer as before the rebuild (_keepLayers)
             else if (IMAGE_TYPES[w.type]) ref = c.image(Object.assign({ iw: w.w, ih: w.h }, base));
-            else ref = c.effect(Object.assign({ fs: w.type === 'swatch' ? calibration.SWATCH : shaders.accented(w.type, this.accentHue) }, base));
+            else ref = c.effect(Object.assign({ fs: w.type === 'swatch' ? calibration.SWATCH : w.type === 'shiftlight' && w.style === 'pills' ? shaders.shiftpills : shaders.accented(w.type, this.accentHue) }, base));
             if (ref && this.live) this.live.set(this._connOf(w) + ':' + ref, { c, ref, sig: this.reuseSig, id: w.id });
             if (!ref) { this.log.warn('widget "' + w.id + '": layer refused'); return; }
             this.placed.push({ c, ref, x: r.x, y: r.y, w: r.w, h: r.h, fixed: !!w.fixed });
@@ -3006,7 +3015,7 @@ class HudApp {
         else if (w.type === 'icon') this._blit(x, null, paintIcon(w.icon, w.w, w.h, color(t, w.color || 'fg')));
         else if (w.type === 'emblem') {
             // the picked lettering ("setting": the choice setting that names it, "off" = none), hidden while the Waze map is up in the theme
-            const name = String(this.setting(w.setting || 'emblem') || 'off');
+            const name = w.name ? String(w.name) : String(this.setting(w.setting || 'emblem') || 'off');      // "name": always that one (Evo's SHAK logo)
             const mask = name === 'off' || (this.setting('mapUp') === true && !w.keepWithMap) || !/^[a-z0-9_]+$/i.test(name) ? null : hudData.json('emblems/' + name + '.json');
             this._blit(x, null, paintEmblem(mask, w.w, w.h, w.stops));
         }
@@ -3103,6 +3112,23 @@ class HudApp {
                 c.uniform(ref, 'u_bx', [w.tiles[0] - w.x, w.tiles[1] - w.x]);
                 c.uniform(ref, 'u_ry', [w.tiles[2] - w.y, w.tiles[3] - w.y, -1, -1]);
             }
+        } else if (w.type === 'evo') {
+            // the Shak theme (shaders.js evo): the two bands of blocks and the visor (paths "revPath", "spdPath", "visor"), the map's window, the bottom bars
+            const path = (P, f) => [[P[0], P[1], P[2], P[3] * Math.PI / 180], [P[4], P[5], f, P[6] || 1]];
+            const rp = path(w.revPath, 1), sp = path(w.spdPath, -1), vp = path(w.visor, 1);
+            c.uniform(ref, 'u_size', [w.w, w.h]);
+            c.uniform(ref, 'u_ra', rp[0]); c.uniform(ref, 'u_rb', rp[1]);
+            c.uniform(ref, 'u_sa', sp[0]); c.uniform(ref, 'u_sb', sp[1]);
+            c.uniform(ref, 'u_va', vp[0]); c.uniform(ref, 'u_vb', vp[1]);
+            c.uniform(ref, 'u_hole', [w.hole && (w.holeWhen === true || (w.holeWhen && this.setting(w.holeWhen) === true)) ? 1 : 0]);
+            c.uniform(ref, 'u_hr', w.hole || [0, 0, 0, 0]);
+            c.uniform(ref, 'u_rev', [0]); c.uniform(ref, 'u_speed', [0]);
+            c.uniform(ref, 'u_zone', [0, 0]); c.uniform(ref, 'u_redFrom', [2]); c.uniform(ref, 'u_hy', [0, 0, 0, 0]);
+        } else if (w.type === 'evobars') {
+            // the Shak theme's four bottom bars (shaders.js evobars), their own layer over the bottom strip
+            c.uniform(ref, 'u_box', [w.x, w.y, w.w, w.h]);
+            c.uniform(ref, 'u_lv', [0, 0, 0, 0]); c.uniform(ref, 'u_low', [0, 0]); c.uniform(ref, 'u_tone', [1, 1]);
+            c.uniform(ref, 'u_bF', w.barF); c.uniform(ref, 'u_bB', w.barB); c.uniform(ref, 'u_bO', w.barO); c.uniform(ref, 'u_bC', w.barC);
         } else if (w.type === 'navi') {
             const B = w.band, L = w.line, L2 = w.line2;
             c.uniform(ref, 'u_size', [w.w, w.h]);
@@ -3537,8 +3563,15 @@ class HudApp {
         const raw = isNum(test) ? test : this.car.data().rpm;
         const dt = this.lastTickT ? Math.min(500, now - this.lastTickT) : 0;
         this.lastTickT = now;
-        if (!isNum(raw)) { this.rpmF = null; this.rpmShown = null; return; }
-        this.rpmF = isNum(this.rpmF) ? this.rpmF + (raw - this.rpmF) * (1 - Math.exp(-dt / 120)) : raw;
+        // the engine starting or stopping glides from / down to 0 like a needle instead of jumping (owner, 23 Nov 2026: "une accélération franche, il
+        // monte d'un coup à 5000 tours, c'est pas fluide": on the hybrid the engine starts mid-acceleration, and its first reading was shown at once)
+        if (!isNum(raw)) {
+            if (!isNum(this.rpmF) || this.rpmF < 50) { this.rpmF = null; this.rpmShown = null; return; }
+            this.rpmF += (0 - this.rpmF) * (1 - Math.exp(-dt / 120));
+        } else {
+            if (!isNum(this.rpmF)) this.rpmF = isNum(test) || this.car.data().demo ? raw : 0;
+            this.rpmF += (raw - this.rpmF) * (1 - Math.exp(-dt / 120));
+        }
         if (!isNum(this.rpmShown) || Math.abs(this.rpmF - this.rpmShown) >= 40) this.rpmShown = Math.max(0, Math.round(this.rpmF / 50) * 50);
     }
 
@@ -3870,6 +3903,43 @@ class HudApp {
             x.c.uniform(x.ref, 'u_speed', [vals[4]]);
             // the blade: blue on the electric power, else white, orange in the run-up to the redline, red from it
             x.c.uniform(x.ref, 'u_red', ev ? [0.2, 0.55, 1.0, vals[5]] : this._zoneRgb(zone[1]).concat([vals[5]]));
+        } else if (w.type === 'evo') {
+            // the rev band (the rpm, or while the battery alone drives its power in blue, green while it charges) and the speed band (the Sport theme's scale)
+            const us = this.setting('units') === 'us';
+            const sp = this._barRaw('speed'), rpm = this._barRaw('rpm');
+            const q = (v) => Math.round(Math.min(1, Math.max(0, v)) * 500) / 500;
+            const hy = this._hybridTach(w, rpm), bar = hy.ev ? 1 : (w.chgOnBar === true && hy.engineOff && hy.chg > 0 ? 2 : 0);
+            this.hybridEv = bar > 0; this.hybridCharge = bar === 2;
+            this.hybridPow = bar > 0 ? { kw: Math.abs(hy.kw), chg: bar === 2 } : null;
+            const max = w.rpmMax || 7000;
+            const vals = [q(isNum(sp) ? scaleFrac(us ? sp * 0.621371 : sp, SPEED_SCALE[us ? 'us' : 'metric']) : 0),
+                q(bar ? Math.abs(hy.kw) * 100 / max : isNum(rpm) ? rpm / max : 0)];
+            const zone = [this._ease(w.id + 's', this._zoneSpeed(), now), this._ease(w.id + 'r', bar ? 0 : this._zoneRev(max), now)];
+            const key = vals.join('|') + '|' + bar + '|' + zone.map((z) => Math.round(z * 20)).join(',');
+            if (!force && key === x.last) return;
+            x.last = key;
+            x.c.uniform(x.ref, 'u_speed', [vals[0]]);
+            x.c.uniform(x.ref, 'u_rev', [vals[1]]);
+            x.c.uniform(x.ref, 'u_zone', zone);
+            x.c.uniform(x.ref, 'u_redFrom', [bar ? 2 : this._redMarks(max)[0]]);
+            x.c.uniform(x.ref, 'u_hy', bar === 1 ? [0.3, 0.75, 1.0, 1] : bar === 2 ? [0.2, 0.85, 0.5, 1] : [0, 0, 0, 0]);
+        } else if (w.type === 'evobars') {
+            // fuel, battery, oil (50..150 C), coolant (40..130 C); each temperature blue while cold, red over its limit; fuel and battery red in reserve
+            const fuel = this._raw('fuel'), hv = this._raw('hvSoc'), oil = this._raw('oil'), cool = this._raw('coolant');
+            const q = (v) => Math.round(Math.min(1, Math.max(0, v)) * 200) / 200;
+            const lv = [q(isNum(fuel) ? fuel : 0), q(isNum(hv) ? hv / 100 : 0), q(isNum(oil) ? (oil - 50) / 100 : 0), q(isNum(cool) ? (cool - 40) / 90 : 0)];
+            const toneOf = (key, v) => {
+                if (this._overLimit(key)) return 2;
+                const cold = this.setting(COLD_BELOW[key]);
+                return isNum(v) && isNum(cold) && cold > 0 && v < cold ? 0 : 1;
+            };
+            const tones = [toneOf('oil', oil), toneOf('coolant', cool)], low = this._lows();
+            const key = lv.join('|') + '|' + low.join('') + tones.join('');
+            if (!force && key === x.last) return;
+            x.last = key;
+            x.c.uniform(x.ref, 'u_lv', lv);
+            x.c.uniform(x.ref, 'u_low', low);
+            x.c.uniform(x.ref, 'u_tone', tones);
         } else if (w.type === 'navi') {
             // the marker on the speed band (the same scale as the Sport theme's), the rev counter (the purple stripe: the rpm, or while the
             // battery alone drives its power in light blue, or while it charges in green, as Sport's bar) and the two bottom bars

@@ -80,6 +80,19 @@ CLUSTER_FONTS = [
     ('sign_m3', 'DINishCondensed-Bold.ttf', 35, DIGITS),
     ('sign_s', 'DINish-Bold.ttf', 24, DIGITS),
     ('sign_s3', 'DINishCondensed-Bold.ttf', 24, DIGITS),
+] + [
+    # Shak (23 Nov 2026, after the owner's picture of a race cluster): bold italic numbers, the italic drawn from Barlow's upright cuts
+    ('e_speed', 'BarlowCondensed-Bold.ttf', 162, DIGITS + '-', 0, None, None, '', 0.2),          # the speed in the hexagon
+    ('e_big', 'BarlowCondensed-Bold.ttf', 92, DIGITS + '-', 0, None, None, '', 0.2),             # the speed on the left while the map is up
+    ('e_gear', 'BarlowCondensed-Bold.ttf', 78, DIGITS + 'PRNDSM-', 0, None, None, '', 0.2),      # the gear
+    ('e_num', 'BarlowSemiCondensed-SemiBold.ttf', 34, DIGITS + '-', 0, None, None, '', 0.18),     # small numbers
+    ('e_rnum', 'BarlowSemiCondensed-SemiBold.ttf', 50, DIGITS, 0, None, None, '', 0.2),          # the rev band's numbers
+    ('e_snum', 'BarlowSemiCondensed-SemiBold.ttf', 42, DIGITS + '-', 0, None, None, '', 0.2),    # the speed band's numbers
+    ('e_val', 'BarlowSemiCondensed-SemiBold.ttf', 36, DIGITS + ':+-.,/ ', 0, None, None, '', 0.18),   # the readouts (clock, temperatures, ranges)
+    ('e_unit', 'Barlow-Medium.ttf', 24, LOWER + UPPER + DIGITS + '°/-.,:%· x', 0, None, None, '', 0.15),   # units and captions
+    ('e_mode', 'BarlowSemiCondensed-SemiBold.ttf', 30, UPPER + LOWER + DIGITS + " -+'éèêàçùôîÉ", 0, None, None, '', 0.18),   # the drive mode
+    ('sign_xl', 'DINish-Bold.ttf', 84, DIGITS),                 # the big speed limit sign on Evo's left (150 px)
+    ('sign_xl3', 'DINishCondensed-Bold.ttf', 84, DIGITS),
 ]
 FONTS = {'shaktheme': CLUSTER_FONTS, 'shakhud': [
     # the owner, 22 Nov 2026, with a photo of an M car's HUD: "I want all the writing to look like that": the squared numbers of the M theme
@@ -95,12 +108,13 @@ PAD = 2
 ATLAS_W = 1024
 
 
-def bake(out, name, file, size, chars, stroke=0, weight=None, subs=None, tuck=''):
+def bake(out, name, file, size, chars, stroke=0, weight=None, subs=None, tuck='', slant=0):
     """stroke: px of extra weight round every glyph (Michroma has one weight). weight: a named instance of a
     variable font (Orbitron: Regular .. Black), for the M theme's squared BMW-style gear, speed and numbers.
     subs: {char: glyph drawn for it} (Orbitron's zero is slashed; the M8's is plain, so its O stands in).
     tuck: characters added to a font after layouts were built on its cell height (° on value / y_val, Nov 7 2026):
-    they don't count towards the cell, and one that rises above it is drawn lower so its top meets the cell's."""
+    they don't count towards the cell, and one that rises above it is drawn lower so its top meets the cell's.
+    slant: an italic drawn from the upright cut, the top of each glyph leaning right by slant x its height (Shak)."""
     font = ImageFont.truetype(os.path.join(SRC, file), size)
     if weight: font.set_variation_by_name(weight)
     subs = subs or {}
@@ -123,6 +137,9 @@ def bake(out, name, file, size, chars, stroke=0, weight=None, subs=None, tuck=''
         w = r - l + 2 * PAD
         img = Image.new('L', (w, height), 0)
         ImageDraw.Draw(img).text((PAD - l, PAD - top + drop.get(c, 0)), glyph(c), font=font, fill=255, anchor='ls', stroke_width=stroke, stroke_fill=255)
+        if slant:
+            k = slant * height
+            img = img.transform((w + int(round(k)), height), Image.AFFINE, (1, slant, -k, 0, 1, 0), resample=Image.BICUBIC)
         shift = (tab - adv) / 2 if c in DIGITS else 0
         cells.append((c, img, round(l - PAD + shift), round(tab if c in DIGITS else adv)))
 

@@ -1748,6 +1748,269 @@ void main() {
 }
 `;
 
+const EVO = `// The Shak theme in one cluster-render "effect" layer (GLSL ES 1.00), after the owner's picture of a race cluster (23 Nov 2026): on black,
+// neon magenta lines; the rev counter as a band of blocks stretched across the top (flat in the middle, its two ends bending down on rounded
+// shoulders), the speed as the same band upside down at the bottom, the two joined into a hexagon by slanted sides; a visor line under the revs'
+// numbers; the gear's slanted box; the ledge and the tray of the bottom row. The Waze map shows in the hexagon while
+// u_hole is 1 (cut through u_hr). The side panels are chamfered, outlined in neon; the bottom row's bars are their own layer (EVOBARS). Each band is a path symmetric about x 960: A = [y of its straight part, half length of the straight part,
+// the shoulder's radius, the end's angle (radians)], B = [length of the end, the band's width, 1 = bends down (the revs) / -1 = bends up (the
+// speed), blocks]. The band lies on the inner side of its path. v_uv (0,0) is the top-left.
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 v_uv;
+uniform vec2 u_size;
+uniform vec2 u_rect;
+uniform vec2 u_org;
+uniform vec4 u_ra;        // the rev band's path (A, B above)
+uniform vec4 u_rb;
+uniform vec4 u_sa;        // the speed band's path
+uniform vec4 u_sb;
+uniform vec4 u_va;        // the visor line's path
+uniform vec4 u_vb;
+uniform float u_hole;     // 1: the map shows in the hexagon
+uniform vec4 u_hr;        // the map's window: x, y, w, h
+uniform float u_rev;      // 0..1 along the rev band
+uniform float u_speed;    // 0..1 along the speed band
+uniform vec2 u_zone;      // the speed's and the revs' zone: 0 = none, 2 = in it
+uniform float u_redFrom;  // 0..1 along the rev band: red blocks from here (2 = none)
+uniform vec4 u_hy;        // the hybrid rev counter's colour (a = 1 while the battery drives or charges)
+
+const vec3 MAG = vec3(1.0, 0.18, 0.76);
+float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
+float len64(vec2 v) { return length(v / 64.0) * 64.0; }       // (half precision cannot hold a squared panel length)
+vec4 over(vec4 top, vec4 under) {
+    float k = under.a * (1.0 - top.a), a = top.a + k;
+    return vec4((top.rgb * top.a + under.rgb * k) / max(a, 0.0001), a);
+}
+float segD(vec2 p, vec2 a, vec2 b) { vec2 pa = (p - a) / 64.0, ba = (b - a) / 64.0; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h) * 64.0; }
+// signed distance to the line a -> b, > 0 on its left (outside, for a polygon drawn clockwise on screen)
+float hp(vec2 p, vec2 a, vec2 b) { vec2 d = normalize(b - a); return dot(p - a, vec2(d.y, -d.x)); }
+vec4 neon(float d, float w, vec4 c) {
+    c = over(vec4(MAG, 0.4 * exp(-max(d - w, 0.0) / 6.0)), c);
+    return over(vec4(mix(MAG, vec3(1.0, 0.85, 0.97), 0.35), cov(d - w)), c);
+}
+vec3 ramp(float t) {
+    vec3 a = mix(vec3(0.16, 0.42, 1.0), vec3(0.9, 0.94, 1.0), smoothstep(0.0, 0.5, t));
+    a = mix(a, vec3(1.0, 0.45, 0.75), smoothstep(0.55, 0.78, t));
+    return mix(a, vec3(1.0, 0.16, 0.2), smoothstep(0.78, 0.92, t));
+}
+// where p stands against a path: x = its distance (> 0 on the band's side), y = how far along it from the middle (< 0 on the left), z = half its length
+vec3 pathAt(vec2 p, vec4 A, vec4 B) {
+    float f = B.z;
+    vec2 q = vec2(abs(p.x - 960.0), f * p.y);
+    float y0 = f * A.x, a = A.y, R = A.z, ph = A.w;
+    float cx = clamp(q.x, 0.0, a);
+    float d = len64(q - vec2(cx, y0)), sd = q.y >= y0 ? d : -d, s = cx;
+    vec2 C = vec2(a, y0 + R), v = q - C;
+    float an = clamp(atan(v.x, -v.y), 0.0, ph);
+    float d2 = len64(q - C - R * vec2(sin(an), -cos(an)));
+    if (d2 < d) { d = d2; sd = len64(v) <= R ? d2 : -d2; s = a + R * an; }
+    vec2 T = C + R * vec2(sin(ph), -cos(ph)), dir = vec2(cos(ph), sin(ph)), nr = vec2(-sin(ph), cos(ph));
+    float u = clamp(dot(q - T, dir), 0.0, B.x);
+    float d3 = len64(q - T - dir * u);
+    if (d3 < d) { d = d3; sd = dot(q - T, nr) >= 0.0 ? d3 : -d3; s = a + R * ph + u; }
+    float L = a + R * ph + B.x;
+    return vec3(sd, p.x < 960.0 ? -s : s, L);
+}
+// the end of a path (its right one; mirror x for the left), on its outer edge pushed out by o px
+vec2 pathEnd(vec4 A, vec4 B, float o) {
+    float ph = A.w;
+    vec2 e = vec2(A.y + A.z * sin(ph) + B.x * cos(ph), B.z * A.x + A.z * (1.0 - cos(ph)) + B.x * sin(ph)) - o * vec2(-sin(ph), cos(ph));
+    return vec2(960.0 + e.x, B.z * e.y);
+}
+vec4 band(vec3 at, vec4 B, float v, float zone, float redFrom, vec4 hy, vec4 c) {
+    float d = at.x, w = B.y;
+    if (d < -30.0 || d > w + 30.0) return c;
+    float t = 0.5 + at.y / (2.0 * at.z);
+    float inside = step(abs(at.y), at.z - 0.01);
+    float n = B.w, k = floor(t * n), f = fract(t * n);
+    float tc = (k + 0.5) / n;
+    float on = step(tc, v) * step(0.002, v);
+    // a block: a thin gap between blocks, the band's width
+    float block = cov(abs(f - 0.5) * at.z * 2.0 / n - (at.z / n - 1.6)) * cov(-d + 0.5) * cov(d - w + 0.5) * inside;
+    vec3 col = mix(ramp(tc), vec3(1.0, 0.16, 0.2), max(step(redFrom, tc), clamp(zone * 0.5, 0.0, 1.0) * on));
+    col = mix(col, hy.rgb, hy.a * on);
+    // the lit part glows, the unlit blocks stay dark in their own colour
+    c = over(vec4(col, on * 0.4 * exp(-max(max(-d, d - w), 0.0) / 8.0) * inside * step(t, v)), c);
+    c = over(vec4(col * mix(0.22, 1.0, on) * (0.82 + 0.18 * smoothstep(0.0, w, d)), block * mix(0.9, 1.0, on)), c);
+    // the frame: a silver line on the outer edge with the neon just outside it, a thin dark-magenta line on the inner edge
+    c = over(vec4(0.86, 0.88, 0.94, 0.9 * cov(abs(d + 3.0) - 0.8) * inside), c);
+    c = over(vec4(MAG, (0.45 * exp(-abs(d + 9.0) / 5.0) + cov(abs(d + 9.0) - 1.0)) * inside), c);
+    c = over(vec4(MAG * 0.8, 0.6 * cov(abs(d - w - 4.0) - 0.7) * inside), c);
+    return c;
+}
+
+void main() {
+    vec2 p = v_uv * u_rect + u_org;
+    vec4 c = vec4(0.0, 0.0, 0.0, 1.0);
+    // the cluster's outline, the ledge over the bottom row, the dividers under the side panels' top rows
+    float o = segD(p, vec2(40.0, 616.0), vec2(60.0, 260.0));
+    o = min(o, segD(p, vec2(60.0, 260.0), vec2(160.0, 168.0)));
+    o = min(o, segD(p, vec2(160.0, 168.0), vec2(700.0, 76.0)));
+    o = min(o, segD(p, vec2(700.0, 76.0), vec2(830.0, 76.0)));
+    o = min(o, segD(p, vec2(830.0, 76.0), vec2(872.0, 36.0)));
+    o = min(o, segD(p, vec2(1048.0, 36.0), vec2(1090.0, 76.0)));
+    o = min(o, segD(p, vec2(1090.0, 76.0), vec2(1220.0, 76.0)));
+    o = min(o, segD(p, vec2(1220.0, 76.0), vec2(1760.0, 168.0)));
+    o = min(o, segD(p, vec2(1760.0, 168.0), vec2(1860.0, 260.0)));
+    o = min(o, segD(p, vec2(1860.0, 260.0), vec2(1880.0, 616.0)));
+    // the ledge over the bottom row, dipping into the middle tray (oil, coolant) whose sides run down to the bottom edge, as on the picture
+    o = min(o, segD(p, vec2(40.0, 616.0), vec2(588.0, 616.0)));
+    o = min(o, segD(p, vec2(588.0, 616.0), vec2(618.0, 628.0)));
+    o = min(o, segD(p, vec2(618.0, 628.0), vec2(1302.0, 628.0)));
+    o = min(o, segD(p, vec2(1302.0, 628.0), vec2(1332.0, 616.0)));
+    o = min(o, segD(p, vec2(1332.0, 616.0), vec2(1880.0, 616.0)));
+    o = min(o, segD(p, vec2(618.0, 628.0), vec2(652.0, 716.0)));
+    o = min(o, segD(p, vec2(1302.0, 628.0), vec2(1268.0, 716.0)));
+    // the hexagon's slanted sides, from the rev band's ends to the speed band's, on their neon lines
+    vec2 re = pathEnd(u_ra, u_rb, 9.0), se = pathEnd(u_sa, u_sb, 9.0);
+    o = min(o, segD(p, re, se));
+    o = min(o, segD(p, vec2(1920.0 - re.x, re.y), vec2(1920.0 - se.x, se.y)));
+    // the side panels, as on the picture: a chamfered panel on each side (the right one mirrors the left), dark inside with a faint diagonal
+    // hatch and a magenta glow along its edge, outlined in neon; the time row sits above the left one, the drive mode above the right one
+    vec2 m = vec2(p.x < 960.0 ? p.x : 1920.0 - p.x, p.y);
+    float pd = max(max(max(hp(m, vec2(70.0, 290.0), vec2(130.0, 214.0)), hp(m, vec2(130.0, 214.0), vec2(480.0, 214.0))),
+                       max(hp(m, vec2(480.0, 214.0), vec2(502.0, 238.0)), hp(m, vec2(502.0, 238.0), vec2(540.0, 520.0)))),
+                   max(max(hp(m, vec2(540.0, 520.0), vec2(520.0, 600.0)), hp(m, vec2(520.0, 600.0), vec2(120.0, 600.0))),
+                       max(hp(m, vec2(120.0, 600.0), vec2(70.0, 540.0)), hp(m, vec2(70.0, 540.0), vec2(70.0, 290.0)))));
+    float hatch = 0.5 + 0.5 * step(fract((p.x + p.y) / 7.0), 0.45);
+    c = over(vec4(mix(vec3(0.03, 0.01, 0.035), vec3(0.06, 0.015, 0.06), hatch), step(pd, 0.0)), c);
+    c = over(vec4(MAG, 0.32 * exp(pd / 16.0) * step(pd, 0.0)), c);
+    o = min(o, abs(pd));
+    c = neon(o, 1.0, c);
+    // inside the hexagon (inside both bands' outer edges, inside the slanted sides): a magenta glow along the sides with a faint hatch, as on the picture
+    vec3 aR = pathAt(p, u_ra, u_rb), aS = pathAt(p, u_sa, u_sb);
+    vec2 sd = normalize(vec2(se.y - re.y, re.x - se.x));
+    float side = -dot(vec2(abs(p.x - 960.0) + 960.0, p.y) - re, sd);         // > 0 inside
+    float inHex = step(0.0, aR.x) * step(0.0, aS.x) * step(0.0, side);
+    c = over(vec4(0.42, 0.03, 0.3, inHex * 0.42 * exp(-side / 70.0) * (0.75 + 0.25 * step(fract((p.x - p.y) / 6.0), 0.5))), c);
+    // the visor under the revs' numbers, its ends running out to the side panels
+    vec3 vs = pathAt(p, u_va, u_vb);
+    vec2 ve = pathEnd(u_va, u_vb, 0.0);
+    float vl = min(abs(vs.x) + step(vs.z - 0.01, abs(vs.y)) * 99.0, min(segD(p, ve, vec2(ve.x + 110.0, ve.y)), segD(p, vec2(1920.0 - ve.x, ve.y), vec2(1810.0 - ve.x, ve.y))));
+    c = neon(vl, 1.0, c);
+    // the gear's slanted box (in the hexagon, or on the left while the map is up)
+    vec2 gc = u_hole > 0.5 ? vec2(260.0, 370.0) : vec2(960.0, 462.0);
+    vec2 gq = p - gc;
+    gq.x += gq.y * 0.3;
+    float gd = max(abs(gq.x) - 86.0, abs(gq.y) - 36.0);
+    c = over(vec4(0.14, 0.0, 0.1, 0.85 * cov(gd)), c);
+    c = neon(abs(gd), 1.0, c);
+    // the map's window
+    if (u_hole > 0.5) {
+        vec2 hs = u_hr.zw * 0.5;
+        vec2 hq = abs(p - (u_hr.xy + hs)) - (hs - vec2(24.0));
+        float hd = len64(max(hq, 0.0)) + min(max(hq.x, hq.y), 0.0) - 24.0;
+        c.a *= clamp(hd + 0.5, 0.0, 1.0);
+    }
+    c = band(aR, u_rb, u_rev, u_zone.y, u_redFrom, u_hy, c);
+    c = band(aS, u_sb, u_speed, u_zone.x, 2.0, vec4(0.0), c);
+    gl_FragColor = c;
+}
+`;
+
+// The Shak theme's four bottom bars, their own layer over the bottom strip (the backdrop alone would pass the car's shader size): fuel and battery
+// at the sides, oil and coolant in the middle tray. Bars: [left x, middle y, width] in panel px, u_box the layer's place on the panel.
+const EVOBARS = `#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 v_uv;
+uniform vec4 u_box;       // the layer on the panel: x, y, w, h
+uniform vec4 u_lv;        // the bars' levels 0..1: fuel, battery, oil, coolant
+uniform vec2 u_low;       // 1 while the fuel / the battery is in reserve
+uniform vec2 u_tone;      // the oil's and the coolant's tone: 0 cold, 1 warm, 2 hot
+uniform vec3 u_bF;
+uniform vec3 u_bB;
+uniform vec3 u_bO;
+uniform vec3 u_bC;
+float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
+vec4 over(vec4 top, vec4 under) {
+    float k = under.a * (1.0 - top.a), a = top.a + k;
+    return vec4((top.rgb * top.a + under.rgb * k) / max(a, 0.0001), a);
+}
+// a bar of slanted blocks along the bottom, as on the picture: 22 px blocks leaning right, 6 px apart, lit to the level in a gradient from
+// c0 (its left) to c1 (its right), the top half a little lighter; the blocks above the level dark with a thin outline in their colour
+vec4 bar(vec2 p, vec3 b, float lv, vec3 c0, vec3 c1, vec4 c) {
+    float dy = p.y - b.y;
+    float x = p.x - b.x + dy * 0.55;
+    if (x < -6.0 || x > b.z + 6.0 || abs(dy) > 14.0) return c;
+    float n = floor((b.z + 6.0) / 28.0);
+    float k = floor(x / 28.0), m = x - k * 28.0;
+    float inb = step(0.0, k) * step(k, n - 1.0);
+    float body = cov(abs(m - 11.0) - 11.0) * cov(abs(dy) - 7.0) * inb;
+    float tk = (k + 0.5) / n;
+    float on = step(k + 0.5, lv * n + 0.001) * step(0.01, lv);
+    vec3 col = mix(c0, c1, tk);
+    c = over(vec4(col, on * 0.4 * exp(-abs(dy) / 5.0) * inb * step(-3.0, m) * step(m, 25.0)), c);
+    vec3 lit = min(col * (dy < -1.0 ? 1.18 : 0.92) + (dy < -1.0 ? 0.08 : 0.0), vec3(1.0));
+    float rim = body * (1.0 - cov(abs(m - 11.0) - 9.8) * cov(abs(dy) - 5.8));
+    c = over(vec4(on > 0.5 ? lit : vec3(0.07, 0.07, 0.1), body), c);
+    c = over(vec4(col * 0.75, (1.0 - on) * 0.85 * rim), c);
+    return c;
+}
+vec3 tone(float t) { return t < 0.5 ? vec3(0.24, 0.55, 1.0) : (t < 1.5 ? vec3(0.2, 0.86, 0.5) : vec3(1.0, 0.16, 0.2)); }
+
+void main() {
+    vec2 p = v_uv * u_box.zw + u_box.xy;
+    vec4 c = vec4(0.0);
+    // fuel: blue to white as on the picture; the battery: the hybrid blue to cyan; both red in reserve. Oil and coolant in their tone.
+    vec3 fr = vec3(1.0, 0.16, 0.2);
+    c = bar(p, u_bF, u_lv.x, mix(vec3(0.85, 0.92, 1.0), fr, u_low.x), mix(vec3(0.22, 0.48, 1.0), fr, u_low.x), c);
+    c = bar(p, u_bO, u_lv.z, tone(u_tone.x) * 0.8, tone(u_tone.x), c);
+    c = bar(p, u_bC, u_lv.w, tone(u_tone.y) * 0.8, tone(u_tone.y), c);
+    c = bar(p, u_bB, u_lv.y, mix(vec3(0.2, 0.55, 1.0), fr, u_low.y), mix(vec3(0.45, 0.9, 1.0), fr, u_low.y), c);
+    gl_FragColor = c;
+}
+`;
+
+// The Shak shift light: a row of slanted pills (u_n each side of a centre one, lit from the outer ends in, as the stock one;
+// the centre one last), coloured blue on the left through white to pink on the right, every pill red while it flashes. The same uniforms as
+// SHIFTLIGHT (hud.js picks this one for a "shiftlight" widget with "style": "pills").
+const SHIFTPILLS = `precision mediump float;
+varying vec2 v_uv;
+uniform vec2 u_size;
+uniform float u_n;
+uniform float u_lit;
+uniform float u_flash;
+uniform float u_cw;
+uniform float u_gap;
+uniform float u_skew;
+uniform float u_lean;
+uniform vec3 u_color;
+uniform vec3 u_red;
+uniform float u_off;
+
+void main() {
+    float W = u_size.x, H = u_size.y;
+    vec2 p = vec2(v_uv.x * W, v_uv.y * H);
+    float m = 2.0 * u_n + 1.0;
+    float pitch = W / m;
+    float k = floor(p.x / pitch);
+    float cx = (k + 0.5) * pitch;
+    float hw = (pitch - u_gap) * 0.5 - 4.0, hh = H * 0.3, r = 3.0;
+    vec2 pp = p - vec2(cx, H * 0.5);
+    pp.x += pp.y * 0.6;                                    // slanted, as on the picture
+    vec2 q = abs(pp) - vec2(hw - r, hh - r);
+    float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+    float side = min(k, m - 1.0 - k);                     // 0 at the outer ends, u_n in the middle
+    bool every = u_flash > 0.5;
+    bool on = every || side < u_lit - 0.5;
+    float t = k / (m - 1.0);
+    vec3 col = mix(vec3(0.2, 0.5, 1.0), vec3(0.9, 0.94, 1.0), smoothstep(0.0, 0.5, t));
+    col = mix(col, vec3(1.0, 0.3, 0.74), smoothstep(0.5, 1.0, t));
+    if (every) col = u_red;
+    float core = clamp(0.5 - d, 0.0, 1.0);
+    float glow = on ? 0.5 * exp(-max(d, 0.0) / 4.0) : 0.0;
+    float a = max(core * (on ? 1.0 : u_off * 1.6), glow * (1.0 - core));
+    gl_FragColor = vec4(col * (on ? 1.0 : 0.6), a);
+}
+`;
+
 const ATEXT = `// Atlas text for a cluster-render "effect" layer (GLSL ES 1.00): u_cells equal cells across the layer, each
 // showing one glyph of the R8 glyph atlas bound to u_font (u_grid.x columns by u_grid.y rows of cells), picked
 // by the codes in u_text (32 codes, 4 to a vec4; below 0 = empty). A new value is one uniform message, no
@@ -2305,5 +2568,5 @@ function hardened(src, highp) {
 // matrices wherever a shader mentions them. The views' drawings named their bars' levels "u_v" (a vec4): on the car RAMSES then refused the
 // whole effect ("effect did not compile", owner's photo of 21 Nov 2026) while the bench drew it. Renamed u_lvl; tools/test_shader_names.js keeps watch.
 const VIEW_SHADERS = { mpanel: true, mblades: true, sring: true, nline: true, vcard: true, mstyle: true };   // (high precision where the GPU has it)
-module.exports = { mblades: MBLADES, nline: NLINE, sring: SRING, vcard: VCARD, slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, mpanel: MPANEL, navi: NAVI, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, accented, ACCENT_LITERALS };
+module.exports = { mblades: MBLADES, nline: NLINE, sring: SRING, vcard: VCARD, slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, mpanel: MPANEL, navi: NAVI, evo: EVO, evobars: EVOBARS, shiftpills: SHIFTPILLS, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, accented, ACCENT_LITERALS };
 Object.keys(module.exports).forEach((k) => { if (typeof module.exports[k] === 'string') module.exports[k] = hardened(module.exports[k], VIEW_SHADERS[k] === true); });

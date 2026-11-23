@@ -2,7 +2,7 @@
 
 # ShakTheme
 
-**ShakTheme**, par shakzer : quatre thèmes pour le cluster de l'iDrive 7 d'une **BMW X3 30e (G01, 2022)**, un hybride rechargeable. **Sport**, **M**, **M Blade** et **Navi**, avec la batterie et l'autonomie électrique, les vrais modes de conduite de la voiture, une fenêtre pour la carte Waze, des températures d'huile et de liquide qui changent de couleur, et un menu au style de l'iDrive 8.5.
+**ShakTheme**, par shakzer : quatre thèmes pour le cluster de l'iDrive 7 d'une **BMW X3 30e (G01, 2022)**, un hybride rechargeable. **Sport**, **M**, **M Blade** et **Navi** (un cinquième, **Shak**, est en préparation), avec la batterie et l'autonomie électrique, les vrais modes de conduite de la voiture, une fenêtre pour la carte Waze, des températures d'huile et de liquide qui changent de couleur, et un menu au style de l'iDrive 8.5.
 
 Le dépôt contient aussi **ShakHUD** (l'affichage tête haute), **ShakLimites** (la limitation d'après la carte), **RideTube** et deux applis d'essai (ShakConso, ShakMusique). Rien ici n'est officiel BMW.
 

@@ -2,6 +2,21 @@
 
 ## 23 novembre 2026
 
+### ShakTheme 0.22.0 : panneau de limitation plus petit, compte-tours fluide
+- **Demande du propriétaire (23 nov., 09:47)** : « la limitation depuis la dernière mise à jour est trop grande » et « le compte-tours monte d'un coup : sur une accélération franche il monte d'un coup à 5000 tours, c'est pas fluide ».
+- **Panneau de limitation** : 74 px au lieu de 92 dans les quatre thèmes (Sport, M, M Blade, Navi), même place (même centre) ; la limitation suivante 52 px au lieu de 64 (50 au lieu de 60 sous le panneau de M Blade). `tools/gen_mblade_navi.py` (`shrink_limits`) et `tools/add_sensor_bars.py` les refont à cette taille.
+- **Compte-tours** : sur l'hybride, le moteur démarre en pleine accélération et sa première lecture (souvent 4000 à 5000 tr/min) s'affichait d'un coup. Maintenant la barre part de 0 et monte comme une aiguille (le filtre de 120 ms qui lissait déjà les lectures s'applique aussi au démarrage) ; à l'arrêt du moteur elle redescend à 0 au lieu de disparaître d'un coup. Les chiffres et le shiftlight suivent la même valeur. Nouveau test `tools/test_rpm_ease.js`.
+
+### ShakTheme 0.22.0 : nouveau thème « Shak » (en préparation, caché)
+- **Caché des réglages** (le propriétaire, 09:52 : « cache-le jusqu'à ce qu'on finisse le reste ») : le thème est dans l'appli mais n'apparaît pas encore dans les listes de thèmes ; on le reprend plus tard.
+- **Demande du propriétaire (23 nov., 02:29 à 02:45)** : un tout nouveau thème avec toutes les options des autres, d'après sa photo d'un cluster de course, sans le logo M ni l'écriture « Competition Evo », avec son logo SHAK en haut au milieu, fond noir, nommé « Shak ».
+- **Dessin** (`shared/shaders.js` `evo`, une seule couche, 5 691 jetons, sous la limite de la voiture) : lignes néon magenta, hexagone central, régime et vitesse en bandes de blocs « tendues » comme sur la photo (droites au milieu, épaules arrondies ; bleu → blanc → rose, rouge en zone), reliées en hexagone, barres de blocs en bas (essence ambre, huile et refroidissement bleu / vert / rouge, batterie bleue). Le shiftlight en pastilles (`shiftpills`, même logique que l'original).
+- **Rangée du bas** (08:00, « retravaille les lignes de l'essence pour que ça y ressemble ») : comme sur la photo, une ligne par jauge (icône, valeur, unité) suivie d'une barre de blocs penchés ; l'huile et le refroidissement dans un bac au milieu dont les côtés descendent jusqu'au bord, l'essence à gauche (bleu → blanc), la batterie à droite. Les barres ont leur propre couche (`shaders.js` `evobars`), coupée en deux de chaque côté de la lettre du rapport de BMW, pour que le fond reste sous la taille que la voiture supporte.
+- **Waze** dans l'hexagone (la carte y est placée), la vitesse et le rapport passent alors à gauche ; sans carte, la limitation en grand panneau et l'alerte radar à gauche. Les vues BC à droite restent affichées avec la carte (`viewsWithMap`, propre à ce thème).
+- **Logo** : `tools/bake_logo.py` cuit `tools/logo-src/shak.png` en image couleur (`hud/emblems/shak.json`) ; `shared/emblems.js` sait maintenant dessiner une image en couleurs.
+- **Polices** italiques `e_*` (Barlow penchée, nouvelle option `slant` de `tools/bake_fonts.py`) et `sign_xl` pour le grand panneau.
+- Nouveau test `tools/test_evo.js` ; `test_text_fit`, `test_pixel_memory`, `test_emblems`, `test_gear_window` couvrent le nouveau thème. Pas encore essayé sur la voiture.
+
 ### Ménage du dépôt : HUD Widgets et les applis d'eroobeeroo retirés
 - **Demande du propriétaire (23 nov., 01:45)** : « supprime tout ce qui ne sert à rien, genre Cluster Info ; garde ShakTheme, ShakHUD, RideTube et les applis d'essai ». Supprimés : `bimmer/apps/idrive_hud_widgets` (HUD Widgets), tout le dossier `eroobeeroo/` (Cluster Info, Cluster Centre, Cluster Layouts), leur groupe dans `mgu-repo.json` (le Store ne les propose plus), les polices et images qui ne servaient qu'à HUD Widgets (DSEG7, `docs/images/hud-*`), la police HUD Widgets de `tools/bake_fonts.py`. Gardés : ShakTheme, ShakHUD, ShakLimites, ShakConso, ShakMusique, RideTube cluster et RideTube.
 - **Gardé exprès** : `shared/cluster_info.js`, malgré son nom : c'est par lui que la vidéo de RideTube demande la fenêtre du centre au thème.
