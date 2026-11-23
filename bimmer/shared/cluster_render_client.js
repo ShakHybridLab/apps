@@ -62,9 +62,14 @@ const BACKLOG_MAX = 16 * 1024 * 1024;
  * uniform waits in memory while the socket is full (0.21.64), the backlog never reached BACKLOG_MAX any more: a service that stopped reading
  * left the cluster frozen for good (the owner's photos, 22 Nov 2026: R and 3 km/h shown in P, standing). */
 const WATCH_MS = 1000;
-const STALL_MS = 4000;
+const STALL_MS = 8000;
 const PING_MS = 3000;
-const PING_LOST_MS = 6000;
+const PING_LOST_MS = 12000;
+/* (0.22.1, the owner, 23 Nov 2026: "un retour du compteur d'origine pendant quelques secondes, deux fois pendant un trajet". Making a connection
+ * again drops its layers until they are sent anew: if the backdrop's goes, BMW's cluster shows for a few seconds. A busy service answers late
+ * (its answers come after everything sent before), so a late answer alone is no reason any more: the ping must be unanswered for PING_LOST_MS
+ * AND nothing at all must have come back nor left our socket for ALIVE_MS. A full socket must not move for STALL_MS, 8 s instead of 4.) */
+const ALIVE_MS = 4000;
 const SET_KEYS = ['klass', 'z', 'x', 'y', 'w', 'h', 'visible', 'exclusive', 'prewarm', 'contend', 'guide_hold',
     'opacity', 'rotate', 'sx', 'sy', 'px', 'py'];
 const MESH_KEYS = ['projection', 'fov', 'ortho_h', 'near', 'far', 'cx', 'cy', 'cz', 'crx', 'cry', 'crz'];
@@ -164,6 +169,8 @@ class ClusterRender extends EventEmitter {
         if (!s || !this.connected || this.corked) { this.stallAt = 0; return; }
         const now = Date.now();
         const n = s.bufferSize !== undefined ? s.bufferSize : s.writableLength;
+        if (n < (this.lastLen || 0)) this.drainAt = now;      // bytes left our socket since the last look: the service reads
+        this.lastLen = n;
         if (this.blocked && n > 0) {
             if (!this.stallAt || n < this.stallLen) { this.stallAt = now; this.stallLen = n; }      // (bytes leaving: it moves, slowly)
             else if (now - this.stallAt >= STALL_MS) { this._restart('socket full, nothing read for ' + Math.round((now - this.stallAt) / 1000) + ' s'); return; }
@@ -171,7 +178,8 @@ class ClusterRender extends EventEmitter {
         if (!this.ready) return;
         const q = this.asked || [];
         const first = q.find((a) => a.kind === 'ping');
-        if (first && this.pongs > 0 && now - first.t >= PING_LOST_MS) { this._restart('no answer for ' + Math.round((now - first.t) / 1000) + ' s'); return; }
+        const alive = now - (this.inAt || 0) < ALIVE_MS || now - (this.drainAt || 0) < ALIVE_MS;
+        if (first && this.pongs > 0 && now - first.t >= PING_LOST_MS && !alive) { this._restart('no answer for ' + Math.round((now - first.t) / 1000) + ' s'); return; }
         if (now - (this.pingAt || 0) >= PING_MS && q.length < 4) {
             this.pingAt = now;
             q.push({ kind: 'ping', t: now }); this.asked = q;
@@ -246,6 +254,7 @@ class ClusterRender extends EventEmitter {
     }
 
     _data(d) {
+        this.inAt = Date.now();                                  // anything back from the service: it is alive (see _watch)
         this.inbuf = this.inbuf.length ? Buffer.concat([this.inbuf, d]) : d;
         let off = 0;
         while (this.inbuf.length - off >= 5) {

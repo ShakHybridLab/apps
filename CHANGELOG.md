@@ -2,6 +2,14 @@
 
 ## 23 novembre 2026
 
+### ShakTheme 0.22.1, ShakHUD 0.6.56 : retours du compteur d'origine, le journal et un mode de conduite qui doit tenir
+- **Demande du propriétaire (23 nov., 09:53)** : « un retour du compteur d'origine pendant quelques secondes, deux fois pendant un trajet, regarde pourquoi ».
+- **Ce qui peut le faire** : une connexion à cluster-render figée et refaite par le chien de garde (ses calques disparaissent le temps de revenir), cluster-render perdu, l'écran pris par autre chose, l'appli qui redémarre après une erreur, ou le mode de conduite qui passe un instant sur un mode réglé sur « compteur de BMW » (par défaut, Hybride).
+- **Journal** : chacun de ces moments est noté avec l'heure dans `gaps.json` (les 8 derniers) et dans le journal de l'appli, et le dernier s'affiche sur la ligne d'état (« dernier trou 09:41 (…) »). Une photo de la ligne d'état après un trou dit lequel c'était.
+- **Cause la plus probable** (le propriétaire n'a pas changé de mode, 09:57) : le chien de garde de 0.21.67 refaisait une connexion dont le ping restait sans réponse 6 s. Or cluster-render répond après tout ce qu'on lui a envoyé avant : quand il est chargé (images de texte à envoyer), sa réponse arrive tard alors qu'il marche. La connexion refaite perdait ses calques le temps de les renvoyer : si c'était celle du fond, le compteur d'origine se voyait quelques secondes. Maintenant une connexion n'est refaite que si le ping reste sans réponse 12 s **et** que rien n'est revenu du service ni sorti de notre côté depuis 4 s ; un envoi bloqué doit l'être 8 s au lieu de 4. Un service vraiment figé est toujours repris (le cas du 22 nov.).
+- **Mode de conduite** : le thème ne suit un nouveau mode qu'après 1,5 s : un mode que la voiture envoie un instant (l'hybride qui bascule seul en forte accélération) ne fait plus apparaître le compteur d'origine quelques secondes.
+- Nouveau test `tools/test_gaps.js`.
+
 ### ShakTheme 0.22.0 : panneau de limitation plus petit, compte-tours fluide
 - **Demande du propriétaire (23 nov., 09:47)** : « la limitation depuis la dernière mise à jour est trop grande » et « le compte-tours monte d'un coup : sur une accélération franche il monte d'un coup à 5000 tours, c'est pas fluide ».
 - **Panneau de limitation** : 74 px au lieu de 92 dans les quatre thèmes (Sport, M, M Blade, Navi), même place (même centre) ; la limitation suivante 52 px au lieu de 64 (50 au lieu de 60 sous le panneau de M Blade). `tools/gen_mblade_navi.py` (`shrink_limits`) et `tools/add_sensor_bars.py` les refont à cette taille.

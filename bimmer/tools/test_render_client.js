@@ -123,7 +123,7 @@ check('hud.js : _rebuild retient les écritures de chaque connexion pendant la r
     assert(/finally \{ corked\.forEach\(\(c\) => \{ try \{ c\.uncork\(\); \} catch/.test(src));
 });
 
-check('chien de garde : socket plein qui ne bouge plus 4 s, ou ping sans réponse 6 s, la connexion est refaite (22 nov. 2026 : R et 3 km/h affichés en P, à l\'arrêt)', () => {
+check('chien de garde : socket plein qui ne bouge plus 8 s, ou ping sans réponse 12 s sans rien reçu ni envoyé, la connexion est refaite (22 nov. 2026 : R et 3 km/h affichés en P, à l\'arrêt)', () => {
     const real = Date.now; let t = 1000000; Date.now = () => t;
     try {
         const mk = () => {
@@ -135,7 +135,7 @@ check('chien de garde : socket plein qui ne bouge plus 4 s, ou ping sans répons
         };
         // 1. plein, rien ne sort
         let a = mk(); a.c.blocked = true; a.c.sock.writableLength = 50000;
-        for (let i = 0; i < 3; i++) { t += 1000; a.c._watch(); }
+        for (let i = 0; i < 7; i++) { t += 1000; a.c._watch(); }
         assert.strictEqual(a.destroyed(), 0, 'trop tôt');
         t += 1000; a.c._watch(); t += 1000; a.c._watch();
         assert.strictEqual(a.destroyed(), 1, 'socket figé : la connexion devait être refaite');
@@ -152,8 +152,21 @@ check('chien de garde : socket plein qui ne bouge plus 4 s, ou ping sans répons
         let emitted = 0; a.c.on('status', () => emitted++);
         a.c.status(); a.c._event({ ev: 'status', text: 'y' });
         assert.strictEqual(emitted, 1, 'la réponse demandée par le thème doit lui revenir, pas celles des pings');
-        for (let i = 0; i < 12; i++) { t += 1000; a.c._watch(); }
+        for (let i = 0; i < 10; i++) { t += 1000; a.c._watch(); }
+        assert.strictEqual(a.destroyed(), 0, 'pas avant 12 s');
+        for (let i = 0; i < 8; i++) { t += 1000; a.c._watch(); }
         assert.strictEqual(a.destroyed(), 1, 'plus de réponse : la connexion devait être refaite');
+        // 3b. réponses en retard mais le service vit (il envoie des nouvelles, ou nos octets sortent) : pas de reconnexion
+        // (0.22.1 : un retour du compteur d'origine pendant quelques secondes en roulant)
+        a = mk();
+        t += 3000; a.c._watch(); t += 40; a.c._event({ ev: 'status', text: 'x' });
+        for (let i = 0; i < 30; i++) { t += 1000; if (i % 3 === 0) a.c.inAt = t; a.c._watch(); }
+        assert.strictEqual(a.destroyed(), 0, 'le service répond à autre chose : il vit');
+        a = mk();
+        t += 3000; a.c._watch(); t += 40; a.c._event({ ev: 'status', text: 'x' });
+        a.c.sock.writableLength = 3000000;
+        for (let i = 0; i < 30; i++) { t += 1000; a.c.sock.writableLength -= 50000; a.c._watch(); }
+        assert.strictEqual(a.destroyed(), 0, 'nos octets sortent : il lit, juste lentement');
         // 4. un service qui ne répond jamais aux pings : pas de reconnexion pour ça seul
         a = mk();
         for (let i = 0; i < 30; i++) { t += 1000; a.c._watch(); }

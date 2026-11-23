@@ -365,6 +365,8 @@ const SPEED_IFACE = 'de.bmw.infotainment.vehicle.Vehicle2';
 // own figures, rounded. mass kg with a driver, drag = half rho Cd A in N per (m/s)^2, rolling resistance, the drive and recuperation efficiencies,
 // the motor's power in kW (the most it can show), the most it can recover, and the filters of the speed and of the acceleration (ms)
 const EST = { massKg: 2150, drag: 0.5, roll: 0.010, etaDrive: 0.85, etaRegen: 0.6, maxKw: 80, maxRegenKw: 60, minRegenKw: 2, speedMs: 250, accelMs: 300 };
+const MODE_SETTLE_MS = 1500;      // a drive mode must hold this long before the theme follows it (a mode sent for a moment is ignored)
+const GAPS_KEPT = 8;               // the moments the theme may have gone (see this.gaps) kept in gaps.json
 const SPEED_FILTER_MS = 90;      // the speed bars' own smoothing (the car sends the speed a few times a second): the bars glide, the digits stay the car's own
 const ZOOM_MS = 60;              // the scale numbers that grow or change colour re-draw this often while they ease
 // the keys of a text widget that never changes once drawn (any other key, or a {{token}}, makes it live: _create "still")
@@ -657,6 +659,12 @@ class HudApp {
         this.pixelBytes = 0;             // what the layout's image layers and glyph atlases cost of cluster-render's pixel memory
         this.atlases = new Map();        // "<conn>:<font>" -> { ref, c, ci, cols, rows, cellW, cellH, chars, bytes }: R8 assets, kept across rebuilds
         this.targetState = null;         // { state, holder, reason } of our target
+        // the moments BMW's own cluster may have shown through (owner, 23 Nov 2026: "un retour du compteur d'origine pendant quelques secondes, deux
+        // fois pendant un trajet"): a connection made again, cluster-render lost, the target taken, the theme switched off, the app (re)started.
+        // The last ones are kept in <data>/gaps.json (an app that crashed and came back shows it) and the last one is on the status line.
+        this.gapsFile = path.join(ctx.dataDir || '.', 'gaps.json');
+        this.gaps = [];
+        try { const g = JSON.parse(fs.readFileSync(this.gapsFile, 'utf8')); if (Array.isArray(g)) this.gaps = g.slice(-GAPS_KEPT); } catch (e) { /* none yet */ }
         this.rpmF = null; this.rpmShown = null; this.lastTickT = 0;
         this.themeName = null;
         this.flash = false;
@@ -1015,8 +1023,15 @@ class HudApp {
                     if (m === this.driveMode && variant === this.driveVariant && name === this.driveName) return;
                     this.log.info('drive mode ' + (name || MODE_NAME[m]) + ' (' + raw + ')');
                     this.driveMode = m; this.driveVariant = variant; this.driveName = name;
-                    if (this._layoutName() !== this.activeName || this._accentHue() !== this.accentHue
-                        || (this.driveLayout && (this.driveMode === 'sport') !== this.driveShown)) this._rebuild(); else this._status();
+                    // a theme change waits MODE_SETTLE_MS for the mode to settle: a mode the car sends for a moment (the hybrid switching by itself
+                    // under hard acceleration) no longer swaps the theme, or BMW's own cluster, in and out for a few seconds (owner, 23 Nov 2026)
+                    clearTimeout(this.modeT);
+                    this.modeT = setTimeout(() => this._guard('drive mode', () => {
+                        this.modeT = null;
+                        if (this._layoutName() !== this.activeName || this._accentHue() !== this.accentHue
+                            || (this.driveLayout && (this.driveMode === 'sport') !== this.driveShown)) this._rebuild(); else this._status();
+                    }), this.activeName ? MODE_SETTLE_MS : 0);
+                    this._status();
                 },
             },
         };
@@ -1092,7 +1107,7 @@ class HudApp {
         // every handler runs from the socket's 'data' event: guarded, an error there would be an uncaught one (the kit exits on those)
         const on = (name, fn) => c.on(name, (...a) => this._guard('cluster-render ' + name, () => fn(...a)));
         on('ready', () => { this.log.info('cluster-render ready' + tag + ' (backend=' + c.backend + ')'); if (ci === 0) this._rebuild(true); else this._status(); });
-        on('disconnected', () => { this.log.warn('cluster-render disconnected' + tag + ', client will retry'); this._status(); });
+        on('disconnected', () => { this.log.warn('cluster-render disconnected' + tag + ', client will retry'); this._gap('cluster-render lost' + tag); this._status(); });
         on('layer', (ref, state, reason) => {
             const key = ci + ':' + ref;
             const old = this.layerStates.get(key);
@@ -1119,7 +1134,9 @@ class HudApp {
         });
         on('target', (name, state, holder, reason) => {
             if (name !== this.target) return;
+            const was = this.targetState;
             this.targetState = { state, holder, reason };
+            if (was && was.state !== state) this._gap('target ' + state + (holder ? ' (' + holder + ')' : '') + (reason ? ': ' + reason : '') + tag);
             this.log.info('target ' + name + tag + ' ' + state + (holder ? ' (holder ' + holder + ')' : '') + (reason ? ': ' + reason : ''));
             this._statusSoon();
         });
@@ -1130,7 +1147,7 @@ class HudApp {
             if (op === 'layer' || op === 'asset') this._retryRefused();
             this._statusSoon();
         });
-        on('stalled', (why) => { this.log.warn('cluster-render connection' + tag + ' stalled (' + why + '): connecting again'); this._statusSoon(); });
+        on('stalled', (why) => { this.log.warn('cluster-render connection' + tag + ' stalled (' + why + '): connecting again'); this._gap('connection stalled, made again' + tag + ' (' + why + ')'); this._statusSoon(); });
         on('budget', (capKb, maxKb, reason) => this.log.info('budget' + tag + ' ' + capKb + '/' + maxKb + ' kb/s (' + reason + ')'));
         on('status', (text) => {
             this.log.info('cluster-render status: ' + text);
@@ -1148,6 +1165,7 @@ class HudApp {
     start() {
         this.log.info('connecting to cluster-render at ' + this.socketPath);
         this.started = true;
+        this._gap('app started');               // (after a crash the app comes back by itself: a start in the middle of a drive shows up here)
         this.clients.forEach((c) => c.connect());
         this._loopStart();
         // Auto theme: check for sunrise / sunset once a minute; the status line too
@@ -1513,6 +1531,7 @@ class HudApp {
 
     stop() {
         clearTimeout(this.tickTimer); this.tickTimer = null; this.loopStopped = true;
+        clearTimeout(this.modeT); this.modeT = null;
         clearInterval(this.themeTimer);
         clearInterval(this.statusTimer);
         clearInterval(this.dmeTimer);
@@ -1735,6 +1754,22 @@ class HudApp {
         return ', ' + shown + ' of ' + this._layerCount(refs.length) + ' drawn' + (why ? ' (' + whyN + ' ' + why + ')' : '') + refused;
     }
 
+    /** A moment BMW's own cluster may have shown through: logged, kept (gaps.json, the last GAPS_KEPT), the last one on the status line. */
+    _gap(why) {
+        if (this.target !== 'panel') return;
+        const t = this._now(), at = pad2(t.getHours()) + ':' + pad2(t.getMinutes());
+        this.gaps.push({ at, t: Date.now(), why: String(why).slice(0, 120) });
+        if (this.gaps.length > GAPS_KEPT) this.gaps = this.gaps.slice(-GAPS_KEPT);
+        this.log.warn('the theme may have gone for a moment (' + at + '): ' + why);
+        try { fs.writeFileSync(this.gapsFile, JSON.stringify(this.gaps)); } catch (e) { /* a read-only data folder: the log has it */ }
+    }
+
+    /** The last moment the theme may have gone, for the status line ('' when none in the last 12 hours). */
+    _lastGap() {
+        const g = this.gaps[this.gaps.length - 1];
+        return g && Date.now() - g.t < 12 * 3600000 ? ', last gap ' + g.at + ' (' + g.why + ')' : '';
+    }
+
     statusText() {
         if (!this.client.ready) {
             let there = false;
@@ -1748,7 +1783,7 @@ class HudApp {
         const what = this.target === 'panel' ? 'cluster' : 'HUD';
         if (this.activeName === 'off' && this.claimBy) return this.label + ' off: ' + this.claimBy.charAt(0).toUpperCase() + this.claimBy.slice(1) + ' has the HUD; it comes back when that app lets go';
         if (this.activeName === 'off' && this.screen.yielded) return this.label + ' off: ' + this.screen.otherName + ' has the screen, pick one here to take it back';
-        if (this.activeName === 'off') return this.label + ' off' + mode + ": BMW's own " + what + ' shows';
+        if (this.activeName === 'off') return this.label + ' off' + mode + ": BMW's own " + what + ' shows' + this._lastGap();
         const name = this._layoutLabel(this.activeName);
         const d = this.car.data();
         const demo = d.demo ? ', demo data' : '';
@@ -1761,7 +1796,7 @@ class HudApp {
         const conns = this._connCount();
         const layers = ', ' + this._layerCount(this._layerRefs().length) + (conns > 1 ? ' on ' + conns + ' connections' : '')
             + (this.pixelBytes ? ', ' + mib(this.pixelBytes) + ' of 16 MiB pixels' : '');
-        if (this.layoutTheme) return this.label + ' on' + mode + ': ' + name + ' theme' + layers + demo + drawn + late;
+        if (this.layoutTheme) return this.label + ' on' + mode + ': ' + name + ' theme' + layers + demo + drawn + late + this._lastGap();
         const theme = THEMES[this.themeName] ? THEMES[this.themeName].name : this.themeName;
         const auto = this.setting('hudTheme') === 'auto' ? ' (Auto)' : '';
         return this.label + ' on' + mode + ': ' + name + ' layout, ' + theme + ' theme' + auto + layers + demo + drawn + late;
@@ -2637,6 +2672,11 @@ class HudApp {
         clearTimeout(this.statusAskT); this.statusAskT = null;
         this.car.setRedline(this.setting('redline'));
         const name = this._layoutName();
+        if (name === 'off' && this.activeName && this.activeName !== 'off') {
+            const why = this.screen && this.screen.yielded ? (this.screen.otherName || 'another app') + ' took the screen'
+                : this.setting('byMode') === true && this.driveMode ? 'drive mode ' + (this.driveName || MODE_NAME[this.driveMode]) + ': BMW\'s own cluster in that mode' : 'the theme was turned off';
+            this._gap(why);
+        }
         this.activeName = name;
         this.mapLayout = false;
         this.dangerLayout = false;
