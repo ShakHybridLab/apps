@@ -198,6 +198,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp&viewSel=none",
+      "zoomAlways": true,
       "near": [
         "mspeed",
         0
@@ -225,6 +226,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp&viewSel=none",
+      "zoomAlways": true,
       "near": [
         "mspeed",
         1
@@ -252,6 +254,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp&viewSel=none",
+      "zoomAlways": true,
       "near": [
         "mspeed",
         2
@@ -279,6 +282,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp&viewSel=none",
+      "zoomAlways": true,
       "near": [
         "mspeed",
         3
@@ -306,6 +310,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp&viewSel=none",
+      "zoomAlways": true,
       "near": [
         "mspeed",
         4
@@ -333,6 +338,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp&viewSel=none",
+      "zoomAlways": true,
       "near": [
         "mspeed",
         5
@@ -360,6 +366,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp&viewSel=none",
+      "zoomAlways": true,
       "near": [
         "mspeed",
         6
@@ -387,6 +394,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp&viewSel=none",
+      "zoomAlways": true,
       "near": [
         "mspeed",
         7
@@ -414,6 +422,7 @@
       "color": "fg",
       "align": "right",
       "toggle": "!mapUp&viewSel=none",
+      "zoomAlways": true,
       "near": [
         "mspeed",
         8
@@ -704,6 +713,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         0
@@ -733,6 +743,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         1
@@ -761,6 +772,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         2
@@ -789,6 +801,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         3
@@ -817,6 +830,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         4
@@ -845,6 +859,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         5
@@ -873,6 +888,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         6
@@ -901,6 +917,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         7
@@ -960,6 +977,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         0
@@ -988,6 +1006,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         1
@@ -1016,6 +1035,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         2
@@ -1044,6 +1064,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         3
@@ -1072,6 +1093,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         4
@@ -1100,6 +1122,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         5
@@ -1128,6 +1151,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         6
@@ -1156,6 +1180,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         7

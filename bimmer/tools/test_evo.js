@@ -10,8 +10,8 @@ const L = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'hud',
 const by = (i) => L.widgets.find((w) => w.id === i);
 const font = (n) => JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'hud', 'fonts', n + '.json'), 'utf8'));
 
-check('la mise en page : thème evo, nom Shak, les vues restent à côté de la carte, le fond porte ses deux bandes tendues, sa visière et ses barres', () => {
-    assert.strictEqual(L.theme, 'evo'); assert.strictEqual(L.name, 'Shak'); assert.strictEqual(L.viewsWithMap, true);
+check('la mise en page : thème evo, nom Shak, le fond porte ses deux bandes tendues, sa visière et ses barres', () => {
+    assert.strictEqual(L.theme, 'evo'); assert.strictEqual(L.name, 'Shak'); assert(!L.viewsWithMap, 'avec la carte, la vitesse à droite à la place des vues');
     const b = by('backdrop');
     assert.strictEqual(b.type, 'evo');
     ['revPath', 'spdPath', 'visor'].forEach((k) => assert(Array.isArray(b[k]) && b[k].length === 7, k));
@@ -37,18 +37,21 @@ check('le shiftlight en pastilles sous le logo, au-dessus de l\'arc du régime',
     assert(s.style === 'pills' && s.toggle === 'stockShiftLight');
     assert(s.y >= by('logo').y + by('logo').h && s.y + s.h <= by('backdrop').revPath[0] - 10);
 });
-check('sans carte : la vitesse et le rapport dans l\'hexagone, à gauche le grand panneau de limitation et l\'alerte radar ; avec la carte : la vitesse et le rapport à gauche', () => {
+check('sans carte : la vitesse et le rapport dans l\'hexagone, à gauche le grand panneau de limitation et l\'alerte radar ; avec la carte : la vitesse et le rapport à droite', () => {
     assert(by('speed').toggle === '!mapUp' && by('gear').toggle === '!mapUp');
-    assert(by('mspeed').toggle === 'mapUp' && by('mgear').toggle === 'mapUp' && by('mspeed').x < 520 && by('mgear').x < 520);
-    const r = by('lim_ring');
-    assert(r.limitBy && r.w >= 140 && r.x < 520 && r.toggle === '!mapUp', 'le grand panneau');
-    assert(by('al_card') && by('al_card').x < 520, 'l\'alerte à gauche');
+    assert(by('mspeed').toggle === 'mapUp' && by('mgear').toggle === 'mapUp' && by('mspeed').x > 1400 && by('mgear').x > 1400, 'avec la carte : vitesse et rapport à droite');
+    // (23 nov. 2026, 10:07 : « le panneau de limitation est trop gros, inverse l'emplacement » : l'alerte en haut, le panneau dessous, 100 px)
+    const r = by('lim_ring'), al = by('al_card');
+    // (10:10 : « inspire-toi du thème M pour l'emplacement du panneau ») : la place et la taille de celui du M
+    const mr = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'hud', 'layouts', 'm.json'), 'utf8')).widgets.find((w) => w.id === 'lim_ring');
+    assert(r.limitBy && r.x < mr.x && r.x > 200 && r.y === mr.y && r.w === mr.w && !r.toggle, 'le panneau de limitation à la hauteur et à la taille de celui du M, un peu plus à gauche (10:55)');
+    assert(al && al.x < 520 && al.y + al.h <= r.y, 'l\'alerte à gauche, au-dessus du panneau');
     assert(font('sign_xl') && font('sign_xl3'), 'la police du grand panneau');
 });
 check('en bas : essence à gauche, huile et refroidissement au milieu, batterie à droite', () => {
     const b = Object.assign({}, by('bars'), { barB: by('bars_r').barB });
     assert(b.barF[0] < 600 && b.barO[0] > 620 && b.barC[0] + b.barC[2] < visible.GEAR_P[0] && b.barB[0] > visible.GEAR_P[2]);
-    assert(by('oil').text === '{{oil}}' && by('cool').text === '{{coolant}}' && by('ev_pct').text === '{{hvSoc}}' && by('range').text === '{{rangeTotal}}');
+    assert(by('oil').text === '{{oil}}' && by('cool').text === '{{coolant}}' && by('ev_range').text === '{{evRange}}' && !by('ev_pct') && by('range').text === '{{rangeTotal}}');
 });
 check('les zones de la voiture : rien sous le capot, sur le voyant de ceinture ni sur la lettre du rapport (hors le fond)', () => {
     const w = visible.check(L.widgets.filter((x) => x.id !== 'backdrop' && x.id !== 'bars'), 'panel');
@@ -70,11 +73,11 @@ check('les shaders : evo et shiftpills sous le budget de la voiture', () => {
     assert(sb.layer(sh.shiftpills, 540, 28).level === 'ok');
     assert(sb.layer(sh.evobars, 1920, 56).level === 'ok');
 });
-check('les réglages : Shak est caché des listes de thèmes tant qu\'il n\'est pas fini (le propriétaire, 23 nov. 2026), son image est prête', () => {
+check('les réglages : Shak dans les quatre listes de thèmes, son image est prête', () => {
     const app = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'app.json'), 'utf8'));
     ['hudLayout', 'inHybrid', 'inSport', 'inEco'].forEach((k) => {
         const s = app.settings.find((x) => x.key === k);
-        assert(!s.options.some((o) => o[0] === 'evo'), k);
+        assert(s.options.some((o) => o[0] === 'evo' && o[1] === 'Shak'), k);
     });
     assert(fs.existsSync(path.join(root, 'apps', 'shaktheme', 'hud', 'previews', 'evo.json')), 'l\'image du thème');
 });

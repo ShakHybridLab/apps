@@ -109,6 +109,8 @@
  *             x 960: [y of the straight middle, its half length, the shoulder's radius, the end's angle in degrees, the end's length, the band's
  *             width, blocks]; the revs bend down, the speed up), the visor line "visor" (same, no blocks), the map's window "hole" [x, y, w, h]
  *             (cut while "holeWhen" is on)
+ *   evbars    effect layer; the Shak theme's views: up to four bars of slanted blocks, "rows" [{ y (middle), signal, min, max, low (red at the empty end) }],
+ *             "bar" [left x, right x] in panel px
  *   evobars   effect layer; the Shak theme's bottom bars of slanted blocks (shaders.js evobars): "barF" (fuel), "barB" (battery), "barO" (oil),
  *             "barC" (coolant) [left x, middle y, width] in panel px
  *   segbar    effect layer; "max" segments, the first round(signal) lit (e.g. "setupLevel:engine"), "slant" px
@@ -3162,13 +3164,24 @@ class HudApp {
             c.uniform(ref, 'u_va', vp[0]); c.uniform(ref, 'u_vb', vp[1]);
             c.uniform(ref, 'u_hole', [w.hole && (w.holeWhen === true || (w.holeWhen && this.setting(w.holeWhen) === true)) ? 1 : 0]);
             c.uniform(ref, 'u_hr', w.hole || [0, 0, 0, 0]);
+            c.uniform(ref, 'u_mag', [1.0, 0.18, 0.76]); c.uniform(ref, 'u_peak', [0]);
             c.uniform(ref, 'u_rev', [0]); c.uniform(ref, 'u_speed', [0]);
-            c.uniform(ref, 'u_zone', [0, 0]); c.uniform(ref, 'u_redFrom', [2]); c.uniform(ref, 'u_hy', [0, 0, 0, 0]);
+            c.uniform(ref, 'u_zone', [0, 0]); c.uniform(ref, 'u_redFrom', [2]); c.uniform(ref, 'u_szone', [2]); c.uniform(ref, 'u_hy', [0, 0, 0, 0]);
+        } else if (w.type === 'evbars') {
+            // the Shak theme's views: up to four bars of slanted blocks ("rows": { y, signal, min, max, red, color }), "bar" [left x, right x]
+            const R = (w.rows || []).slice(0, 4), at = (f, d) => [0, 1, 2, 3].map((i) => (R[i] ? f(R[i]) : d));
+            c.uniform(ref, 'u_box', [w.x, w.y, w.w, w.h]);
+            c.uniform(ref, 'u_bx', w.bar);
+            c.uniform(ref, 'u_ry', at((r) => r.y, 0));
+            c.uniform(ref, 'u_lo', at((r) => (r.low ? 1 : 0), 0));
+            c.uniform(ref, 'u_pitch', [isNum(w.pitch) ? w.pitch : 28]);      // "pitch": a block and its gap (fewer, wider blocks)        // "low": red at the empty end (a charge)
+            c.uniform(ref, 'u_lv', [0, 0, 0, 0]);
         } else if (w.type === 'evobars') {
             // the Shak theme's four bottom bars (shaders.js evobars), their own layer over the bottom strip
             c.uniform(ref, 'u_box', [w.x, w.y, w.w, w.h]);
-            c.uniform(ref, 'u_lv', [0, 0, 0, 0]); c.uniform(ref, 'u_low', [0, 0]); c.uniform(ref, 'u_tone', [1, 1]);
+            c.uniform(ref, 'u_lv', [0, 0, 0, 0]);
             c.uniform(ref, 'u_bF', w.barF); c.uniform(ref, 'u_bB', w.barB); c.uniform(ref, 'u_bO', w.barO); c.uniform(ref, 'u_bC', w.barC);
+            c.uniform(ref, 'u_bP', w.barP || [0, 0, 0]); c.uniform(ref, 'u_bR', w.barR || [0, 0, 0]); c.uniform(ref, 'u_lv2', [0, 0]);
         } else if (w.type === 'navi') {
             const B = w.band, L = w.line, L2 = w.line2;
             c.uniform(ref, 'u_size', [w.w, w.h]);
@@ -3690,7 +3703,9 @@ class HudApp {
                 }
             }
             if (w.nearFont && w.near) {
-                const sz = this._ease(w.id + 'z', here && this._zoneOf(w.near[0], w.rpmMax) > 0 ? 1 : 0, now);
+                // ("zoomAlways": the number the bar has reached grows at every step, not only in the zone: the Shak theme, owner 23 Nov 2026,
+                // "un effet loupe quand il atteint une étape, qu'on voit un peu mais pas trop": its bigger bake is only 1.15 times)
+                const sz = this._ease(w.id + 'z', here && (w.zoomAlways === true || this._zoneOf(w.near[0], w.rpmMax) > 0) ? 1 : 0, now);
                 lvl = sz < 0.12 ? 0 : sz < 0.6 && w.nearMid ? 1 : 2;
             }
             const key = s + '|' + role + '|' + lvl + '|' + (col ? col.join(',') : '');
@@ -3955,31 +3970,47 @@ class HudApp {
             const vals = [q(isNum(sp) ? scaleFrac(us ? sp * 0.621371 : sp, SPEED_SCALE[us ? 'us' : 'metric']) : 0),
                 q(bar ? Math.abs(hy.kw) * 100 / max : isNum(rpm) ? rpm / max : 0)];
             const zone = [this._ease(w.id + 's', this._zoneSpeed(), now), this._ease(w.id + 'r', bar ? 0 : this._zoneRev(max), now)];
-            const key = vals.join('|') + '|' + bar + '|' + zone.map((z) => Math.round(z * 20)).join(',');
+            const pk = this._peakRev(x, vals[1], now, bar > 0 || this.sweepAt !== null);
+            // the neon in the drive mode's colour (owner, 23 Nov 2026): blue in Electric, red in Sport, the theme's magenta in Hybrid and Hybrid Eco Pro
+            const dm = this.setting('accentByMode') !== false ? this.driveMode : null;
+            const mag = dm === 'sport' ? [1.0, 0.16, 0.2] : dm === 'electric' ? [0.2, 0.5, 1.0] : [1.0, 0.18, 0.76];
+            const key = vals.join('|') + '|' + bar + '|' + zone.map((z) => Math.round(z * 20)).join(',') + '|' + pk + '|' + mag.join(',');
             if (!force && key === x.last) return;
             x.last = key;
+            x.c.uniform(x.ref, 'u_peak', [pk]);
+            x.c.uniform(x.ref, 'u_mag', mag);
             x.c.uniform(x.ref, 'u_speed', [vals[0]]);
             x.c.uniform(x.ref, 'u_rev', [vals[1]]);
             x.c.uniform(x.ref, 'u_zone', zone);
             x.c.uniform(x.ref, 'u_redFrom', [bar ? 2 : this._redMarks(max)[0]]);
             x.c.uniform(x.ref, 'u_hy', bar === 1 ? [0.3, 0.75, 1.0, 1] : bar === 2 ? [0.2, 0.85, 0.5, 1] : [0, 0, 0, 0]);
-        } else if (w.type === 'evobars') {
-            // fuel, battery, oil (50..150 C), coolant (40..130 C); each temperature blue while cold, red over its limit; fuel and battery red in reserve
-            const fuel = this._raw('fuel'), hv = this._raw('hvSoc'), oil = this._raw('oil'), cool = this._raw('coolant');
-            const q = (v) => Math.round(Math.min(1, Math.max(0, v)) * 200) / 200;
-            const lv = [q(isNum(fuel) ? fuel : 0), q(isNum(hv) ? hv / 100 : 0), q(isNum(oil) ? (oil - 50) / 100 : 0), q(isNum(cool) ? (cool - 40) / 90 : 0)];
-            const toneOf = (key, v) => {
-                if (this._overLimit(key)) return 2;
-                const cold = this.setting(COLD_BELOW[key]);
-                return isNum(v) && isNum(cold) && cold > 0 && v < cold ? 0 : 1;
-            };
-            const tones = [toneOf('oil', oil), toneOf('coolant', cool)], low = this._lows();
-            const key = lv.join('|') + '|' + low.join('') + tones.join('');
+            // the speed band: its blocks red from the speed zone's start ("speedZone", 0 = none), the rest keeps its colours, as on the picture
+            const zl = this.ctx.settings.item('speedZone') ? this.setting('speedZone') : 0;
+            const zf = isNum(zl) && zl > 0 ? scaleFrac(us ? zl * 0.621371 : zl, SPEED_SCALE[us ? 'us' : 'metric']) : 2;
+            if (zf !== x.szone) { x.szone = zf; x.c.uniform(x.ref, 'u_szone', [zf]); }
+        } else if (w.type === 'evbars') {
+            const lv = [0, 1, 2, 3].map((i) => {
+                const r = (w.rows || [])[i], v = r ? this._raw(r.signal) : null;
+                return r && isNum(v) && r.max !== r.min ? Math.round(Math.min(1, Math.max(0, (v - r.min) / (r.max - r.min))) * 200) / 200 : 0;
+            });
+            const key = lv.join('|');
             if (!force && key === x.last) return;
             x.last = key;
             x.c.uniform(x.ref, 'u_lv', lv);
-            x.c.uniform(x.ref, 'u_low', low);
-            x.c.uniform(x.ref, 'u_tone', tones);
+        } else if (w.type === 'evobars') {
+            // fuel, battery, oil (50..150 C), coolant (40..130 C); each block in the blue-white-red of the bands (fuel and battery red at the empty end)
+            const fuel = this._raw('fuel'), hv = this._raw('hvSoc'), oil = this._raw('oil'), cool = this._raw('coolant');
+            const q = (v) => Math.round(Math.min(1, Math.max(0, v)) * 200) / 200;
+            const lv = [q(isNum(fuel) ? fuel : 0), q(isNum(hv) ? hv / 100 : 0), q(isNum(oil) ? (oil - 50) / 100 : 0), q(isNum(cool) ? (cool - 40) / 90 : 0)];
+            // the live energy bars (left panel, while the map is down: "energyWhen" names the toggle): 0..80 kW given, 0..60 kW taken back
+            const eOn = w.barP && (!w.energyWhen || this._toggleOn(w.energyWhen));
+            const pw = this._raw('evPower'), rc = this._raw('evRecup');
+            const lv2 = eOn ? [q(isNum(pw) ? pw / 80 : 0), q(isNum(rc) ? rc / 60 : 0)] : [0, 0];
+            const key = lv.join('|') + '|' + lv2.join('|') + (eOn ? 'e' : '');
+            if (!force && key === x.last) return;
+            x.last = key;
+            x.c.uniform(x.ref, 'u_lv', lv);
+            if (w.barP) { x.c.uniform(x.ref, 'u_lv2', lv2); x.c.uniform(x.ref, 'u_bP', eOn ? w.barP : [0, 0, 0]); x.c.uniform(x.ref, 'u_bR', eOn ? w.barR : [0, 0, 0]); }
         } else if (w.type === 'navi') {
             // the marker on the speed band (the same scale as the Sport theme's), the rev counter (the purple stripe: the rpm, or while the
             // battery alone drives its power in light blue, or while it charges in green, as Sport's bar) and the two bottom bars

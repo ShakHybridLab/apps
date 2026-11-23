@@ -704,49 +704,63 @@ def _navi(d):
 # Shak (23 Nov 2026, the owner: "à droite on mettra les thèmes BC"): every view in the right panel, the same with the map up or not,
 # under the drive mode and its divider (y 190), right of BMW's black box (x 1597), the hood leaves it from y 196 at the far right. Each row: its
 # icon, its value and unit, a hairline with the sliding ring under them (the neon line of the theme's frame round it).
+# short names: the panel is narrower than Navi's card (the long ones were cut: "Liquide de refroidis", 23 Nov 2026)
+EV_NAMES = {'boost': 'Turbo', 'oil': 'Huile moteur', 'cool': 'Refroidissement', 'out': 'Extérieur',
+            'batt': 'Batterie', 'erange': 'Autonomie', 'epow': 'Puissance', 'erec': 'Récupération'}
+# Shak's own view rows (the intake air of the engine unit is left out: its reading is not confirmed on this car): key, icon, name, value, unit, signal of its bar (None: no bar), min, max, red from, tone
+EV_ENGINE = (('boost', 'gauge', 'Turbo', '{{boostPos}}', '{{u:pressure}}', 'boost', 0, 2, 0.8, 'boost'),
+             ('peak', 'gauge', 'Pic du turbo', '{{boostPeak}}', '{{u:pressure}}', None, 0, 0, None, None),
+             ('avg', 'stopwatch', 'Vitesse moyenne', '{{avgSpeed}}', '{{u:speedLc}}', None, 0, 0, None, None))
+EV_ELEC = (('batt', 'battery', 'Batterie', '{{hvSoc}}', '%', 'hvSoc', 0, 100, None, 'blue'),
+           ('share', 'leaf', 'Part en électrique', '{{evShare}}', '{{evShareUnit}}', None, 0, 0, None, None))
 EV = dict(x=1440, y=232, w=392, h=330, x0=1454, x1=1816, t0=272, pitch=72, glass=[0.05, 0.0, 0.05], edge=[1.0, 0.45, 0.86], step=[300, 12, 0])
 
 
+def evbars(id, tog, conn, rows):
+    """One layer of the Shak views' bars of slanted blocks (shaders.js evbars), under the rows of one view."""
+    return {'id': id, 'type': 'evbars', 'class': 'content', 'z': 2, 'x': EV['x'], 'y': EV['y'], 'w': EV['w'], 'h': EV['h'],
+            'bar': [EV['x0'], EV['x1']], 'rows': rows, 'toggle': tog, 'conn': conn}
+
+
 def evo_views(pre, conn, cconn):
-    """The Shak theme's views, in its right panel (as the picture's right panel): each row its icon and name on the left, the value and unit on
-    the right, a hairline with a sliding ring under them; the tyres as four corners round the car's tyre; the G-meter or the drive settings."""
+    """The Shak theme's views, in its right panel, in the theme's own style (owner, 23 Nov 2026: "inspire-toi du thème actuel, pas des vues des
+    autres thèmes : la barre comme l'autonomie"): each row its icon and name, the value and unit on the right, and under them a bar of slanted
+    blocks like the bottom row's (one layer per view, shaders.js evbars); the tyres round the car seen from above; the G-meter or the drive settings."""
     new = []
     S = 'xs_ev'
     x0, x1 = EV['x0'], EV['x1']
-
-    def col(id, tog, rows=None, **kw):
-        return nline(id, tog, cconn, rows, x=EV['x'], y=EV['y'], w=EV['w'], h=EV['h'], bar=[x0, x1], card=EV['step'],
-                     glass=EV['glass'], edge=EV['edge'], **kw)
-
-    for vname, vp, ROWS, NAMES in (('gauges', 'g', CARD_ROWS, GAUGE_NAMES), ('electric', 'e', ELEC_ROWS, ELEC_NAMES)):
+    # what the theme does not show elsewhere (owner, 23 Nov 2026: "le thème BC reprend à peu près la même chose"): the oil, the coolant and the
+    # electric range are on the bottom row, the outside temperature on the top one, the power and the recuperation in the left panel
+    for vname, vp, ROWS in (('gauges', 'g', EV_ENGINE), ('electric', 'e', EV_ELEC)):
         tg = 'viewSel=%s' % vname
         rows = []
-        for r, (k, ic, sig, mn, mx, tok, unit, red, tone) in enumerate(ROWS):
+        for r, (k, ic, name, tok, unit, sig, mn, mx, red, tone) in enumerate(ROWS):
             T = EV['t0'] + r * EV['pitch']
-            tb = {'tempBy': sig} if tone == 'temp' else {'iceBy': True} if tone == 'ice' else {}
-            new += [icon(pre + vp + '_%s_ic' % k, x0, T - 18, 28, 34, ic, 'fg', S, conn, toggle=tg, **({'tempBy': sig} if tone == 'temp' else {})),
-                    text(pre + vp + '_%s_name' % k, x0 + 38, T - 13, 190, 24, NAMES[k], 'm_name', 'dim', 'left', S, conn, toggle=tg),
-                    text(pre + vp + '_%s' % k, x0 + 228, T - 19, 84, 33, tok, 'e_val', 'fg', 'right', S, conn, toggle=tg, **tb),
-                    text(pre + vp + '_%s_unit' % k, x0 + 316, T - 15, 46, 29, unit, 'e_unit', 'dim', 'left', S, conn, toggle=tg)]
-            rows.append({'y': T + 24, 'signal': sig, 'min': mn, 'max': mx, 'red': red if red else 2, 'tone': tone})
-        new.append(col(pre + vp + '_col', tg, rows))
-    # the tyres: pressure over temperature at each corner, the tyre glyph in the middle, the units on top
+            new += [icon(pre + vp + '_%s_ic' % k, x0, T - 18, 28, 34, ic, 'fg', S, conn, toggle=tg),
+                    text(pre + vp + '_%s_name' % k, x0 + 38, T - 13, 190, 24, name, 'm_name', 'dim', 'left', S, conn, toggle=tg),
+                    text(pre + vp + '_%s' % k, x0 + 228, T - 19, 84, 27, tok, 'e_val', 'fg', 'right', S, conn, toggle=tg),
+                    text(pre + vp + '_%s_unit' % k, x0 + 316, T - 19, 56, 27, unit, 'e_unit', 'dim', 'left', S, conn, toggle=tg)]      # (the value's baseline)
+            if sig:                       # a reading with a scale: its bar under it; the others are a value alone
+                rows.append(dict({'y': T + 26, 'signal': sig, 'min': mn, 'max': mx}, **({'low': True} if sig == 'hvSoc' else {})))      # (the charge: red when low)
+        new.append(evbars(pre + vp + '_bars', tg, cconn, rows))
+    # the tyres: pressure over temperature at each corner, round the car seen from above (its wheels green, as on the picture)
     tt = 'viewSel=tyres'
-    new.append(text(pre + 't_u', x0, 250, x1 - x0, 29, '{{u:pressure}} · {{u:temp}}', 'e_unit', 'dim', 'center', S, conn, toggle=tt))
+    new.append(text(pre + 't_u', x0, 250, x1 - x0, 27, '{{u:pressure}} · {{u:temp}}', 'e_unit', 'dim', 'center', S, conn, toggle=tt))
     for corner, cx, cy in (('FL', x0 + 60, 300), ('FR', x1 - 60, 300), ('RL', x0 + 60, 420), ('RR', x1 - 60, 420)):
-        new += [text(pre + 't_p' + corner, cx - 60, cy, 120, 33, '{{tyreP:%s}}' % corner, 'e_val', 'fg', 'center', S, conn, toggle=tt, tyreBy=corner),
-                text(pre + 't_t' + corner, cx - 60, cy + 38, 120, 29, '{{tyreT:%s}}' % corner, 'e_unit', 'dim', 'center', S, conn, toggle=tt)]
-    new.append(icon(pre + 't_ic', (x0 + x1) // 2 - 30, 360, 60, 60, 'tyre', 'dim', S, conn, toggle=tt))
-    new.append(col(pre + 't_col', tt, mode='tyres', tiles=[x0 + 60, x1 - 60, 316, 436]))
+        new += [text(pre + 't_p' + corner, cx - 60, cy, 120, 27, '{{tyreP:%s}}' % corner, 'e_val', 'fg', 'center', S, conn, toggle=tt, tyreBy=corner),
+                text(pre + 't_t' + corner, cx - 60, cy + 34, 120, 27, '{{tyreT:%s}}' % corner, 'e_unit', 'dim', 'center', S, conn, toggle=tt)]
+    new.append(nline(pre + 't_col', tt, cconn, None, x=EV['x'], y=EV['y'], w=EV['w'], h=EV['h'], bar=[x0, x1], card=[0, 0, 0],
+                     glass=[0.0, 0.0, 0.0], edge=EV['edge'], mode='tyres', tiles=[x0 + 60, x1 - 60, 316, 436]))
     ds, dn = 'viewSel=drive&driveSport', 'viewSel=drive&!driveSport'
     new += drive_g(pre + 'dg', x0 + 10, 262, 190, x0 + 214, 330, 148, S, conn, ds, stacked=True)
     rows = []
     for r, (k, ic) in enumerate(SETUP_ROWS):
         T = EV['t0'] + r * EV['pitch']
         new += [icon(pre + 'dr_%s_ic' % k, x0, T - 18, 28, 34, ic, 'fg', S, conn, toggle=dn),
-                text(pre + 'dr_%s' % k, x0 + 40, T - 14, 300, 29, '{{setup:%s}}' % k, 'e_unit', 'fg', 'left', S, conn, toggle=dn)]
-        rows.append({'y': T + 24, 'signal': 'setupLevel:' + k, 'min': 0, 'max': 3})
-    new.append(col(pre + 'dr_col', dn, rows, seg=3, div=3))
+                text(pre + 'dr_%s' % k, x0 + 40, T - 14, 300, 27, '{{setup:%s}}' % k, 'e_unit', 'fg', 'left', S, conn, toggle=dn)]
+        rows.append({'y': T + 26, 'signal': 'setupLevel:' + k, 'min': 0, 'max': 3})
+    # three levels (comfort, sport, sport plus): three wide blocks (owner, 23 Nov 2026: "trop de traits, fais des traits plus larges")
+    new.append(dict(evbars(pre + 'dr_bars', dn, cconn, rows), pitch=(EV['x1'] - EV['x0'] + 6) / 3.0))
     return new
 
 

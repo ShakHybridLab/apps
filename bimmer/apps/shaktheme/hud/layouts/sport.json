@@ -110,7 +110,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s0"
+      "sheet": "s0",
+      "zoomAlways": true
     },
     {
       "id": "spd1",
@@ -136,7 +137,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s0"
+      "sheet": "s0",
+      "zoomAlways": true
     },
     {
       "id": "spd2",
@@ -162,7 +164,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s0"
+      "sheet": "s0",
+      "zoomAlways": true
     },
     {
       "id": "spd3",
@@ -188,7 +191,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s1"
+      "sheet": "s1",
+      "zoomAlways": true
     },
     {
       "id": "spd4",
@@ -214,7 +218,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s1"
+      "sheet": "s1",
+      "zoomAlways": true
     },
     {
       "id": "spd5",
@@ -240,7 +245,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s1"
+      "sheet": "s1",
+      "zoomAlways": true
     },
     {
       "id": "spd6",
@@ -266,7 +272,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s1"
+      "sheet": "s1",
+      "zoomAlways": true
     },
     {
       "id": "spd7",
@@ -292,7 +299,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s1"
+      "sheet": "s1",
+      "zoomAlways": true
     },
     {
       "id": "spd8",
@@ -318,7 +326,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s1"
+      "sheet": "s1",
+      "zoomAlways": true
     },
     {
       "id": "rpm0",
@@ -345,7 +354,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s2"
+      "sheet": "s2",
+      "zoomAlways": true
     },
     {
       "id": "rpm1",
@@ -372,7 +382,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s2"
+      "sheet": "s2",
+      "zoomAlways": true
     },
     {
       "id": "rpm2",
@@ -399,7 +410,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s2"
+      "sheet": "s2",
+      "zoomAlways": true
     },
     {
       "id": "rpm3",
@@ -426,7 +438,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s3"
+      "sheet": "s3",
+      "zoomAlways": true
     },
     {
       "id": "rpm4",
@@ -453,7 +466,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s3"
+      "sheet": "s3",
+      "zoomAlways": true
     },
     {
       "id": "rpm5",
@@ -480,7 +494,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s3"
+      "sheet": "s3",
+      "zoomAlways": true
     },
     {
       "id": "rpm6",
@@ -507,7 +522,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s3"
+      "sheet": "s3",
+      "zoomAlways": true
     },
     {
       "id": "rpm7",
@@ -534,7 +550,8 @@
         3
       ],
       "nearMid": "s_scale_m",
-      "sheet": "s3"
+      "sheet": "s3",
+      "zoomAlways": true
     },
     {
       "id": "mph_cap",

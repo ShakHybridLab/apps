@@ -81,16 +81,22 @@ CLUSTER_FONTS = [
     ('sign_s', 'DINish-Bold.ttf', 24, DIGITS),
     ('sign_s3', 'DINishCondensed-Bold.ttf', 24, DIGITS),
 ] + [
-    # Shak (23 Nov 2026, after the owner's picture of a race cluster): bold italic numbers, the italic drawn from Barlow's upright cuts
-    ('e_speed', 'BarlowCondensed-Bold.ttf', 162, DIGITS + '-', 0, None, None, '', 0.2),          # the speed in the hexagon
-    ('e_big', 'BarlowCondensed-Bold.ttf', 92, DIGITS + '-', 0, None, None, '', 0.2),             # the speed on the left while the map is up
-    ('e_gear', 'BarlowCondensed-Bold.ttf', 78, DIGITS + 'PRNDSM-', 0, None, None, '', 0.2),      # the gear
-    ('e_num', 'BarlowSemiCondensed-SemiBold.ttf', 34, DIGITS + '-', 0, None, None, '', 0.18),     # small numbers
-    ('e_rnum', 'BarlowSemiCondensed-SemiBold.ttf', 50, DIGITS, 0, None, None, '', 0.2),          # the rev band's numbers
-    ('e_snum', 'BarlowSemiCondensed-SemiBold.ttf', 42, DIGITS + '-', 0, None, None, '', 0.2),    # the speed band's numbers
-    ('e_val', 'BarlowSemiCondensed-SemiBold.ttf', 36, DIGITS + ':+-.,/ ', 0, None, None, '', 0.18),   # the readouts (clock, temperatures, ranges)
-    ('e_unit', 'Barlow-Medium.ttf', 24, LOWER + UPPER + DIGITS + '°/-.,:%· x', 0, None, None, '', 0.15),   # units and captions
-    ('e_mode', 'BarlowSemiCondensed-SemiBold.ttf', 30, UPPER + LOWER + DIGITS + " -+'éèêàçùôîÉ", 0, None, None, '', 0.18),   # the drive mode
+    # Shak (23 Nov 2026): the ShakHUD's lettering, as the owner asked ("la police la même que le HUD"): Orbitron Black for the numbers, Bold for
+    # the readouts, its zero drawn as the plain O; the units and the drive mode's name in Barlow (Orbitron has no accented letters)
+    ('e_speed', 'Orbitron[wght].ttf', 112, DIGITS + '-', 0, 'Black', {'0': 'O'}),          # the speed in the hexagon
+    ('e_big', 'Orbitron[wght].ttf', 66, DIGITS + '-', 0, 'Black', {'0': 'O'}),             # the speed on the left while the map is up
+    ('e_gear', 'Orbitron[wght].ttf', 54, DIGITS + 'PRNDSM-', 0, 'Black', {'0': 'O'}),      # the gear
+    ('e_num', 'Orbitron[wght].ttf', 24, DIGITS + '-', 0, 'Black', {'0': 'O'}),             # small numbers
+    ('e_rnum', 'Orbitron[wght].ttf', 32, DIGITS, 0, 'Black', {'0': 'O'}),                  # the rev band's numbers
+    ('e_snum', 'Orbitron[wght].ttf', 24, DIGITS + '-', 0, 'Black', {'0': 'O'}),            # the speed band's numbers
+    # the magnifier on the number the band has reached (owner, 23 Nov 2026: "un effet loupe qu'on voit un peu mais pas trop"): 1.07 then 1.15 times
+    ('e_rnum_m', 'Orbitron[wght].ttf', 34, DIGITS, 0, 'Black', {'0': 'O'}),
+    ('e_rnum_z', 'Orbitron[wght].ttf', 37, DIGITS, 0, 'Black', {'0': 'O'}),
+    ('e_snum_m', 'Orbitron[wght].ttf', 26, DIGITS + '-', 0, 'Black', {'0': 'O'}),
+    ('e_snum_z', 'Orbitron[wght].ttf', 28, DIGITS + '-', 0, 'Black', {'0': 'O'}),
+    ('e_val', 'Orbitron[wght].ttf', 26, DIGITS + ':+-.,/ ', 0, 'Bold', {'0': 'O'}),        # the readouts (clock, temperatures, ranges)
+    ('e_unit', 'Barlow-Medium.ttf', 22, LOWER + UPPER + DIGITS + '°/-.,:%· x'),             # units and captions
+    ('e_mode', 'Barlow-Medium.ttf', 26, UPPER + LOWER + DIGITS + " -+'éèêàçùôîÉ"),            # the drive mode
     ('sign_xl', 'DINish-Bold.ttf', 84, DIGITS),                 # the big speed limit sign on Evo's left (150 px)
     ('sign_xl3', 'DINishCondensed-Bold.ttf', 84, DIGITS),
 ]

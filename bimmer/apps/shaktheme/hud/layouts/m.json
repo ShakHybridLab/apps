@@ -208,7 +208,8 @@
       "nearFont": "m_num_z",
       "rpmMax": 7000,
       "nearMid": "m_num_m",
-      "sheet": "s0"
+      "sheet": "s0",
+      "zoomAlways": true
     },
     {
       "id": "nr0",
@@ -229,7 +230,8 @@
       "nearFont": "m_num_z",
       "rpmMax": 7000,
       "nearMid": "m_num_m",
-      "sheet": "s0"
+      "sheet": "s0",
+      "zoomAlways": true
     },
     {
       "id": "nl2",
@@ -250,7 +252,8 @@
       "nearFont": "m_num_z",
       "rpmMax": 7000,
       "nearMid": "m_num_m",
-      "sheet": "s1"
+      "sheet": "s1",
+      "zoomAlways": true
     },
     {
       "id": "nr2",
@@ -271,7 +274,8 @@
       "nearFont": "m_num_z",
       "rpmMax": 7000,
       "nearMid": "m_num_m",
-      "sheet": "s2"
+      "sheet": "s2",
+      "zoomAlways": true
     },
     {
       "id": "nl4",
@@ -292,7 +296,8 @@
       "nearFont": "m_num_z",
       "rpmMax": 7000,
       "nearMid": "m_num_m",
-      "sheet": "s1"
+      "sheet": "s1",
+      "zoomAlways": true
     },
     {
       "id": "nr4",
@@ -313,7 +318,8 @@
       "nearFont": "m_num_z",
       "rpmMax": 7000,
       "nearMid": "m_num_m",
-      "sheet": "s2"
+      "sheet": "s2",
+      "zoomAlways": true
     },
     {
       "id": "nl6",
@@ -334,7 +340,8 @@
       "nearFont": "m_num_z",
       "rpmMax": 7000,
       "nearMid": "m_num_m",
-      "sheet": "s1"
+      "sheet": "s1",
+      "zoomAlways": true
     },
     {
       "id": "nr6",
@@ -355,7 +362,8 @@
       "nearFont": "m_num_z",
       "rpmMax": 7000,
       "nearMid": "m_num_m",
-      "sheet": "s2"
+      "sheet": "s2",
+      "zoomAlways": true
     },
     {
       "id": "nl7",
@@ -376,7 +384,8 @@
       "nearFont": "m_num_z",
       "rpmMax": 7000,
       "nearMid": "m_num_m",
-      "sheet": "s1"
+      "sheet": "s1",
+      "zoomAlways": true
     },
     {
       "id": "nr7",
@@ -397,7 +406,8 @@
       "nearFont": "m_num_z",
       "rpmMax": 7000,
       "nearMid": "m_num_m",
-      "sheet": "s2"
+      "sheet": "s2",
+      "zoomAlways": true
     },
     {
       "id": "rpm_unit",

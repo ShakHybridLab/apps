@@ -1776,9 +1776,12 @@ uniform float u_rev;      // 0..1 along the rev band
 uniform float u_speed;    // 0..1 along the speed band
 uniform vec2 u_zone;      // the speed's and the revs' zone: 0 = none, 2 = in it
 uniform float u_redFrom;  // 0..1 along the rev band: red blocks from here (2 = none)
+uniform float u_szone;    // 0..1 along the speed band: red blocks from the speed zone's start (2 = none), as on the picture
 uniform vec4 u_hy;        // the hybrid rev counter's colour (a = 1 while the battery drives or charges)
 
-const vec3 MAG = vec3(1.0, 0.18, 0.76);
+uniform vec3 u_mag;       // the neon's colour: magenta, or the drive mode's (blue in Electric, red in Sport: hud.js, setting accentByMode)
+uniform float u_peak;     // the rev band's held peak 0..1 (0 = none): its block outlined in white
+#define MAG u_mag
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
 float len64(vec2 v) { return length(v / 64.0) * 64.0; }       // (half precision cannot hold a squared panel length)
 vec4 over(vec4 top, vec4 under) {
@@ -1792,10 +1795,10 @@ vec4 neon(float d, float w, vec4 c) {
     c = over(vec4(MAG, 0.4 * exp(-max(d - w, 0.0) / 6.0)), c);
     return over(vec4(mix(MAG, vec3(1.0, 0.85, 0.97), 0.35), cov(d - w)), c);
 }
+// blue, white, red along a band (the owner, 23 Nov 2026: "bleu blanc rouge, le compte-tours et la vitesse")
 vec3 ramp(float t) {
-    vec3 a = mix(vec3(0.16, 0.42, 1.0), vec3(0.9, 0.94, 1.0), smoothstep(0.0, 0.5, t));
-    a = mix(a, vec3(1.0, 0.45, 0.75), smoothstep(0.55, 0.78, t));
-    return mix(a, vec3(1.0, 0.16, 0.2), smoothstep(0.78, 0.92, t));
+    vec3 a = mix(vec3(0.12, 0.36, 1.0), vec3(0.94, 0.96, 1.0), smoothstep(0.0, 0.42, t));
+    return mix(a, vec3(1.0, 0.14, 0.18), smoothstep(0.58, 0.9, t));
 }
 // where p stands against a path: x = its distance (> 0 on the band's side), y = how far along it from the middle (< 0 on the left), z = half its length
 vec3 pathAt(vec2 p, vec4 A, vec4 B) {
@@ -1821,7 +1824,8 @@ vec2 pathEnd(vec4 A, vec4 B, float o) {
     vec2 e = vec2(A.y + A.z * sin(ph) + B.x * cos(ph), B.z * A.x + A.z * (1.0 - cos(ph)) + B.x * sin(ph)) - o * vec2(-sin(ph), cos(ph));
     return vec2(960.0 + e.x, B.z * e.y);
 }
-vec4 band(vec3 at, vec4 B, float v, float zone, float redFrom, vec4 hy, vec4 c) {
+// tk: the scale's ticks, one at each number (owner, 23 Nov 2026: "des traits pour chaque étape"): steps, and the band of distances they span
+vec4 band(vec3 at, vec4 B, float v, float zone, float redFrom, vec4 hy, vec3 tk, float pk, vec4 c) {
     float d = at.x, w = B.y;
     if (d < -30.0 || d > w + 30.0) return c;
     float t = 0.5 + at.y / (2.0 * at.z);
@@ -1836,10 +1840,19 @@ vec4 band(vec3 at, vec4 B, float v, float zone, float redFrom, vec4 hy, vec4 c) 
     // the lit part glows, the unlit blocks stay dark in their own colour
     c = over(vec4(col, on * 0.4 * exp(-max(max(-d, d - w), 0.0) / 8.0) * inside * step(t, v)), c);
     c = over(vec4(col * mix(0.22, 1.0, on) * (0.82 + 0.18 * smoothstep(0.0, w, d)), block * mix(0.9, 1.0, on)), c);
+    // the held peak (the highest rpm of the last moments): its block outlined in white, a few seconds, as on Navi and Sport
+    float pb = pk > v + 0.01 ? step(abs(k - floor(pk * n)), 0.5) : 0.0;
+    float edge = block * (1.0 - cov(abs(f - 0.5) * at.z * 2.0 / n - (at.z / n - 4.0)) * cov(-d + 2.5) * cov(d - w + 2.5));
+    c = over(vec4(1.0, 1.0, 1.0, 0.95 * pb * edge), c);
     // the frame: a silver line on the outer edge with the neon just outside it, a thin dark-magenta line on the inner edge
     c = over(vec4(0.86, 0.88, 0.94, 0.9 * cov(abs(d + 3.0) - 0.8) * inside), c);
     c = over(vec4(MAG, (0.45 * exp(-abs(d + 9.0) / 5.0) + cov(abs(d + 9.0) - 1.0)) * inside), c);
     c = over(vec4(MAG * 0.8, 0.6 * cov(abs(d - w - 4.0) - 0.7) * inside), c);
+    // the ticks: a short white line at each step of the scale (red from the red zone on), between the band and its numbers
+    float e = 1.6 / (2.0 * at.z);                       // the two end ticks sit just inside the band's ends (past them the distance turns round)
+    float ts = clamp(floor(t * tk.x + 0.5) / tk.x, e, 1.0 - e);
+    float tl = cov(abs((t - ts) * 2.0 * at.z) - 1.3) * cov(max(tk.y - d, d - tk.z)) * inside;
+    c = over(vec4(ts >= redFrom - 0.001 ? vec3(1.0, 0.2, 0.22) : vec3(0.95, 0.96, 1.0), 0.95 * tl), c);
     return c;
 }
 
@@ -1893,10 +1906,10 @@ void main() {
     float vl = min(abs(vs.x) + step(vs.z - 0.01, abs(vs.y)) * 99.0, min(segD(p, ve, vec2(ve.x + 110.0, ve.y)), segD(p, vec2(1920.0 - ve.x, ve.y), vec2(1810.0 - ve.x, ve.y))));
     c = neon(vl, 1.0, c);
     // the gear's slanted box (in the hexagon, or on the left while the map is up)
-    vec2 gc = u_hole > 0.5 ? vec2(260.0, 370.0) : vec2(960.0, 462.0);
+    vec2 gc = u_hole > 0.5 ? vec2(1615.0, 425.0) : vec2(960.0, 454.0);     // (with the map: the right panel, in place of the BC views)
     vec2 gq = p - gc;
     gq.x += gq.y * 0.3;
-    float gd = max(abs(gq.x) - 86.0, abs(gq.y) - 36.0);
+    float gd = max(abs(gq.x) - 86.0, abs(gq.y) - 30.0);
     c = over(vec4(0.14, 0.0, 0.1, 0.85 * cov(gd)), c);
     c = neon(abs(gd), 1.0, c);
     // the map's window
@@ -1906,13 +1919,13 @@ void main() {
         float hd = len64(max(hq, 0.0)) + min(max(hq.x, hq.y), 0.0) - 24.0;
         c.a *= clamp(hd + 0.5, 0.0, 1.0);
     }
-    c = band(aR, u_rb, u_rev, u_zone.y, u_redFrom, u_hy, c);
-    c = band(aS, u_sb, u_speed, u_zone.x, 2.0, vec4(0.0), c);
+    c = band(aR, u_rb, u_rev, u_zone.y, u_redFrom, u_hy, vec3(7.0, u_rb.y + 5.0, u_rb.y + 17.0), u_peak, c);
+    c = band(aS, u_sb, u_speed, 0.0, u_szone, vec4(0.0), vec3(8.0, u_sb.y + 5.0, u_sb.y + 17.0), 0.0, c);
     gl_FragColor = c;
 }
 `;
 
-// The Shak theme's four bottom bars, their own layer over the bottom strip (the backdrop alone would pass the car's shader size): fuel and battery
+// The Shak theme's four bottom bars (and the left panel's live energy), their own layer over the bottom strip (the backdrop alone would pass the car's shader size): fuel and battery
 // at the sides, oil and coolant in the middle tray. Bars: [left x, middle y, width] in panel px, u_box the layer's place on the panel.
 const EVOBARS = `#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
@@ -1922,20 +1935,26 @@ precision mediump float;
 varying vec2 v_uv;
 uniform vec4 u_box;       // the layer on the panel: x, y, w, h
 uniform vec4 u_lv;        // the bars' levels 0..1: fuel, battery, oil, coolant
-uniform vec2 u_low;       // 1 while the fuel / the battery is in reserve
-uniform vec2 u_tone;      // the oil's and the coolant's tone: 0 cold, 1 warm, 2 hot
 uniform vec3 u_bF;
 uniform vec3 u_bB;
 uniform vec3 u_bO;
 uniform vec3 u_bC;
+uniform vec3 u_bP;        // the left panel's live energy (the Shak theme without the map): the electric power and the recuperation
+uniform vec3 u_bR;
+uniform vec2 u_lv2;       // their levels 0..1
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
 vec4 over(vec4 top, vec4 under) {
     float k = under.a * (1.0 - top.a), a = top.a + k;
     return vec4((top.rgb * top.a + under.rgb * k) / max(a, 0.0001), a);
 }
-// a bar of slanted blocks along the bottom, as on the picture: 22 px blocks leaning right, 6 px apart, lit to the level in a gradient from
-// c0 (its left) to c1 (its right), the top half a little lighter; the blocks above the level dark with a thin outline in their colour
-vec4 bar(vec2 p, vec3 b, float lv, vec3 c0, vec3 c1, vec4 c) {
+// a bar of slanted blocks along the bottom, as on the picture: 22 px blocks leaning right, 6 px apart, lit to the level, each block in the blue ->
+// white -> red of the bands, left to right (owner, 23 Nov 2026: "bleu blanc rouge dégradé dans tous les petits carrés"); with "low" 1 (the fuel,
+// the battery) it fills from the right, so the red blocks are the last ones left; the top half a little lighter; the blocks above the level dark with a thin outline
+vec3 bwr(float t) {
+    vec3 a = mix(vec3(0.15, 0.42, 1.0), vec3(0.94, 0.96, 1.0), smoothstep(0.0, 0.45, t));
+    return mix(a, vec3(1.0, 0.16, 0.2), smoothstep(0.55, 1.0, t));
+}
+vec4 bar(vec2 p, vec3 b, float lv, float low, vec4 c) {
     float dy = p.y - b.y;
     float x = p.x - b.x + dy * 0.55;
     if (x < -6.0 || x > b.z + 6.0 || abs(dy) > 14.0) return c;
@@ -1944,32 +1963,97 @@ vec4 bar(vec2 p, vec3 b, float lv, vec3 c0, vec3 c1, vec4 c) {
     float inb = step(0.0, k) * step(k, n - 1.0);
     float body = cov(abs(m - 11.0) - 11.0) * cov(abs(dy) - 7.0) * inb;
     float tk = (k + 0.5) / n;
-    float on = step(k + 0.5, lv * n + 0.001) * step(0.01, lv);
-    vec3 col = mix(c0, c1, tk);
+    // a level that empties ("low" 1: the fuel, a charge) fills from the right: its last blocks, the red ones, are what is left when little is
+    // (owner, 23 Nov 2026: "vraiment bleu blanc rouge, pas rouge blanc bleu", and red when there is little left)
+    float kk = low > 0.5 ? n - 1.0 - k : k;
+    float on = step(kk + 0.5, lv * n + 0.001) * step(0.01, lv);
+    vec3 col = bwr(tk);
     c = over(vec4(col, on * 0.4 * exp(-abs(dy) / 5.0) * inb * step(-3.0, m) * step(m, 25.0)), c);
-    vec3 lit = min(col * (dy < -1.0 ? 1.18 : 0.92) + (dy < -1.0 ? 0.08 : 0.0), vec3(1.0));
+    vec3 lit = min(col * (dy < -1.0 ? 1.12 : 0.92) + (dy < -1.0 ? 0.06 : 0.0), vec3(1.0));
     float rim = body * (1.0 - cov(abs(m - 11.0) - 9.8) * cov(abs(dy) - 5.8));
     c = over(vec4(on > 0.5 ? lit : vec3(0.07, 0.07, 0.1), body), c);
     c = over(vec4(col * 0.75, (1.0 - on) * 0.85 * rim), c);
     return c;
 }
-vec3 tone(float t) { return t < 0.5 ? vec3(0.24, 0.55, 1.0) : (t < 1.5 ? vec3(0.2, 0.86, 0.5) : vec3(1.0, 0.16, 0.2)); }
 
 void main() {
     vec2 p = v_uv * u_box.zw + u_box.xy;
     vec4 c = vec4(0.0);
-    // fuel: blue to white as on the picture; the battery: the hybrid blue to cyan; both red in reserve. Oil and coolant in their tone.
-    vec3 fr = vec3(1.0, 0.16, 0.2);
-    c = bar(p, u_bF, u_lv.x, mix(vec3(0.85, 0.92, 1.0), fr, u_low.x), mix(vec3(0.22, 0.48, 1.0), fr, u_low.x), c);
-    c = bar(p, u_bO, u_lv.z, tone(u_tone.x) * 0.8, tone(u_tone.x), c);
-    c = bar(p, u_bC, u_lv.w, tone(u_tone.y) * 0.8, tone(u_tone.y), c);
-    c = bar(p, u_bB, u_lv.y, mix(vec3(0.2, 0.55, 1.0), fr, u_low.y), mix(vec3(0.45, 0.9, 1.0), fr, u_low.y), c);
+    c = bar(p, u_bF, u_lv.x, 1.0, c);      // fuel: red at the empty end
+    c = bar(p, u_bO, u_lv.z, 0.0, c);      // oil and coolant: blue cold, red hot
+    c = bar(p, u_bC, u_lv.w, 0.0, c);
+    c = bar(p, u_bB, u_lv.y, 1.0, c);      // battery: red at the empty end
+    c = bar(p, u_bP, u_lv2.x, 0.0, c);     // the live energy
+    c = bar(p, u_bR, u_lv2.y, 0.0, c);
+    gl_FragColor = c;
+}
+`;
+
+// The Shak theme's views (the right panel): up to four bars of slanted blocks, the same as the bottom row's, one under each row of the view
+// (owner, 23 Nov 2026: "inspire-toi du thème actuel, pas des vues des autres thèmes : la barre comme l'autonomie"). Rows: u_ry their middle y
+// (0 = none), u_lv their levels 0..1 (each block in the bands' blue -> white -> red); u_bx the bars' left and right x.
+const EVBARS = `#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 v_uv;
+uniform vec4 u_box;
+uniform vec2 u_bx;
+uniform vec4 u_ry;
+uniform vec4 u_lv;
+uniform float u_pitch;    // a block and its gap, px (28; the drive settings' three levels: three wide blocks)
+uniform vec4 u_lo;        // 1: red at the bar's empty end (a charge, a fuel level), 0: blue -> white -> red as it fills
+float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
+vec4 over(vec4 top, vec4 under) {
+    float k = under.a * (1.0 - top.a), a = top.a + k;
+    return vec4((top.rgb * top.a + under.rgb * k) / max(a, 0.0001), a);
+}
+// a bar of slanted blocks along the bottom, as on the picture: 22 px blocks leaning right, 6 px apart, lit to the level, each block in the blue ->
+// white -> red of the bands, left to right (owner, 23 Nov 2026: "bleu blanc rouge dégradé dans tous les petits carrés"); with "low" 1 (the fuel,
+// the battery) it fills from the right, so the red blocks are the last ones left; the top half a little lighter; the blocks above the level dark with a thin outline
+vec3 bwr(float t) {
+    vec3 a = mix(vec3(0.15, 0.42, 1.0), vec3(0.94, 0.96, 1.0), smoothstep(0.0, 0.45, t));
+    return mix(a, vec3(1.0, 0.16, 0.2), smoothstep(0.55, 1.0, t));
+}
+vec4 bar(vec2 p, vec3 b, float lv, float low, vec4 c) {
+    float dy = p.y - b.y;
+    float x = p.x - b.x + dy * 0.55;
+    if (x < -6.0 || x > b.z + 6.0 || abs(dy) > 14.0) return c;
+    float n = floor((b.z + 6.0) / u_pitch);
+    float k = floor(x / u_pitch), m = x - k * u_pitch, hb = (u_pitch - 6.0) * 0.5;
+    float inb = step(0.0, k) * step(k, n - 1.0);
+    float body = cov(abs(m - hb) - hb) * cov(abs(dy) - 7.0) * inb;
+    float tk = (k + 0.5) / n;
+    // a level that empties ("low" 1: the fuel, a charge) fills from the right: its last blocks, the red ones, are what is left when little is
+    // (owner, 23 Nov 2026: "vraiment bleu blanc rouge, pas rouge blanc bleu", and red when there is little left)
+    float kk = low > 0.5 ? n - 1.0 - k : k;
+    float on = step(kk + 0.5, lv * n + 0.001) * step(0.01, lv);
+    vec3 col = bwr(tk);
+    c = over(vec4(col, on * 0.4 * exp(-abs(dy) / 5.0) * inb * step(-3.0, m) * step(m, u_pitch - 3.0)), c);
+    vec3 lit = min(col * (dy < -1.0 ? 1.12 : 0.92) + (dy < -1.0 ? 0.06 : 0.0), vec3(1.0));
+    float rim = body * (1.0 - cov(abs(m - hb) - (hb - 1.2)) * cov(abs(dy) - 5.8));
+    c = over(vec4(on > 0.5 ? lit : vec3(0.07, 0.07, 0.1), body), c);
+    c = over(vec4(col * 0.75, (1.0 - on) * 0.85 * rim), c);
+    return c;
+}
+vec4 row(vec2 p, float y, float lv, float lo, vec4 c) {
+    if (y <= 0.0 || abs(p.y - y) > 14.0) return c;
+    return bar(p, vec3(u_bx.x, y, u_bx.y - u_bx.x), lv, lo, c);
+}
+void main() {
+    vec2 p = v_uv * u_box.zw + u_box.xy;
+    vec4 c = vec4(0.0);
+    c = row(p, u_ry.x, u_lv.x, u_lo.x, c);
+    c = row(p, u_ry.y, u_lv.y, u_lo.y, c);
+    c = row(p, u_ry.z, u_lv.z, u_lo.z, c);
+    c = row(p, u_ry.w, u_lv.w, u_lo.w, c);
     gl_FragColor = c;
 }
 `;
 
 // The Shak shift light: a row of slanted pills (u_n each side of a centre one, lit from the outer ends in, as the stock one;
-// the centre one last), coloured blue on the left through white to pink on the right, every pill red while it flashes. The same uniforms as
+// the centre one last), coloured blue on the left through white to red on the right, every pill red while it flashes. The same uniforms as
 // SHIFTLIGHT (hud.js picks this one for a "shiftlight" widget with "style": "pills").
 const SHIFTPILLS = `precision mediump float;
 varying vec2 v_uv;
@@ -2001,8 +2085,8 @@ void main() {
     bool every = u_flash > 0.5;
     bool on = every || side < u_lit - 0.5;
     float t = k / (m - 1.0);
-    vec3 col = mix(vec3(0.2, 0.5, 1.0), vec3(0.9, 0.94, 1.0), smoothstep(0.0, 0.5, t));
-    col = mix(col, vec3(1.0, 0.3, 0.74), smoothstep(0.5, 1.0, t));
+    vec3 col = mix(vec3(0.15, 0.42, 1.0), vec3(0.94, 0.96, 1.0), smoothstep(0.0, 0.42, t));      // blue, white, red
+    col = mix(col, vec3(1.0, 0.16, 0.2), smoothstep(0.58, 1.0, t));
     if (every) col = u_red;
     float core = clamp(0.5 - d, 0.0, 1.0);
     float glow = on ? 0.5 * exp(-max(d, 0.0) / 4.0) : 0.0;
@@ -2568,5 +2652,5 @@ function hardened(src, highp) {
 // matrices wherever a shader mentions them. The views' drawings named their bars' levels "u_v" (a vec4): on the car RAMSES then refused the
 // whole effect ("effect did not compile", owner's photo of 21 Nov 2026) while the bench drew it. Renamed u_lvl; tools/test_shader_names.js keeps watch.
 const VIEW_SHADERS = { mpanel: true, mblades: true, sring: true, nline: true, vcard: true, mstyle: true };   // (high precision where the GPU has it)
-module.exports = { mblades: MBLADES, nline: NLINE, sring: SRING, vcard: VCARD, slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, mpanel: MPANEL, navi: NAVI, evo: EVO, evobars: EVOBARS, shiftpills: SHIFTPILLS, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, accented, ACCENT_LITERALS };
+module.exports = { mblades: MBLADES, nline: NLINE, sring: SRING, vcard: VCARD, slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, mpanel: MPANEL, navi: NAVI, evo: EVO, evobars: EVOBARS, evbars: EVBARS, shiftpills: SHIFTPILLS, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, accented, ACCENT_LITERALS };
 Object.keys(module.exports).forEach((k) => { if (typeof module.exports[k] === 'string') module.exports[k] = hardened(module.exports[k], VIEW_SHADERS[k] === true); });

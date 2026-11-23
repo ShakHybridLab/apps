@@ -171,6 +171,7 @@
         0
       ],
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "sheet": "s1"
@@ -192,6 +193,7 @@
         0
       ],
       "toggle": "mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "sheet": "s1"
@@ -213,6 +215,7 @@
         1
       ],
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "sheet": "s1"
@@ -234,6 +237,7 @@
         1
       ],
       "toggle": "mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "sheet": "s1"
@@ -255,6 +259,7 @@
         2
       ],
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "sheet": "s1"
@@ -276,6 +281,7 @@
         2
       ],
       "toggle": "mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "sheet": "s1"
@@ -297,6 +303,7 @@
         3
       ],
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "sheet": "s1"
@@ -318,6 +325,7 @@
         3
       ],
       "toggle": "mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "sheet": "s1"
@@ -339,6 +347,7 @@
         4
       ],
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "grow": [
@@ -366,6 +375,7 @@
         4
       ],
       "toggle": "mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "grow": [
@@ -393,6 +403,7 @@
         5
       ],
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "grow": [
@@ -420,6 +431,7 @@
         5
       ],
       "toggle": "mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "grow": [
@@ -447,6 +459,7 @@
         6
       ],
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "grow": [
@@ -474,6 +487,7 @@
         6
       ],
       "toggle": "mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "grow": [
@@ -501,6 +515,7 @@
         7
       ],
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "grow": [
@@ -528,6 +543,7 @@
         7
       ],
       "toggle": "mapUp",
+      "zoomAlways": true,
       "nearFont": "m_num_z",
       "nearMid": "m_num_m",
       "grow": [
@@ -551,6 +567,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         0
@@ -580,6 +597,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         1
@@ -609,6 +627,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         2
@@ -638,6 +657,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         3
@@ -667,6 +687,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         4
@@ -696,6 +717,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         5
@@ -725,6 +747,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         6
@@ -754,6 +777,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "!mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         7
@@ -783,6 +807,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         0
@@ -812,6 +837,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         1
@@ -841,6 +867,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         2
@@ -870,6 +897,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         3
@@ -899,6 +927,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         4
@@ -928,6 +957,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         5
@@ -957,6 +987,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         6
@@ -986,6 +1017,7 @@
       "color": "fg",
       "align": "center",
       "toggle": "mapUp",
+      "zoomAlways": true,
       "near": [
         "rpm",
         7
