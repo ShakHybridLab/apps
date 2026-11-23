@@ -769,7 +769,7 @@ class Page {
     settingRows(cv, bottom, title, list) {
         // the engine's status keeps two lines of its own under the rows: on the car it was drawn over the last row and could not be read on a
         // photo (20 Nov 2026), when it is the one thing that tells why a layer is not shown
-        const full = bottom; bottom -= 44;
+        const full = bottom; bottom -= 64;      // (three lines since 23 Nov 2026: the last moments the theme went must fit)
         label(cv, CX, 70, title);
         const keys = list.filter((k) => this.item(k));
         const colW = (CW - 24) / 2, per = Math.ceil(keys.length / 2);
@@ -784,9 +784,15 @@ class Page {
             else this.pickRow(cv, x, y, colW, s.label, k, undefined, rh);
         });
         // what the engine says it is doing (layers, pixel memory, why nothing shows): for checking on the car
-        const st = this.fr ? fr.tr(String(this.hud.lastStatus || '')) : String(this.hud.lastStatus || ''), cut = st.length > 120 ? st.lastIndexOf(' ', 120) : -1;
-        cv.text(cut > 0 ? st.slice(0, cut) : st, CX, full - 26, 15, C.text, { literal: true });
-        if (cut > 0) cv.text(st.slice(cut + 1, cut + 1 + 130), CX, full - 6, 15, C.text, { literal: true });
+        const st = this.fr ? fr.tr(String(this.hud.lastStatus || '')) : String(this.hud.lastStatus || '');
+        const lines = [];
+        let rest = st;
+        while (rest && lines.length < 3) {
+            const cut = rest.length > 125 ? rest.lastIndexOf(' ', 125) : -1;
+            lines.push(cut > 0 ? rest.slice(0, cut) : rest.slice(0, 125));
+            rest = cut > 0 ? rest.slice(cut + 1) : rest.slice(125);
+        }
+        lines.forEach((l, i) => cv.text(l, CX, full - 46 + i * 20, 15, C.text, { literal: true }));
     }
 
     /* ---------- rows ---------- */

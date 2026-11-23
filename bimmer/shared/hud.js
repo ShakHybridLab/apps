@@ -1138,7 +1138,9 @@ class HudApp {
             if (name !== this.target) return;
             const was = this.targetState;
             this.targetState = { state, holder, reason };
-            if (was && was.state !== state) this._gap('target ' + state + (holder ? ' (' + holder + ')' : '') + (reason ? ': ' + reason : '') + tag);
+            // (only when the cluster is taken from us: the way back to "shown" said nothing of what had happened, the owner's photo of 23 Nov 2026,
+            // "dernier trou 21:49 (cible shown (us) [connexion 2])")
+            if (was && was.state === 'shown' && state !== 'shown') this._gap('target ' + state + (holder ? ' (' + holder + ')' : '') + (reason ? ': ' + reason : '') + tag);
             this.log.info('target ' + name + tag + ' ' + state + (holder ? ' (holder ' + holder + ')' : '') + (reason ? ': ' + reason : ''));
             this._statusSoon();
         });
@@ -1768,8 +1770,11 @@ class HudApp {
 
     /** The last moment the theme may have gone, for the status line ('' when none in the last 12 hours). */
     _lastGap() {
-        const g = this.gaps[this.gaps.length - 1];
-        return g && Date.now() - g.t < 12 * 3600000 ? ', last gap ' + g.at + ' (' + g.why + ')' : '';
+        // the last two of the last 12 hours, newest first ("app started" left out once something else has happened since)
+        const recent = this.gaps.filter((g) => Date.now() - g.t < 12 * 3600000);
+        const real = recent.filter((g) => g.why !== 'app started');
+        const two = (real.length ? real : recent).slice(-2).reverse();
+        return two.map((g) => ', last gap ' + g.at + ' (' + g.why + ')').join('');
     }
 
     statusText() {

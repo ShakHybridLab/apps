@@ -62,9 +62,9 @@ const BACKLOG_MAX = 16 * 1024 * 1024;
  * uniform waits in memory while the socket is full (0.21.64), the backlog never reached BACKLOG_MAX any more: a service that stopped reading
  * left the cluster frozen for good (the owner's photos, 22 Nov 2026: R and 3 km/h shown in P, standing). */
 const WATCH_MS = 1000;
-const STALL_MS = 8000;
+const STALL_MS = 12000;
 const PING_MS = 3000;
-const PING_LOST_MS = 12000;
+const PING_LOST_MS = 20000;      // (12 s in 0.22.1, 20 s since 0.22.9: still a drive where it fired twice)
 /* (0.22.1, the owner, 23 Nov 2026: "un retour du compteur d'origine pendant quelques secondes, deux fois pendant un trajet". Making a connection
  * again drops its layers until they are sent anew: if the backdrop's goes, BMW's cluster shows for a few seconds. A busy service answers late
  * (its answers come after everything sent before), so a late answer alone is no reason any more: the ping must be unanswered for PING_LOST_MS
@@ -167,6 +167,7 @@ class ClusterRender extends EventEmitter {
     _watch() {
         const s = this.sock;
         if (!s || !this.connected || this.corked) { this.stallAt = 0; return; }
+        if (this._waitTarget()) { this.stallAt = 0; this.asked = []; return; }      // (see _event 'target')
         const now = Date.now();
         const n = s.bufferSize !== undefined ? s.bufferSize : s.writableLength;
         if (n < (this.lastLen || 0)) this.drainAt = now;      // bytes left our socket since the last look: the service reads
@@ -185,6 +186,14 @@ class ClusterRender extends EventEmitter {
             q.push({ kind: 'ping', t: now }); this.asked = q;
             this._send({ op: 'status' });
         }
+    }
+
+    /* A target one of our layers draws on is not shown now (BMW or another app has it): the watchdog waits. */
+    _waitTarget() {
+        const ns = this.notShown;
+        if (!ns || !Object.keys(ns).length) return false;
+        for (const l of this.layers.values()) if (l.opts && ns[l.opts.target]) return true;
+        return false;
     }
 
     _restart(why) {
@@ -209,7 +218,7 @@ class ClusterRender extends EventEmitter {
             this.helloTimer = setTimeout(() => { this.helloTimer = null; if (this.sock === sock && !this.ready) sock.destroy(); }, HELLO_MS);
             if (this.helloTimer.unref) this.helloTimer.unref();
             this._send({ op: 'hello', app: this.app, proto: PROTO });
-            this.asked = []; this.pongs = 0; this.stallAt = 0; this.stallLen = 0; this.pingAt = Date.now();
+            this.asked = []; this.pongs = 0; this.stallAt = 0; this.stallLen = 0; this.pingAt = Date.now(); this.notShown = {};
             if (!this.watchT) { this.watchT = setInterval(() => this._watch(), WATCH_MS); if (this.watchT.unref) this.watchT.unref(); }
             /* Assets first, so binds find them; binds and animations once
              * every layer and part is made. */
@@ -285,6 +294,12 @@ class ClusterRender extends EventEmitter {
         } else if (ev.ev === 'layer') {
             this.emit('layer', ev.ref, ev.state, ev.reason);
         } else if (ev.ev === 'target') {
+            // a target not shown (BMW or another app has the screen): cluster-render may well leave us unanswered then, and making the
+            // connection again would only add a gap of our own when it comes back (0.22.9, owner, 23 Nov 2026: "2 connexions figées refaites"
+            // on a drive where the stock cluster came back twice). The watchdog waits while any target is not shown.
+            this.notShown = this.notShown || {};
+            if (ev.state === 'shown') delete this.notShown[ev.target]; else this.notShown[ev.target] = true;
+            if (!this._waitTarget()) { this.asked = []; this.pingAt = Date.now(); this.stallAt = 0; }
             this.emit('target', ev.target, ev.state, ev.holder, ev.reason, ev.guide_disabled === 1);
         } else if (ev.ev === 'budget') {
             this.emit('budget', ev.cap_kb_per_s, ev.max_kb_per_s, ev.reason);

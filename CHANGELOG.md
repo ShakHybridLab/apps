@@ -2,6 +2,11 @@
 
 ## 23 novembre 2026
 
+### ShakTheme 0.22.9, ShakHUD 0.6.57 : la ligne d'état dit ce qui a pris le cluster, le chien de garde plus patient
+- **Photo de la ligne d'état (22:00)** : « 2 connexions figées refaites, dernier trou 21:49 (cible shown (us) [connexion 2]) ». Deux connexions ont été refaites par le chien de garde pendant le trajet, et le dernier trou noté était le **retour** du cluster à l'appli, pas ce qui l'avait pris.
+- Le journal note maintenant le moment où le cluster nous est **pris** (par qui et pourquoi), plus son retour ; la ligne d'état montre les **deux** derniers trous (le plus récent d'abord), sur trois lignes au lieu de deux pour qu'ils tiennent.
+- **Chien de garde** (22:34 : « même en 0.22.8 ça le fait ») : il ne refait plus de connexion pendant que l'écran qu'elle dessine n'est pas à nous (BMW ou une autre appli l'a : cluster-render peut alors ne plus répondre, et la connexion refaite ajoutait un trou de plus au retour) ; sinon il attend 20 s sans réponse (au lieu de 12) et 12 s d'envoi bloqué (au lieu de 8), toujours avec rien reçu ni sorti depuis 4 s.
+
 ### ShakTheme 0.22.8 : Waze sur le thème M, plus d'autre carte dans la fenêtre
 - **Demande du propriétaire (21:54)** : « sur le thème M, Waze bugue : des fois il change de carte, je ne sais pas laquelle, et des fois ça revient sur le cluster d'origine ».
 - **L'autre carte** : sans doute celle de BMW. Le thème M ne demandait pas à Maps on Cluster de dessiner dans sa fenêtre : la carte du téléphone restait dans la case de carte du cluster (1088 × 480) et la fenêtre du M n'en montrait que le milieu ; quand le flux du téléphone calait, cette case montrait la carte de BMW à travers la fenêtre. Maintenant le M demande sa fenêtre (comme M Blade et Shak : la carte entière y est dessinée), et dans tous les thèmes la fenêtre se ferme tout de suite pendant que le flux cale (sans refaire le thème) et se rouvre quand il revient.
