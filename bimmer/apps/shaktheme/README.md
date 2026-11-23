@@ -58,6 +58,9 @@ A diagonal speed band on the left, a big rounded window in the middle for the ma
 
 ### Shak (nouveau, 23 nov. 2026)
 
+<p align="center"><img src="../../docs/images/cluster-shak.png" width="900" alt="Thème Shak"></p>
+<p align="center"><img src="../../docs/images/cluster-shak-waze.png" width="900" alt="Thème Shak avec la fenêtre de la carte (carte de démonstration noire)"></p>
+
 Le thème du propriétaire, d'après sa photo d'un cluster de course, sans ses badges : fond noir, lignes néon magenta, chiffres en italique gras.
 
 - **En haut :** le logo **SHAK** au milieu (toujours affiché, carte ou pas), et dessous le shiftlight redessiné en **pastilles** (bleu à gauche, blanc, rose à droite ; tout rouge quand il clignote). Il garde les réglages du shiftlight d'origine (début, rouge, clignotement).

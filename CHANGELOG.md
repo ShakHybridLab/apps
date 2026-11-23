@@ -2,6 +2,10 @@
 
 ## 23 novembre 2026
 
+### ShakTheme 0.22.4 : images de tous les thèmes refaites
+- **Demande du propriétaire (11:38)** : « mets le thème en public et réactualise l'image de tous les thèmes ». Shak est proposé dans les réglages depuis 0.22.2 ; il a maintenant son image dans les README (`docs/images/cluster-shak.png`, avec la carte : `cluster-shak-waze.png`).
+- Images du dépôt refaites au banc pour Sport, M, M Blade (avec et sans carte) et Navi (panneau de limitation de 74 px, effet loupe, alerte radar), et la capture du menu des thèmes sur l'écran central (`page-cluster-themes.png`, prise avec l'émulateur du kit). L'étiquette de Shak dans le menu devient « néon · bleu blanc rouge ».
+
 ### ShakTheme 0.22.3 : le chrono 0-100 seulement après un départ arrêté
 - **Demande du propriétaire (23 nov., 11:36)** : « le chrono, il faut qu'il se déclenche seulement après un launch control : gros freinage et 1500 tr/min minimum à l'arrêt ».
 - Le chrono n'est armé que si la voiture est à l'arrêt **et** le moteur tenu à au moins 1500 tr/min (nouveau réglage « Chrono 0-100 seulement après un départ arrêté », 1500 par défaut, 0 = à chaque départ comme avant). La voiture ne donne pas à l'appli de signal de frein, mais en D elle ne peut rester à l'arrêt à ce régime que frein tenu. Si le régime retombe à l'arrêt (pied levé), il se désarme : un départ au feu rouge ne lance plus le chrono.

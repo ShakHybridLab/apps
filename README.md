@@ -7,6 +7,7 @@
 Le dépôt contient aussi **ShakHUD** (l'affichage tête haute), **ShakLimites** (la limitation d'après la carte), **RideTube** et deux applis d'essai (ShakConso, ShakMusique). Rien ici n'est officiel BMW.
 
 <p align="center"><img src="bimmer/docs/images/page-cluster-themes.png" width="900" alt="Le menu de ShakTheme sur l'écran central"></p>
+<p align="center"><img src="bimmer/docs/images/cluster-shak.png" width="900" alt="Le thème Shak"></p>
 
 > **Important : rien n'a encore été essayé dans une vraie X3 30e.** Tout a été vérifié sur un banc d'essai (rendu image par image des thèmes) et par des tests automatiques. Les points non vérifiés sont listés plus bas, honnêtement.
 

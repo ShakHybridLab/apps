@@ -15,6 +15,7 @@ Redraws the whole instrument cluster in one of five themes: **Sport**, **M**, **
 <p align="center"><img src="docs/images/cluster-m.png" width="900" alt="M theme"></p>
 <p align="center"><img src="docs/images/cluster-mblade.png" width="900" alt="M Blade theme"></p>
 <p align="center"><img src="docs/images/cluster-navi.png" width="900" alt="Navi theme"></p>
+<p align="center"><img src="docs/images/cluster-shak.png" width="900" alt="Shak theme"></p>
 
 ## Setting up
 
