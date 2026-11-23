@@ -361,6 +361,9 @@ const SPEED_IFACE = 'de.bmw.infotainment.vehicle.Vehicle2';
 const EST = { massKg: 2150, drag: 0.5, roll: 0.010, etaDrive: 0.85, etaRegen: 0.6, maxKw: 80, maxRegenKw: 60, minRegenKw: 2, speedMs: 250, accelMs: 300 };
 const SPEED_FILTER_MS = 90;      // the speed bars' own smoothing (the car sends the speed a few times a second): the bars glide, the digits stay the car's own
 const ZOOM_MS = 60;              // the scale numbers that grow or change colour re-draw this often while they ease
+// the keys of a text widget that never changes once drawn (any other key, or a {{token}}, makes it live: _create "still")
+const STILL_KEYS = { id: true, type: true, font: true, color: true, align: true, x: true, y: true, w: true, h: true, text: true, class: true, z: true,
+    sheet: true, conn: true, toggle: true, spacing: true, glow: true, color2: true, fit: true, grow: true, fixed: true, rect: true, _note: true, _comment: true };
 const TEXT_MS = 200;             // text re-draws at most 5 times a second (what BMW's own readouts do)
 const SPEED_TEXT_MS = 40;        // the speed's digits: up to 25 times a second, so a new reading (DisplayDataServer every RPM2_POLL_MS) shows at once
 const TARGET_SIZES = { hud: [800, 480], panel: [1920, 720] };
@@ -720,6 +723,7 @@ class HudApp {
         this._setupVehicleData();
         this.layouts.onChange(() => this._rebuild());
         ctx.settings.onChange((key) => this._guard('setting ' + key, () => {
+            this._setCache = null;                                 // (setting(): what was read before is stale)
             // a theme or layout picked anywhere (the page asks first, the kit's All settings list doesn't): no longer stepping aside
             if (['hudLayout', 'inHybrid', 'inSport', 'inEco', 'byMode'].indexOf(key) >= 0 && this.screen.yielded) this.screen.release();
             if (key === 'viewSel') this.viewNow = null;           // a choice made on the page wins over the button's last step
@@ -905,13 +909,20 @@ class HudApp {
             if (key === 'boostShown') return !flow && this.ctx.settings.get('showBoost') !== false;
             return key === 'power' ? !!flow : !!flow && (key === 'powerOpen') === (this.setting('mapUp') === true);
         }
+        // a saved setting: checked against the schema once, then kept until a setting changes (the gauges' loop asks for some 100 a second)
+        const cache = this._setCache || (this._setCache = new Map());
+        if (cache.has(key)) return cache.get(key);
         const s = this.ctx.settings.item(key);
         const v = this.ctx.settings.get(key);
-        if (!s) return v;
-        const ok = s.type === 'bool' ? typeof v === 'boolean'
-            : s.type === 'choice' ? (s.options || []).some((o) => o[0] === v)
-                : s.type === 'number' ? isNum(v) && (!s.steps || s.steps.indexOf(v) >= 0) : true;
-        return ok ? v : s.default;
+        let out = v;
+        if (s) {
+            const ok = s.type === 'bool' ? typeof v === 'boolean'
+                : s.type === 'choice' ? (s.options || []).some((o) => o[0] === v)
+                    : s.type === 'number' ? isNum(v) && (!s.steps || s.steps.indexOf(v) >= 0) : true;
+            out = ok ? v : s.default;
+        }
+        cache.set(key, out);
+        return out;
     }
 
     _setupVehicleData() {
@@ -2974,6 +2985,8 @@ class HudApp {
             this.placed.push({ c, ref, x: r.x, y: r.y, w: r.w, h: r.h, fixed: !!w.fixed });
         }
         const x = { w, ref, c, ci: sheet ? sheet.ci : this._connOf(w), sheet: sheet || null, last: null, lastPaint: 0, px: null };
+        // a text that never changes (no token, none of the keys that colour or zoom it): drawn once, then left out of the loop (a third of M Blade's)
+        x.still = w.type === 'text' && String(w.text || '').indexOf('{{') < 0 && Object.keys(w).every((k) => STILL_KEYS[k] === true);
         this.widgets.set(w.id, x);
         const t = this.theme;
         if (w.type === 'atext') {
@@ -3498,7 +3511,8 @@ class HudApp {
         const rpm = this._raw('rpm');
         const flashing = isNum(rpm) && rpm >= this.setting('redline') - 150;
         this.flash = flashing ? Math.floor(now / 62.5) % 2 === 0 : false;
-        this.widgets.forEach((x) => this._guard('widget ' + x.w.id, () => this._update(x, now, false)));
+        // (no closure nor name made per widget and frame: the name only when one throws)
+        for (const x of this.widgets.values()) { try { this._update(x, now, false); } catch (e) { this._fault('widget ' + x.w.id, e); } }
     }
 
     /** This drive's distance and moving time (the car's own data only; standing still doesn't count). */
@@ -3548,6 +3562,7 @@ class HudApp {
             x.last = s; x.lastPaint = now;
             x.c.uniform(x.ref, 'u_text', this._atlasCodes(x, s), { type: 'vec4' });
         } else if (w.type === 'text') {
+            if (!force && x.still && x.last !== null) return;
             if (!force && now - x.lastPaint < (w.nearFont ? ZOOM_MS : (w.rate || (w.text === '{{speed}}' ? SPEED_TEXT_MS : TEXT_MS)))) return;
             let s = w.readyHides && this._launchReady(now) ? '' : this._resolve(w.text);                              // (M Blade: the cue takes the drive mode's name's place)
             // the speed limit's number: drawn inside its ring now, on the white sign (_paintLimitSign); this box stays empty

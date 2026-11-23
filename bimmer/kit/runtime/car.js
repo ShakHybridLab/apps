@@ -117,7 +117,7 @@ class Car {
         };
         const put = (k, v, tick) => {
             if (v === null || v === undefined || (typeof v === 'number' && !isFinite(v))) return;
-            this.live[k] = v; this.lastCar = Date.now();
+            this.live[k] = v; this.lastCar = Date.now(); this._ver = (this._ver || 0) + 1;
             // learned gear while driving; nothing at a standstill - the guess can't tell P, N or D
             // there, and "N" shown in park or in D was wrong
             if (k === 'rpm' || k === 'speed') { const g = this.guess.feed(this.live.rpm, this.live.speed); if (g !== null || this.live.speed < 3) this.guessed = this.live.speed < 3 ? undefined : g; }
@@ -211,9 +211,14 @@ class Car {
     }
 
     data() {
+        // one copy for as long as nothing changed: the gauges' loop asks for it some 20 times a frame, 50 frames a second, and the copies
+        // were the biggest single cost of a frame on the bench (23 Nov 2026). The object handed out must not be written to (nobody does).
         const src = this.demoActive ? this.simData : this.live;
+        const c = this._dataCache;
+        if (c && c.src === src && c.demo === this.demoActive && c.ver === this._ver && c.guessed === this.guessed) return c.d;
         const d = Object.assign({}, src, { demo: this.demoActive });
         if (d.gear === undefined && !this.demoActive) { d.gear = this.guessed; d.gearGuessed = true; }
+        this._dataCache = { src, demo: this.demoActive, ver: this._ver, guessed: this.guessed, d };
         return d;
     }
 

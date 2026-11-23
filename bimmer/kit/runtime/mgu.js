@@ -115,7 +115,7 @@ class Settings {
         this.listeners.forEach((fn) => { try { fn(key, value); } catch (e) { log.error(e); } });
     }
     onChange(fn) { this.listeners.push(fn); }
-    item(key) { return this.schema.find((s) => s.key === key); }
+    item(key) { return (this._items || (this._items = new Map(this.schema.map((s) => [s.key, s])))).get(key); }   // (asked many times a frame)
     /** Human text for the current value of a setting. */
     display(key) {
         const s = this.item(key), v = this.values[key];
