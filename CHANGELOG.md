@@ -2,6 +2,11 @@
 
 ## 23 novembre 2026
 
+### ShakTheme 0.22.3 : le chrono 0-100 seulement après un départ arrêté
+- **Demande du propriétaire (23 nov., 11:36)** : « le chrono, il faut qu'il se déclenche seulement après un launch control : gros freinage et 1500 tr/min minimum à l'arrêt ».
+- Le chrono n'est armé que si la voiture est à l'arrêt **et** le moteur tenu à au moins 1500 tr/min (nouveau réglage « Chrono 0-100 seulement après un départ arrêté », 1500 par défaut, 0 = à chaque départ comme avant). La voiture ne donne pas à l'appli de signal de frein, mais en D elle ne peut rester à l'arrêt à ce régime que frein tenu. Si le régime retombe à l'arrêt (pied levé), il se désarme : un départ au feu rouge ne lance plus le chrono.
+- Nouveau test `tools/test_run_arm.js`.
+
 ### ShakTheme 0.22.2 : le thème Shak revient dans les réglages
 - **Reprise du thème** (le propriétaire, 09:59 : « on peut reprendre le thème Shak »). Il est de nouveau proposé dans les listes de thèmes.
 - **Comme sur la photo** : panneaux de côté chanfreinés en néon avec un fond hachuré ; 9 pastilles penchées pour le shiftlight ; plus de « /// » dans la case du rapport (demandé à 09:42) ; les vues de la touche BC remplissent tout le panneau de droite, avec des noms courts (Turbo, Huile moteur, Refroidissement, Extérieur ; Batterie, Autonomie, Puissance, Récupération) ; la bande de vitesse ne devient rouge qu'à partir de la zone de vitesse (130 km/h par défaut), le reste garde ses couleurs.

@@ -2,7 +2,11 @@
 /**
  * runs.js - the 0-60 timer (the Drag theme): 0 to 60 mph, or 0 to 100 km/h in metric units.
  *
- * Armed once the car has stood still (under 1 km/h) for half a second. The clock starts the moment the speed
+ * Armed once the car has stood still (under 1 km/h) for half a second, and, when an engine speed is asked for ("armRpm", the setting
+ * "runArmRpm", 1500 by default), only while the engine is held at it or above, standing: a launch, foot on the brake and on the throttle
+ * (the owner, 23 Nov 2026: "le chrono seulement après un launch control : gros freinage et 1500 tr/min minimum à l'arrêt"). The car gives
+ * this app no brake signal, but in D the car can only stand still at that engine speed with the brake held. Below it again, standing, it
+ * is no longer armed, so pulling away from a red light does not time. The clock starts the moment the speed
  * goes over 1 km/h and stops when it reaches the target; the finish time is interpolated between the two speed
  * samples either side of the target, so it isn't rounded to the signal's update rate. A run is dropped if the car
  * stops again or takes longer than 30 s. The best time per unit is kept in <data>/runs.json.
@@ -36,14 +40,18 @@ class Runs {
         this.onStart = null;        // called when a run starts (the Drag theme's peak boost resets)
     }
 
-    /** One speed sample (km/h, or null) at time `now` (ms); `unit` 'us' | 'metric'. */
-    update(kmh, now, unit) {
+    /** One speed sample (km/h, or null) at time `now` (ms); `unit` 'us' | 'metric'; `rpm` the engine speed and `armRpm` the one a launch
+     *  needs (0 or none: armed by standing alone). */
+    update(kmh, now, unit, rpm, armRpm) {
         if (typeof kmh !== 'number' || !isFinite(kmh)) { this.prev = null; return; }
         const target = TARGET[unit] || TARGET.us;
         if (kmh < STILL_KMH) {
             if (this.state === 'run') { this.state = 'idle'; this.log.info('0-60: run dropped (stopped)'); }
             if (this.stillSince === null) this.stillSince = now;
-            if (now - this.stillSince >= ARM_MS && this.state !== 'armed') this.state = 'armed';
+            const held = !(armRpm > 0) || (typeof rpm === 'number' && rpm >= armRpm);
+            if (now - this.stillSince >= ARM_MS && held && this.state !== 'armed') { this.state = 'armed'; this.armedAt = now; }
+            // (a little under it while armed is still the launch: the engine speed wobbles; 300 rpm under, the foot is off)
+            if (this.state === 'armed' && armRpm > 0 && !(typeof rpm === 'number' && rpm >= armRpm - 300)) this.state = 'idle';
         } else {
             this.stillSince = null;
             if (this.state === 'armed') {

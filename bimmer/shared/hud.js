@@ -3580,7 +3580,9 @@ class HudApp {
         // (a rebuild put off, see _rebuild: the gauges go on meanwhile)
         if (this.config.hideWithWaze === true && this.started && this._layoutName() !== this.activeName) { this._rebuild(); if (!this.rebuildT) return; }
         // the 0-60 timer only on the car's own data (the demo drive would set a best time)
-        if (!this.car.data().demo) this.runs.update(this.car.data().speed, now, this.setting('units') === 'us' ? 'us' : 'metric');
+        // (the setting "runArmRpm": the timer arms only at a launch, standing with the engine held at that speed; 0 = by standing alone)
+        const armRpm = this.ctx.settings.item('runArmRpm') ? this.setting('runArmRpm') : 0;
+        if (!this.car.data().demo) this.runs.update(this.car.data().speed, now, this.setting('units') === 'us' ? 'us' : 'metric', this.car.data().rpm, armRpm);
         this._trip(now);
         this._gTick(now);
         const b = this._boost();

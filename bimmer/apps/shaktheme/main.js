@@ -55,7 +55,7 @@ mgu.run({
             title: ctx.spec.title, what: 'cluster',
             look: { name: 'Themes', style: 'hero', tags: { m: 'M8 style', sport: 'Live Cockpit', mblade: 'blue card · red blade', navi: 'speed band · big map', evo: 'néon · arcs · logo SHAK' } },
             tabs: ['look', 'badge', 'map', 'alerts', 'display', 'signals', 'settings'],
-            settings: ['units', 'clock', 'timeZone', 'tankLitres', 'evRangeFull', 'reserveKm', 'reservePct', 'tyreLow', 'speedZone', 'startupSweep', 'limitRing', 'launchTimer', 'launchReady', 'launchRpm', 'accentByMode', 'iceBelow', 'evShare', 'redline', 'shiftBefore', 'coldGuard', 'showBoost', 'demo'],
+            settings: ['units', 'clock', 'timeZone', 'tankLitres', 'evRangeFull', 'reserveKm', 'reservePct', 'tyreLow', 'speedZone', 'startupSweep', 'limitRing', 'launchTimer', 'launchReady', 'launchRpm', 'runArmRpm', 'accentByMode', 'iceBelow', 'evShare', 'redline', 'shiftBefore', 'coldGuard', 'showBoost', 'demo'],
             display: ['bcViews', 'viewSel', 'gFlipLat', 'gFlipLong', 'sportTint', 'sportFacets', 'sportPower', 'stockShiftLight', 'shiftLightRed', 'shiftLightFlash', 'nightDim', 'gearWindow', 'cameraNotch'],
         }).start();
         process.on('exit', () => { try { hud.stop(); if (radar) radar.stop(); } catch (e) { /* exiting anyway */ } });

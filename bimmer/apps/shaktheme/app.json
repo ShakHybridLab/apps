@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte du téléphone, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.22.2",
+  "version": "0.22.3",
   "vendor": "custom",
   "startType": "autostart",
   "loggingId": "OAC1",
@@ -1315,6 +1315,21 @@
       "default": 2000,
       "steps": [
         0,
+        1500,
+        2000,
+        2500,
+        3000
+      ]
+    },
+    {
+      "key": "runArmRpm",
+      "label": "Chrono 0-100 seulement après un départ arrêté, moteur tenu à (frein + accélérateur ; 0 = à chaque départ)",
+      "type": "number",
+      "unit": "tr/min",
+      "default": 1500,
+      "steps": [
+        0,
+        1200,
         1500,
         2000,
         2500,
