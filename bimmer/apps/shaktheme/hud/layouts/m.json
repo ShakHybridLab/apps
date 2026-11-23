@@ -129,7 +129,8 @@
             0
           ]
         }
-      }
+      },
+      "mapPlace": true
     },
     {
       "id": "tach_left",

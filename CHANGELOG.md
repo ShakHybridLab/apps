@@ -2,6 +2,12 @@
 
 ## 23 novembre 2026
 
+### ShakTheme 0.22.8 : Waze sur le thème M, plus d'autre carte dans la fenêtre
+- **Demande du propriétaire (21:54)** : « sur le thème M, Waze bugue : des fois il change de carte, je ne sais pas laquelle, et des fois ça revient sur le cluster d'origine ».
+- **L'autre carte** : sans doute celle de BMW. Le thème M ne demandait pas à Maps on Cluster de dessiner dans sa fenêtre : la carte du téléphone restait dans la case de carte du cluster (1088 × 480) et la fenêtre du M n'en montrait que le milieu ; quand le flux du téléphone calait, cette case montrait la carte de BMW à travers la fenêtre. Maintenant le M demande sa fenêtre (comme M Blade et Shak : la carte entière y est dessinée), et dans tous les thèmes la fenêtre se ferme tout de suite pendant que le flux cale (sans refaire le thème) et se rouvre quand il revient.
+- **Le cluster d'origine** : un flux qui cale plus de 10 s fait refermer la fenêtre et refaire le thème, l'un des moments où le compteur d'origine peut se voir. La ligne d'état garde le dernier (« dernier trou … ») : une photo dira lequel.
+- Nouveau test `tools/test_map_stall.js`.
+
 ### ShakTheme 0.22.7 : Shak, carte plus basse et mode de conduite dans le cadre
 - **Photo de la voiture (19:12)** : « Electric Individual dépasse toujours, et Waze, trouve un moyen de descendre un tout petit peu plus ».
 - **Mode de conduite** : la case finit avant le coin du contour néon (elle le traversait) ; le chrono 0-100 se décale à sa gauche.

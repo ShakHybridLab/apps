@@ -72,7 +72,8 @@ check('M Blade asks for it, with a window in the middle of Waze on cluster\'s ow
     assert(Math.abs(w.x + w.w / 2 - 960) <= 2, 'the window is not centred on x 960: ' + JSON.stringify(w));
     assert(w.x >= 416 && w.y >= 120 && w.x + w.w <= 1504 && w.y + w.h <= 600, 'the window leaves the slot where Waze on cluster draws its map by default: a Waze that ignores our window would show a sliver of its map');
     assert(w.x > 90, 'the window must clear the hood\'s limit at the left');
-    ['sport', 'm'].forEach((n) => {
+    // (M asks too since 0.22.8: the owner saw another map, BMW's own, in its window: Waze now draws its map right in it)
+    ['sport'].forEach((n) => {
         const p = path.join(ROOT, 'apps/shaktheme/hud/layouts/' + n + '.json');
         if (!fs.existsSync(p)) return;
         assert(!L(n).widgets.some((x) => x.mapPlace), n + ' must not move the map');

@@ -688,7 +688,7 @@ class HudApp {
             if (up && !this.wazeWasUp) this.mapOff = this.setting('mapByBc') === true;
             else if (!up && this.mapOff) this.mapOff = false;
             this.wazeWasUp = up;
-            if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuild(); else this._status();
+            if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuild(); else { this._holeLive(); this._status(); }
         })) : null;
         this.viewNow = null;             // the view the steering wheel's button stepped to (null: the setting "viewSel" decides), see nextView()
         this.mapOff = false;             // the BC button hid the Waze map (nextView): the theme shows without its window until the next press or the map goes
@@ -2673,6 +2673,7 @@ class HudApp {
         this.refused = null;
         clearTimeout(this.statusAskT); this.statusAskT = null;
         this.car.setRedline(this.setting('redline'));
+        this.holeShut = this._mapStalled();      // (the window built as the stream is now: _hole)
         const name = this._layoutName();
         if (name === 'off' && this.activeName && this.activeName !== 'off') {
             const why = this.screen && this.screen.yielded ? (this.screen.otherName || 'another app') + ' took the screen'
@@ -3162,7 +3163,7 @@ class HudApp {
             c.uniform(ref, 'u_ra', rp[0]); c.uniform(ref, 'u_rb', rp[1]);
             c.uniform(ref, 'u_sa', sp[0]); c.uniform(ref, 'u_sb', sp[1]);
             c.uniform(ref, 'u_va', vp[0]); c.uniform(ref, 'u_vb', vp[1]);
-            c.uniform(ref, 'u_hole', [w.hole && (w.holeWhen === true || (w.holeWhen && this.setting(w.holeWhen) === true)) ? 1 : 0]);
+            c.uniform(ref, 'u_hole', [this._hole(w)[2] > 0 ? 1 : 0]);
             c.uniform(ref, 'u_hr', w.hole || [0, 0, 0, 0]);
             c.uniform(ref, 'u_mag', [1.0, 0.18, 0.76]); c.uniform(ref, 'u_peak', [0]);
             c.uniform(ref, 'u_rev', [0]); c.uniform(ref, 'u_speed', [0]);
@@ -3505,7 +3506,31 @@ class HudApp {
     }
 
     /** A widget's map hole in layer px, inset by "holeInset" (6) a side, while "holeWhen" is on; else no hole. */
+    /** The phone's map is up in the theme but its stream has stalled (Maps on Cluster says "frozen", "idle"...): the window is closed, so
+     *  what lies under it, BMW's own map in the cluster's map slot, does not show through (owner, 23 Nov 2026: "sur le thème M, des fois il
+     *  change de carte, je ne sais pas laquelle"); the layout stays as it is, no rebuild. */
+    _mapStalled() {
+        return !!(this.waze && this.waze.up === true && this._wazeMapOn() && !(this.waze.st && this.waze.st.state === 'showing'));
+    }
+
+    /** Open or close the map window at once (uniforms only) when the stream stalls or comes back. */
+    _holeLive() {
+        const shut = this._mapStalled();
+        if (shut === this.holeShut) return;
+        this.holeShut = shut;
+        this.log.info('map window ' + (shut ? 'closed: the phone\'s map stalled' : 'open again'));
+        for (const x of this.widgets.values()) {
+            const w = x.w;
+            if (x.follower || !x.ref || w.holeWhen !== 'mapUp' || !w.hole) continue;
+            try {
+                if (w.type === 'evo') x.c.uniform(x.ref, 'u_hole', [this._hole(w)[2] > 0 ? 1 : 0]);
+                else x.c.uniform(x.ref, 'u_hole', this._hole(w));
+            } catch (e) { /* the layer is going: the next rebuild sets it */ }
+        }
+    }
+
     _hole(w) {
+        if (w.holeWhen === 'mapUp' && this._mapStalled()) return [0, 0, 0, 0];
         const on = w.holeWhen === true || (w.holeWhen && this.setting(w.holeWhen) === true);   // true: always cut
         const h = w.hole && on ? w.hole : null;
         if (!h) return [0, 0, 0, 0];
