@@ -434,7 +434,7 @@ def navi():
     # digits and was cut at its left edge in a 70 wide box (QA, Nov 14 2026); x stays right of the hood at the far left
     for i in range(8):
         y = 612 - 47 * i
-        mg = 24 if i < 7 else 14          # the top one (250) is the widest and sits at the far left, so it moves 10 px nearer the band
+        mg = 30 if i < 7 else 14          # the top one (250) is the widest and sits at the far left, so it moves nearer the band (30: room for the magnifier, 23 Nov 2026)
         xl = 1.5 + (y - 179.7) / 0.932
         W.append(text('spd%d' % i, max(10, round(xl - mg - 88)), round(y - 19), 88, 38, '{{spd:%d}}' % i, 'm_num', align='right',
                       near=['speed', i], toggle='!mapUp'))
@@ -531,6 +531,15 @@ if __name__ == '__main__':
     for name, L in (('mblade', mblade()), ('navi', navi())):
         shrink_limits(L['widgets'])                        # the speed limit signs at their size of 23 Nov 2026
         zoomify(name, L['widgets'])                        # the scale numbers that grow in their zone: bigger boxes (tools/zoom_labels.py)
+        if name == 'navi':
+            # Navi's top speed number (250) sits at the panel's left edge (the hood), against the band: no room to grow, it only turns red
+            # (bench, 23 Nov 2026: grown, its 0 touched the band)
+            for w in L['widgets']:
+                if w['id'] in ('spd7', 'o_spd7') and w.get('nearFont'):
+                    w['nearFont'] = w['nearMid'] = w['font']
+                    g = w.pop('grow', None)
+                    if g:
+                        w['x'] += g[0]; w['y'] += g[1]; w['w'] -= g[0] + g[2]; w['h'] -= g[1] + g[3]
         # M Blade: what gives way to a view (the speed scale, the fuel strip's marks, the limit...) keeps sheets apart from what stays (the gear,
         # the speed, the clock): opening a view then leaves those sheets as they are, and the theme does not blink (owner, 20 Nov 2026)
         apart = add_sensor_bars.V_GIVE + ['cool_icon', 'cool', 'cool_unit'] if name == 'mblade' else ()

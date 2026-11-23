@@ -289,7 +289,9 @@ check('every zoomed scale number has its middle step, between the normal and the
         zoomed.forEach((w) => {
             assert(w.nearMid && w.near && w.font, id + ' ' + w.id);
             const a = font(w.font).cellHeight, b = font(w.nearMid).cellHeight, c = font(w.nearFont).cellHeight;
-            assert(a <= b && b <= c && a < c, id + ' ' + w.id + ': ' + [a, b, c]);
+            // (Navi's 250, at the hood against the band, only turns red: no room to grow, 23 Nov 2026)
+            const still = id === 'navi' && /^(o_)?spd7$/.test(w.id);
+            assert(a <= b && b <= c && (a < c || still), id + ' ' + w.id + ': ' + [a, b, c]);
             const g = w.grow || [0, 0, 0, 0];
             assert(w.h - g[1] - g[3] >= a - 2 && w.h >= c, id + ' ' + w.id + ' box ' + w.h + ' for ' + c);
         });

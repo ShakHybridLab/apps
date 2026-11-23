@@ -2,6 +2,11 @@
 
 ## 23 novembre 2026
 
+### ShakTheme 0.22.5 : vérification de l'effet loupe dans tous les thèmes
+- **Demande du propriétaire (11:58)** : « regarde si tout est bien aligné, avec l'effet loupe que ça ne touche pas quelque part, qu'il n'y ait pas de bug et que tout soit stable ».
+- Vérifié pour les cinq thèmes : aucun chiffre grossi ne recouvre un autre texte ou une icône (contrôle de toutes les boîtes, carte ouverte et fermée), captures au banc à 256 km/h et 6150 tr/min, aucune erreur dans le journal du banc, toute la suite de tests passe (sauf les trois échecs connus).
+- **Corrigé sur Navi** : grossis, les chiffres de la vitesse touchaient presque la bande en diagonale ; ils sont 6 px plus à gauche. Le 250, coincé entre le bord du capot et la bande, ne grossit plus (il passe seulement au rouge), il touchait la bande.
+
 ### ShakTheme 0.22.4 : images de tous les thèmes refaites
 - **Demande du propriétaire (11:38)** : « mets le thème en public et réactualise l'image de tous les thèmes ». Shak est proposé dans les réglages depuis 0.22.2 ; il a maintenant son image dans les README (`docs/images/cluster-shak.png`, avec la carte : `cluster-shak-waze.png`).
 - Images du dépôt refaites au banc pour Sport, M, M Blade (avec et sans carte) et Navi (panneau de limitation de 74 px, effet loupe, alerte radar), et la capture du menu des thèmes sur l'écran central (`page-cluster-themes.png`, prise avec l'émulateur du kit). L'étiquette de Shak dans le menu devient « néon · bleu blanc rouge ».
