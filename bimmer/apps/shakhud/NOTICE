@@ -16,8 +16,10 @@ The app's own code is MIT (the LICENSE in the repository). Besides it, the app s
    Project Authors (https://github.com/theleagueof/orbitron), with Reserved Font Name "Orbitron", SIL Open Font License 1.1
    (bimmer/tools/fonts-src/Orbitron-OFL.txt in the repository).
 
-4. The shared engine (hud.js and the files next to it) is HUD Widgets' and ShakTheme's, with the notices of
-   apps/idrive_hud_widgets/NOTICE (the pixel-diff text update after PenguinDukeYDAuto/idrive7-EVAHUD, MIT).
+4. The shared engine (hud.js and the files next to it) is ShakTheme's: its pixel-diff text update (changes(): only the rectangle
+   that changed goes up the link) is adapted from PenguinDukeYDAuto/idrive7-EVAHUD (shared/eva_canvas.js): MIT, Copyright (c) 2026
+   DukeAPenguin, https://github.com/PenguinDukeYDAuto/idrive7-EVAHUD; the atlas-text shader in shaders.js is after js/showcase.js of
+   https://github.com/robertnisipeanu/idrive-apps (native/cluster-render): Mozilla Public License 2.0, Copyright (C) 2026 Robert Nisipeanu.
 
 The M Style rev counter is an original drawing; it copies no BMW or M logo, lettering or artwork.
 

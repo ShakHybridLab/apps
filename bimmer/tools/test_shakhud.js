@@ -18,7 +18,7 @@ const L = read('apps/shakhud/hud/layouts/mstyle.json');
 check('the app is complete: every shared file exists, ids are its own, the layout and its picture ship', () => {
     app.shared.forEach((f) => assert(fs.existsSync(path.join(root, 'shared', f)), 'shared/' + f + ' missing'));
     assert.strictEqual(app.id, 'shakhud'); assert.strictEqual(app.title, 'ShakHUD');
-    const ids = ['idrive_hud_widgets', 'shaktheme', 'ridetube_cluster'].map((a) => read('apps/' + a + '/app.json'));
+    const ids = ['shaktheme', 'ridetube_cluster'].map((a) => read('apps/' + a + '/app.json'));
     ids.forEach((o) => { assert.notStrictEqual(o.id, app.id); assert.notStrictEqual(o.loggingId, app.loggingId, 'same loggingId as ' + o.id); });
     assert.strictEqual(app.config.target, 'hud');
     ['hybridRev', 'shiftLights', 'hudLayout', 'redline', 'units'].forEach((k) => assert(app.settings.some((s) => s.key === k), 'setting ' + k));

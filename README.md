@@ -4,7 +4,7 @@
 
 **ShakTheme**, par shakzer : quatre thèmes pour le cluster de l'iDrive 7 d'une **BMW X3 30e (G01, 2022)**, un hybride rechargeable. **Sport**, **M**, **M Blade** et **Navi**, avec la batterie et l'autonomie électrique, les vrais modes de conduite de la voiture, une fenêtre pour la carte Waze, des températures d'huile et de liquide qui changent de couleur, et un menu au style de l'iDrive 8.5.
 
-Le dépôt contient aussi HUD Widgets (le HUD) et les apps Cluster Centre / Cluster Info qui vont avec. Rien ici n'est officiel BMW.
+Le dépôt contient aussi **ShakHUD** (l'affichage tête haute), **ShakLimites** (la limitation d'après la carte), **RideTube** et deux applis d'essai (ShakConso, ShakMusique). Rien ici n'est officiel BMW.
 
 <p align="center"><img src="bimmer/docs/images/page-cluster-themes.png" width="900" alt="Le menu de ShakTheme sur l'écran central"></p>
 
@@ -14,8 +14,7 @@ Le dépôt contient aussi HUD Widgets (le HUD) et les apps Cluster Centre / Clus
 
 | Dossier | Apps | Licence |
 |---|---|---|
-| `bimmer/` | **ShakTheme** (4 thèmes du cluster), **HUD Widgets** (10 dispositions du HUD) | MIT (voir `LICENSES.md`) |
-| `eroobeeroo/` | **Cluster Centre** (pages de données au centre du cluster), **Cluster Info** (petit panneau sur la carte Waze) | PolyForm Noncommercial 1.0.0 (voir `LICENSES.md`) |
+| `bimmer/` | **ShakTheme** (4 thèmes du cluster), **ShakHUD** (le HUD), **ShakLimites**, **ShakConso**, **ShakMusique**, **RideTube cluster** | MIT (voir `LICENSES.md`) |
 
 À installer à côté, depuis leur propre source du Store (non copiés ici, non modifiés) :
 
@@ -49,19 +48,14 @@ Le dépôt contient aussi HUD Widgets (le HUD) et les apps Cluster Centre / Clus
 
 **Deux thèmes en plus : M Blade et Navi.** Copiés d'après la capture d'écran d'un cluster vu en ligne ; M et Sport restent tels quels. **M Blade** (refait le 14 novembre d'après la photo d'un cluster M, mesurée sur l'image) : l'échelle de vitesse en trait cyan à coudes à gauche, l'hexagone bleu en panneaux avec le **rapport (D)** en grand dans le vide central et la **vitesse en petit dessous**, avec « km/h », comme sur la photo, la grande lame de régime rouge bordée à droite avec son pied, trois barres obliques à droite (réservoir à gauche ; **huile** et **batterie haute tension** côte à côte, alignées) et quatre onglets bleus sous l'hexagone qui portent le mode de conduite. **Navi** : une bande en diagonale à gauche (la partie bleue est la vitesse, la partie **violette est le compte-tours**, avec ses repères 0 à 7), une grande fenêtre arrondie au milieu et une ligne fine en bas. **Navi** n'a **plus de rapport** (D3…) : la case noire de BMW, sur la droite, l'affiche déjà ; la vitesse prend sa place, en grand. **M Blade** garde le rapport, comme la photo : D (ou S / M selon le programme, P, R, N) en grand au milieu. Sur **Navi** : la **batterie haute tension** est une barre en bas à droite (pourcentage et autonomie électrique), le **réservoir** a sa barre avec l'autonomie, la **température d'huile** (colorée) et la température extérieure sont à droite dans l'espace libre sous la case noire du rapport BMW. Sur **M Blade** : la barre d'**huile** (échelle 50 / 100 / 150 °C, bleue en dessous de 75 °C, verte à chaud, rouge qui flashe en alerte) est collée à la barre de **batterie** (0 / 50 / 100 %) ; sur la rangée du bas, avec la même écriture, la température du **liquide de refroidissement**, celle de l'**huile** (mêmes couleurs que la barre) et l'**autonomie électrique** (sous la barre de batterie) suivent l'heure et l'autonomie du réservoir, avant la température extérieure. Dans les deux : le **shift light** est à la place de celui de BMW (en haut au centre), et le lettrage **ONE OF ONE** est centré juste dessous sur Navi (il disparaît quand la fenêtre de Waze s'ouvre, pour ne jamais gêner la carte) ; M Blade n'en a pas, il n'y avait pas la place sans toucher la carte bleue et la lame. Les deux ont la fenêtre du centre : Waze, Cluster Centre et Cluster Info s'y affichent. **Navi** (et Sport, M) : Waze on cluster dessine sa carte au centre du panneau (rectangle 1088 × 480), la fenêtre est de 852 px de large sur toute la hauteur (x 534–1386, y 120–600) et la bande de vitesse devient plus raide pour rester à gauche. **M Blade** fait comme la photo : fenêtre à gauche (561 × 422 px, x 80–641, y 167–589) et **rien derrière** ; l'hexagone est un peu plus étroit (8 %, même hauteur) et décalé vers la droite, la lame (18 px) et les deux barres (30 px) aussi, pour que la carte soit la plus grande possible sans rien serrer (l'huile, l'autonomie électrique et la température extérieure du bas suivent leurs barres), et le **réservoir devient une barre horizontale sous la carte** (pompe, 0 / 1/2 / 1) à la place de la barre oblique. Pour que la carte soit dessinée **dans** cette fenêtre, M Blade écrit `/dev/shm/cluster-info/map_window.txt` (une ligne `panel 80 167 561 422`, réécrite toutes les 500 ms tant que la carte est là, effacée sinon : `shared/map_window.js`), que Waze on cluster **0.9.107 ou plus** lit ; avec une version plus ancienne le fichier est ignoré et la carte reste au centre (x 416–1504) : règle alors son `map_rect` sur la même zone (x 80, y 167, 561 × 422). Non testé sur la voiture. Sur M Blade, les kW de la puissance de la batterie (quand eDrive Live les partage) restent sous la vitesse, carte ouverte ou non. **Compte-tours hybride (M Blade et Sport, avec eDrive Live)** : moteur thermique en marche (au-dessus de 400 tr/min), la lame (M Blade) ou l'arc rouge de droite (Sport) montre le régime comme avant ; en roulant sur la batterie seule, elle se remplit en **bleu** selon la puissance (10 kW par graduation, l'unité devient « kW x 10 ») ; en recharge ou récupération, **M Blade** remplit en **vert** le pied de la lame, sous le 0 (plein à 60 kW), et **Sport** passe tout l'arc en **vert** avec la puissance récupérée ; dans les deux, « CHARGE » s'affiche à côté de l'unité. Le **shift light** reste lié au régime moteur seul : éteint en électrique. Le thème **M** n'a pas ce compte-tours (volontairement) et **Navi** a son compte-tours dans la bande violette (hybride aussi). Sans eDrive Live, ou sur une voiture thermique, seul le régime est affiché. Seuls les kW d'eDrive Live sont utilisés (`shared/hybrid_tach.js`) ; pas testé sur la voiture.
 
-**Cluster Info et Cluster Centre.**
-- ShakTheme publie le niveau de batterie pour Cluster Info (`/dev/shm/cluster-info`) : le panneau sur la carte Waze affiche la batterie sans app supplémentaire. Cluster Info démarre avec batterie, huile, liquide de refroidissement, en °C.
+**Waze et le cluster.**
 - **Waze dans ShakTheme.** Les quatre thèmes (**Sport, M, M Blade et Navi**) ont une fenêtre pour la carte Waze (réglage « Show Waze map inside the theme » dans l'onglet Map, désactivé par défaut ; il déplace la carte de Waze on cluster sur la cible « panel »).  Par défaut, Sport Plus (thème M) et Hybrid Eco Pro (thème Sport) pointent vers des thèmes qui en ont une, et Hybrid laisse le cluster d'origine de BMW. Vérifié sur le banc d'essai avec un faux Waze, pas sur la voiture.
-- **Cluster Centre dans les thèmes (cluster, pas l'écran iDrive).** Avant, Cluster Centre se mettait en retrait dès qu'un thème couvrait le cluster, donc rien ne s'affichait. Maintenant, dans **Sport, M, M Blade et Navi**, le thème ouvre sa **fenêtre du centre**, la même que celle de la carte Waze, et Cluster Centre y affiche ses pages, réduites à la taille de cette fenêtre (M : environ 500 × 260 px, Sport : environ 850 × 460 px). Le thème l'ouvre tant que Cluster Centre est activé ; quand Waze tourne, c'est Waze qui y passe, puis les pages reviennent. Les autres thèmes n'ont pas de fenêtre : Cluster Centre s'y met en retrait. Dans le thème M, la fenêtre prend la place du grand rapport et de la vitesse, qui passent en petit en dessous, comme avec Waze. Pour garder le thème M tel quel : coupe Cluster Centre, ou désactive « Centre window for Cluster Centre / Cluster Info » dans ShakTheme (onglet Map). Réglage de Cluster Centre « When a ShakTheme theme shows » : fenêtre du thème (par défaut), se mettre en retrait, ou afficher quand même (caché sous le thème). **Vérifié sur le banc d'essai (échange thème ↔ apps, mise en page des pages dans la fenêtre), pas encore sur la voiture.**
-- **Cluster Info : sur le HUD par défaut.** Réglage « Show the panel » sur « Always on the HUD ». Avec HUD Widgets, le panneau ne se pose plus sur les indicateurs : HUD Widgets dit à Cluster Info quelle zone de la mise en page est libre (`/dev/shm/cluster-themes/hud-layout.json`) et le panneau s'y place. Les mises en page très chargées (Redline, Track, grilles de calibration) n'ont pas de place : le panneau y est caché. Avec « Where the Waze map is » (cluster), le panneau reste dans la fenêtre du thème, dans le thème M comme dans Sport.
 - **Pixels noirs ou cases BMW par-dessus un thème :** si ça arrive sur ta voiture, active « Leave BMW's bottom strip clear » dans les réglages de ShakTheme (un propriétaire de M a réglé le problème ainsi, l'auteur ne l'a pas testé lui-même). Je n'ai pas pu vérifier sur la voiture si les voyants BMW (ESP, ceinture) restent visibles par-dessus les thèmes : l'auteur d'origine le note aussi comme à vérifier.
-- Cluster Centre cède la place à la carte Waze quand Waze on cluster l'affiche (`/run/waze-on-cluster/status.json`, état `showing`), et revient tout seul à l'arrêt. Il démarre activé, véhicule « plug-in hybrid », unités métriques.
-- **Cluster Layouts** (eroobeeroo) n'est pas proposé dans le Store : il fait le même travail que ShakTheme (tout le cluster) et les deux ensemble se disputeraient l'écran. Son code reste dans `eroobeeroo/apps/cluster_layouts`.
 
 ## Installation (MGU Store)
 
 1. Ajouter la source `robertnisipeanu/idrive-apps`, installer **cluster-render** (et **Waze on cluster** si tu veux la carte Waze).
-2. Ajouter la source `ShakHybridLab/apps` (ancien nom : `shakzer/x3-hybride`, que GitHub redirige mais que le Store peut refuser), installer **ShakTheme**, **ShakHUD**, **HUD Widgets**, **Cluster Centre**, **Cluster Info** selon l'envie.
+2. Ajouter la source `ShakHybridLab/apps` (ancien nom : `shakzer/x3-hybride`, que GitHub redirige mais que le Store peut refuser), installer **ShakTheme**, **ShakHUD** et **ShakLimites** selon l'envie.
 3. Ouvrir chaque app depuis le menu des apps pour choisir les thèmes par mode de conduite.
 4. Régler « Time zone (clock) » dans ShakTheme (l'horloge de l'unité est en UTC).
 
@@ -80,15 +74,14 @@ Le Store compile les apps sur la voiture depuis ce dépôt (`mgu-repo.json`, un 
 ## Vérifier
 
 ```sh
-cd bimmer && node tools/test_cluster_info.js
-cd eroobeeroo && for t in engine app centre data finder logs providers shared signals yield; do node tools/test_$t.js; done
+cd bimmer && for t in tools/test_*.js; do node $t; done
 ```
 
 Le banc d'essai de `bimmer/` (`node bench/server.js shaktheme`) rend les thèmes dans un navigateur.
 
 ## Licences
 
-Chaque dossier garde sa licence (voir `LICENSES.md`, qui garde aussi les mentions que ces licences exigent) : `bimmer/` MIT ; `eroobeeroo/` PolyForm Noncommercial 1.0.0 (usage non commercial uniquement, ni vente ni installation payante), avec son crédit signé laissé intact ; le client `cluster_render_client.js` est sous MPL-2.0. Les ajouts et changements de ShakTheme sont de shakzer, sous MIT. Modifications : voir `CHANGELOG.md`.
+Chaque dossier garde sa licence (voir `LICENSES.md`, qui garde aussi les mentions que ces licences exigent) : `bimmer/` MIT ; `ridetube/` GPL-3.0 ; le client `cluster_render_client.js` est sous MPL-2.0. Les ajouts et changements de ShakTheme sont de shakzer, sous MIT. Modifications : voir `CHANGELOG.md`.
 
 ## À tes risques
 

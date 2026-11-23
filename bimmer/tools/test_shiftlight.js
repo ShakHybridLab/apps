@@ -60,7 +60,7 @@ check('the settings exist (on, red at 4500, flash from 5500) and the page lists 
     ['stockShiftLight', 'shiftLightRed', 'shiftLightFlash'].forEach((k) => assert(main.includes("'" + k + "'"), k + ' not on the settings page'));
 });
 check('both apps ship the file (the build copies only what "shared" lists), and layouts know the type', () => {
-    ['apps/shaktheme/app.json', 'apps/idrive_hud_widgets/app.json'].forEach((f) => assert(read(f).shared.includes('shift_light.js'), f));
+    ['apps/shaktheme/app.json', 'apps/shakhud/app.json'].forEach((f) => assert(read(f).shared.includes('shift_light.js'), f));
     assert(/shiftlight:\s*\[\]/.test(fs.readFileSync(path.join(ROOT, 'shared/layouts.js'), 'utf8')));
 });
 check('the shader uses no reserved GLSL ES 1.00 word as a name (half did: the layer drew nothing)', () => {

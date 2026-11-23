@@ -11,7 +11,7 @@ Le gestionnaire d'applis de la voiture (« oapgen », `generateSomeipInterfaces`
 - Cas connu : ShakTheme 0.21.12 a déclaré `CarPlayManager.projectedGuidanceActive` avec « rs » (le catalogue dit « get notify »). Refusé quand même. Cause inconnue. Voir le CHANGELOG, entrée 0.21.13.
 - **22 novembre 2026 : ShakGuidage et ShakGuidage 2 refusées toutes les deux** (essais d'un seul signal chacune, en « s », sur `de.bmw.infotainment.a4a.carplay.CarPlayManager` : `projectedGuidanceActive`, puis `projectedGuidanceMetadataAvailable`). Le nom de l'interface était pourtant le bon : photo de la page 4/19 le même jour, `infotainment.a4a.carplay.CarPlayManager · projectedGuidanceMetadataAvailable`, « get notify ». Trois refus sur cette interface (avec ShakTheme 0.21.12) : la voiture ne la donne pas à nos applis, pour une raison que l'installateur ne dit pas. **Ne plus déclarer `CarPlayManager`.** Le réglage « Carte seulement avec un itinéraire » reste inactif.
 - Donc : on ne déclare que des noms vus acceptés par une vraie installation. La liste est `tools/car_accepted_signals.json`, vérifiée par `tools/test_declared_signals.js`.
-- Sont aussi acceptés, car installés sur sa voiture : tout ce que déclarent *Cluster Layouts* 0.28.1 et *Cluster Centre* 0.9.0 (`eroobeeroo/apps/*/app.json`). Ils ont été ajoutés à la liste le 17 novembre 2026.
+- Sont aussi acceptés, car installés sur sa voiture : tout ce que déclarent *Cluster Layouts* 0.28.1 et *Cluster Centre* 0.9.0 (leurs `app.json`, retirés du dépôt le 23 nov. 2026). Ils ont été ajoutés à la liste le 17 novembre 2026.
 - Un nom seulement présent au catalogue (liste ci-dessous) ne se déclare qu'après un essai d'installation, seul, sur la voiture.
 
 Drapeaux : « get notify » = `rs`, « notify » seul = `s` (le test accepte un `s` déclaré sur un `rs` accepté).
@@ -31,7 +31,7 @@ Drapeaux : « get notify » = `rs`, « notify » seul = `s` (le test accepte un 
 
 ### `statusPowerRelativHybrid`, à vérifier sur la voiture
 
-Source : `eroobeeroo/apps/cluster_layouts/shared/data.js` lit `displayActualValuePowerRelativeDrivingElectric` et `displayActualValuePowerRelativeRecuperation` (`{pollMs: 2000}`). Le nom est déjà déclaré « rs » par les deux applis Cluster installées.
+Source : le `shared/data.js` de Cluster Layouts (retiré du dépôt le 23 nov. 2026) lisait `displayActualValuePowerRelativeDrivingElectric` et `displayActualValuePowerRelativeRecuperation` (`{pollMs: 2000}`). Le nom est déjà déclaré « rs » par les deux applis Cluster installées.
 
 Ce qu'on ne sait pas : l'échelle sur la G01 (supposée 0 à 100 %), et si la voiture notifie une valeur qui ne change pas (d'où la relecture toutes les 2 s). Garde-fous dans le code (`shared/car_extras.js` `relPowerOf`, `shared/hud.js` `_relPower`) : un nombre au-dessus de 100 n'est jamais dessiné ; 255, 65535 et 0x7FFF sont ignorés ; la source ne compte qu'après une première valeur au-dessus de 0 ; une lecture de plus de 6 s est périmée. Sinon la barre retombe sur la part de puissance de la voiture puis sur l'estimation. Ordre : eDrive Live (kW réels) > compteur du tableau de bord > part `displayPowerDrive` > estimation.
 

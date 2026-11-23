@@ -95,7 +95,7 @@ assert.strictEqual(formatLimit(null, false), '');
 
 // the wiring: both apps ship the file, the setting is on by default, the two themes draw the alert
 const read = (f) => JSON.parse(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'));
-['apps/shaktheme/app.json', 'apps/idrive_hud_widgets/app.json'].forEach((f) => assert(read(f).shared.includes('danger.js'), f + ' ships danger.js'));
+['apps/shaktheme/app.json', 'apps/shakhud/app.json'].forEach((f) => assert(read(f).shared.includes('danger.js'), f + ' ships danger.js'));
 const set = read('apps/shaktheme/app.json').settings.find((s) => s.key === 'dangerAlert');
 // on by default since ShakTheme 0.21.24 (ShakRadar gives the zones from the car's GPS): nothing shows while no app writes a zone
 assert(set && set.type === 'bool' && set.default === true, 'dangerAlert is a bool, on by default');

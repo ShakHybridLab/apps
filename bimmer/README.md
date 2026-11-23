@@ -16,31 +16,11 @@ Redraws the whole instrument cluster in one of four themes: **Sport**, **M**, **
 <p align="center"><img src="docs/images/cluster-mblade.png" width="900" alt="M Blade theme"></p>
 <p align="center"><img src="docs/images/cluster-navi.png" width="900" alt="Navi theme"></p>
 
-## HUD Widgets
-
-<img src="apps/idrive_hud_widgets/icon.png" width="72" align="left" alt="HUD Widgets icon">
-
-Puts your own readouts on the windshield HUD: gear, shift lights, boost, oil, coolant and intake temperatures, a G-meter and trip figures. Ten layouts, in Classic, M and Night colours (Cruise and Retro bring their own). [Read more](apps/idrive_hud_widgets/README.md)
-
-<table align="center">
-  <tr>
-    <th align="center">Daily</th>
-    <th align="center">Sport</th>
-    <th align="center">Redline</th>
-  </tr>
-  <tr>
-    <td><img src="docs/images/hud-daily.png" width="300" alt="Daily layout"></td>
-    <td><img src="docs/images/hud-sport.png" width="300" alt="Sport layout"></td>
-    <td><img src="docs/images/hud-redline.png" width="300" alt="Redline layout at the shift point"></td>
-  </tr>
-</table>
-
 ## Setting up
 
 Each app has its own menu on the center screen, opened from the apps menu, in the style of BMW's iDrive 8.5. Pick a theme or layout there, give each drive mode its own, and set your time zone and units.
 
 <p align="center"><img src="docs/images/page-cluster-themes.png" width="900" alt="ShakTheme menu on the center screen"></p>
-<p align="center"><img src="docs/images/page-hud-layouts.png" width="900" alt="HUD Widgets menu on the center screen"></p>
 
 ## Install
 

@@ -112,7 +112,7 @@ daily.forEach((d) => assert(!(r.x < d.x + d.w && r.x + r.w > d.x && r.y < d.y + 
 // too little room: none (a panel any smaller would be unreadable)
 assert.strictEqual(freeRect([{ x: 120, y: 100, w: 560, h: 240 }], HUD, {}), null);
 // every HUD layout: whatever room is found touches none of its readouts
-const lay = path.join(__dirname, '..', 'apps', 'idrive_hud_widgets', 'hud', 'layouts');
+const lay = path.join(__dirname, '..', 'apps', 'shakhud', 'hud', 'layouts');     // (HUD Widgets' layouts until it left the repository, 23 Nov 2026)
 fs.readdirSync(lay).filter((f) => /\.json$/.test(f)).forEach((f) => {
     const L = JSON.parse(fs.readFileSync(path.join(lay, f), 'utf8'));
     const used = L.widgets.filter((w) => typeof w.x === 'number').map((w) => ({ x: w.x, y: w.y, w: w.w, h: w.h })).concat([{ x: 120, y: 235, w: 230, h: 145 }]);

@@ -62,9 +62,7 @@ check('toutes les applis Shak installent survive.js en premier et l\'embarquent 
         assert(/start\(ctx\) \{\n\s+require\('\.\/survive'\)\.install\(ctx\.log\);/.test(main), a + ' : survive n\'est pas la première chose de start()');
         assert(spec.shared.indexOf('survive.js') >= 0, a + ' : survive.js manque dans "shared"');
     });
-    const w = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'idrive_hud_widgets', 'app.json'), 'utf8'));
-    assert(w.shared.indexOf('survive.js') < 0);
-    assert(!/require\('\.\/survive'\)/.test(hudSrc) && !/require\('\.\/survive'\)/.test(fs.readFileSync(path.join(root, 'shared', 'page.js'), 'utf8')), 'hud.js et page.js (partagés avec HUD Widgets) ne chargent pas survive.js');
+    assert(!/require\('\.\/survive'\)/.test(hudSrc) && !/require\('\.\/survive'\)/.test(fs.readFileSync(path.join(root, 'shared', 'page.js'), 'utf8')), 'hud.js et page.js ne chargent pas survive.js (main.js le fait, en premier)');
 });
 
 function fakeHud() {

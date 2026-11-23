@@ -56,7 +56,7 @@ check('hud.js holds the window only while the layout asks for it and its map sho
     assert(/_wazeMapOn\(\) \{\s*return this\._mapCan\(\) && !this\.mapOff;/.test(hud) && /_mapCan\(\) \{\s*return !!this\.waze && this\.waze\.up === true/.test(hud), 'must wait for Waze to be up in the theme (and not hidden by the BC button)');
 });
 check('both apps that bundle hud.js list map_window.js (or the bundle would crash on the require)', () => {
-    ['apps/shaktheme/app.json', 'apps/idrive_hud_widgets/app.json'].forEach((f) => {
+    ['apps/shaktheme/app.json', 'apps/shakhud/app.json'].forEach((f) => {
         const a = JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
         const list = JSON.stringify(a);
         assert(list.includes('"map_window.js"'), f + ' lacks map_window.js');

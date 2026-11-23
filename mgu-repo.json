@@ -20,29 +20,6 @@
           "bimmer/shared"
         ]
       }
-    },
-    {
-      "path": "eroobeeroo/apps/*",
-      "manifest": "app.json",
-      "icon": "icon.png",
-      "mguHmi": [
-        "ID7"
-      ],
-      "exclude": [
-        "cluster_layouts"
-      ],
-      "build": {
-        "python": "eroobeeroo/kit/tools/build.py",
-        "args": [
-          "{id}"
-        ],
-        "sdk": "eroobeeroo/oap-sdk",
-        "output": "eroobeeroo/dist/{id}@{version}.tgz",
-        "network": [],
-        "shared": [
-          "eroobeeroo/kit"
-        ]
-      }
     }
   ],
   "components": [

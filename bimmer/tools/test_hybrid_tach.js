@@ -80,7 +80,7 @@ check('Sport: the rev caption is the unit token, a CHARGE note sits left of it, 
     '1/min x 1000kW x 10CHARGE'.split('').forEach((ch) => assert(f[ch], cap.font + ' lacks "' + ch + '"'));
 });
 check('the module ships with both apps that bundle hud.js, and hud.js uses it', () => {
-    ['shaktheme', 'idrive_hud_widgets'].forEach((a) => {
+    ['shaktheme', 'shakhud'].forEach((a) => {
         const j = JSON.parse(fs.readFileSync(path.join(root, 'apps', a, 'app.json'), 'utf8'));
         const list = JSON.stringify(j);
         assert(list.includes('"hybrid_tach.js"'), a + ' app.json does not list hybrid_tach.js');

@@ -4,7 +4,8 @@
 - Toute appli, tout code ou tout changement nouveau : description, étiquettes de réglages, README, CHANGELOG et messages de commit en français.
 - Réglages par défaut : km/h, °C, bar, horloge 24 h. Une appli met `"lang": "fr"` dans `config` ; ses textes de page passent par `shared/fr.js` (ajouter les nouvelles phrases à `EXACT` ou `PATTERNS`, avec leurs accents : `tools/bake_accents.py`).
 - Ne jamais faire afficher de vidéo sur le cluster ou le HUD voiture en mouvement (`shared/video_bridge.js`, `shared/video_app.js` : `STILL_KMH = 0.5`, `moving() === false`).
-- `design/` n'est jamais commité. Ne pas toucher à HUD Widgets (`apps/idrive_hud_widgets`) ni à `eroobeeroo/`, sauf les listes de fichiers partagés.
+- `design/` n'est jamais commité.
+- Décision du propriétaire (23 novembre 2026) : HUD Widgets (`apps/idrive_hud_widgets`) et tout `eroobeeroo/` (Cluster Info, Cluster Centre, Cluster Layouts) sont supprimés du dépôt ; ne pas les recréer. Les mentions de licence et de copyright des projets d'origine (NOTICE, LICENSES.md, en-têtes) restent : les licences l'exigent.
 - Décision du propriétaire (16 novembre 2026) : le verrou vidéo reste comme il est (`STILL_KMH = 188` dans `shared/video_bridge.js`). Ne pas y toucher, ignorer les échecs de `tools/test_video_app.js` et `tools/test_video_bridge.js`, et ne plus lui en parler.
 - Décision du propriétaire (21 novembre 2026) : ShakPark (les caméras avant/arrière) est abandonné. Ne pas le reprendre ni recréer ses fichiers (`shared/park*.js`, `shared/waze_yield.js`, `shakpark-capture/`) sans qu'il le redemande.
 - Avant de déclarer un nouveau signal dans un `app.json` : lire `docs/car_catalog_notes.md` (noms vus au catalogue de la voiture, ce qui est accepté ou non, marche à suivre). La voiture refuse toute l'installation si un seul signal déclaré ne lui convient pas ; ne déclarer que ce qui est dans `tools/car_accepted_signals.json`.

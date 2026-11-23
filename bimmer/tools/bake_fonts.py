@@ -27,19 +27,6 @@ APPS = os.path.join(HERE, '..', 'apps')
 UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 DIGITS = '0123456789'
 LOWER = 'abcdefghijklmnopqrstuvwxyz'
-# HUD Widgets, fitted to the part of the 800x480 HUD the driver can see (485x278 from the Nov 5 2026 grid
-# photo; 560x280 since Nov 9, the sizes stayed): hero 140 -> 96, big 42 -> 34, mid 30 -> 24; label and small stay, BMW's own "mph" is that size.
-HUD_FONTS = [
-    # name, file, px size, characters
-    ('hero', 'BarlowSemiCondensed-SemiBold.ttf', 96, DIGITS + 'PRND-'),
-    ('big', 'BarlowSemiCondensed-Medium.ttf', 34, DIGITS + ':.-° PRNDSM'),
-    ('mid', 'BarlowSemiCondensed-Medium.ttf', 24, DIGITS + ':.-° ' + UPPER),
-    ('label', 'Barlow-Medium.ttf', 15, UPPER + DIGITS + '/.:-°%>· '),
-    ('small', 'Barlow-Medium.ttf', 13, UPPER + DIGITS + '/.:-°%>· '),
-    # Retro: seven-segment digits (DSEG7 Classic, SIL OFL; the unlit 8s behind are the same font in "track")
-    ('d7_hero', 'DSEG7Classic-Bold.ttf', 76, DIGITS + 'PRN-', 0, None, {'R': 'r', 'N': 'n'}),   # r and n: seven segments can't draw R or N
-    ('d7_mid', 'DSEG7Classic-Bold.ttf', 26, DIGITS + '-.:'),
-]
 # ShakTheme, 1920x720 LCD: the shared small print in Barlow Condensed, then each theme's own numbers.
 CLUSTER_FONTS = [
     # ('big', 124 px) and ('small', 50 px) went on 21 Nov 2026 with 'm_spd': no theme used them any more
@@ -94,7 +81,7 @@ CLUSTER_FONTS = [
     ('sign_s', 'DINish-Bold.ttf', 24, DIGITS),
     ('sign_s3', 'DINishCondensed-Bold.ttf', 24, DIGITS),
 ]
-FONTS = {'idrive_hud_widgets': HUD_FONTS, 'shaktheme': CLUSTER_FONTS, 'shakhud': [
+FONTS = {'shaktheme': CLUSTER_FONTS, 'shakhud': [
     # the owner, 22 Nov 2026, with a photo of an M car's HUD: "I want all the writing to look like that": the squared numbers of the M theme
     # (Orbitron, its zero drawn as the plain O) for every number and word; Barlow stays only for the small print (tr/min x 1000)
     ('small', 'Barlow-Medium.ttf', 13, LOWER + UPPER + DIGITS + '/.:-°%>· '),

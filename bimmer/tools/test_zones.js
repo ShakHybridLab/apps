@@ -525,7 +525,7 @@ check('limit ring and timer: in the four layouts, blank-safe, clear of the map a
         const a = typeof adv === 'object' ? (adv.advance || adv.w) : adv, R = by('lim_ring').w;
         assert(3 * a <= 0.74 * R, id + ': three digits do not fit in the ring (' + 3 * a + ' > ' + 0.74 * R + ')');
     });
-    ['shaktheme', 'shakhud', 'idrive_hud_widgets'].forEach((app) => {
+    ['shaktheme', 'shakhud'].forEach((app) => {
         const j = JSON.parse(fs.readFileSync(path.join(root, 'apps', app, 'app.json'), 'utf8'));
         assert(j.shared.indexOf('speedlimit.js') >= 0, app + ': speedlimit.js is not in its shared list');
     });
@@ -705,7 +705,7 @@ check('accent by mode: blue is the identity; green and red rewrite only the list
     const a = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'app.json'), 'utf8'));
     const st = a.settings.find((x) => x.key === 'accentByMode'); assert(st && st.type === 'bool' && st.default === true);
     assert(/'accentByMode'/.test(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'main.js'), 'utf8')));
-    ['shaktheme', 'shakhud', 'idrive_hud_widgets'].forEach((app) => assert(JSON.parse(fs.readFileSync(path.join(root, 'apps', app, 'app.json'), 'utf8')).shared.indexOf('accent.js') >= 0, app + ': accent.js missing'));
+    ['shaktheme', 'shakhud'].forEach((app) => assert(JSON.parse(fs.readFileSync(path.join(root, 'apps', app, 'app.json'), 'utf8')).shared.indexOf('accent.js') >= 0, app + ': accent.js missing'));
     // hue from the setting and the mode; blue off the cluster, with the setting off, or on a layout without an accent
     const h = make({ settings: { accentByMode: true } });
     h.target = 'panel'; h.accentLayout = true; h.driveMode = 'sport'; assert.strictEqual(h._accentHue(), 'red');

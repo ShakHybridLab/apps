@@ -8,7 +8,7 @@ zlib-deflated RGBA rows (opaque). The build packs hud/ into hud.pack; previews.j
 
     # the app's bench must be running (node bench/server.js <app>, BENCH_PORT=...)
     uv run -q --with pillow python -I tools/previews.py shaktheme 8078
-    ... idrive_hud_widgets 8079
+    ... shakhud 8079
 
 The bench's settings are put back afterwards. The raw shots are kept in ../design/previews-src/<app>/.
 """
