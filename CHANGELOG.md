@@ -2,6 +2,15 @@
 
 ## 25 novembre 2026
 
+### ShakHUD 0.6.59, ShakTheme 0.23.1 : contrôle complet de ShakHUD
+- **Demande du propriétaire (01:51)** : « contrôle le HUD pareil, avec tout le temps ».
+- **Le HUD clignotait pendant Waze** : ShakHUD se cache quand la carte Waze s'affiche, mais à chaque seconde où le flux du téléphone calait (« frozen ») ou où le fichier d'état était lu à moitié écrit, il réapparaissait puis se cachait de nouveau. Au banc : 54 couches refaites en 20 s de flux qui cale. Il reste maintenant caché 10 s après le dernier « showing » (comme la fenêtre de ShakTheme) ; Waze éteint ou parti, il revient tout de suite. Nouveau test `tools/test_hud_waze_hold.js`.
+- **Distance de l'alerte** : la police des gros chiffres n'avait pas le point : « 1.2 km » s'affichait « 1 2 » (et « 0.4 mi » en mph). Le point est ajouté (les autres chiffres restent identiques au pixel près). Le test des polices vérifie maintenant aussi les caractères que chaque valeur peut écrire.
+- **Mode de conduite** : le HUD vérifiait son thème à chaque image et sautait le délai de 1,5 s ; il suit maintenant le mode confirmé, comme ShakTheme.
+- **Nom de l'autre appli** : l'écran partagé disait encore « HUD Widgets » (supprimé) au lieu de ShakHUD.
+- **Correction de ma réponse d'hier** : ShakHUD ne prend pas 19 couches (mon script comptait le thème Shak) mais 4 à 7, sur une seule connexion. Avec ShakTheme (22 au plus), on reste sous les 32 du service.
+- **Vérifié** : 772 combinaisons au banc (4 modes × 4 couleurs × batterie affichée ou non × alerte absente / avant / dans la zone × km/h et mph, horloge 12 / 24 h × quatre jeux de valeurs dont électrique et extrêmes), plus Waze et une autre appli qui prennent le HUD puis le rendent : aucune erreur, toutes les couches dans la fenêtre visible du HUD, aucune sur la vitesse de BMW. Toute la suite de tests passe (sauf les trois échecs connus).
+
 ### ShakTheme 0.23.0, ShakHUD 0.6.58 : contrôle complet de la stabilité
 - **Demande du propriétaire (00:09)** : « contrôle minutieux de toute l'appli : pourquoi le thème M bugue un peu par rapport aux autres, ce qu'on peut améliorer pour une stabilité parfaite ; trouve chaque bug, teste toutes les combinaisons ».
 - **Thème M, le fond** : son programme de dessin (shader) faisait 8 704 jetons, à 20 de la marque où un écran de cluster a déjà planté (8 724, tools/shader_budget.js). Il contenait encore le dessin de l'ancien cadran d'huile, qui ne s'affichait plus. Retiré : 7 352 jetons. L'image est identique au pixel près (captures avant / après au banc).

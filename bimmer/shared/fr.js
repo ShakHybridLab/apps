@@ -170,7 +170,7 @@ const PATTERNS = [
         'zone behind': 'zone derrière', 'in a zone': 'dans une zone', 'zone ahead': 'zone devant' }[why] || (/^no zone within/.test(why) ? 'pas de zone proche' : why))
         + ' · positions ' + n + (age ? ' (il y a ' + age + ' s)' : '') + ' · cap ' + (h === 'unknown' ? 'inconnu' : h) + rest.replace(' · write ', ' · écriture ')],
     [/^Loop: (\d+)\/s · average ([\d.]+) ms · slowest (\d+) ms · longest wait (\d+) ms$/, 'Boucle : $1/s · moyenne $2 ms · la plus lente $3 ms · attente la plus longue $4 ms'],
-    [/^Turn HUD Widgets off so (.*) shows\?$/, 'Éteindre HUD Widgets pour afficher $1 ?'],
+    [/^Turn ShakHUD off so (.*) shows\?$/, 'Éteindre ShakHUD pour afficher $1 ?'],
     [/^Turn the cluster theme off so (.*) shows\?$/, 'Éteindre le thème du cluster pour afficher $1 ?'],
     [/^Show (.*) on the HUD anyway\?$/, 'Afficher $1 sur le HUD quand même ?'],
     [/^(.*) is on$/, '$1 est actif'],

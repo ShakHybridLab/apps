@@ -105,7 +105,7 @@ FONTS = {'shaktheme': CLUSTER_FONTS, 'shakhud': [
     # (Orbitron, its zero drawn as the plain O) for every number and word; Barlow stays only for the small print (tr/min x 1000)
     ('small', 'Barlow-Medium.ttf', 13, LOWER + UPPER + DIGITS + '/.:-°%>· '),
     ('rnum', 'Orbitron[wght].ttf', 20, DIGITS, 0, 'Black', {'0': 'O'}),   # the rev counter's numbers, under the bar
-    ('big', 'Orbitron[wght].ttf', 42, DIGITS + '-%', 0, 'Black', {'0': 'O'}),      # the battery's percent, the danger distance
+    ('big', 'Orbitron[wght].ttf', 42, DIGITS + '-%.', 0, 'Black', {'0': 'O'}),      # the battery's percent, the danger distance (".": 1.2 km, 0.4 mi; missing before 0.6.59)
     ('mid', 'Orbitron[wght].ttf', 17, LOWER + UPPER + DIGITS + '/.:-°%>· ', 0, 'Bold', {'0': 'O'}),   # ranges, temperatures, the alert's words
     ('sign_m', 'DINish-Bold.ttf', 33, DIGITS),     # the danger alert's limit on its white sign (60 px), in the road signs' DIN 1451
     ('sign_m3', 'DINishCondensed-Bold.ttf', 33, DIGITS),   # three digits: the condensed cut

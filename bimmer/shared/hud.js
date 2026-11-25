@@ -325,6 +325,7 @@ const STATUS_ASK_MS = 2000;      // after a rebuild: ask cluster-render for its 
 const STALL_WARN_MS = 5000;
 const LAYER_BUDGET = 8;          // cluster-render's limit per client connection (CompositorLimits.per_client; confirmed on the car Nov 5 2026)
 const MAX_CONN = 4;              // connections a layout may ask for ("conn"): 32 layers service-wide / 8 per connection
+const WAZE_HIDE_HOLD_MS = 10000;   // ShakHUD stays hidden this long after Waze's map last said "showing", through a stalled stream (_wazeShowing; waze.js DOWN_HOLD_MS)
 const MAP_SHUT_MS = 2500;     // the map window closes when Maps on Cluster's status file has been unreadable this long (_mapStalled)
 const PIXEL_BYTES = 16 * 1024 * 1024;   // cluster-render's pixel memory for every app's images together (CompositorLimits.pixel_bytes)
 const SHEET_AREA_FRAC = 4;       // the first sheet size limit: 1/4 of the target area (see the header)
@@ -3013,17 +3014,24 @@ class HudApp {
         if (c) this._blit(x, [c.rect], c.px);
     }
 
-    /** Waze on Cluster says its map is showing (status.json state "showing", fresh), wherever it draws it. Read once a second. */
+    /** Waze on Cluster says its map is showing (status.json state "showing", fresh), wherever it draws it. Read once a second.
+     *  Held WAZE_HIDE_HOLD_MS after the last "showing" while the tool only says the stream stalls ("frozen", "idle", "starting") or the file was
+     *  read half written: before 0.6.59 each such second showed ShakHUD and hid it again (the HUD blinked while Waze ran). "off", "unsupported",
+     *  "error", or no fresh file (the tool gone): at once. */
     _wazeShowing(now) {
         if (this._wzAt !== undefined && now >= this._wzAt && now - this._wzAt < 1000) return this._wz === true;      // (not for as long as a clock set back went back)
         this._wzAt = now;
-        let on = false;
+        let st = null;            // null: no fresh file; '?': there but unreadable; else its state
         try {
             const f = process.env.WAZE_STATUS || '/run/waze-on-cluster/status.json';
-            if (Date.now() - fs.statSync(f).mtime.getTime() < 10000) on = JSON.parse(fs.readFileSync(f, 'utf8')).state === 'showing';
-        } catch (e) { on = false; }
-        this._wz = on;
-        return on;
+            if (Date.now() - fs.statSync(f).mtime.getTime() < 10000) {
+                try { st = String(JSON.parse(fs.readFileSync(f, 'utf8')).state || ''); } catch (e) { st = '?'; }
+            }
+        } catch (e) { st = null; }
+        if (st === 'showing') this._wzSeen = now;
+        const held = st !== null && st !== 'off' && st !== 'unsupported' && st !== 'error' && isNum(this._wzSeen) && now >= this._wzSeen && now - this._wzSeen < WAZE_HIDE_HOLD_MS;
+        this._wz = st === 'showing' || held;
+        return this._wz;
     }
 
     /** "key" is on while that bool setting is on; "!key" while it is off; "a&!b" while every one of them is (a bar shown only without the map window). */
