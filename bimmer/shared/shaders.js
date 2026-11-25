@@ -626,11 +626,12 @@ vec4 streak(vec2 q, float py, float len, vec3 col, float k, vec4 c) {
     c = over(vec4(col, 0.3 * exp(-max(sd, 0.0) / (5.0 * k))), c);
     return over(vec4(mix(col, vec3(1.0, 0.55, 0.5), 0.25 * taper), cov(sd)), c);
 }
-vec4 gauge(vec2 p, vec4 g, float zones, float low, vec4 c) {
+vec4 gauge(vec2 p, vec4 g, float low, vec4 c) {
     float k = g.z / 120.0;
     vec2 q = (p - g.xy) / k;
     if (q.x < -140.0 || q.x > 70.0 || q.y < -22.0 || q.y > 140.0) return c;
     float v = clamp(g.w, 0.0, 1.0);
+    float yv = mix(100.0, 2.0, v);           // the level's height (the photo's oil dial, with its own scale and end streaks, is no longer drawn: 0.23.0)
     // the bezel: double-edged and hatched, from its top end down round to its bottom end
     vec2 qb = q - vec2(-13.0, 11.0);
     float rb = length(qb);
@@ -645,10 +646,8 @@ vec4 gauge(vec2 p, vec4 g, float zones, float low, vec4 c) {
     float dOut = 120.0 - length(q);
     float dIn = length(q - vec2(57.0, -68.0)) - 180.0;
     float inside = min(min(dOut, dIn), min(q.y + 10.0, 14.0 - q.x));
-    if (zones > 0.5) inside = min(min(inside, 104.0 - q.y), -30.0 - q.x);       // the oil glass ends higher and shorter (photo: y 564, x 1686)
     if (inside > -1.5) {
         float f = clamp(dOut / max(dOut + max(dIn, 0.0), 1.0), 0.0, 1.0);        // 0 at the outer edge, 1 at the inner
-        float yv = zones > 0.5 ? mix(97.0, 7.0, v) : mix(100.0, 2.0, v);
         float lit = smoothstep(yv - 2.0, yv + 4.0, q.y);
         vec4 dark = vec4(0.85, 0.87, 0.92, 0.75 * (1.0 - smoothstep(0.0, 6.0, dOut)));
         vec4 bright = vec4(mix(mix(vec3(0.96, 0.97, 0.99), vec3(0.55, 0.57, 0.63), f), vec3(1.0, 0.2, 0.22) * mix(1.0, 0.7, f), low), mix(1.0, 0.55, f));
@@ -656,13 +655,7 @@ vec4 gauge(vec2 p, vec4 g, float zones, float low, vec4 c) {
         c = over(vec4(glass.rgb, glass.a * cov(-inside * k)), c);
         c = over(vec4(1.0, 1.0, 1.0, 0.7 * cov(abs(inside * k) - 0.6) * (1.0 - lit) * step(dOut, 3.0)), c);
     }
-    float yv = zones > 0.5 ? mix(97.0, 7.0, v) : mix(100.0, 2.0, v);
-    if (zones > 0.5) {
-        c = streak(q, -8.0, 44.0, u_red, k, c);                                    // hot end, above the top label as the photo
-        c = streak(q, 101.0, 34.0, vec3(0.3, 0.55, 1.0), k, c);                    // cold end, along the glass's bottom
-    } else {
-        c = streak(q, 112.0, 50.0, u_red, k, c);                                   // reserve
-    }
+    c = streak(q, 112.0, 50.0, u_red, k, c);                                       // reserve
     c = streak(q, yv, 38.0, u_red, k, c);                                          // the level, across the glass only
     return c;
 }
@@ -687,8 +680,8 @@ void main() {
     c = tyreBlock(p, c);
 
     // the side dials, traced off the M8 photo: the glass crescent, the fuel one as laid out, the oil one its mirror
-    c = gauge(p, u_gaugeL, 0.0, u_low.x, c);
-    c = gauge(pm, vec4(u_size.x - u_gaugeR.x, u_gaugeR.yzw), 0.0, u_low.y, c);   // the battery: the same as the fuel dial (level streak, reserve streak at the bottom); the photo's oil dial (hot / cold ends) is no longer drawn
+    c = gauge(p, u_gaugeL, u_low.x, c);
+    c = gauge(pm, vec4(u_size.x - u_gaugeR.x, u_gaugeR.yzw), u_low.y, c);   // the battery: the same as the fuel dial (level streak, reserve streak at the bottom); the photo's oil dial (hot / cold ends) is no longer drawn
 
     c = segbar(p, u_seg0, vec2(u_segLit.x, u_segMax.x), c);
     c = segbar(p, u_seg1, vec2(u_segLit.y, u_segMax.y), c);

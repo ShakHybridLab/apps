@@ -1,5 +1,27 @@
 # Modifications par rapport aux projets d'origine
 
+## 25 novembre 2026
+
+### ShakTheme 0.23.0, ShakHUD 0.6.58 : contrôle complet de la stabilité
+- **Demande du propriétaire (00:09)** : « contrôle minutieux de toute l'appli : pourquoi le thème M bugue un peu par rapport aux autres, ce qu'on peut améliorer pour une stabilité parfaite ; trouve chaque bug, teste toutes les combinaisons ».
+- **Thème M, le fond** : son programme de dessin (shader) faisait 8 704 jetons, à 20 de la marque où un écran de cluster a déjà planté (8 724, tools/shader_budget.js). Il contenait encore le dessin de l'ancien cadran d'huile, qui ne s'affichait plus. Retiré : 7 352 jetons. L'image est identique au pixel près (captures avant / après au banc).
+- **Thème M, la carte** : quand la carte du téléphone se figeait puis revenait, la plaque sous la fenêtre (rapport et vitesse) ne revenait qu'au thème refait suivant. Elle revient maintenant avec la fenêtre.
+- **Tous les thèmes, la carte** : une lecture ratée du fichier d'état de Maps on Cluster (lu pendant sa réécriture, environ une fois par seconde) fermait la fenêtre de la carte pendant une seconde. La fenêtre ne se ferme plus que si l'outil dit que la carte est figée, ou si le fichier reste illisible 2,5 s.
+- **Mode de conduite** : le thème attend 1,5 s qu'un mode tienne avant de le suivre, mais une autre reconstruction pendant ce temps (une alerte, la carte, un réglage) prenait déjà le mode passager. Corrigé : le choix du thème et de ses couleurs suit le mode confirmé ; le nom du mode à l'écran change tout de suite.
+- **Shak, le néon** : il devait passer en bleu en Électrique, mais la voiture range Électrique avec Eco Pro et le néon restait magenta. Corrigé (bleu en Électrique et Électrique Individual, rouge en Sport, magenta en Hybride et Eco Pro).
+- **Couches refusées** : cluster-render n'a que 32 couches pour toutes les applis (ShakTheme en prend 19 à 22, ShakHUD 19). Quand il en refusait une, l'appli jetait tout le thème et le refaisait, jusqu'à trois fois : le thème disparaissait à chaque fois et le compteur BMW se voyait. Maintenant seules les couches refusées sont refaites, le reste ne bouge pas (au banc : 2 couches refaites au lieu de 26). Jeter une couche refusée ne déclenche plus une nouvelle erreur et un nouvel essai.
+- **M Blade et Navi, vue des pneus** : « bar · °C » s'affichait « bar   °C » (la police n'a pas le point médian) : maintenant « bar / °C ».
+- **Banc** : la copie des réglages en mémoire vive (0.23.0) faisait planter l'appli sur le banc (le banc prend la classe des réglages seule). Corrigé, avant d'arriver dans la voiture.
+- **Vérifié** : 864 combinaisons au banc (5 thèmes × 4 modes × carte absente / affichée / figée × chaque vue × alerte absente / avant / dans la zone, plus km/h et mph et des valeurs extrêmes sur M), sans aucune erreur ni couche hors place ou sur la case du rapport BMW. Le calcul de chaque image prend moins de 1 ms dans les cinq thèmes. Toute la suite de tests passe (sauf les trois échecs connus). Nouveaux tests : `tools/test_mode_settle.js`, `tools/test_font_glyphs.js`, et des cas ajoutés à `test_map_stall.js` et `test_reliability.js`.
+
+## 24 novembre 2026
+
+### ShakTheme 0.23.0, ShakHUD 0.6.58 (et les autres applis du kit) : les réglages reviennent après un plantage
+- **Demande du propriétaire (21:06)** : « j'ai l'impression que les réglages changent alors que je n'ai rien changé ».
+- **La cause la plus probable** : sur la voiture, quand une appli se ferme d'un coup (plantage, mémoire), le gestionnaire de BMW (CorruptAppsHandler) **efface ses données**, réglages compris ; l'appli repart alors avec les réglages par défaut. (Autres changements qui peuvent y ressembler : le thème qui suit le mode de conduite, la touche BC qui change de vue.)
+- **Le correctif** (`kit/runtime/mgu.js`, pour toutes les applis du kit) : à chaque réglage changé, une copie est gardée en mémoire vive (`/dev/shm/mgu-settings`) ; si l'appli redémarre sans `settings.json`, elle reprend la copie et la réécrit. La copie disparaît quand l'iDrive s'éteint complètement : un effacement fait au démarrage suivant n'est pas couvert. La ligne d'état le note (« dernier trou … (réglages remis après un plantage) »), ce qui dira aussi si l'appli plante.
+- Nouveau test `tools/test_settings_copy.js`.
+
 ## 23 novembre 2026
 
 ### ShakTheme 0.22.9, ShakHUD 0.6.57 : la ligne d'état dit ce qui a pris le cluster, le chien de garde plus patient

@@ -146,7 +146,7 @@ check('couche refusée par cluster-render : le thème est refait un peu plus tar
 });
 check('couche refusée : le vrai _rebuildInner remet le compte à zéro quand le thème précédent est passé entier, et stop() annule l\'essai en attente', () => {
     assert(/if \(!this\.refused\) this\.refusedTries = 0;[^\n]*\n\s+this\.refused = null;/.test(hudSrc));
-    assert(/if \(op === 'layer' \|\| op === 'asset'\) this\._retryRefused\(\);/.test(hudSrc));
+    assert(/if \(op === 'layer' \|\| op === 'asset'\) \{\n\s+if \(!this\.refused\) this\.refused = [^\n]*\n\s+this\._retryRefused\(\);/.test(hudSrc), 'seul un refus de couche ou d\'asset compte (pas l\'écho sur une couche absente : uniform, set, drop)');
     assert(/clearTimeout\(this\.refusedT\); this\.refusedT = null;/.test(hudSrc) && /clearTimeout\(this\.rebuildT\); this\.rebuildT = null;\n\s+clearTimeout\(this\.refusedT\)/.test(hudSrc));
 });
 
@@ -210,8 +210,22 @@ check('reconstruction : un effet dont la couleur de mode change est refait (autr
     const b3 = [layerE('card', 500, 5), sheetE('s0', 0, ['txt'], 5)];
     assert.strictEqual(h3._keepLayers(b3, 'navi'), 1, 'sans recouvrement : gardé');
 });
-check('reconstruction : après un refus tout est refait, « off » et un thème illisible retirent tout, les valeurs du moment partent avec les couches', () => {
-    assert(/if \(this\.refused\) this\._dropOld\(\);/.test(hudSrc));
+check('reconstruction : après un refus seules les couches refusées sont refaites (0.23.0 : avant, tout le thème, qui clignotait), « off » et un thème illisible retirent tout, les valeurs du moment partent avec les couches', () => {
+    assert(!/if \(this\.refused\) this\._dropOld\(\);/.test(hudSrc), 'plus de retrait de tout le thème après un refus');
+    assert(/this\.oldLayers\.forEach\(\(l, key\) => \{ if \(l\.c && typeof l\.c\.has === 'function' && !l\.c\.has\(l\.ref\)\) this\.oldLayers\.delete\(key\); \}\);/.test(hudSrc));
+    {
+        // le client oublie une couche refusée : plus rien ne part pour elle, pas même son retrait
+        const { ClusterRender } = require(path.join(tmp, 'shared', 'cluster_render_client.js'));
+        const c = new ClusterRender('t', '/nonexistent'), sent = [];
+        c.sock = { write(m) { if (m[4] === 0x4a) sent.push(JSON.parse(m.slice(5).toString())); return true; } }; c.connected = true; c.ready = true;
+        let refused = 0; c.on('refused', () => { refused++; });
+        const a = c.effect({ target: 'panel', x: 0, y: 0, w: 4, h: 4, fs: 'x' }), b = c.effect({ target: 'panel', x: 0, y: 0, w: 4, h: 4, fs: 'x' });
+        c._event({ ev: 'error', op: 'layer', ref: b, reason: 'too many layers' });
+        assert.strictEqual(refused, 1); assert.strictEqual(c.has(a), true); assert.strictEqual(c.has(b), false);
+        sent.length = 0;
+        c.uniform(b, 'u_v', [1]); c.drop(b); c.uniform(a, 'u_v', [1]);
+        assert.deepStrictEqual(sent.map((m) => m.op + ':' + m.ref), ['uniform:' + a], 'rien pour la couche refusée');
+    }
     assert((hudSrc.match(/this\._dropOld\(\);\n\s+return;/g) || []).length >= 2, 'off et thème illisible');
     assert(/this\.widgets\.forEach\(\(x\) => this\._guard\('widget ' \+ x\.w\.id, \(\) => this\._update\(x, t0, true\)\)\);/.test(hudSrc));
     assert(!/this\._layerRefs\(\)\.forEach\(\(r\) => r\.c\.drop\(r\.ref\)\);/.test(hudSrc), 'plus de retrait de toutes les couches');

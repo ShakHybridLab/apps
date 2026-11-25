@@ -83,12 +83,27 @@ process.on('exit', (code) => fileLog(code ? 'FATAL' : 'INFO', 'exit code ' + cod
 /* ---------------- settings (persisted in data/settings.json) ---------------- */
 class Settings {
     constructor(schema) {
+        // (read here, not from a constant above the class: the bench's hu-stub.js takes the class alone, 0.23.0 crashed there)
+        const SETTINGS_COPY_DIR = this.copyDir = process.env.MGU_SETTINGS_COPY_DIR || '/dev/shm/mgu-settings';
         this.schema = schema || [];
         this.file = path.join(DATA_DIR, 'settings.json');
         this.values = {};
         this.listeners = [];
         for (const s of this.schema) this.values[s.key] = s.default;
-        try { Object.assign(this.values, JSON.parse(fs.readFileSync(this.file, 'utf8'))); } catch (e) {}
+        // a copy in RAM (/dev/shm, gone at power off): on the car a crash makes CorruptAppsHandler wipe the app's data, the settings with it
+        // (the owner, 24 Nov 2026: "j'ai l'impression que ça change alors que je n'ai pas changé"); the copy puts them back when the app
+        // comes back in the same drive. Written at each change, read only when settings.json is gone.
+        this.copy = path.join(SETTINGS_COPY_DIR, String(DATA_DIR).replace(/[^A-Za-z0-9._-]/g, '_') + '.json');
+        let saved = null;
+        try { saved = JSON.parse(fs.readFileSync(this.file, 'utf8')); } catch (e) {}
+        if (!saved) {
+            try {
+                saved = JSON.parse(fs.readFileSync(this.copy, 'utf8'));
+                if (saved) { this.restored = true; try { fs.writeFileSync(this.file, JSON.stringify(saved, null, 1)); } catch (e) { /* read-only */ } }
+            } catch (e) { saved = null; }
+        }
+        if (saved) Object.assign(this.values, saved);
+        if (this.restored) try { log.warn('settings: settings.json was gone (wiped after a crash?): put back from the copy in RAM'); } catch (e) { /* log not ready */ }
         // one-time move of saved settings to the new default theme (M Tricolour); later choices are kept
         const th = this.item('theme');
         if (th && this.values._themeV !== 2) {
@@ -111,7 +126,9 @@ class Settings {
     get(key) { return this.values[key]; }
     set(key, value) {
         this.values[key] = value;
-        try { fs.writeFileSync(this.file, JSON.stringify(this.values, null, 1)); } catch (e) { log.warn('settings save: ' + e); }
+        const txt = JSON.stringify(this.values, null, 1);
+        try { fs.writeFileSync(this.file, txt); } catch (e) { log.warn('settings save: ' + e); }
+        try { try { fs.mkdirSync(this.copyDir); } catch (e) { /* there */ } fs.writeFileSync(this.copy, txt); } catch (e) { /* no RAM folder: the bench */ }
         this.listeners.forEach((fn) => { try { fn(key, value); } catch (e) { log.error(e); } });
     }
     onChange(fn) { this.listeners.push(fn); }

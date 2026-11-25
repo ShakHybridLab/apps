@@ -304,6 +304,9 @@ class ClusterRender extends EventEmitter {
         } else if (ev.ev === 'budget') {
             this.emit('budget', ev.cap_kb_per_s, ev.max_kb_per_s, ev.reason);
         } else if (ev.ev === 'error') {
+            // a layer or an asset the service refused does not exist there: forgotten here too, so nothing more goes out for it (its uniforms and
+            // pixels, a drop the service would refuse again, a replay after a reconnect) and the app sees it is not there (has())
+            if ((ev.op === 'layer' || ev.op === 'asset') && this.layers.has(ev.ref)) { this.layers.delete(ev.ref); this.pendingFrames.delete(ev.ref); }
             this.emit('refused', ev.op, ev.ref, ev.reason);
         } else if (ev.ev === 'status') {
             /* the answers come in the order asked: our pings (see _watch) are not passed on */
@@ -593,6 +596,9 @@ class ClusterRender extends EventEmitter {
         this.pendingFrames.delete(ref);
         this._send({ op: 'drop', ref: ref });
     }
+
+    /** The layer or asset is held here (made and not dropped, nor refused by the service). */
+    has(ref) { return this.layers.has(ref); }
 
     frameBytes(ref) {
         const l = this.layers.get(ref);

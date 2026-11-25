@@ -156,7 +156,8 @@ def slant(id, x, y, w, h, sensor, mn, mx, conn, slant=12, z=5, toggle='viewSel=g
 def tyres(prefix, x0, y0, font, ufont, sheet, conn, colw=72, gap=48, rowp=34, rowt=28, rear=104, cap=None, tcolor='dim', toggle='viewSel=tyres', **kw):
     # a 2 x 2 block: pressure over temperature at each corner, the wheel glyph between the columns, the units on top
     W = 2 * colw + gap
-    r = [text(prefix + 'u', x0, y0, W, 24, '{{u:pressure}} · {{u:temp}}', ufont, 'dim', 'center', sheet, conn, toggle=toggle)]
+    # (m_tiny has no "·": before 0.23.0 it showed as a gap, "bar   °C")
+    r = [text(prefix + 'u', x0, y0, W, 24, '{{u:pressure}} ' + ('/' if ufont == 'm_tiny' else '·') + ' {{u:temp}}', ufont, 'dim', 'center', sheet, conn, toggle=toggle)]
     yy = {'F': y0 + rowp, 'R': y0 + rear}
     for corner, cx, yr in (('FL', x0, yy['F']), ('FR', x0 + colw + gap, yy['F']), ('RL', x0, yy['R']), ('RR', x0 + colw + gap, yy['R'])):
         r.append(text(prefix + 'p' + corner, cx, yr, colw, 26, '{{tyreP:%s}}' % corner, font, 'fg', 'center', sheet, conn, toggle=toggle, tyreBy=corner))
@@ -328,7 +329,7 @@ def _mblade_views(d, SA, SB, SL, SF):
     tt = 'viewSel=tyres&!mapUp'
     cxm = (TILES[0] + TILES[1]) // 2
     new.append(text('xb_vty_title', cxm - 180, 184, 360, 24, 'Pression et température des pneus', 'm_name', 'dim', 'center', SA, 0, toggle=tt))
-    new.append(text('xb_vty_u', cxm - 165, 212, 330, 32, '{{u:pressure}} · {{u:temp}}', 'm_tiny', 'dim', 'center', SA, 0, toggle=tt))
+    new.append(text('xb_vty_u', cxm - 165, 212, 330, 32, '{{u:pressure}} / {{u:temp}}', 'm_tiny', 'dim', 'center', SA, 0, toggle=tt))
     for corner, x, yc, sh in (('FL', TILES[0], TILES[2], SA), ('FR', TILES[1], TILES[2], SA), ('RL', TILES[0], TILES[3], SB), ('RR', TILES[1], TILES[3], SB)):
         new += [text('xb_vty_p' + corner, x - 55, yc - 30, 110, 29, '{{tyreP:%s}}' % corner, 'm_mid', 'fg', 'center', sh, 0, toggle=tt, tyreBy=corner),
                 text('xb_vty_t' + corner, x - 55, yc + 10, 110, 23, '{{tyreT:%s}}' % corner, 'm_tyre', 'dim', 'center', sh, 0, toggle=tt)]

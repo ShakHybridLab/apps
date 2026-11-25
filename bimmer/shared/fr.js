@@ -131,6 +131,7 @@ const STATUS = [
     [/, cluster delay (\d+) ms/, ', délai du cluster $1 ms'],
     [/, (\d+) stalled connections made again/, ', $1 connexions figées refaites'],
     [/, last gap (\d\d:\d\d) \(app started\)/g, ', dernier trou $1 (appli démarrée)'],
+    [/, last gap (\d\d:\d\d) \(settings put back after a crash\)/g, ', dernier trou $1 (réglages remis après un plantage)'],
     [/, last gap (\d\d:\d\d) \(connection stalled, made again( \[connection \d+\])? \(([^)]*)\)\)/g, ', dernier trou $1 (connexion figée refaite$2 : $3)'],
     [/, last gap (\d\d:\d\d) \(cluster-render lost( \[connection \d+\])?\)/g, ', dernier trou $1 (cluster-render perdu$2)'],
     [/, last gap (\d\d:\d\d) \(drive mode ([^:]+): BMW's own cluster in that mode\)/g, ', dernier trou $1 (mode $2 : compteur d\'origine dans ce mode)'],

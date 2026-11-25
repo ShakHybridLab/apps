@@ -710,17 +710,17 @@ check('accent by mode: blue is the identity; green and red rewrite only the list
     ['shaktheme', 'shakhud'].forEach((app) => assert(JSON.parse(fs.readFileSync(path.join(root, 'apps', app, 'app.json'), 'utf8')).shared.indexOf('accent.js') >= 0, app + ': accent.js missing'));
     // hue from the setting and the mode; blue off the cluster, with the setting off, or on a layout without an accent
     const h = make({ settings: { accentByMode: true } });
-    h.target = 'panel'; h.accentLayout = true; h.driveMode = 'sport'; assert.strictEqual(h._accentHue(), 'red');
-    h.driveMode = 'hybrid'; assert.strictEqual(h._accentHue(), 'green'); h.driveMode = 'eco'; assert.strictEqual(h._accentHue(), 'blue');
-    h.driveMode = 'sport'; h.S.accentByMode = false; assert.strictEqual(h._accentHue(), 'blue', 'the setting off');
+    h.target = 'panel'; h.accentLayout = true; h.driveMode = h.layoutMode = 'sport'; assert.strictEqual(h._accentHue(), 'red');
+    h.driveMode = h.layoutMode = 'hybrid'; assert.strictEqual(h._accentHue(), 'green'); h.driveMode = h.layoutMode = 'eco'; assert.strictEqual(h._accentHue(), 'blue');
+    h.driveMode = h.layoutMode = 'sport'; h.S.accentByMode = false; assert.strictEqual(h._accentHue(), 'blue', 'the setting off');
     h.S.accentByMode = true; h.accentLayout = false; assert.strictEqual(h._accentHue(), 'blue', 'the M theme: no accent');
     h.accentLayout = true; h.target = 'hud'; assert.strictEqual(h._accentHue(), 'blue', 'not on the HUD');
 });
 check('drive mode name: in the mode\'s colour on Sport, M and Navi (white on M Blade\'s coloured tab; the theme\'s bright blue in the hue), unchanged on the M, with the setting off or before the car has said', () => {
     const h = make({ settings: { accentByMode: true } });
-    h.target = 'panel'; h.accentLayout = true; h.driveMode = 'eco';
+    h.target = 'panel'; h.accentLayout = true; h.driveMode = h.layoutMode = 'eco';
     assert.deepStrictEqual(h._accentColor(), [92, 158, 255, 255], 'blue: the bright blue of the theme');
-    h.driveMode = 'hybrid'; const g = h._accentColor(); assert(g[1] > g[0] && g[1] > g[2] && g[1] > 180, 'green ' + g);
+    h.driveMode = h.layoutMode = 'hybrid'; const g = h._accentColor(); assert(g[1] > g[0] && g[1] > g[2] && g[1] > 180, 'green ' + g);
     h.driveMode = 'sport'; const r = h._accentColor(); assert(r[0] > 200 && r[1] < 80 && r[2] < 80, 'red ' + r);
     h.driveMode = null; assert.strictEqual(h._accentColor(), null, 'no mode yet');
     h.driveMode = 'sport'; h.S.accentByMode = false; assert.strictEqual(h._accentColor(), null, 'the setting off');

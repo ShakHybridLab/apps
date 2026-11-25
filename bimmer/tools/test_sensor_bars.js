@@ -213,13 +213,13 @@ check('la vue du bouton gagne sur le réglage, et un choix fait dans les réglag
 check('driveSport : vrai quand la voiture est en Sport, faux sinon ou tant qu\'elle n\'a rien dit ; un changement de mode reconstruit un thème qui en dépend', () => {
     const h = Object.create(HudApp.prototype);
     h.viewNow = null; h.ctx = { settings: { item: () => null, get: () => 'none' } };
-    h.driveMode = 'sport'; assert.strictEqual(h.setting('driveSport'), true);
-    ['hybrid', 'eco', 'electric', null].forEach((m) => { h.driveMode = m; assert.strictEqual(h.setting('driveSport'), false, String(m)); });
+    h.layoutMode = 'sport'; assert.strictEqual(h.setting('driveSport'), true);
+    ['hybrid', 'eco', 'electric', null].forEach((m) => { h.layoutMode = m; assert.strictEqual(h.setting('driveSport'), false, String(m)); });
     h._toggleOn = HudApp.prototype._toggleOn;
-    h.driveMode = 'sport'; assert.strictEqual(h._toggleOn('driveSport'), true); assert.strictEqual(h._toggleOn('!driveSport'), false);
+    h.layoutMode = 'sport'; assert.strictEqual(h._toggleOn('driveSport'), true); assert.strictEqual(h._toggleOn('!driveSport'), false);
     assert.strictEqual(h._toggleOn('viewSel=drive&driveSport'), false, 'viewSel n\'est pas drive ici : le réglage est vide');
     const src = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
-    assert(src.includes("(this.driveLayout && (this.driveMode === 'sport') !== this.driveShown)"), 'la reconstruction au changement de mode');
+    assert(src.includes("(this.driveLayout && (this.layoutMode === 'sport') !== this.driveShown)"), 'la reconstruction au changement de mode');
     assert(src.includes("this.driveLayout = layout.widgets.some((w) => /(^|&)!?driveSport(&|$)/.test(w.toggle || ''));"), 'le thème dit s\'il suit le mode');
 });
 

@@ -325,6 +325,7 @@ const STATUS_ASK_MS = 2000;      // after a rebuild: ask cluster-render for its 
 const STALL_WARN_MS = 5000;
 const LAYER_BUDGET = 8;          // cluster-render's limit per client connection (CompositorLimits.per_client; confirmed on the car Nov 5 2026)
 const MAX_CONN = 4;              // connections a layout may ask for ("conn"): 32 layers service-wide / 8 per connection
+const MAP_SHUT_MS = 2500;     // the map window closes when Maps on Cluster's status file has been unreadable this long (_mapStalled)
 const PIXEL_BYTES = 16 * 1024 * 1024;   // cluster-render's pixel memory for every app's images together (CompositorLimits.pixel_bytes)
 const SHEET_AREA_FRAC = 4;       // the first sheet size limit: 1/4 of the target area (see the header)
 const REFUSED_RETRY_MS = [5000, 15000, 45000];   // after cluster-render refused a layer: the layout is made again after these waits, then left (see _retryRefused)
@@ -648,6 +649,9 @@ class HudApp {
         this.tripMs = 0;                 // ms moving, for {{avgSpeed}}
         this.tripT = 0;
         this.driveMode = null;           // 'hybrid' | 'electric' | 'eco' | 'sport', once the car has said
+        // the drive mode the layout follows: driveMode once it has held MODE_SETTLE_MS (the names and colours on the screen take driveMode at once). Before
+        // 0.23.0 every choice read driveMode, so any rebuild in those 1.5 s (an alert, the map, a setting) took a mode the car sent for a moment
+        this.layoutMode = null;
         this.driveRaw = null;            // a drive mode value the car sent that we don't know (shown in the status)
         this.driveVariant = null;        // 'plus' (Sport+ / Comfort+ / Eco Pro+), 'individual', or null
         this.driveName = null;           // the mode as the car names it (driveNameOf), for the small text in the themes
@@ -908,7 +912,7 @@ class HudApp {
             if (sv && sv !== 'none' && this.layoutViews && this.layoutViews.length && this.layoutViews.indexOf(sv) < 0) return 'none';
         }
         // "driveSport": not saved, the car's drive mode is Sport (the "drive" view shows the G-meter then, the settings of the modes otherwise)
-        if (key === 'driveSport') return this.driveMode === 'sport';
+        if (key === 'driveSport') return this.layoutMode === 'sport';
         // "danger": not saved, a danger zone is ahead (danger.js) and the alert is turned on; "dangerLimit" / "dangerNoLimit": and its speed limit is / isn't known
         // "dangerInside" / "dangerAhead" (20 Nov 2026): the car is in the zone (the distance to its edge is 0: the card says so in words, the owner
         // read the smallest distance, "10 m", as a camera 10 m away) or still before it
@@ -1030,8 +1034,9 @@ class HudApp {
                     clearTimeout(this.modeT);
                     this.modeT = setTimeout(() => this._guard('drive mode', () => {
                         this.modeT = null;
+                        this.layoutMode = this.driveMode;
                         if (this._layoutName() !== this.activeName || this._accentHue() !== this.accentHue
-                            || (this.driveLayout && (this.driveMode === 'sport') !== this.driveShown)) this._rebuild(); else this._status();
+                            || (this.driveLayout && (this.layoutMode === 'sport') !== this.driveShown)) this._rebuild(); else this._status();
                     }), this.activeName ? MODE_SETTLE_MS : 0);
                     this._status();
                 },
@@ -1147,8 +1152,11 @@ class HudApp {
         on('refused', (op, ref, reason) => {
             const w = this._widgetOf(ci, ref);
             this.log.warn('refused ' + op + ' on ' + ref + tag + (w ? ' (' + w + ')' : '') + ': ' + reason);
-            if (!this.refused) this.refused = (w || op) + ': ' + reason;   // the first one, until the next rebuild
-            if (op === 'layer' || op === 'asset') this._retryRefused();
+            // only a layer or an asset refused is missing from the screen (a uniform, a set or a drop on a layer that is not there is the echo of one)
+            if (op === 'layer' || op === 'asset') {
+                if (!this.refused) this.refused = (w || op) + ': ' + reason;   // the first one, until the next rebuild
+                this._retryRefused();
+            }
             this._statusSoon();
         });
         on('stalled', (why) => { this.log.warn('cluster-render connection' + tag + ' stalled (' + why + '): connecting again'); this._gap('connection stalled, made again' + tag + ' (' + why + ')'); this._statusSoon(); });
@@ -1169,7 +1177,7 @@ class HudApp {
     start() {
         this.log.info('connecting to cluster-render at ' + this.socketPath);
         this.started = true;
-        this._gap('app started');               // (after a crash the app comes back by itself: a start in the middle of a drive shows up here)
+        this._gap(this.ctx.settings && this.ctx.settings.restored ? 'settings put back after a crash' : 'app started');               // (after a crash the app comes back by itself: a start in the middle of a drive shows up here)
         this.clients.forEach((c) => c.connect());
         this._loopStart();
         // Auto theme: check for sunrise / sunset once a minute; the status line too
@@ -1562,7 +1570,9 @@ class HudApp {
      */
     _atlas(fontName, ci) {
         const key = ci + ':' + fontName;
-        if (this.atlases.has(key)) return this.atlases.get(key);
+        const had = this.atlases.get(key);
+        if (had && (typeof had.c.has !== 'function' || had.c.has(had.ref))) return had;
+        this.atlases.delete(key);        // (refused by the service: made again)
         const font = textRaster.loadFont(fontName), glyphs = font.metrics.glyphs;
         const chars = Object.keys(glyphs).filter((ch) => ch.length === 1 && ch >= ' ' && ch <= '~').sort().slice(0, 64);
         if (!chars.length) throw new Error('font "' + fontName + '" has no printable glyphs for an atlas');
@@ -1663,8 +1673,8 @@ class HudApp {
     }
     /** The layout the driver picked for now, before anything that makes us step aside. */
     _chosenName() {
-        if (this.setting('byMode') === true && this.driveMode && MODE_KEY[this.driveMode]) {
-            const v = this.setting(MODE_KEY[this.driveMode]);
+        if (this.setting('byMode') === true && this.layoutMode && MODE_KEY[this.layoutMode]) {
+            const v = this.setting(MODE_KEY[this.layoutMode]);
             if (v) return v;
         }
         return this.setting('hudLayout');
@@ -2664,10 +2674,12 @@ class HudApp {
     _rebuildInner() {
         if (!this.client.ready) return; // the 'ready' handler calls us again
         // the layers on the screen now: those the new layout has just the same are kept (_keepLayers), the others dropped once the new plan is
-        // known. After a refusal everything is made anew (a layer cluster-render refused is not there to be kept).
+        // known.
         this.oldLayers = this.live || new Map();
         this.live = new Map();
-        if (this.refused) this._dropOld();
+        // a layer the service refused is not there (the client forgot it): it is made anew, the others are kept as usual. Before 0.23.0 a refusal
+        // dropped the whole layout and made it again, up to three times: the theme blinked out each time, BMW's cluster showing through
+        this.oldLayers.forEach((l, key) => { if (l.c && typeof l.c.has === 'function' && !l.c.has(l.ref)) this.oldLayers.delete(key); });
         this.placed = [];
         this.widgets.clear();
         this.sheets = [];
@@ -2714,7 +2726,7 @@ class HudApp {
         if (this.viewNow !== null && this.viewNow !== 'none' && this.layoutViews.indexOf(this.viewNow) < 0) this.viewNow = null;      // this theme doesn't have it
         this.dangerLayout = layout.widgets.some((w) => /(^|&)!?danger/.test(w.toggle || ''));
         this.driveLayout = layout.widgets.some((w) => /(^|&)!?driveSport(&|$)/.test(w.toggle || ''));
-        this.driveShown = this.driveMode === 'sport';
+        this.driveShown = this.layoutMode === 'sport';
         this.dangerShown = this._dangerKey();
         this.powerLayout = layout.widgets.some((w) => w.toggle === 'power' || w.toggle === 'powerShut' || w.toggle === 'powerOpen' || w.toggle === 'boostShown');
         this.powerShown = this._powerKey();
@@ -3234,10 +3246,7 @@ class HudApp {
             c.uniform(ref, 'u_segSlant', [isNum(w.segSlant) ? w.segSlant : 9]);
             c.uniform(ref, 'u_hole', this._hole(w));
             c.uniform(ref, 'u_holeR', [this._holeRadius(w)]);
-            // the plate under the cut window (the gear and the speed on it): only while the window is cut, as the hole
-            const pl = Array.isArray(w.plate) && w.plate.length === 5 && w.plate.every(isNum) && this._hole(w)[2] > 0 ? w.plate : null;
-            c.uniform(ref, 'u_plate', pl ? [pl[0] - w.x, pl[1] - w.y, pl[2], pl[3]] : [0, 0, 0, 0]);
-            c.uniform(ref, 'u_split', [pl ? pl[4] - w.x : 0]);
+            this._plateSet(c, ref, w);
             x.gauges = [['u_gaugeL', L], ['u_gaugeR', R]];
             x.bars = bars;
         } else if (w.type === 'mtach') {
@@ -3515,7 +3524,14 @@ class HudApp {
      *  what lies under it, BMW's own map in the cluster's map slot, does not show through (owner, 23 Nov 2026: "sur le thème M, des fois il
      *  change de carte, je ne sais pas laquelle"); the layout stays as it is, no rebuild. */
     _mapStalled() {
-        return !!(this.waze && this.waze.up === true && this._wazeMapOn() && !(this.waze.st && this.waze.st.state === 'showing'));
+        if (!(this.waze && this.waze.up === true && this._wazeMapOn())) return false;
+        const st = this.waze.st;
+        if (st && st.state === 'showing') return false;
+        // the tool says so (frozen, idle, error...): at once. The file unreadable for a moment (read while it was being rewritten, about once a
+        // second): only once no "showing" has come for MAP_SHUT_MS, else each such read closed the window for a second (0.23.0)
+        if (st) return true;
+        const at = this.waze.showAt || 0, now = Date.now();
+        return !(now >= at && now - at < MAP_SHUT_MS);
     }
 
     /** Open or close the map window at once (uniforms only) when the stream stalls or comes back. */
@@ -3530,8 +3546,18 @@ class HudApp {
             try {
                 if (w.type === 'evo') x.c.uniform(x.ref, 'u_hole', [this._hole(w)[2] > 0 ? 1 : 0]);
                 else x.c.uniform(x.ref, 'u_hole', this._hole(w));
+                if (w.type === 'mdash') this._plateSet(x.c, x.ref, w);
             } catch (e) { /* the layer is going: the next rebuild sets it */ }
         }
+    }
+
+    /** The M backdrop's plate under the cut window (the gear and the speed on it): only while the window is cut, as the hole (set at the
+     *  layer's making and again when the window opens or closes live: before 0.23.0 a window opened again after a stalled map came back
+     *  without its plate until the next rebuild). */
+    _plateSet(c, ref, w) {
+        const pl = Array.isArray(w.plate) && w.plate.length === 5 && w.plate.every(isNum) && this._hole(w)[2] > 0 ? w.plate : null;
+        c.uniform(ref, 'u_plate', pl ? [pl[0] - w.x, pl[1] - w.y, pl[2], pl[3]] : [0, 0, 0, 0]);
+        c.uniform(ref, 'u_split', [pl ? pl[4] - w.x : 0]);
     }
 
     _hole(w) {
@@ -3547,7 +3573,7 @@ class HudApp {
     /** The hue the blue themes (Sport, M Blade, Navi) take now: from the drive mode while the setting "accentByMode" is on; blue elsewhere (accent.js). */
     _accentHue() {
         if (!this.accentLayout || this.target !== 'panel' || this.setting('accentByMode') === false) return 'blue';
-        return hueOfMode(this.driveMode);
+        return hueOfMode(this.layoutMode);
     }
 
     /** The colour of the drive mode's name (a text with "accentBy"): the theme's own bright blue in the mode's hue, [r, g, b, a]; null when the colours don't follow the mode (the setting off, no mode yet, not the cluster). */
@@ -3618,6 +3644,8 @@ class HudApp {
         const b = this._boost();
         if (isNum(b) && (!isNum(this.boostPeak) || b > this.boostPeak)) this.boostPeak = b;
         if (!this.client.ready) return;
+        // the map window's time-based close (_mapStalled: a status file unreadable for MAP_SHUT_MS) is looked at four times a second
+        if (this.mapLayout && this.waze && now - (this.holeLookAt || 0) >= 250) { this.holeLookAt = now; this._holeLive(); }
         // shift light: blink the whole bar at 8 Hz once the rpm reaches the redline
         const rpm = this._raw('rpm');
         const flashing = isNum(rpm) && rpm >= this.setting('redline') - 150;
@@ -4003,9 +4031,11 @@ class HudApp {
                 q(bar ? Math.abs(hy.kw) * 100 / max : isNum(rpm) ? rpm / max : 0)];
             const zone = [this._ease(w.id + 's', this._zoneSpeed(), now), this._ease(w.id + 'r', bar ? 0 : this._zoneRev(max), now)];
             const pk = this._peakRev(x, vals[1], now, bar > 0 || this.sweepAt !== null);
-            // the neon in the drive mode's colour (owner, 23 Nov 2026): blue in Electric, red in Sport, the theme's magenta in Hybrid and Hybrid Eco Pro
+            // the neon in the drive mode's colour: red in Sport, blue in Electric, magenta in Hybrid and Hybrid Eco Pro (owner, 24 Nov 2026). The car files Electric under the "eco" group
+            // (driveModeOf: 20 / 21 are this car's electric modes), so Electric is told by its name: before 0.23.0 it stayed magenta
             const dm = this.setting('accentByMode') !== false ? this.driveMode : null;
-            const mag = dm === 'sport' ? [1.0, 0.16, 0.2] : dm === 'electric' ? [0.2, 0.5, 1.0] : [1.0, 0.18, 0.76];
+            const elec = dm === 'eco' && /^Electric/.test(this.driveName || '');
+            const mag = dm === 'sport' ? [1.0, 0.16, 0.2] : elec ? [0.2, 0.5, 1.0] : [1.0, 0.18, 0.76];
             const key = vals.join('|') + '|' + bar + '|' + zone.map((z) => Math.round(z * 20)).join(',') + '|' + pk + '|' + mag.join(',');
             if (!force && key === x.last) return;
             x.last = key;

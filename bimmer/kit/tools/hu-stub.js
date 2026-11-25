@@ -27,6 +27,8 @@ function headUnit(stage, o) {
     const spec = JSON.parse(fs.readFileSync(path.join(kitDir, 'app-spec.json'), 'utf8'));
     const log = o.log || { info: console.log, warn: console.warn, error: console.error, debug: () => {} };
     const src = fs.readFileSync(path.join(kitDir, 'mgu.js'), 'utf8').replace(/\r\n/g, '\n');
+    // the RAM copy of the settings (mgu.js Settings) goes beside the bench's data, not in /dev/shm: one run's settings must not come back in another
+    if (!process.env.MGU_SETTINGS_COPY_DIR && out) process.env.MGU_SETTINGS_COPY_DIR = path.join(out, '.copie-ram');
     const { Settings } = (() => {
         // reuse the real Settings class without loading the SDK
         const m = src.match(/class Settings[\s\S]*?\n}\n/);

@@ -3291,7 +3291,7 @@
       "y": 140,
       "w": 154,
       "h": 24,
-      "text": "{{u:pressure}} \u00b7 {{u:temp}}",
+      "text": "{{u:pressure}} / {{u:temp}}",
       "font": "m_tiny",
       "color": "dim",
       "align": "center",
