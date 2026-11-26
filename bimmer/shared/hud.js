@@ -2826,10 +2826,14 @@ class HudApp {
 
     /** A glide that keeps the layer on the panel all the way (cluster-render takes no layer outside it): its start pulled in to the edge. */
     _glideFit(gl, r) {
-        if (!gl) return null;
+        if (!gl || this._scale() !== 1) return null;       // (a scaled layout turns its layers about a pivot set from their place: no glide, a fade)
         const W = this.size[0], H = this.size[1];
         const dx = r.x - Math.max(0, Math.min(W - r.w, r.x - gl[0])), dy = r.y - Math.max(0, Math.min(H - r.h, r.y - gl[1]));
-        return Math.hypot(dx, dy) < 6 ? null : [dx, dy];
+        if (Math.hypot(dx, dy) < 6) return null;
+        // never across the hole over BMW's gear letter (no sheet may cover it, _plan): the whole way's box is checked, else a plain fade
+        const a = this._avoid, x0 = Math.min(r.x, r.x - dx), y0 = Math.min(r.y, r.y - dy), x1 = Math.max(r.x, r.x - dx) + r.w, y1 = Math.max(r.y, r.y - dy) + r.h;
+        if (a && x0 < a.x + a.w && a.x < x1 && y0 < a.y + a.h && a.y < y1) return null;
+        return [dx, dy];
     }
 
     /** A layer on its way from (x0, y0) to (x1, y1), from t0 over dur ms, eased as the window opens (_glideStep moves it at each frame). */
@@ -2842,7 +2846,9 @@ class HudApp {
         for (const [key, l] of this.glides) {
             if (typeof l.c.has === 'function' && !l.c.has(l.ref)) { this.glides.delete(key); continue; }
             const u = Math.max(0, Math.min(1, (now - l.t0) / l.dur)), g = u * u * u * (u * (u * 6 - 15) + 10);
-            const x = Math.round(l.x0 + (l.x1 - l.x0) * g), y = Math.round(l.y0 + (l.y1 - l.y0) * g);
+            // where the layer goes as _place puts it: moved by the layout's offset, squeezed above BMW's bottom strip ("stripClear")
+            const off = this._offset(), st = this._stripSy();
+            const x = Math.round(l.x0 + (l.x1 - l.x0) * g) + off.x, y = Math.round((Math.round(l.y0 + (l.y1 - l.y0) * g) + off.y) * st);
             if (x + ',' + y !== l.at) { l.c.set(l.ref, { x, y }); l.at = x + ',' + y; }
             if (u >= 1) this.glides.delete(key);
         }
@@ -3048,6 +3054,8 @@ class HudApp {
             }
         });
         if (this._offset().x || this._offset().y || this._scale() !== 1 || this._stripSy() !== 1) this._place();
+        if (this.glides.size) this._glideStep(Date.now());     // (in the same corked write as _place: a gliding layer starts where it was, no jump)
+        if (this.glides.size && this.geoAnim) this.log.info('map ' + (this.geoAnim.open ? 'opening' : 'closing') + ': ' + this.glides.size + ' layer(s) glide to their places');
         const atlasBytes = this._atlasBytes();
         px += atlasBytes;
         this.pixelBytes = px;

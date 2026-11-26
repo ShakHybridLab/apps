@@ -15,6 +15,7 @@ const check = (name, fn) => { try { fn(); } catch (e) { bad++; console.log('FAIL
 const mk = () => {
     const h = Object.create(H.prototype);
     h.alpha = new Map(); h.fades = new Map(); h.geoAnim = null; h.size = [1920, 720];
+    h._scale = () => 1; h._offset = () => ({ x: 0, y: 0 }); h._stripSy = () => 1;
     h.log = { info() {}, warn() {} };
     return h;
 };
@@ -147,6 +148,20 @@ check('un texte qui glisse reste sur l\'écran tout du long, et suit l\'ouvertur
     assert(sets[1].x < 500 && sets[1].x > 100, 'à mi-chemin : ' + sets[1].x);
     h._glideStep(t0 + 800);
     assert.strictEqual(sets[sets.length - 1].x, 100); assert(!h.glides.size, 'arrivé');
+});
+check('un texte qui glisse suit la place du thème (bande du bas de BMW laissée libre : tout est resserré en hauteur)', () => {
+    const h = mk(), sets = [], c = { set(ref, o) { sets.push(o); }, has() { return true; } };
+    h.glides = new Map(); h._offset = () => ({ x: 0, y: 0 }); h._stripSy = () => 0.5;
+    const t0 = Date.now();
+    h._glide('0:1', c, 1, 500, 100, 100, 100, t0, 800);
+    h._glideStep(t0 + 800);
+    assert.deepStrictEqual(sets[sets.length - 1], { x: 100, y: 50 });
+    h._avoid = { x: 1406, y: 342, w: 191, h: 77 };
+    assert.strictEqual(h._glideFit([-600, 0], { x: 1000, y: 300, w: 100, h: 100 }), null, 'pas à travers la case du rapport de BMW');
+    assert.deepStrictEqual(h._glideFit([-600, 0], { x: 1000, y: 500, w: 100, h: 100 }), [-600, 0], 'en dessous : il glisse');
+    h._avoid = null;
+    h._scale = () => 1.2;
+    assert.strictEqual(h._glideFit([300, 0], { x: 100, y: 100, w: 50, h: 50 }), null, 'thème agrandi : un fondu, pas de glissement');
 });
 console.log(bad ? bad + ' échec(s)' : 'transitions : tout passe');
 process.exit(bad ? 1 : 0);

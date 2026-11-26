@@ -2,6 +2,13 @@
 
 ## 26 novembre 2026
 
+### ShakTheme 0.24.2, ShakHUD 0.6.62 : deux défauts du glissement corrigés
+- **Demande du propriétaire (15:07)** : « t'es sûr qu'il n'y a pas de bug ? ». Contrôle complet du glissement de 0.24.1, avec un banc qui vérifie maintenant chaque pas de chaque glissement (et pas seulement l'image finale).
+- **Case noire de BMW** : sur Circuit, quand la carte se fermait, la feuille des chiffres du cadran repartait vers la droite en passant sur la lettre de rapport de BMW (en bas à droite). Or BMW dessine sa case noire dès qu'un calque touche cette lettre : elle pouvait apparaître un instant. Un calque dont le trajet passe par là ne glisse plus, il apparaît en fondu à sa place.
+- **Bande du bas de BMW laissée libre** (réglage « stripClear ») : avec ce réglage, les calques sont resserrés en hauteur ; un texte qui glissait finissait à sa place non resserrée. Il suit maintenant la même mise en place que le reste du thème, et part de son ancienne place sans saut d'une image.
+- **Journal** : à chaque ouverture ou fermeture de la carte, l'appli note combien de calques glissent (au banc à l'ouverture : Sport 5, M 3, M Blade 10, Navi 5, Shak 1, Circuit 7).
+- **Vérifié** : les six thèmes dans toutes les combinaisons (1 044) : à aucun pas d'aucun glissement un calque ne touche la lettre de rapport ni ne sort de l'écran ; aucune erreur, aucune couche restée transparente, 24 couches au plus. Toute la suite de tests passe (sauf les trois échecs connus).
+
 ### ShakTheme 0.24.1, ShakHUD 0.6.61 : les textes glissent avec la carte dans tous les thèmes, transitions et démarrage plus lents
 - **Demande du propriétaire (08:27)** : « c'est pas mal, mais j'aimerais que ça le fasse sur tous les thèmes, et que ça se fasse plus lentement : la transition va trop vite, et au démarrage aussi l'animation va trop vite, du coup l'aiguille, on dirait qu'elle va bugger ».
 - **Tous les thèmes** : quand la carte Waze s'ouvre, la vitesse, le rapport, la limitation, les jauges des vues BC, etc. **glissent** de leur place d'avant jusqu'à leur place à côté de la carte, pendant que la fenêtre s'ouvre (même courbe, ils arrivent ensemble). Quand la carte s'en va, ils repartent en glissant vers leur place sans la carte en s'effaçant, puis la fenêtre se referme. Chaque texte retrouve son pendant dans l'autre état par son nom (`speed` / `mspeed`, `lim_ring` / `o_lim_ring`, `xb_g_boost` / `xb_smg_boost`…) ; un groupe qui contient un texte immobile (les chiffres d'une échelle) ne bouge pas. Dans Circuit, les chiffres suivent le cadran. Ce qui reste à sa place pendant l'ouverture réapparaît tout de suite au lieu d'attendre la fin.
