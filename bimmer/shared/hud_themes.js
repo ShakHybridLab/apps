@@ -110,6 +110,18 @@ const THEMES = {
         ink: [12, 12, 14, 255], accent: [255, 60, 200, 255], well: [0, 0, 0, 255],
         faint: [120, 124, 140, 255],
     },
+    // Circuit (layout circuit.json, tools/gen_circuit.py): after the owner's photo of a race car's round dial: white on black, red ring and needle,
+    // the gear in a pale orange; "gearC" the gear, "prog" the shifter's letter beside it (orange), "lbl" the grey captions (TRIP)
+    circuit: {
+        name: 'Circuit',
+        fg: [244, 245, 248, 255], dim: [150, 154, 162, 255], track: [44, 46, 52, 255], arc: [236, 32, 32, 255],
+        glow: 0, stripe: false,
+        bar: { low: [244, 245, 248], mid: [255, 150, 40], high: [236, 32, 32], midAt: 'shift' },
+        rev: { from: [244, 245, 248], to: [236, 32, 32] },
+        bg: [0, 0, 0, 255], panel: [0, 0, 0, 255], line: [230, 232, 236, 255], head: [226, 228, 232, 255],
+        ink: [12, 12, 14, 255], accent: [236, 40, 40, 255], well: [0, 0, 0, 255],
+        gearC: [255, 236, 214, 255], prog: [255, 160, 50, 255], lbl: [150, 154, 162, 255], faint: [110, 112, 120, 255],
+    },
     // Minimal (layout minimal.json): white on black, nothing but the speed, the gear and a fuel line.
     minimal: {
         name: 'Minimal',

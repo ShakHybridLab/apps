@@ -9,7 +9,8 @@ let bad = 0, n = 0;
 const DIG = '0123456789', NUM = DIG + '-', DEC = NUM + '.';
 const VALUE = { ambient: NUM, avgSpeed: NUM, coolant: NUM, oil: NUM, evPower: NUM, evRecup: NUM, evRange: NUM, evShare: NUM, fuelPct: NUM,
     hvSoc: NUM, rangeTotal: NUM, powerKw: NUM, speed: NUM, dangerLimit: DIG, limit: DIG, nextLimit: DIG, spd: DIG, ms: DIG, tc: NUM,   // (a limit or a scale number is never "--": blank or a fixed number)
-    boost: DEC, boostPeak: DEC, boostPos: DEC, launch: DEC, tyreP: DEC, tyreMin: DEC, dangerDist: DEC, time: NUM + ':' };
+    boost: DEC, boostPeak: DEC, boostPos: DEC, launch: DEC, tyreP: DEC, tyreMin: DEC, dangerDist: DEC, time: NUM + ':',
+    gSide: DEC + ' LR', gFwd: DEC + ' ACBRK', gearBig: DIG + 'PRN-', gearProg: 'DSM' };
 ['shaktheme', 'shakhud'].forEach((app) => {
     const dir = path.join(root, 'apps', app, 'hud');
     fs.readdirSync(path.join(dir, 'layouts')).filter((f) => f.endsWith('.json')).forEach((f) => {

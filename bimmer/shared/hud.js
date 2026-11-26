@@ -317,7 +317,7 @@ const BOOST_SCALE = { factor: 0.01, offset: 0, invalid: 255 }; // see header com
 // the widget types drawn as pixels (image layers, packed into sheets unless "own": true); the rest are shaders
 // the effect layers the views' readings sit on: M Blade's panel, Navi's card, Sport's round gauges (the same rows, the same tyres' view)
 const VIEW_PANEL = { mpanel: true, vcard: true, sring: true, nline: true, mblades: true };
-const BACKDROP_TYPES = { sdash: true, mdash: true, mblade: true, navi: true, evo: true };   // the shaders that read u_rect / u_org (a piece of the picture)
+const BACKDROP_TYPES = { sdash: true, mdash: true, mblade: true, navi: true, evo: true, circuit: true };   // the shaders that read u_rect / u_org (a piece of the picture)
 const IMAGE_TYPES = { text: true, scale: true, stripe: true, badge: true, gridlabels: true, icon: true, emblem: true, swatchimg: true };
 const STATUS_ASK_MS = 2000;      // after a rebuild: ask cluster-render for its own status text
 // an image layer is "stalled" until its first pixels reach cluster-render, which after a rebuild takes a second or two
@@ -326,7 +326,16 @@ const STALL_WARN_MS = 5000;
 const LAYER_BUDGET = 8;          // cluster-render's limit per client connection (CompositorLimits.per_client; confirmed on the car Nov 5 2026)
 const MAX_CONN = 4;              // connections a layout may ask for ("conn"): 32 layers service-wide / 8 per connection
 const WAZE_HIDE_HOLD_MS = 10000;   // ShakHUD stays hidden this long after Waze's map last said "showing", through a stalled stream (_wazeShowing; waze.js DOWN_HOLD_MS)
-const MAP_SHUT_MS = 2500;     // the map window closes when Maps on Cluster's status file has been unreadable this long (_mapStalled)
+const MAP_SHUT_MS = 2500;
+// the transitions (owner, 26 Nov 2026: "quand j'appuie sur BC ou surtout quand Waze s'affiche, que ça ne se déplace pas sec : une animation très propre,
+// très fluide, dans tous les thèmes"; "le démarrage du thème est sec"): what changes fades out, the layout is made again, the new fades in; the map's
+// window opens from its middle (and the Circuit dial slides aside); the first showing of a theme fades in over BMW's own cluster.
+// A layer that covers half the panel or more (a backdrop) never fades during a change: BMW's cluster would show through it.
+const TRANS_SLOW = Math.max(1, Number(process.env.HUD_TRANS_SLOW) || 1);     // (the bench only: the transitions this many times slower, to film them)
+const FADE_OUT_MS = 140 * TRANS_SLOW;
+const FADE_IN_MS = 260 * TRANS_SLOW;
+const SHOW_MS = 450 * TRANS_SLOW;
+const GEO_MS = 420 * TRANS_SLOW;     // the map window closes when Maps on Cluster's status file has been unreadable this long (_mapStalled)
 const PIXEL_BYTES = 16 * 1024 * 1024;   // cluster-render's pixel memory for every app's images together (CompositorLimits.pixel_bytes)
 const SHEET_AREA_FRAC = 4;       // the first sheet size limit: 1/4 of the target area (see the header)
 const REFUSED_RETRY_MS = [5000, 15000, 45000];   // after cluster-render refused a layer: the layout is made again after these waits, then left (see _retryRefused)
@@ -477,7 +486,7 @@ const EV_RANGE_NONE = 4093;   // the electric range the cluster sends for "none"
 // the zone colours of the rev and speed bars: white at first, orange in the run-up to the zone, then the theme's red
 const ZONE_RGB = [[0.97, 0.98, 1.0], [1.0, 0.68, 0.1], [1.0, 0.18, 0.24]];
 const SWEEP_MS = 1600;                  // the start-up sweep: the bars climb to the top and come back down in this long (half each way)
-const SWEEP_WAIT_MS = 1500;             // ... starting this long after the layout is built, so its layers have reached cluster-render
+const SWEEP_WAIT_MS = 650;              // ... starting this long after the layout is built (1500 before 0.24.0: the owner found the start slow; the theme now fades in over SHOW_MS first)
 const PEAK_HOLD_MS = 1500;              // the rev counter's peak tick stays this long where the rpm topped out, then eases down onto the rpm
 const PEAK_FALL = 0.001;                // ... at this much of the scale per ms (0.9 to 0.3 in 0.6 s)
 const HY_BLUE = [77, 191, 255, 255], HY_GREEN = [51, 217, 128, 255];   // the hybrid rev bar's blue (the battery drives) and green (it charges), for the scale numbers
@@ -619,6 +628,9 @@ class HudApp {
         this.clients = [];               // the connections to cluster-render: [0] the app's own, more for "conn" widgets
         this.started = false;
         this.layerStates = new Map();    // "<conn>:<ref>" -> { state, reason, since, long } from cluster-render
+        this.alpha = new Map();          // "<conn>:<ref>" -> the opacity a layer was last given (the transitions; absent: 1)
+        this.fades = new Map();          // "<conn>:<ref>" -> a fade on its way { c, ref, from, to, t0, dur } (_fadeTo, _fadeStep)
+        this.geoAnim = null;             // the map window opening or closing, the Circuit dial sliding: { t0, dur, open } (_geoF)
         this.stallTimers = new Map();    // "<conn>:<ref>" -> timer: warns if the layer is still stalled after STALL_WARN_MS
         this.client = this._clientAt(0);
         this.target = TARGET_SIZES[this.config.target] ? this.config.target : 'hud';
@@ -693,7 +705,7 @@ class HudApp {
             if (up && !this.wazeWasUp) this.mapOff = this.setting('mapByBc') === true;
             else if (!up && this.mapOff) this.mapOff = false;
             this.wazeWasUp = up;
-            if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuild(); else { this._holeLive(); this._status(); }
+            if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuildSoft('map'); else { this._holeLive(); this._status(); }
         })) : null;
         this.viewNow = null;             // the view the steering wheel's button stepped to (null: the setting "viewSel" decides), see nextView()
         this.mapOff = false;             // the BC button hid the Waze map (nextView): the theme shows without its window until the next press or the map goes
@@ -752,6 +764,7 @@ class HudApp {
             if (key === 'mapByBc') this.mapOff = this.setting('mapByBc') === true;   // turned on: the map hides now (BC brings it); off: it shows
             if (PLACE_KEYS.indexOf(key) >= 0) this._guard('place', () => this._place());
             else if (LIVE_KEYS.indexOf(key) >= 0) this.widgets.forEach((x) => { x.last = null; });
+            else if (key === 'viewSel' || key === 'mapByBc' || key === 'mapInTheme' || key === 'centreWindow') this._rebuildSoft(key === 'viewSel' ? 'view' : 'map');
             else if (key !== 'demo') this._rebuild(); else this._status();
         }));
     }
@@ -1242,7 +1255,7 @@ class HudApp {
 
     /** The alert came or went, or its limit became known or unknown (danger.js): rebuild a layout that draws it. */
     _dangerChanged() {
-        if (this.dangerLayout && this._dangerKey() !== this.dangerShown) this._rebuild(); else this._status();
+        if (this.dangerLayout && this._dangerKey() !== this.dangerShown) this._rebuildSoft('danger'); else this._status();
     }
 
     /** Waze's map on the panel only while the setting is on and the theme shown has a map window. */
@@ -1403,13 +1416,13 @@ class HudApp {
         // the Waze map is a step of the round too (owner, 22 Nov 2026: "BC turns the Waze view on, and off again when I am in it"): while it
         // shows, a press hides it (the theme without its window, no view); after the last view, a press brings it back. Only while it can show.
         const mapCan = !!this.mapLayout && this._mapCan();
-        if (mapCan && !this.mapOff) { this.mapOff = true; this.viewNow = 'none'; this._rebuild(); return 'none'; }
+        if (mapCan && !this.mapOff) { this.mapOff = true; this.viewNow = 'none'; this._rebuildSoft('map'); return 'none'; }
         if (this.windowOpen === true) return 'none';    // (another app's window, a video: no view beside it, the button waits)
         const list = ['none'].concat(this.layoutViews).concat(mapCan ? ['map'] : []), now = this.setting('viewSel');
         if (list.length < 2) return 'none';
         const next = list[(Math.max(0, list.indexOf(now)) + 1) % list.length];
         if (next === 'map') { this.mapOff = false; this.viewNow = 'none'; } else this.viewNow = next;
-        this._rebuild();
+        this._rebuildSoft(next === 'map' ? 'map' : 'view');
         return next;
     }
 
@@ -1443,7 +1456,7 @@ class HudApp {
         if (open !== this.windowOpen) {
             this.windowOpen = open;
             this.log.info('centre window ' + (open ? 'open: Cluster Centre / Cluster Info draw in it' : 'closed'));
-            if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuild(); else this._status();
+            if (this.mapLayout && this.setting('mapUp') !== this.mapShown) this._rebuildSoft('map'); else this._status();
         }
         this.ci.markTheme(shows, { window: shows ? this.windowRect : null, open: this.setting('mapUp') === true && this.mapShown === true,
             map: this._wazeMapOn() });
@@ -1557,6 +1570,7 @@ class HudApp {
         clearTimeout(this.statusAskT);
         clearTimeout(this.rebuildT); this.rebuildT = null;
         clearTimeout(this.refusedT); this.refusedT = null;
+        clearTimeout(this.softT); this.softT = null;
         this.stallTimers.forEach((t) => clearTimeout(t)); this.stallTimers.clear();
         if (this.waze) this._guard('waze stop', () => this.waze.stop());
         this._guard('screen stop', () => this.screen.stop());
@@ -2333,6 +2347,7 @@ class HudApp {
             if (name === 'torquePct') return Math.max(0, d.torque) / (e.torqueNm || 500) * 100;
             return isNum(d.rpm) ? Math.max(0, d.torque) * d.rpm / 9549 / (e.powerKw || 285) * 100 : null;
         }
+        if (name.indexOf('tyreP:') === 0) return this._tyre('p', name.slice(6));      // a tyre's pressure in bar (the Circuit views' stacks)
         if (name.indexOf('setupLevel:') === 0) { const s = this._setup(); return s ? SETUP_LEVEL[s[name.slice(11)]] || 0 : 0; }
         const d = this.car.data();
         return Object.prototype.hasOwnProperty.call(d, name) ? d[name] : null;
@@ -2458,6 +2473,24 @@ class HudApp {
             }
             case 'tachUnit': return this.hybridEv ? 'kW x 10' : (this.config.lang === 'fr' ? 'tr/min x 1000' : '1/min x 1000');     // the hybrid rev counter's marks: kW x 10 while it shows the power
             case 'chargeNote': return this.hybridCharge ? 'CHARGE' : '';
+            // Circuit: the gear alone in the hub (the number while driving, P R N standing) and the shifter's programme beside it (D, S, M)
+            // Circuit: the drive mode short, as the picture's SPORT under the gear (its column is 135 px wide)
+            case 'modeShort': {
+                if (!this.driveMode) return '';
+                const nm = this.driveName || MODE_NAME[this.driveMode] || '';
+                const S = { 'Sport': 'SPORT', 'Sport Plus': 'SPORT+', 'Sport Individual': 'SPORT IND.', 'Hybrid': 'HYBRID', 'Hybrid Eco Pro': 'ECO PRO',
+                    'Electric': 'ELECTRIC', 'Electric Individual': 'ELEC. IND.', 'Battery Control': 'BATTERY', 'Xtraboost': 'XTRABOOST' };
+                return S[nm] || String(nm).toUpperCase().slice(0, 10);
+            }
+            case 'gearBig': {
+                const d = this.car.data();
+                if (d.stage === 'P' || d.stage === 'R' || d.stage === 'N') return d.stage;
+                return isNum(d.gear) && d.gear > 0 ? String(d.gear) : (d.stage ? '' : '-');
+            }
+            case 'gearProg': {
+                const d = this.car.data();
+                return (d.stage === 'D' || (!d.stage && isNum(d.gear))) && isNum(d.gear) && d.gear > 0 ? this._program(d) : '';
+            }
             case 'powerKw': {        // the battery's power in kW, - while charging (recuperation); -- when no app shares it
                 const p = this.ci.sharedPower();
                 return p ? String(Math.round(p.kw)) : '--';
@@ -2651,6 +2684,67 @@ class HudApp {
      * setting changing together), and each one keeps the car's processor for a while. `now`: at once whatever came before (cluster-render
      * is back: nothing of ours is on the screen).
      */
+    /**
+     * A rebuild for a change on the same layout (the map, a view, the danger alert: `kind` 'map' | 'view' | 'danger'), as a transition: the layers
+     * whose widgets follow that change fade out (FADE_OUT_MS), then the layout is made again, and what is new (or was faded) fades in. Anything
+     * else (another layout, nothing on the screen yet) is a plain rebuild.
+     */
+    _rebuildSoft(kind) {
+        const re = kind === 'map' ? /mapUp|powerOpen|powerShut/ : kind === 'view' ? /viewSel|driveSport/ : /danger/;
+        if (!this.started || !this.client.ready || !this.live || !this.live.size || this.activeName === 'off' || this._layoutName() !== this.activeName) { this._rebuild(); return; }
+        if (this.softT) return;                       // one already on its way: it reads the state when it runs
+        let n = 0;
+        this.live.forEach((l, key) => { if (!l.full && re.test(l.dyn || '')) { this._fadeTo(key, l.c, l.ref, 0, FADE_OUT_MS, 0); n++; } });
+        const go = () => { this.softT = null; this.fadeNew = true; try { this._rebuild(true); } finally { this.fadeNew = false; } };
+        if (!n) { go(); return; }
+        this.softT = setTimeout(() => this._guard('soft rebuild', go), FADE_OUT_MS + 10);
+    }
+
+    /** A layer's opacity to `to` over `dur` ms, starting `delay` ms from now (the loop steps it, _fadeStep). */
+    _fadeTo(key, c, ref, to, dur, delay) {
+        const from = this.alpha.has(key) ? this.alpha.get(key) : 1;
+        if (from === to && !this.fades.has(key)) return;
+        this.fades.set(key, { c, ref, from, to, t0: Date.now() + (delay || 0), dur: Math.max(1, dur) });
+    }
+
+    _fadeStep(now) {
+        for (const [key, f] of this.fades) {
+            if (typeof f.c.has === 'function' && !f.c.has(f.ref)) { this.fades.delete(key); this.alpha.delete(key); continue; }
+            const t = Math.max(0, Math.min(1, (now - f.t0) / f.dur)), e = t * t * (3 - 2 * t);
+            const v = Math.round((f.from + (f.to - f.from) * e) * 100) / 100;
+            if (v !== this.alpha.get(key)) { f.c.set(f.ref, { opacity: v }); this.alpha.set(key, v); }
+            if (t >= 1) this.fades.delete(key);
+        }
+    }
+
+    /** The opacity a layer is made with in this rebuild: 0 to fade in (the first showing: every layer; a transition: the layers under half the panel). */
+    _newAlpha(full) { return this.showFade || (this.fadeNew && !full) ? 0 : undefined; }
+
+    /** The Circuit dial in the middle or beside the map ("alt"), on its way from one to the other while the map's window opens or closes: [cx, cy,
+     *  size, lines 0..1, box x, box y]; null for a widget without the two faces. */
+    _circuitGeo(w, now) {
+        const A = w.altOf && w.altOf.alt ? w.altOf.alt.set : null;
+        if (!A) return null;
+        const g = this._geoF(now), t = this.geoAnim ? (this.geoAnim.open ? g : 1 - g) : (w.mapMode ? 1 : 0);
+        const L = (a, b) => Math.round((a + (b - a) * t) * 10) / 10, B0 = w.altOf.box || [373, 478.5], C0 = w.altOf.center;
+        return [L(C0[0], A.center[0]), L(C0[1], A.center[1]), Math.round((1 + ((A.dscale || 1) - 1) * t) * 1000) / 1000, Math.round(t * 100) / 100,
+            L(B0[0], A.box[0]), L(B0[1], A.box[1])];
+    }
+
+    _circuitGeoSend(c, ref, g) {
+        c.uniform(ref, 'u_ctr', [g[0], g[1]]); c.uniform(ref, 'u_ds', [g[2]]); c.uniform(ref, 'u_md', [g[3]]); c.uniform(ref, 'u_bx', [g[4], g[5]]);
+    }
+
+    /** The map window's opening (or closing) and the Circuit dial's slide, 0..1 eased; 1 when none runs. */
+    _geoF(now) {
+        const g = this.geoAnim;
+        if (!g) return 1;
+        const t = (now - g.t0) / g.dur;
+        if (t >= 1) { this.geoAnim = null; this.geoEnd = true; return 1; }
+        const u = Math.max(0, t);
+        return u * u * (3 - 2 * u);
+    }
+
     _rebuild(now) {
         const t = Date.now(), since = t - (this.rebuiltAt || 0);
         if (now !== true && this.started && since >= 0 && since < REBUILD_MIN_MS) {
@@ -2664,6 +2758,12 @@ class HudApp {
         const corked = this.clients.filter((c) => typeof c.cork === 'function' && c.cork());
         try {
             this._guard('rebuild', () => this._rebuildInner());
+            // the fade in of what was made (or faded out) in this rebuild; during the dial's slide, after it
+            if (this.live) {
+                const dur = this.showFade ? SHOW_MS : FADE_IN_MS, delay = this.showFade ? 0 : this.geoAnim ? Math.round(this.geoAnim.dur * 0.9) : 0;
+                this.live.forEach((l, key) => { if (this.alpha.has(key) && this.alpha.get(key) < 1) this._fadeTo(key, l.c, l.ref, 1, dur, delay); });
+            }
+            this.showFade = false;
             // the values of now go out with the layers (a layer kept through the rebuild had its uniforms set to their starting values just above: sent
             // apart, the rev bar would fall to 0 for a frame)
             const t0 = Date.now();
@@ -2693,6 +2793,9 @@ class HudApp {
         this.car.setRedline(this.setting('redline'));
         this.holeShut = this._mapStalled();      // (the window built as the stream is now: _hole)
         const name = this._layoutName();
+        const wasMap = this.mapShown, wasName = this.activeName;
+        // the first showing of a layout (the app's start, back from BMW's own cluster): it fades in over BMW's cluster
+        this.showFade = name !== 'off' && (!wasName || wasName === 'off') && this.started === true;
         if (name === 'off' && this.activeName && this.activeName !== 'off') {
             const why = this.screen && this.screen.yielded ? (this.screen.otherName || 'another app') + ' took the screen'
                 : this.setting('byMode') === true && this.driveMode ? 'drive mode ' + (this.driveName || MODE_NAME[this.driveMode]) + ': BMW\'s own cluster in that mode' : 'the theme was turned off';
@@ -2736,6 +2839,8 @@ class HudApp {
         // (a layout without a window can't have it open for Cluster Centre; the map flag is re-read for this layout)
         if (this.windowOpen && !this.windowRect) this.windowOpen = false;
         this.mapShown = this.setting('mapUp');
+        // the map came or went on the same layout: its window opens from its middle (closes faster), the Circuit dial slides
+        if (wasName === name && wasMap !== this.mapShown && this.mapLayout) this.geoAnim = { t0: Date.now(), dur: this.mapShown ? GEO_MS : Math.round(GEO_MS * 0.6), open: this.mapShown };
         this._wazeWant();
         this.layoutSlots = layout.slots || [];
         this.layoutTheme = layout.theme && THEMES[layout.theme] ? layout.theme : null;
@@ -2768,6 +2873,7 @@ class HudApp {
             if (!w.alt || typeof w.alt.when !== 'string') return w;
             const o = Object.assign({}, w, this._toggleOn(w.alt.when) ? w.alt.set : null);
             delete o.alt;
+            o.altOf = w;                       // (both faces, for a transition between them: the Circuit dial's slide)
             o.sigOf = JSON.stringify(w);       // (a plain key: the gear window's pieces of this widget are copies and must carry it too)
             return o;
         });
@@ -2850,7 +2956,7 @@ class HudApp {
     _dropOld() {
         const old = this.oldLayers;
         this.oldLayers = null;
-        if (old) old.forEach((l) => l.c.drop(l.ref));
+        if (old) old.forEach((l, key) => { l.c.drop(l.ref); this.alpha.delete(key); this.fades.delete(key); });
     }
 
     /**
@@ -2968,8 +3074,10 @@ class HudApp {
     /** One image layer for a sheet: every member painted into a local buffer, then sent whole once. */
     _createSheet(s) {
         const c = this._clientAt(s.conn);
-        const ref = s.reuse ? s.reuse.ref : c.image({ target: this.target, klass: s.klass, z: s.z, x: s.x, y: s.y, w: s.w, h: s.h, iw: s.w, ih: s.h });
-        if (ref && this.live) this.live.set((s.conn || 0) + ':' + ref, { c, ref, sig: s.sig });
+        const full = s.w * s.h >= this.size[0] * this.size[1] / 2, a0 = s.reuse ? undefined : this._newAlpha(full);
+        const ref = s.reuse ? s.reuse.ref : c.image({ target: this.target, klass: s.klass, z: s.z, x: s.x, y: s.y, w: s.w, h: s.h, iw: s.w, ih: s.h, opacity: a0 });
+        if (ref && this.live) this.live.set((s.conn || 0) + ':' + ref, { c, ref, sig: s.sig, full, dyn: s.members.map((m) => m.toggle || '').join(' ') });
+        if (ref && a0 === 0) this.alpha.set((s.conn || 0) + ':' + ref, 0);
         if (!ref) { this.log.warn('sheet ' + s.klass + '/' + s.z + ' at ' + s.x + ',' + s.y + ' ' + s.w + 'x' + s.h + ': layer refused'); return; }
         s.ref = ref; s.c = c; s.ci = s.conn;
         this.placed.push({ c, ref, x: s.x, y: s.y, w: s.w, h: s.h });
@@ -3052,12 +3160,15 @@ class HudApp {
             // "rect": the layer shows only that part of the widget (the gear window cuts a backdrop into pieces, shared/gear_window.js); the widget keeps its
             // own x, y, w, h for every uniform, and the four backdrop shaders read u_rect / u_org to know which part of the picture the layer holds
             const r = w.rect || w;
-            const base = { target: this.target, klass: w.class || 'content', z: w.z || 0, x: r.x, y: r.y, w: r.w, h: r.h };
+            const full = r.w * r.h >= this.size[0] * this.size[1] / 2 || !!BACKDROP_TYPES[w.type];
             const keep = this.reuse; this.reuse = null;
+            const a0 = keep ? undefined : this._newAlpha(full);
+            const base = { target: this.target, klass: w.class || 'content', z: w.z || 0, x: r.x, y: r.y, w: r.w, h: r.h, opacity: a0 };
             if (keep) ref = keep.ref;                                   // the same layer as before the rebuild (_keepLayers)
             else if (IMAGE_TYPES[w.type]) ref = c.image(Object.assign({ iw: w.w, ih: w.h }, base));
             else ref = c.effect(Object.assign({ fs: w.type === 'swatch' ? calibration.SWATCH : w.type === 'shiftlight' && w.style === 'pills' ? shaders.shiftpills : shaders.accented(w.type, this.accentHue) }, base));
-            if (ref && this.live) this.live.set(this._connOf(w) + ':' + ref, { c, ref, sig: this.reuseSig, id: w.id });
+            if (ref && this.live) this.live.set(this._connOf(w) + ':' + ref, { c, ref, sig: this.reuseSig, id: w.id, full, dyn: w.toggle || '' });
+            if (ref && a0 === 0) this.alpha.set(this._connOf(w) + ':' + ref, 0);
             if (!ref) { this.log.warn('widget "' + w.id + '": layer refused'); return; }
             this.placed.push({ c, ref, x: r.x, y: r.y, w: r.w, h: r.h, fixed: !!w.fixed });
         }
@@ -3193,6 +3304,22 @@ class HudApp {
             c.uniform(ref, 'u_mag', [1.0, 0.18, 0.76]); c.uniform(ref, 'u_peak', [0]);
             c.uniform(ref, 'u_rev', [0]); c.uniform(ref, 'u_speed', [0]);
             c.uniform(ref, 'u_zone', [0, 0]); c.uniform(ref, 'u_redFrom', [2]); c.uniform(ref, 'u_szone', [2]); c.uniform(ref, 'u_hy', [0, 0, 0, 0]);
+        } else if (w.type === 'circuit') {
+            // the Circuit theme (shaders.js circuit): the round dial at "center", the map's window
+            c.uniform(ref, 'u_size', [w.w, w.h]);
+            // ("alt" while the map is up: the dial smaller on the left, "dscale", the lines along the map, "mapMode", the gearbox's box under the speed, "box")
+            const geo = this._circuitGeo(w, Date.now());          // (mid-slide already: a frame drawn between this and the loop's update would jump)
+            if (geo) this._circuitGeoSend(c, ref, geo);
+            else { c.uniform(ref, 'u_ctr', w.center); c.uniform(ref, 'u_ds', [isNum(w.dscale) ? w.dscale : 1]); c.uniform(ref, 'u_md', [w.mapMode ? 1 : 0]); c.uniform(ref, 'u_bx', w.box || [373, 478.5]); }
+            c.uniform(ref, 'u_nd', [0, 0, 0, 0]); c.uniform(ref, 'u_zn', [99, 99]); c.uniform(ref, 'u_acc', [0.93, 0.12, 0.12]); c.uniform(ref, 'u_lv', [0, 0, 0, 0]);
+            c.uniform(ref, 'u_hole', this._hole(w));
+        } else if (w.type === 'cstack') {
+            // the Circuit theme's views: up to four small stacks of bars ("stacks": { x, y, w, n, signal, min, max, low })
+            const S = (w.stacks || []).slice(0, 4);
+            c.uniform(ref, 'u_size', [w.w, w.h]);
+            [0, 1, 2, 3].forEach((i) => c.uniform(ref, 'u_s' + i, S[i] ? [S[i].x - w.x, S[i].y - w.y, S[i].w, S[i].n || 5] : [0, 0, 0, 0]));
+            c.uniform(ref, 'u_lo', [0, 1, 2, 3].map((i) => (S[i] && S[i].low ? 1 : 0)));
+            c.uniform(ref, 'u_lv', [0, 0, 0, 0]);
         } else if (w.type === 'evbars') {
             // the Shak theme's views: up to four bars of slanted blocks ("rows": { y, signal, min, max, red, color }), "bar" [left x, right x]
             const R = (w.rows || []).slice(0, 4), at = (f, d) => [0, 1, 2, 3].map((i) => (R[i] ? f(R[i]) : d));
@@ -3570,11 +3697,34 @@ class HudApp {
 
     _hole(w) {
         if (w.holeWhen === 'mapUp' && this._mapStalled()) return [0, 0, 0, 0];
-        const on = w.holeWhen === true || (w.holeWhen && this.setting(w.holeWhen) === true);   // true: always cut
-        const h = w.hole && on ? w.hole : null;
-        if (!h) return [0, 0, 0, 0];
+        // true: always cut; "mapUp": as the layout was built (mapShown), not the map's state of this instant: between the two (a transition fading out
+        // before its rebuild) a layer sending its window at each frame opened it at once (M Blade, bench 26 Nov 2026)
+        const on = w.holeWhen === true || (w.holeWhen === 'mapUp' ? this.mapShown === true : !!w.holeWhen && this.setting(w.holeWhen) === true);
+        if (!w.hole) return [0, 0, 0, 0];
         const inset = isNum(w.holeInset) ? w.holeInset : 6;
-        return [h[0] + inset - w.x, h[1] + inset - w.y, Math.max(0, h[2] - 2 * inset), Math.max(0, h[3] - 2 * inset)];
+        const full = [w.hole[0] + inset - w.x, w.hole[1] + inset - w.y, Math.max(0, w.hole[2] - 2 * inset), Math.max(0, w.hole[3] - 2 * inset)];
+        // opening or closing (the map came or went): the window grows from its middle, or shrinks back into it
+        if (w.holeWhen === 'mapUp' && this.geoAnim) {
+            const g = this._geoF(Date.now()), k = this.geoAnim ? (this.geoAnim.open ? g : 1 - g) : (on ? 1 : 0);
+            if (k <= 0.01) return [0, 0, 0, 0];
+            if (k >= 1) return full;          // (a closing's first instant: still whole, not shut for a frame)
+            return [full[0] + full[2] * (1 - k) / 2, full[1] + full[3] * (1 - k) / 2, full[2] * k, full[3] * k].map((v) => Math.round(v * 10) / 10);
+        }
+        return on ? full : [0, 0, 0, 0];
+    }
+
+    /** While the map's window opens or closes: its size sent again at each frame (the shaders' own uniform for it). */
+    _holeFrame() {
+        for (const x of this.widgets.values()) {
+            const w = x.w;
+            if (x.follower || !x.ref || w.holeWhen !== 'mapUp' || !w.hole) continue;
+            const h = this._hole(w);
+            if (w.type === 'evo') {
+                const r = h[2] > 0 ? [h[0] + w.x, h[1] + w.y, h[2], h[3]] : [0, 0, 0, 0];      // (evo: a flag, and the window in panel px)
+                x.c.uniform(x.ref, 'u_hole', [h[2] > 0 ? 1 : 0]); x.c.uniform(x.ref, 'u_hr', h[2] > 0 ? r : w.hole);
+            } else x.c.uniform(x.ref, 'u_hole', h);
+            if (w.type === 'mdash') this._plateSet(x.c, x.ref, w);
+        }
     }
 
     _holeRadius(w) { return isNum(w.holeRadius) ? w.holeRadius : 28; }
@@ -3652,6 +3802,9 @@ class HudApp {
         const b = this._boost();
         if (isNum(b) && (!isNum(this.boostPeak) || b > this.boostPeak)) this.boostPeak = b;
         if (!this.client.ready) return;
+        // the transitions: the fades, the map window's size while it opens or closes (and once more at the end)
+        if (this.fades.size) this._fadeStep(now);
+        if (this.geoAnim || this.geoEnd) { this._geoF(now); this._holeFrame(); if (!this.geoAnim) this.geoEnd = false; }
         // the map window's time-based close (_mapStalled: a status file unreadable for MAP_SHUT_MS) is looked at four times a second
         if (this.mapLayout && this.waze && now - (this.holeLookAt || 0) >= 250) { this.holeLookAt = now; this._holeLive(); }
         // shift light: blink the whole bar at 8 Hz once the rpm reaches the redline
@@ -4058,6 +4211,42 @@ class HudApp {
             const zl = this.ctx.settings.item('speedZone') ? this.setting('speedZone') : 0;
             const zf = isNum(zl) && zl > 0 ? scaleFrac(us ? zl * 0.621371 : zl, SPEED_SCALE[us ? 'us' : 'metric']) : 2;
             if (zf !== x.szone) { x.szone = zf; x.c.uniform(x.ref, 'u_szone', [zf]); }
+        } else if (w.type === 'circuit') {
+            // the needle in thousands: the rpm, or while the battery alone drives its power on the same marks (kW x 10, as {{tachUnit}} says), in light
+            // blue (green while it charges), as the other themes' rev counters; the zone's blocks from _redMarks; the ring red, blue in Electric
+            const rpm = this._barRaw('rpm'), max = w.rpmMax || 7000;
+            const hy = this._hybridTach(w, rpm), bar = hy.ev ? 1 : (w.chgOnBar === true && hy.engineOff && hy.chg > 0 ? 2 : 0);
+            this.hybridEv = bar > 0; this.hybridCharge = bar === 2;
+            this.hybridPow = bar > 0 ? { kw: Math.abs(hy.kw), chg: bar === 2 } : null;
+            const kv = bar ? Math.abs(hy.kw) / 10 : isNum(rpm) ? rpm / 1000 : 0;
+            const nk = Math.round(Math.min(7.42, Math.max(0, kv)) * 200) / 200;
+            const pk = Math.round(this._peakRev(x, nk / 8, now, bar > 0 || this.sweepAt !== null) * 8 * 200) / 200;
+            // the zone's two blocks as on the photo: red from 100 rpm before the redline (the setting "redline"), orange the 500 before that
+            const red = (this.setting('redline') || 7000) / 1000 - 0.1, zn = bar ? [99, 99] : [Math.round((red - 0.5) * 100) / 100, Math.round(red * 100) / 100];
+            const dm = this.setting('accentByMode') !== false ? this.driveMode : null;
+            const acc = dm === 'eco' && /^Electric/.test(this.driveName || '') ? [0.25, 0.6, 1.0] : [0.93, 0.12, 0.12];
+            const fuel = this._raw('fuel'), hv = this._raw('hvSoc'), q = (v) => Math.round(Math.min(1, Math.max(0, v)) * 100) / 100;
+            const lv = [q(isNum(fuel) ? fuel : 0), q(isNum(hv) ? hv / 100 : 0), this._lowNow('fuel') ? 1 : 0, this._lowNow('battery') ? 1 : 0];
+            const nd = [nk, pk, this.flash ? 1 : 0, bar];
+            const geo = this._circuitGeo(w, now);          // (the dial beside the map or in the middle, sliding between them)
+            const key = nd.join('|') + '|' + zn.join('|') + '|' + acc.join('|') + '|' + lv.join('|') + '|' + (geo ? geo.join(',') : '');
+            if (!force && key === x.last) return;
+            x.last = key;
+            if (geo) this._circuitGeoSend(x.c, x.ref, geo);
+            x.c.uniform(x.ref, 'u_nd', nd);
+            x.c.uniform(x.ref, 'u_zn', zn);
+            x.c.uniform(x.ref, 'u_acc', acc);
+            x.c.uniform(x.ref, 'u_lv', lv);
+        } else if (w.type === 'cstack') {
+            const S = (w.stacks || []).slice(0, 4);
+            const lv = [0, 1, 2, 3].map((i) => {
+                const st = S[i], v = st ? this._raw(st.signal) : null;
+                return st && isNum(v) && st.max !== st.min ? Math.round(Math.min(1, Math.max(0, (Math.abs(v) - st.min) / (st.max - st.min))) * 100) / 100 : 0;
+            });
+            const key = lv.join('|');
+            if (!force && key === x.last) return;
+            x.last = key;
+            x.c.uniform(x.ref, 'u_lv', lv);
         } else if (w.type === 'evbars') {
             const lv = [0, 1, 2, 3].map((i) => {
                 const r = (w.rows || [])[i], v = r ? this._raw(r.signal) : null;

@@ -2,7 +2,7 @@
 
 <img src="icon.png" width="72" align="left" alt="ShakTheme logo">
 
-By shakzer. Redraws the whole instrument cluster of an iDrive 7 BMW in one of five themes: **Sport**, **M**, **M Blade**, **Navi** and **Shak**. Open **ShakTheme** from the apps menu on the center screen: its own menu (after BMW's iDrive 8.5) has the themes with pictures, the badge, the phone's map, warnings, display and settings.
+By shakzer. Redraws the whole instrument cluster of an iDrive 7 BMW in one of six themes: **Sport**, **M**, **M Blade**, **Navi**, **Shak** and **Circuit**. Open **ShakTheme** from the apps menu on the center screen: its own menu (after BMW's iDrive 8.5) has the themes with pictures, the badge, the phone's map, warnings, display and settings.
 
 <p align="center"><img src="../../docs/images/page-cluster-themes.png" width="900" alt="The ShakTheme page on the center screen"></p>
 
@@ -70,6 +70,26 @@ Le thème du propriétaire, d'après sa photo d'un cluster de course, sans ses b
 - **En bas :** comme sur la photo, une ligne par jauge suivie d'une barre de blocs penchés : l'essence à gauche (bleu → blanc), l'**huile** et le **liquide de refroidissement** dans un bac au milieu (bleus à froid, verts chauds, rouges au-delà de leur limite), la **batterie** à droite.
 
 Même réglages que les autres thèmes. Le logo vient de `tools/logo-src/shak.png` (`tools/bake_logo.py`), la mise en page de `tools/gen_evo.py`, le dessin de `shared/shaders.js` (`evo`, `shiftpills`). Vérifié au banc seulement.
+
+### Circuit (nouveau, 26 nov. 2026)
+
+<p align="center"><img src="../../docs/images/cluster-circuit.png" width="900" alt="Thème Circuit"></p>
+<p align="center"><img src="../../docs/images/cluster-circuit-waze.png" width="900" alt="Thème Circuit avec la carte (carte de démonstration noire)"></p>
+
+D'après la photo du propriétaire d'un compteur de voiture de course à cadran rond (« copie tout pareil, chaque détail compte »), sans aucun logo de marque. Chaque position est relevée sur la photo, ramenée à l'écran du cluster.
+
+- **Au milieu :** le compte-tours rond (0 en bas, 6 en haut, 30° par millier), son anneau rouge, ses traits gris à l'intérieur et blancs à travers les chiffres, les deux blocs de la zone rouge (orange puis rouge, d'après le réglage Redline) et l'aiguille rouge au cœur blanc. Le moyeu s'allume de 0 jusqu'à l'aiguille, le rapport y est écrit en grand, sa lettre (D, S, M) à côté en orange, et dessous le mode de conduite et la part roulée en électrique. Effet loupe sur chaque chiffre atteint.
+- **À gauche :** la vitesse en grand, dessous la case de la **boîte** (P, R, N, D3, M2…), à côté la limitation en panneau rond et la suivante, l'alerte de zone de danger au-dessus.
+- **À droite :** un panneau tenu par deux lignes blanches : l'heure, la température extérieure et le chrono 0-100 au-dessus ; dessous, l'**huile** et le **liquide de refroidissement** avec leurs icônes (là où la photo a TRIP et ODO). Dedans, les **vues de la touche BC** dans le style du thème (des piles de barres comme les jauges de côté, une légende grise, le chiffre blanc).
+- **Côtés :** l'essence à gauche et, pour l'hybride, la **batterie** à droite (à la place de la température d'eau de la photo), en piles de sept barres avec leur échelle F / E ; rouges en réserve. Sous chacune, son autonomie : l'essence en km, la batterie en km et en %.
+- **Hybride :** moteur arrêté, l'aiguille montre la puissance électrique sur les mêmes repères (kW x 10) en bleu, en vert pendant la recharge ; l'anneau passe au bleu en mode Électrique.
+- **Avec Waze :** le cadran **glisse à droite** (à 82 % de sa taille : plus grand, le haut du 6 et du 7 passerait sous le capot), la batterie rejoint l'essence à gauche, la vitesse, la boîte, les panneaux, l'heure et les températures se rangent au-dessus d'elles, et **la carte s'ouvre entre les deux**, dans les deux lignes blanches.
+
+Mêmes réglages que les autres thèmes. La mise en page vient de `tools/gen_circuit.py`, le dessin de `shared/shaders.js` (`circuit`, `cstack`), les polices `c_*` de `tools/bake_fonts.py`. Vérifié au banc seulement.
+
+### Transitions (tous les thèmes, 26 nov. 2026)
+
+Quand la carte Waze s'affiche ou s'en va, quand on change de vue avec la touche BC, quand l'alerte de zone de danger arrive : ce qui change **s'efface en douceur**, le thème est refait, puis le nouveau **apparaît en fondu**. La **fenêtre de la carte s'ouvre depuis son milieu** (et se referme dedans) ; dans Circuit, le cadran glisse pendant ce temps. Au démarrage, le thème **apparaît en fondu** par-dessus le compteur de BMW, et le balayage de l'aiguille part plus tôt. Un fond plein écran ne devient jamais transparent pendant un changement (le compteur de BMW se verrait dessous).
 
 Neither theme has been tried on a car; they are checked on the bench against the screenshot and for BMW's black gear box, seat-belt light and the hood. The gear letters use the app's own font, not the boxed one of the screenshot.
 

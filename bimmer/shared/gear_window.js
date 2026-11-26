@@ -20,9 +20,9 @@ const WIDTH = 1920;
 const HEIGHT = 720;
 const TOP = 660;
 const VARIANTS = { '1': [1380, 1460], '2': [1300, 1500], '3': [1150, 1470], '4': [0, WIDTH] };
-const AUTO = { sport: '1', m: '1', mblade: '1', navi: '1', evo: '1' };   // essai du 16 nov. 2026 (tailles 1, 2, 3 et 4 : la case noire a disparu dans les quatre thèmes) : la plus petite suffit
+const AUTO = { sport: '1', m: '1', mblade: '1', navi: '1', evo: '1', circuit: '1' };   // essai du 16 nov. 2026 (tailles 1, 2, 3 et 4 : la case noire a disparu dans les quatre thèmes) : la plus petite suffit
 const LETTER = [1392, 666, 1448, 702];          // la lettre de rapport de BMW, mesurée sur les photos
-const PIECES = { sdash: true, mdash: true, mblade: true, navi: true, evo: true };   // les fonds dont le shader sait dessiner un morceau de l'image (u_rect, u_org)
+const PIECES = { sdash: true, mdash: true, mblade: true, navi: true, evo: true, circuit: true };   // les fonds dont le shader sait dessiner un morceau de l'image (u_rect, u_org)
 const NUDGE = 6;                                 // un texte ou une icône qui mord d'au plus 6 px est poussé hors du trou
 
 /** Le trou à utiliser : { id, x, y, w, h } ou null (réglage « off », inconnu, ou un layout qui n'est pas l'un des thèmes). */

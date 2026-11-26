@@ -2,7 +2,7 @@
 
 # ShakTheme
 
-**ShakTheme**, par shakzer : cinq thèmes pour le cluster de l'iDrive 7 d'une **BMW X3 30e (G01, 2022)**, un hybride rechargeable. **Sport**, **M**, **M Blade**, **Navi** et **Shak** (le sien : son logo, néon magenta, bandes de blocs tendues), avec la batterie et l'autonomie électrique, les vrais modes de conduite de la voiture, une fenêtre pour la carte Waze, des températures d'huile et de liquide qui changent de couleur, et un menu au style de l'iDrive 8.5.
+**ShakTheme**, par shakzer : six thèmes pour le cluster de l'iDrive 7 d'une **BMW X3 30e (G01, 2022)**, un hybride rechargeable. **Sport**, **M**, **M Blade**, **Navi**, **Shak** (le sien : son logo, néon magenta, bandes de blocs tendues) et **Circuit** (un compte-tours rond de voiture de course), avec la batterie et l'autonomie électrique, les vrais modes de conduite de la voiture, une fenêtre pour la carte Waze, des températures d'huile et de liquide qui changent de couleur, et un menu au style de l'iDrive 8.5.
 
 Le dépôt contient aussi **ShakHUD** (l'affichage tête haute), **ShakLimites** (la limitation d'après la carte), **RideTube** et deux applis d'essai (ShakConso, ShakMusique). Rien ici n'est officiel BMW.
 
@@ -15,7 +15,7 @@ Le dépôt contient aussi **ShakHUD** (l'affichage tête haute), **ShakLimites**
 
 | Dossier | Apps | Licence |
 |---|---|---|
-| `bimmer/` | **ShakTheme** (4 thèmes du cluster), **ShakHUD** (le HUD), **ShakLimites**, **ShakConso**, **ShakMusique**, **RideTube cluster** | MIT (voir `LICENSES.md`) |
+| `bimmer/` | **ShakTheme** (6 thèmes du cluster), **ShakHUD** (le HUD), **ShakLimites**, **ShakConso**, **ShakMusique**, **RideTube cluster** | MIT (voir `LICENSES.md`) |
 
 À installer à côté, depuis leur propre source du Store (non copiés ici, non modifiés) :
 

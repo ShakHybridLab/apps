@@ -16,9 +16,9 @@ import json, os, re, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 APP = os.path.join(HERE, '..', 'apps', 'shaktheme', 'hud')
-ZOOM = {'s_scale': 's_scale_z', 'm_num': 'm_num_z', 'm_gl': 'm_gl_z', 'e_rnum': 'e_rnum_z', 'e_snum': 'e_snum_z'}
-MID = {'s_scale': 's_scale_m', 'm_num': 'm_num_m', 'm_gl': 'm_gl_m', 'e_rnum': 'e_rnum_m', 'e_snum': 'e_snum_m'}      # 1.1 times: the middle step of the number's growth (a soft rise, not a jump)
-RPM_MAX = {'sport': 7000, 'm': 7000, 'mblade': 7000, 'navi': 7000, 'evo': 7000}       # the rev scale's top of each layout (the bars' _redMarks)
+ZOOM = {'s_scale': 's_scale_z', 'm_num': 'm_num_z', 'm_gl': 'm_gl_z', 'e_rnum': 'e_rnum_z', 'e_snum': 'e_snum_z', 'c_num': 'c_num_z'}
+MID = {'s_scale': 's_scale_m', 'm_num': 'm_num_m', 'm_gl': 'm_gl_m', 'e_rnum': 'e_rnum_m', 'e_snum': 'e_snum_m', 'c_num': 'c_num_m'}      # 1.1 times: the middle step of the number's growth (a soft rise, not a jump)
+RPM_MAX = {'sport': 7000, 'm': 7000, 'mblade': 7000, 'navi': 7000, 'evo': 7000, 'circuit': 7000}       # the rev scale's top of each layout (the bars' _redMarks)
 BLACK_BOX = (1406, 342, 1597, 419)
 BELT = (587, 663, 626, 700)
 # the speed scales of shared/hud.js (SPEED_SCALE, M_SCALE), metric and mph: a label's widest number in either unit sets its room
@@ -75,6 +75,8 @@ def kind(layout, w):
     if layout == 'navi' and re.fullmatch(r'(o_)?rev\d', i):
         return ('rpm', int(t))
     if layout == 'evo' and re.fullmatch(r'rev\d', i):
+        return ('rpm', int(t))
+    if layout == 'circuit' and re.fullmatch(r'm?n\d', i):
         return ('rpm', int(t))
     if layout == 'm' and re.fullmatch(r'n[lr]\d', i):
         return ('rpm', int(t))

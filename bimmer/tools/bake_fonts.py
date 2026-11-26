@@ -99,6 +99,22 @@ CLUSTER_FONTS = [
     ('e_mode', 'BarlowSemiCondensed-SemiBold.ttf', 28, UPPER + LOWER + DIGITS + " -+'éèêàçùôîÉ"),            # the drive mode
     ('sign_xl', 'DINish-Bold.ttf', 84, DIGITS),                 # the big speed limit sign on Evo's left (150 px)
     ('sign_xl3', 'DINishCondensed-Bold.ttf', 84, DIGITS),
+    # Circuit (26 Nov 2026, after the owner's photo of a race car's round dial: "copie tout pareil"): squared italic numbers (Orbitron, its zero the plain O,
+    # narrowed to the picture's digits), the words in Barlow Condensed as on the picture (TRIP, SPORT); squeeze and slant: see bake()
+    ('c_num', 'Orbitron[wght].ttf', 60, DIGITS, 0, 'Bold', {'0': 'O'}, '', 0.18, 0.8),          # the dial's numbers 0..7
+    ('c_num_m', 'Orbitron[wght].ttf', 64, DIGITS, 0, 'Bold', {'0': 'O'}, '', 0.18, 0.8),        # the magnifier's middle step, 1.07 times
+    ('c_num_z', 'Orbitron[wght].ttf', 69, DIGITS, 0, 'Bold', {'0': 'O'}, '', 0.18, 0.8),        # and its top, 1.15 times
+    ('c_speed', 'Orbitron[wght].ttf', 94, DIGITS + '-', 0, 'Black', {'0': 'O'}, '', 0.12, 0.78),   # the speed, left of the dial
+    ('c_gear', 'Orbitron[wght].ttf', 130, DIGITS + 'PRNDSM-', 0, 'Black', {'0': 'O'}, '', 0.12, 0.8),   # the gear in the dial's hub
+    ('c_unit', 'BarlowSemiCondensed-SemiBold.ttf', 24, LOWER + UPPER + DIGITS + '/ .°%', 0, None, None, '', 0.12),   # mph, tr/min x 1000, the M of the gear
+    ('c_mode', 'BarlowCondensed-SemiBold.ttf', 34, UPPER + DIGITS + " -+%'./°", 0, None, None, '°'),   # SPORT, the lines under it (capitals only: a short cell, the lines sit close)
+    ('c_lbl', 'BarlowCondensed-SemiBold.ttf', 30, UPPER + LOWER + DIGITS + " .-/'éèêàçùôîÉÈÊÂÎÔ"),     # TRIP and the views' names, in grey
+    ('c_val', 'BarlowSemiCondensed-SemiBold.ttf', 40, DIGITS + '.-:+,/ LR'),                        # 0202.0 and the views' readings
+    ('c_tiny', 'BarlowSemiCondensed-SemiBold.ttf', 19, LOWER + UPPER + DIGITS + '/ .', 0, None, None, '', 0.12),   # x 1000 RPM under the dial
+    ('c_vu', 'BarlowSemiCondensed-SemiBold.ttf', 28, LOWER + UPPER + '/%° '),                               # their units (mi, km, °C)
+    ('c_time', 'BarlowSemiCondensed-Medium.ttf', 34, DIGITS + ':+-°. ' + LOWER + UPPER),             # 2:46 pm, +22 °C
+    ('c_side', 'BarlowCondensed-SemiBold.ttf', 26, 'FEHC'),                                         # the side gauges' F and E
+    ('c_lim', 'BarlowCondensed-Bold.ttf', 46, DIGITS + '-PRNDSM'),                                  # the gearbox in the box under the speed
 ]
 FONTS = {'shaktheme': CLUSTER_FONTS, 'shakhud': [
     # the owner, 22 Nov 2026, with a photo of an M car's HUD: "I want all the writing to look like that": the squared numbers of the M theme
@@ -114,13 +130,14 @@ PAD = 2
 ATLAS_W = 1024
 
 
-def bake(out, name, file, size, chars, stroke=0, weight=None, subs=None, tuck='', slant=0):
+def bake(out, name, file, size, chars, stroke=0, weight=None, subs=None, tuck='', slant=0, squeeze=1.0):
     """stroke: px of extra weight round every glyph (Michroma has one weight). weight: a named instance of a
     variable font (Orbitron: Regular .. Black), for the M theme's squared BMW-style gear, speed and numbers.
     subs: {char: glyph drawn for it} (Orbitron's zero is slashed; the M8's is plain, so its O stands in).
     tuck: characters added to a font after layouts were built on its cell height (° on value / y_val, Nov 7 2026):
     they don't count towards the cell, and one that rises above it is drawn lower so its top meets the cell's.
-    slant: an italic drawn from the upright cut, the top of each glyph leaning right by slant x its height (Shak)."""
+    slant: an italic drawn from the upright cut, the top of each glyph leaning right by slant x its height (Shak).
+    squeeze: the glyphs made narrower (their widths times squeeze, the height kept): Orbitron is wider than the Circuit picture's digits."""
     font = ImageFont.truetype(os.path.join(SRC, file), size)
     if weight: font.set_variation_by_name(weight)
     subs = subs or {}
@@ -131,7 +148,7 @@ def bake(out, name, file, size, chars, stroke=0, weight=None, subs=None, tuck=''
     bottom = max(b[3] for c, b in boxes.items() if c not in tuck)
     drop = {c: max(0, top - boxes[c][1]) for c in tuck if c in boxes}
     height = bottom - top + 2 * PAD
-    tab = (max(font.getlength(glyph(d)) for d in DIGITS if d in chars) + 2 * stroke) if any(d in chars for d in DIGITS) else 0
+    tab = (max(font.getlength(glyph(d)) for d in DIGITS if d in chars) + 2 * stroke) * squeeze if any(d in chars for d in DIGITS) else 0
 
     cells = []
     for c in chars:
@@ -143,6 +160,9 @@ def bake(out, name, file, size, chars, stroke=0, weight=None, subs=None, tuck=''
         w = r - l + 2 * PAD
         img = Image.new('L', (w, height), 0)
         ImageDraw.Draw(img).text((PAD - l, PAD - top + drop.get(c, 0)), glyph(c), font=font, fill=255, anchor='ls', stroke_width=stroke, stroke_fill=255)
+        if squeeze != 1.0:
+            img = img.resize((max(1, int(round(img.width * squeeze))), height), Image.LANCZOS)
+            w = img.width; l = l * squeeze; adv = adv * squeeze
         if slant:
             k = slant * height
             img = img.transform((w + int(round(k)), height), Image.AFFINE, (1, slant, -k, 0, 1, 0), resample=Image.BICUBIC)

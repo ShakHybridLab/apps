@@ -16,6 +16,7 @@ h.log = { info() {}, warn() {} };
 h.waze = { up: true, st: { state: 'showing' } };
 h._wazeMapOn = () => true;
 h.setting = (k) => (k === 'mapUp' ? true : undefined);
+h.mapShown = true;          // (the layout built with the map: _hole follows it)
 const sent = [];
 const w = { id: 'backdrop', type: 'mdash', x: 0, y: 0, hole: [705, 168, 510, 366], holeWhen: 'mapUp', holeInset: 0, plate: [711, 540, 498, 70, 896] };
 const last = (n) => { for (let i = sent.length - 1; i >= 0; i--) if (sent[i][0] === n) return sent[i]; return null; };

@@ -157,7 +157,7 @@ check('viewsOf : les vues d\'un thème, dans l\'ordre du cycle, sans doublon', (
 check('nextView : chaque appui passe à la vue suivante, le dernier revient à aucune, un thème sans vue ne bouge pas', () => {
     const rebuilt = [];
     const mk = (views, saved) => {
-        const o = { layoutViews: views, viewNow: null, saved, rebuilt: 0, _rebuild() { this.rebuilt++; rebuilt.push(this.viewNow); }, setting(k) { return HudApp.prototype.setting.call(this, k); } };
+        const o = { layoutViews: views, viewNow: null, saved, rebuilt: 0, _rebuild() { this.rebuilt++; rebuilt.push(this.viewNow); }, _rebuildSoft() { this._rebuild(); }, setting(k) { return HudApp.prototype.setting.call(this, k); } };
         o.ctx = { settings: { item: () => null, get: (k) => (k === 'viewSel' ? saved : undefined) } };
         o.can = false; o.mapLayout = true; o.mapOff = false;
         o._mapCan = function () { return this.can; }; o._wazeMapOn = HudApp.prototype._wazeMapOn;

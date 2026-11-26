@@ -38,7 +38,7 @@ function shownIn(widgets, map, view, sport) {
 // la vue « drive » montre autre chose en Sport (la G-force) et hors Sport (les réglages des modes) : les deux sont comptés
 const VIEWS = [[null, false], ['gauges', false], ['tyres', false], ['drive', true], ['drive', false]];
 
-['sport', 'm', 'mblade', 'navi', 'evo'].forEach((name) => {
+['sport', 'm', 'mblade', 'navi', 'evo', 'circuit'].forEach((name) => {
     const L = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'hud', 'layouts', name + '.json'), 'utf8'));
     const h = Object.create(HudApp.prototype);
     check(name + ': chaque texte et icône a sa feuille ("sheet") : sans cela le moteur rangerait par taille et la mémoire redeviendrait celle d\'avant', () => {

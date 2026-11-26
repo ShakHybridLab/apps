@@ -53,7 +53,7 @@ mgu.run({
         } catch (e) { ctx.log.warn('touche BC : pas démarrée (' + (e && e.message || e) + ')'); }
         new Page(ctx, hud, {
             title: ctx.spec.title, what: 'cluster',
-            look: { name: 'Themes', style: 'hero', tags: { m: 'M8 style', sport: 'Live Cockpit', mblade: 'blue card · red blade', navi: 'speed band · big map', evo: 'néon · bleu blanc rouge' } },
+            look: { name: 'Themes', style: 'hero', tags: { m: 'M8 style', sport: 'Live Cockpit', mblade: 'blue card · red blade', navi: 'speed band · big map', evo: 'néon · bleu blanc rouge', circuit: 'cadran rond · aiguille rouge' } },
             tabs: ['look', 'badge', 'map', 'alerts', 'display', 'signals', 'settings'],
             settings: ['units', 'clock', 'timeZone', 'tankLitres', 'evRangeFull', 'reserveKm', 'reservePct', 'tyreLow', 'speedZone', 'startupSweep', 'limitRing', 'launchTimer', 'launchReady', 'launchRpm', 'runArmRpm', 'accentByMode', 'iceBelow', 'evShare', 'redline', 'shiftBefore', 'coldGuard', 'showBoost', 'demo'],
             display: ['bcViews', 'viewSel', 'gFlipLat', 'gFlipLong', 'sportTint', 'sportFacets', 'sportPower', 'stockShiftLight', 'shiftLightRed', 'shiftLightFlash', 'nightDim', 'gearWindow', 'cameraNotch'],

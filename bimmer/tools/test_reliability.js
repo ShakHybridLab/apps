@@ -170,7 +170,7 @@ check('puissance partagée (eDrive Live) : un trou dans le partage ne refait pas
 function keepHud(oldSigs) {
     const h = fakeHud();
     h.accentHue = 'blue'; h._connOf = (w) => w.conn || 0;
-    h.dropped = [];
+    h.dropped = []; h.alpha = new Map(); h.fades = new Map();
     const c = { drop: (ref) => h.dropped.push(ref) };
     h.oldLayers = new Map();
     (oldSigs || []).forEach((sig, i) => h.oldLayers.set('0:' + (i + 1), { c, ref: i + 1, sig }));

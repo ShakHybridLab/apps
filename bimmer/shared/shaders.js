@@ -1921,6 +1921,176 @@ void main() {
 
 // The Shak theme's four bottom bars (and the left panel's live energy), their own layer over the bottom strip (the backdrop alone would pass the car's shader size): fuel and battery
 // at the sides, oil and coolant in the middle tray. Bars: [left x, middle y, width] in panel px, u_box the layer's place on the panel.
+const CIRCUIT = `// The Circuit theme in one cluster-render "effect" layer (GLSL ES 1.00), after the owner's photo of a race car's round dial (26 Nov 2026,
+// design/photos/ref-circuit.png, warped to 1920x720): on black, a round rev dial (0..7, 30 degrees a thousand, 0 at the bottom, 6 at the top), its red
+// ring from just past 0 round to 7.4, grey ticks inside it at each thousand and half, white ticks through the numbers outside it, a faint grey arc
+// further out; the zone as two blocks between the hub and the ring (orange, then red); the hub lit from 0 up to the needle in the ring's colour, with
+// dark spokes every 500, an orange glow behind the gear; the red needle with its white core; the two white lines that frame the panel on the right;
+// the fuel (left) and the battery (right) as stacks of seven bars with their scales; the gearbox's box under the speed. With the phone's map (u_md 1:
+// owner, 26 Nov 2026, with a video of a cluster doing it: "garde le cadran taille d'origine, mets-le à droite, et ce qui gêne à gauche ; les barres de
+// batterie changent de côté pour suivre l'essence") the dial slides to the right (u_ctr, u_ds), the battery's stack goes beside the fuel's, the map
+// sits left of the dial between the two white lines, which then run along its top and its bottom; u_md runs 0..1 during the slide (cross-fades).
+// The car's GPU may be fp16: every length is taken on vectors cut down by 64 first (no square over 65504).
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 v_uv;
+uniform vec2 u_size;
+uniform vec2 u_rect;   // this layer's size in px (hud.js: u_size for the whole picture, less when the layer holds one piece of it, shared/gear_window.js)
+uniform vec2 u_org;    // that piece's top-left in the picture
+uniform vec2 u_ctr;    // the dial's centre px
+uniform float u_ds;    // the dial's size (1: the photo's; smaller beside the map)
+uniform float u_md;    // 1 while the map is in the middle (the lines along it), else 0
+uniform vec2 u_bx;     // the gearbox's box: its centre px
+uniform vec4 u_nd;     // the needle (thousands), the held peak (thousands, 0 none), 1 while the shift light flashes, 1 battery drives / 2 charges (else 0)
+uniform vec2 u_zn;     // the zone: the orange block from (thousands), the red one from
+uniform vec3 u_acc;    // the ring's colour (red; blue in Electric)
+uniform vec4 u_lv;     // fuel 0..1, battery 0..1, 1 while each is in reserve
+uniform vec4 u_hole;   // the map window x, y, w, h px (w 0 = none): cut see-through
+
+const float PI = 3.14159265;
+const float STP = 0.5235988;          // 30 degrees: a thousand
+float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
+float len(vec2 v) { return length(v * 0.015625) * 64.0; }
+float seg(vec2 p, vec2 a, vec2 b) {
+    vec2 pa = (p - a) * 0.015625, ba = (b - a) * 0.015625;
+    return length(pa - ba * clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0)) * 64.0;
+}
+vec2 dirK(float k) { float a = PI + k * STP; return vec2(sin(a), -cos(a)); }
+// a stack of seven bars (the photo's fuel gauge): the top bar's left x0, each bar lower moved right by sh; lit from the bottom up to lv
+vec3 stack(vec2 q, float x0, float sh, float lv, float lo, vec3 c) {
+    float i = clamp(floor((q.y - 425.7) / 30.6), 0.0, 6.0);
+    float xs = x0 + sh * i, ly = q.y - 441.0 - 30.6 * i + (q.x - xs - 68.0) * 0.045;     // (each bar's right end 6 px higher, as the photo's)
+    float a = cov(abs(ly) - 4.5) * cov(max(xs - q.x, q.x - xs - 138.0));
+    bool on = i >= 7.0 - floor(lv * 7.0 + 0.5);
+    vec3 col = on ? (lo > 0.5 ? vec3(1.0, 0.2, 0.2) : vec3(0.95)) : vec3(0.17);
+    c = mix(c, col, a);
+    // its scale: a thin line along the bars' outer ends with a tick at each, the empty end marked red
+    vec2 s0 = vec2(x0 - 38.0, 447.0), s1 = vec2(x0 - 38.0 + sh * 6.0 - 26.0, 628.0);
+    c = mix(c, vec3(0.75), 0.8 * cov(seg(q, s0, s1) - 0.8));
+    float sx = mix(s0.x, s1.x, clamp((q.y - s0.y) / (s1.y - s0.y), 0.0, 1.0));
+    c = mix(c, vec3(0.75), 0.8 * cov(max(abs(ly) - 0.8, max(sx - q.x, q.x - sx - 8.0))) * step(q.y, 640.0) * step(420.0, q.y));
+    return mix(c, vec3(0.95, 0.15, 0.15), cov(max(abs(q.y - 630.0) - 1.4, abs(q.x - s1.x - 18.0) - 10.0)));
+}
+
+void main() {
+    vec2 p = v_uv * u_rect + u_org;
+    vec3 c = vec3(0.0);
+    vec3 acc = u_nd.w > 1.5 ? vec3(0.2, 0.85, 0.5) : u_nd.w > 0.5 ? vec3(0.3, 0.72, 1.0) : u_acc;
+    float s = u_ds;
+    vec2 d = (p - u_ctr) * 0.015625;
+    float r = length(d) * 64.0, q = r / s;                      // q: the radius at the photo's size (every radius below is the photo's)
+    float k = mod(atan(d.x, -d.y) - PI, 2.0 * PI) / STP;
+    if (k > 11.0) k -= 12.0;                                   // just right of the bottom: a little under 0
+    float nk = u_nd.x;
+    float dk = abs(k - floor(k + 0.5)) * STP * r;              // px across to the nearest thousand
+    float dh = abs(k - floor(k) - 0.5) * STP * r;              // and to the nearest half
+    float w = 1.0 / s;                                         // (a line keeps its px width at a smaller size: q-units per px)
+
+    // the faint arc outside the numbers, on the left
+    c = mix(c, vec3(0.2), 0.7 * cov((abs(q - 388.0) - 1.0 * w) * s) * step(0.8, k) * step(k, 4.6));
+    // the hub: lit from 0 to the needle, dark spokes every 500, the rim
+    if (q < 153.0) {
+        float lit = step(0.0, k) * step(k, nk);
+        float f = clamp(k / max(nk, 0.1), 0.0, 1.0);
+        vec3 h = acc * (0.18 + 0.82 * f * f) * (0.5 + 0.5 * q / 150.0);
+        float sp = cov(abs(fract(k * 2.0 + 0.5) - 0.5) * 0.5 * STP * r - 0.9) * step(70.0, q);
+        c = lit > 0.5 ? h * (1.0 - 0.65 * sp) : vec3(0.02) + 0.05 * sp * step(k, 7.42) * step(0.0, k);
+        c += vec3(1.0, 0.5, 0.18) * 0.5 * exp(-q / 42.0);   // the glow behind the gear
+        c = mix(c, lit > 0.5 ? acc : vec3(0.12), cov((abs(q - 150.0) - 1.3 * w) * s));
+    }
+    // the zone: two blocks from the hub to the ring, orange then red (white while the shift light flashes)
+    if (q > 155.0 && q < 251.0 && k > u_zn.x && k < 7.42) {
+        float t = (q - 155.0) / 95.0;
+        vec3 z = k < u_zn.y ? mix(vec3(1.0, 0.5, 0.08), vec3(1.0, 0.88, 0.5), t) : mix(vec3(0.82, 0.04, 0.1), vec3(1.0, 0.42, 0.42), t);
+        z = mix(z, vec3(1.0, 0.95, 0.9), 0.6 * u_nd.z);
+        float e = min(min(k - u_zn.x, 7.42 - k) * STP * r, min(q - 155.0, 251.0 - q) * s);
+        c = mix(c, z, clamp(e, 0.0, 1.0) * (1.0 - cov(abs(k - u_zn.y) * STP * r - 1.0)));
+    }
+    // the ring
+    float e = min(k + 0.36, 7.42 - k) * STP * r;
+    c = mix(c, acc * (0.72 + 0.28 * smoothstep(238.0, 250.0, q)), cov((abs(q - 244.0) - 6.0) * s) * clamp(e, 0.0, 1.0));
+    // the ticks: grey inside the ring (thousands, then shorter halves), white through the numbers outside it
+    float on7 = step(-0.2, k) * step(k, 7.2);
+    c = mix(c, vec3(0.8), on7 * cov(dk - 2.0 * s) * step(214.0, q) * step(q, 251.0));
+    c = mix(c, vec3(0.5), on7 * cov(dh - 1.4 * s) * step(226.0, q) * step(q, 238.0));
+    c = mix(c, vec3(0.92), on7 * cov(dk - 1.2 * s) * step(282.0, q) * step(q, 372.0) * (1.0 - step(309.0, q) * step(q, 353.0)));
+    // the needle: red, a white core towards its tip, a glow; the held peak a white tick on the ring
+    vec2 n = dirK(nk);
+    float nd = seg(p, u_ctr + n * 80.0 * s, u_ctr + n * 236.0 * s);
+    c = mix(c, acc, 0.35 * exp(-nd / (6.0 * s)));
+    c = mix(c, acc, cov(nd - 4.5 * s));
+    c = mix(c, vec3(1.0, 0.93, 0.9), cov(nd - 1.4 * s) * smoothstep(100.0, 200.0, q));
+    if (u_nd.y > nk + 0.05) c = mix(c, vec3(1.0), cov(abs(k - u_nd.y) * STP * r - 1.2) * step(230.0, q) * step(q, 258.0));
+    // the two white lines: the panel's (from the ring's end along the top, from its bottom end up and along the bottom); with the map, along its
+    // top and its bottom, each starting with the same short slant
+    vec2 t0 = vec2(962.0, 365.0) + dirK(7.42) * 250.0, t1 = t0 + vec2(11.0, 6.0);      // (the photo's dial: the lines stay while it slides)
+    vec2 b0 = vec2(962.0, 365.0) + dirK(-0.36) * 250.0, b1 = vec2(b0.x + 56.0, 530.0);
+    // (the two sets cross-fade while the dial slides, u_md going from 0 to 1)
+    float lm = min(min(seg(p, vec2(556.0, 60.0), vec2(567.0, 66.0)), seg(p, vec2(567.0, 66.0), vec2(1316.0, 66.0))),
+                   min(seg(p, vec2(556.0, 626.0), vec2(567.0, 614.0)), seg(p, vec2(567.0, 614.0), vec2(1316.0, 614.0))));
+    float ln = min(min(seg(p, t0, t1), seg(p, t1, vec2(1662.0, t1.y))), min(seg(p, b0, b1), seg(p, b1, vec2(1628.0, 530.0))));
+    float la = min(1.0, (cov(ln - 1.2) + 0.15 * exp(-ln / 3.0)) * (1.0 - u_md) + (cov(lm - 1.2) + 0.15 * exp(-lm / 3.0)) * u_md);
+    c = mix(c, vec3(0.9), la);
+    // the side gauges: the fuel on the left, the battery on the right (the photo's mirror, x 1927 - x), or beside the fuel with the map
+    if (p.y > 420.0 && p.y < 645.0) {
+        if (p.x < 320.0) c = stack(p, 82.0, 11.7, u_lv.x, u_lv.z, c);
+        else if (p.x > 1600.0 && u_md < 1.0) c = mix(c, stack(vec2(1927.0 - p.x, p.y), 82.0, 11.7, u_lv.y, u_lv.w, c), 1.0 - u_md);
+        if (p.x > 300.0 && p.x < 560.0 && u_md > 0.0) c = mix(c, stack(p, 340.0, 11.7, u_lv.y, u_lv.w, c), u_md);
+    }
+    // the gearbox's box, under the speed
+    vec2 bq = abs(p - u_bx) - vec2(35.0, 46.5);
+    float bd = len(max(bq, 0.0)) + min(max(bq.x, bq.y), 0.0) - 5.0;
+    c = mix(c, vec3(0.1), cov(bd));
+    c = mix(c, vec3(0.55), cov(abs(bd + 1.0) - 1.0));
+    // the map's window
+    float a = 1.0;
+    if (u_hole.z > 0.0) {
+        vec2 hq = abs(p - u_hole.xy - u_hole.zw * 0.5) - u_hole.zw * 0.5 + 12.0;
+        a = clamp(len(max(hq, 0.0)) + min(max(hq.x, hq.y), 0.0) - 12.0 + 0.5, 0.0, 1.0);
+    }
+    gl_FragColor = vec4(c, a);
+}
+`;
+const CSTACK = `// The Circuit theme's views (GLSL ES 1.00): up to four stacks of bars in the style of the dial's side gauges (each bar lower moved right, tilted),
+// lit from the bottom up to the reading (red at the empty end of a charge in reserve). u_s<i>: x, y (top), bar length px, bars (0 = none).
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 v_uv;
+uniform vec2 u_size;
+uniform vec4 u_s0;
+uniform vec4 u_s1;
+uniform vec4 u_s2;
+uniform vec4 u_s3;
+uniform vec4 u_lv;
+uniform vec4 u_lo;
+float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
+vec4 stk(vec2 p, vec4 s, float lv, float lo, vec4 c) {
+    if (s.w < 0.5) return c;
+    float i = floor((p.y - s.y) / 16.0);
+    if (i < 0.0 || i >= s.w) return c;
+    float x0 = s.x + i * 4.0;
+    float ly = p.y - s.y - i * 16.0 - 4.0 + (p.x - x0 - s.z * 0.5) * 0.045;      // (each bar's right end higher, as the side gauges')
+    float a = cov(abs(ly) - 3.5) * cov(max(x0 - p.x, p.x - x0 - s.z));
+    bool on = i >= s.w - floor(lv * s.w + 0.5);
+    vec3 col = on ? (lo > 0.5 && lv < 0.2 ? vec3(1.0, 0.2, 0.2) : vec3(0.95)) : vec3(0.2);
+    return vec4(mix(c.rgb, col, a), max(c.a, a));
+}
+void main() {
+    vec2 p = v_uv * u_size;
+    vec4 c = vec4(0.0);
+    c = stk(p, u_s0, u_lv.x, u_lo.x, c);
+    c = stk(p, u_s1, u_lv.y, u_lo.y, c);
+    c = stk(p, u_s2, u_lv.z, u_lo.z, c);
+    c = stk(p, u_s3, u_lv.w, u_lo.w, c);
+    gl_FragColor = c;
+}
+`;
 const EVOBARS = `#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
@@ -2646,5 +2816,5 @@ function hardened(src, highp) {
 // matrices wherever a shader mentions them. The views' drawings named their bars' levels "u_v" (a vec4): on the car RAMSES then refused the
 // whole effect ("effect did not compile", owner's photo of 21 Nov 2026) while the bench drew it. Renamed u_lvl; tools/test_shader_names.js keeps watch.
 const VIEW_SHADERS = { mpanel: true, mblades: true, sring: true, nline: true, vcard: true, mstyle: true };   // (high precision where the GPU has it)
-module.exports = { mblades: MBLADES, nline: NLINE, sring: SRING, vcard: VCARD, slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, mpanel: MPANEL, navi: NAVI, evo: EVO, evobars: EVOBARS, evbars: EVBARS, shiftpills: SHIFTPILLS, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, accented, ACCENT_LITERALS };
+module.exports = { mblades: MBLADES, nline: NLINE, sring: SRING, vcard: VCARD, slantbar: SLANTBAR, mstyle: MSTYLE, shiftbar: SHIFTBAR, arc: ARC, revbar: REVBAR, lights: LIGHTS, shiftlight: SHIFTLIGHT, fill: FILL, box: BOX, grid: GRID, segbar: SEGBAR, mdash: MDASH, mtach: MTACH, sdash: SDASH, mblade: MBLADE, mpanel: MPANEL, navi: NAVI, evo: EVO, circuit: CIRCUIT, cstack: CSTACK, evobars: EVOBARS, evbars: EVBARS, shiftpills: SHIFTPILLS, boxes: BOXES, atext: ATEXT, dial: DIAL, meter: METER, gmeter: GMETER, revarc: REVARC, tiles: TILES, accented, ACCENT_LITERALS };
 Object.keys(module.exports).forEach((k) => { if (typeof module.exports[k] === 'string') module.exports[k] = hardened(module.exports[k], VIEW_SHADERS[k] === true); });

@@ -2,7 +2,7 @@
   "id": "shaktheme",
   "title": "ShakTheme",
   "description": "ShakTheme redessine le cluster : thèmes Sport, M, M Blade et Navi avec shiftlight, fenêtre pour la carte du téléphone, températures d'huile et d'eau qui changent de couleur, batterie et autonomie électrique, et flux d'énergie",
-  "version": "0.23.1",
+  "version": "0.24.0",
   "vendor": "custom",
   "startType": "autostart",
   "loggingId": "OAC1",
@@ -162,6 +162,10 @@
           "Shak"
         ],
         [
+          "circuit",
+          "Circuit"
+        ],
+        [
           "grid",
           "Grille de calibration"
         ],
@@ -206,6 +210,10 @@
         [
           "evo",
           "Shak"
+        ],
+        [
+          "circuit",
+          "Circuit"
         ]
       ]
     },
@@ -238,6 +246,10 @@
         [
           "evo",
           "Shak"
+        ],
+        [
+          "circuit",
+          "Circuit"
         ]
       ]
     },
@@ -270,6 +282,10 @@
         [
           "evo",
           "Shak"
+        ],
+        [
+          "circuit",
+          "Circuit"
         ]
       ]
     },

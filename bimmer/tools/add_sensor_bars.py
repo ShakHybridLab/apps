@@ -769,7 +769,72 @@ def _evo(d):
     d['widgets'] += evo_views('xb_ev', 1, 2)
 
 
-BUILD = {'m': _m, 'mblade': _mblade, 'sport': _sport, 'navi': _navi, 'evo': _evo}
+# Circuit (26 Nov 2026, the owner: "le BC, tu t'inspires du thème, tu ne reprends pas le BC des autres"): every view in the panel between the dial's
+# two white lines (x 1150..1646, y 197..523), made of the theme's own pieces: each reading a column with a small stack of bars like the side gauges
+# (lit from the bottom up to it), the grey caption and the white number of the TRIP row under it. Four columns at most; a reading without a scale is
+# its caption and number alone.
+CV = dict(x=1150, y=197, w=496, h=326, cols=(1162, 1282, 1402, 1522), top=230, bar=96, n=7)
+# key, caption, value, unit, signal of its stack (None: none), min, max, low end red
+CV_VIEWS = (
+    ('gauges', 'g', (('oil', 'HUILE', '{{oil}}', '{{u:temp}}', 'oil', 50, 150, False),
+                     ('cool', 'REFROID.', '{{coolant}}', '{{u:temp}}', 'coolant', 40, 130, False),
+                     ('boost', 'TURBO', '{{boostPos}}', '{{u:pressure}}', 'boost', 0, 2, False),
+                     ('avg', 'MOYENNE', '{{avgSpeed}}', '{{u:speedLc}}', None, 0, 0, False))),
+    ('electric', 'e', (('batt', 'BATTERIE', '{{hvSoc}}', '%', 'hvSoc', 0, 100, True),
+                       ('pow', 'PUISS.', '{{evPower}}', 'kW', 'evPower', 0, 80, False),
+                       ('rec', 'RÉCUP.', '{{evRecup}}', 'kW', 'evRecup', 0, 60, False),
+                       ('share', 'PART EV', '{{evShare}}', '{{evShareUnit}}', None, 0, 0, False))),
+    ('tyres', 't', (('FL', 'AV G', '{{tyreP:FL}}', '{{u:pressure}}', 'tyreP:FL', 1.5, 3.0, True),
+                    ('FR', 'AV D', '{{tyreP:FR}}', '{{u:pressure}}', 'tyreP:FR', 1.5, 3.0, True),
+                    ('RL', 'AR G', '{{tyreP:RL}}', '{{u:pressure}}', 'tyreP:RL', 1.5, 3.0, True),
+                    ('RR', 'AR D', '{{tyreP:RR}}', '{{u:pressure}}', 'tyreP:RR', 1.5, 3.0, True))),
+)
+
+
+def circuit_views(pre, conn, cconn):
+    new, S = [], 'xs_cv'
+    cols, top = CV['cols'], CV['top']
+
+    def column(vp, i, key, cap, val, unit, sig, tg, vfont='c_val', extra=None):
+        # under the stack (7 bars of 16 px from `top`): the grey caption, then the white number with its unit right after it
+        x = cols[i]
+        out = [text(pre + vp + '_%s_cap' % key, x, top + 124, 112, 39, cap, 'c_lbl', 'lbl', 'left', S, conn, toggle=tg),
+               text(pre + vp + '_%s' % key, x, top + 166, (62 if 'speed' in unit else 76) if unit else 112, 36 if vfont == 'c_val' else 32, val, vfont, 'fg',
+                    'right' if unit else 'left', S, conn, toggle=tg, **(extra or {}))]
+        if unit:      # (km/h needs more room than °C or bar: its number less; the box ends 1 px before the next column)
+            uw = 54 if 'speed' in unit else 40
+            out.append(text(pre + vp + '_%s_unit' % key, x + (64 if 'speed' in unit else 78), top + 168, uw, 33, unit, 'c_vu', 'fg', 'left', S, conn, toggle=tg))
+        return out
+
+    def stacks(vp, tg, rows):
+        st = [dict({'x': cols[i], 'y': top, 'w': CV['bar'], 'n': n, 'signal': sig, 'min': mn, 'max': mx}, **({'low': True} if low else {}))
+              for i, (sig, mn, mx, low, n) in enumerate(rows) if sig]
+        return {'id': pre + vp + '_stk', 'type': 'cstack', 'class': 'content', 'z': 2, 'x': CV['x'], 'y': CV['y'], 'w': CV['w'], 'h': CV['h'],
+                'stacks': st, 'toggle': tg, 'conn': cconn}
+
+    for vname, vp, rows in CV_VIEWS:
+        tg = 'viewSel=%s' % vname
+        for i, (key, cap, val, unit, sig, mn, mx, low) in enumerate(rows):
+            new += column(vp, i, key, cap, val, unit, sig, tg, extra={'tyreBy': key} if vname == 'tyres' else None)
+        # (a stack's slot in the list is its column: a reading without one keeps its place)
+        new.append(stacks(vp, tg, [(sig, mn, mx, low, CV['n']) for (_k, _c, _v, _u, sig, mn, mx, low) in rows]))
+    # the drive view: in Sport the g forces (sideways, forwards) and the best of this drive; else the four settings of the drive mode, each a stack of three
+    ds, dn = 'viewSel=drive&driveSport', 'viewSel=drive&!driveSport'
+    for i, (key, cap, val, sig) in enumerate((('lat', 'G LATÉRAL', '{{gSide}}', 'gLat'), ('long', 'G LONG.', '{{gFwd}}', 'gLong'))):
+        new += column('dg', i, key, cap, val, None, sig, ds, vfont='c_mode')       # (« 0.42 L », « 0.90 BRK » : the letters are in c_mode)
+    new += column('dg', 2, 'best', 'G MAX', '{{gBest}}', None, None, ds)
+    new.append(stacks('dg', ds, [('gLat', 0, 1.2, False, CV['n']), ('gLong', 0, 1.2, False, CV['n'])]))
+    for i, (key, cap) in enumerate((('engine', 'MOTEUR'), ('chassis', 'CHÂSSIS'), ('steering', 'DIRECTION'), ('gearbox', 'BOÎTE'))):
+        new += column('dr', i, key, cap, '{{setup:%s}}' % key, None, None, dn, vfont='c_mode')
+    new.append(stacks('dr', dn, [('setupLevel:' + k, 0, 3, False, 3) for k in ('engine', 'chassis', 'steering', 'gearbox')]))
+    return new
+
+
+def _circuit(d):
+    d['widgets'] += circuit_views('xb_c', 1, 2)
+
+
+BUILD = {'m': _m, 'mblade': _mblade, 'sport': _sport, 'navi': _navi, 'evo': _evo, 'circuit': _circuit}
 CAP = pack_sheets.CAP
 
 
