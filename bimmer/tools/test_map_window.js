@@ -49,10 +49,11 @@ check('a window that is not one lets go; letting go twice is harmless; an unwrit
     bad2.set({ x: 1, y: 1, w: 400, h: 300 });          // must not throw
     assert(!bad2.holding);
 });
-check('hud.js holds the window only while the layout asks for it and its map shows, and gives it back when it stops', () => {
+check('hud.js holds the window while the layout asks for it, the theme shows and the map\'s setting is on (0.24.3: no longer only while the map shows), and gives it back when that stops', () => {
     const hud = fs.readFileSync(path.join(ROOT, 'shared/hud.js'), 'utf8');
     ['require(\'./map_window\')', 'this.mapWin.set(place ? this.windowRect : null)', 'w.mapPlace === true', 'this.mapWin.release()'].forEach((s) => assert(hud.includes(s), 'hud.js: ' + s));
-    assert(/const place = shows && this\.mapPlace[\s\S]{0,300}this\._wazeMapOn\(\)/.test(hud), 'must wait for the map to show in the theme');
+    // (the map must not move into the window when it shows and back out at each stall: every move is Maps on Cluster setting its map up again)
+    assert(/const place = shows && this\.mapPlace && !!this\.windowRect && !!this\.waze && this\.ctx\.settings\.get\('mapInTheme'\) === true;/.test(hud), 'held while the theme shows with the map setting on');
     assert(/_wazeMapOn\(\) \{\s*return this\._mapCan\(\) && !this\.mapOff;/.test(hud) && /_mapCan\(\) \{\s*return !!this\.waze && this\.waze\.up === true/.test(hud), 'must wait for Waze to be up in the theme (and not hidden by the BC button)');
 });
 check('both apps that bundle hud.js list map_window.js (or the bundle would crash on the require)', () => {

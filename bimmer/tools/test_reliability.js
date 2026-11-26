@@ -67,7 +67,7 @@ check('toutes les applis Shak installent survive.js en premier et l\'embarquent 
 
 function fakeHud() {
     const h = Object.create(HudApp.prototype);
-    h.log = logOf();
+    h.log = logOf(); h.glides = new Map(); h.alpha = new Map(); h.fades = new Map();
     return h;
 }
 check('_guard : l\'erreur est comptée, écrite entière les premières fois puis au plus une ligne toutes les 10 s par endroit', () => {
@@ -130,7 +130,7 @@ check('couche refusée par cluster-render : le thème est refait un peu plus tar
     fs.writeFileSync(fast, hudSrc.replace('const REFUSED_RETRY_MS = [5000, 15000, 45000];', 'const REFUSED_RETRY_MS = [40, 40, 40];').replace('const REBUILD_MIN_MS = 400;', 'const REBUILD_MIN_MS = 5;'));
     const Fast = require(fast);
     const h = Object.create(Fast.prototype);
-    h.log = logOf(); h.started = true; h.clients = []; h.client = { ready: true }; h._status = () => {};
+    h.log = logOf(); h.glides = new Map(); h.started = true; h.clients = []; h.client = { ready: true }; h._status = () => {};
     let inner = 0, refuse = true;
     h._rebuildInner = () => { inner++; if (!h.refused) h.refusedTries = 0; h.refused = null; if (refuse) setTimeout(() => { h.refused = 'sheet: memory'; h._retryRefused(); }, 5); };
     h._rebuild();

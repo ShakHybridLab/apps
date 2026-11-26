@@ -99,7 +99,32 @@ function blur(src, w, h, r, passes) {
     return a;
 }
 
+/**
+ * A text's pixels (straight RGBA, boxW x boxH). The same text in the same box, font and colours is drawn once and kept (the last ones, up to
+ * TEXT_CACHE_BYTES): a theme made again drew every label anew, and a speed or a rev number comes back many times in a drive. The buffer handed
+ * back is shared: read it, copy it, never write into it.
+ */
+const TEXT_CACHE_MAX = 700, TEXT_CACHE_BYTES = 4 * 1024 * 1024;
+const textCache = new Map();
+let textCacheBytes = 0;
+const rgb = (c) => (c ? c[0] + ',' + c[1] + ',' + c[2] + ',' + c[3] : '');
 function drawText(boxW, boxH, text, opts) {
+    const key = boxW + '|' + boxH + '|' + opts.font + '|' + (opts.offsetY || 0) + '|' + (opts.x || 0) + '|' + (opts.align || '') + '|' + (opts.spacing || 0)
+        + '|' + rgb(opts.color) + '|' + rgb(opts.color2) + '|' + (opts.glow || 0) + '|' + text;
+    const hit = textCache.get(key);
+    if (hit) {
+        if (process.env.HUD_PAINT_CHECK && !hit.equals(drawTextNew(boxW, boxH, text, opts))) throw new Error('text cache: "' + key + '" is not what a fresh paint gives');
+        textCache.delete(key); textCache.set(key, hit); return hit;
+    }
+    const out = drawTextNew(boxW, boxH, text, opts);
+    if (out.length <= TEXT_CACHE_BYTES / 8) {
+        textCache.set(key, out); textCacheBytes += out.length;
+        while (textCache.size > TEXT_CACHE_MAX || textCacheBytes > TEXT_CACHE_BYTES) { const k = textCache.keys().next().value; textCacheBytes -= textCache.get(k).length; textCache.delete(k); }
+    }
+    return out;
+}
+
+function drawTextNew(boxW, boxH, text, opts) {
     return tint(mask(boxW, boxH, text, opts), boxW, boxH, opts);
 }
 
@@ -131,4 +156,4 @@ function tint(m, boxW, boxH, opts) {
     return out;
 }
 
-module.exports = { drawText, mask, tint, measure, loadFont };
+module.exports = { drawText, drawTextNew, mask, tint, measure, loadFont, cacheStats: () => ({ entries: textCache.size, bytes: textCacheBytes }) };

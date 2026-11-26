@@ -14,7 +14,7 @@ let bad = 0;
 const check = (name, fn) => { try { fn(); } catch (e) { bad++; console.log('FAIL ' + name + ': ' + (e && e.stack || e)); } };
 const mk = () => {
     const h = Object.create(H.prototype);
-    h.alpha = new Map(); h.fades = new Map(); h.geoAnim = null; h.size = [1920, 720];
+    h.alpha = new Map(); h.fades = new Map(); h.glides = new Map(); h.geoAnim = null; h.size = [1920, 720];
     h._scale = () => 1; h._offset = () => ({ x: 0, y: 0 }); h._stripSy = () => 1;
     h.log = { info() {}, warn() {} };
     return h;
@@ -162,6 +162,29 @@ check('un texte qui glisse suit la place du thème (bande du bas de BMW laissée
     h._avoid = null;
     h._scale = () => 1.2;
     assert.strictEqual(h._glideFit([300, 0], { x: 100, y: 100, w: 50, h: 50 }), null, 'thème agrandi : un fondu, pas de glissement');
+});
+check('une ouverture retournée en route repart d\'où la fenêtre en est, sans saut', () => {
+    const h = mk(), t0 = Date.now();
+    h.geoAnim = { t0, dur: 800, open: true, from: 0, to: 1 };
+    const half = h._mapK(t0 + 400);
+    assert(half > 0.4 && half < 0.6, 'à mi-chemin : ' + half);
+    h.geoAnim = { t0: t0 + 400, dur: 300, open: false, from: h.mapKNow, to: 0 };
+    assert.strictEqual(h._mapK(t0 + 400), half, 'la fermeture part de la même ouverture');
+    assert(h._mapK(t0 + 550) < half);
+    assert.strictEqual(h._mapK(t0 + 700), 0); assert.strictEqual(h.geoAnim, null);
+    assert.strictEqual(h._mapK(t0 + 800), null, 'rien en cours : le thème dit');
+});
+check('une couche partie en glissant puis gardée (la carte revenue avant la reconstruction) revient à sa place', () => {
+    const h = mk(), sets = [], c = { set(ref, o) { sets.push(o); }, has() { return true; } };
+    const t0 = Date.now();
+    h._glide('0:7', c, 7, 300, 100, 100, 100, t0, 100); h.glides.get('0:7').out = true;
+    h._glideStep(t0 + 200);
+    assert(h.glides.has('0:7'), 'partie : encore sur la liste');
+    assert.deepStrictEqual(sets[sets.length - 1], { x: 100, y: 100 });
+    const g = h.glides.get('0:7');
+    h._glide('0:7', c, 7, g.cx, g.cy, 300, 100, t0 + 200, 100);        // ce que fait _rebuild pour une couche gardée
+    h._glideStep(t0 + 400);
+    assert.deepStrictEqual(sets[sets.length - 1], { x: 300, y: 100 }); assert(!h.glides.size);
 });
 console.log(bad ? bad + ' échec(s)' : 'transitions : tout passe');
 process.exit(bad ? 1 : 0);

@@ -115,7 +115,31 @@ const ICONS = {
     oilcan: (x, y) => Math.min(seg(x, y, 0.2, 0.62, 0.6, 0.62) - 0.12, seg(x, y, 0.6, 0.58, 0.9, 0.44) - 0.04, disc(x, y, 0.92, 0.66, 0.05), seg(x, y, 0.3, 0.46, 0.3, 0.34) - 0.035, seg(x, y, 0.22, 0.34, 0.38, 0.34) - 0.04),
 };
 
+/**
+ * An icon's pixels (straight RGBA, w x h). The same icon at the same size and colour is painted once and kept (the last CACHE_MAX of them): a theme
+ * made again (a view, the map, an alert) painted every icon anew, a distance per pixel each, a third of the time of a rebuild; on the car that is
+ * the needle standing still for a moment at each change. The buffer handed back is shared: read it, copy it, never write into it.
+ */
+const CACHE_MAX = 400, CACHE_BYTES = 3 * 1024 * 1024;
+const cache = new Map();
+let cacheBytes = 0;
 function paintIcon(name, w, h, color) {
+    const key = name + '|' + w + '|' + h + '|' + (color ? color[0] + ',' + color[1] + ',' + color[2] + ',' + color[3] : '');
+    const hit = cache.get(key);
+    if (hit) {
+        // (the bench's check, HUD_PAINT_CHECK=1: a kept picture must be what a fresh paint gives; one written into by mistake would show here)
+        if (process.env.HUD_PAINT_CHECK && !hit.equals(paintIconNew(name, w, h, color))) throw new Error('icon cache: "' + key + '" is not what a fresh paint gives');
+        cache.delete(key); cache.set(key, hit); return hit;      // (the newest last: the oldest is the first to go)
+    }
+    const out = paintIconNew(name, w, h, color);
+    if (out.length <= CACHE_BYTES / 8) {
+        cache.set(key, out); cacheBytes += out.length;
+        while (cache.size > CACHE_MAX || cacheBytes > CACHE_BYTES) { const k = cache.keys().next().value; cacheBytes -= cache.get(k).length; cache.delete(k); }
+    }
+    return out;
+}
+
+function paintIconNew(name, w, h, color) {
     const f = ICONS[name], out = Buffer.alloc(w * h * 4, 0);
     if (!f) return out;
     const s = Math.min(w, h), ox = (w - s) / 2, oy = (h - s) / 2, aa = 1 / s;
@@ -131,4 +155,4 @@ function paintIcon(name, w, h, color) {
     return out;
 }
 
-module.exports = { paintIcon, ICONS };
+module.exports = { paintIcon, paintIconNew, ICONS, cacheStats: () => ({ entries: cache.size, bytes: cacheBytes }) };

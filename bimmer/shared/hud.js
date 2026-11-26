@@ -338,6 +338,7 @@ const FADE_IN_MS = 450 * TRANS_SLOW;
 const SHOW_MS = 900 * TRANS_SLOW;
 const GEO_MS = 850 * TRANS_SLOW;
 const GLIDE_OUT_MS = 420 * TRANS_SLOW;   // the map going: its texts glide back toward their places as they fade, before the window closes     // the map's window opening (closing: 0.75 of it) and, with it, the texts and gauges gliding to their places beside the map (_glideOf)     // the map window closes when Maps on Cluster's status file has been unreadable this long (_mapStalled)
+const SHEET_POOL_BYTES = 6 * 1024 * 1024;   // the sheets' fill buffers kept from one rebuild to the next (_sheetBuf)
 const PIXEL_BYTES = 16 * 1024 * 1024;   // cluster-render's pixel memory for every app's images together (CompositorLimits.pixel_bytes)
 const SHEET_AREA_FRAC = 4;       // the first sheet size limit: 1/4 of the target area (see the header)
 const REFUSED_RETRY_MS = [5000, 15000, 45000];   // after cluster-render refused a layer: the layout is made again after these waits, then left (see _retryRefused)
@@ -1470,9 +1471,13 @@ class HudApp {
         }
         this.ci.markTheme(shows, { window: shows ? this.windowRect : null, open: this.setting('mapUp') === true && this.mapShown === true,
             map: this._wazeMapOn() });
-        // a layout with "mapPlace": while its map shows, Waze on cluster draws the map right in the window (the file is kept fresh)
-        const place = shows && this.mapPlace && !!this.windowRect && this.mapShown === true && this.setting('mapUp') === true
-            && this._wazeMapOn();
+        // a layout with "mapPlace": Waze on cluster draws the map right in the window (the file is kept fresh). Held for as long as the theme
+        // shows with the map's setting on, whether the map is up or not (before 0.24.3: only while it showed). The map then starts in the
+        // window and stays there through a stall or the BC button, instead of starting in the cluster's centre slot, moving into the window a
+        // second later and back out at each stall: each move is Maps on Cluster setting its map up again on the cluster, the moment the owner
+        // sees the theme go ("ça le fait souvent quand Waze s'affiche dans le cluster", 26 Nov 2026; the status line: BMW's cluster stopped
+        // fetching our picture). Behind a closed window the map is hidden by the theme either way.
+        const place = shows && this.mapPlace && !!this.windowRect && !!this.waze && this.ctx.settings.get('mapInTheme') === true;
         this.mapWin.set(place ? this.windowRect : null);
         // on the HUD: where the layout shown leaves room for Cluster Info's panel (it would sit on the readouts otherwise)
         if (this.target === 'hud') this.ci.markLayout(this.started && !!this.activeName && this.activeName !== 'off' && !this.claimBy, this._panelRoom());
@@ -2077,8 +2082,15 @@ class HudApp {
     }
 
     _paintLimitSign(w, text, role, opt) {
-        const W = w.w, H = w.h, out = Buffer.alloc(W * H * 4, 0);
+        const W = w.w, H = w.h;
         const l = opt ? null : this._limitNow(Date.now()), isOver = !!(l && l.over);
+        // the same sign as one painted before (its size, number and colours): kept, a sign is three pictures laid over one another pixel by pixel
+        const signs = this.signCache || (this.signCache = new Map());
+        const key = [W, H, text, color(this.theme, role).join(','), isOver, w.limitFont || ''].join('|');
+        if (signs.has(key)) return signs.get(key);
+        const out = Buffer.alloc(W * H * 4, 0);
+        if (signs.size >= 48) signs.delete(signs.keys().next().value);
+        signs.set(key, out);
         const put = (src) => {                          // src over out, straight alpha
             for (let i = 0; i < W * H; i++) {
                 const o = i * 4, a = src[o + 3] / 255;
@@ -2729,7 +2741,13 @@ class HudApp {
     _rebuildSoft(kind) {
         const re = kind === 'map' ? /mapUp|powerOpen|powerShut/ : kind === 'view' ? /viewSel|driveSport/ : /danger/;
         if (!this.started || !this.client.ready || !this.live || !this.live.size || this.activeName === 'off' || this._layoutName() !== this.activeName) { this._rebuild(); return; }
-        if (this.softT) return;                       // one already on its way: it reads the state when it runs
+        if (this.softT) {
+            // one already on its way (it reads the state when it runs): what this change touches fades out in the time that is left, so a view
+            // and the map changing together do not leave one of the two to go at a stroke
+            const left = Math.max(40, (this.softDue || 0) - Date.now());
+            this.live.forEach((l, key) => { if (!l.full && re.test(l.dyn || '') && !this.fades.has(key) && this.alpha.get(key) !== 0) this._fadeTo(key, l.c, l.ref, 0, left, 0); });
+            return;
+        }
         let n = 0;
         // the map going: its texts glide back toward their places without it as they fade (the way they came, _glideOf)
         const back = kind === 'map' && this.mapShown === true && this.setting('mapUp') !== true, out = back ? GLIDE_OUT_MS : FADE_OUT_MS, now = Date.now();
@@ -2737,10 +2755,13 @@ class HudApp {
             if (l.full || !re.test(l.dyn || '')) return;
             this._fadeTo(key, l.c, l.ref, 0, out, 0); n++;
             const gl = back && l.ids && this.layoutById ? this._glideFit(this._glideOf(l.ids.map((id) => this.layoutById.get(id)).filter(Boolean)), l) : null;
-            if (gl) this._glide(key, l.c, l.ref, l.x, l.y, l.x - gl[0], l.y - gl[1], now, out);
+            // (from where it is: a layer still gliding in when the map goes turns round on the spot)
+            const at = this.glides.get(key), x0 = at ? at.cx : l.x, y0 = at ? at.cy : l.y;
+            if (gl) { this._glide(key, l.c, l.ref, x0, y0, l.x - gl[0], l.y - gl[1], now, out); this.glides.get(key).out = true; }
         });
         const go = () => { this.softT = null; this.fadeNew = true; try { this._rebuild(true); } finally { this.fadeNew = false; } };
         if (!n) { go(); return; }
+        this.softDue = now + out + 10;
         this.softT = setTimeout(() => this._guard('soft rebuild', go), out + 10);
     }
 
@@ -2769,7 +2790,7 @@ class HudApp {
     _circuitGeo(w, now) {
         const A = w.altOf && w.altOf.alt ? w.altOf.alt.set : null;
         if (!A) return null;
-        const g = this._geoF(now), t = this.geoAnim ? (this.geoAnim.open ? g : 1 - g) : (w.mapMode ? 1 : 0);
+        const k = this._mapK(now), t = k === null ? (w.mapMode ? 1 : 0) : k;
         const L = (a, b) => Math.round((a + (b - a) * t) * 10) / 10, B0 = w.altOf.box || [373, 478.5], C0 = w.altOf.center;
         return [L(C0[0], A.center[0]), L(C0[1], A.center[1]), Math.round((1 + ((A.dscale || 1) - 1) * t) * 1000) / 1000, Math.round(t * 100) / 100,
             L(B0[0], A.box[0]), L(B0[1], A.box[1])];
@@ -2779,7 +2800,20 @@ class HudApp {
         c.uniform(ref, 'u_ctr', [g[0], g[1]]); c.uniform(ref, 'u_ds', [g[2]]); c.uniform(ref, 'u_md', [g[3]]); c.uniform(ref, 'u_bx', [g[4], g[5]]);
     }
 
-    /** The map window's opening (or closing) and the Circuit dial's slide, 0..1 eased; 1 when none runs. */
+    /**
+     * How open the map's window is now, 0..1, while it opens or closes (null when it does neither: the layout says). An opening turned round
+     * half way (the map gone again before the window was open) carries on from where the window is, it does not jump open to close.
+     */
+    _mapK(now) {
+        const g = this.geoAnim;
+        if (!g) return null;
+        const e = this._geoF(now), from = isNum(g.from) ? g.from : (g.open ? 0 : 1), to = isNum(g.to) ? g.to : (g.open ? 1 : 0);
+        const k = Math.round((from + (to - from) * e) * 1000) / 1000;
+        this.mapKNow = k;
+        return k;
+    }
+
+    /** The progress of the window's opening or closing (and the Circuit dial's slide), 0..1 eased; 1 when none runs. */
     _geoF(now) {
         const g = this.geoAnim;
         if (!g) return 1;
@@ -2838,19 +2872,21 @@ class HudApp {
 
     /** A layer on its way from (x0, y0) to (x1, y1), from t0 over dur ms, eased as the window opens (_glideStep moves it at each frame). */
     _glide(key, c, ref, x0, y0, x1, y1, t0, dur) {
-        this.glides.set(key, { c, ref, x0, y0, x1, y1, t0, dur: Math.max(1, dur), at: null });
+        this.glides.set(key, { c, ref, x0, y0, x1, y1, t0, dur: Math.max(1, dur), at: null, cx: x0, cy: y0, out: false });
     }
 
     /** The gliding layers at this instant. */
     _glideStep(now) {
+        // where a layer goes as _place puts it: moved by the layout's offset, squeezed above BMW's bottom strip ("stripClear")
+        const off = this._offset(), st = this._stripSy();
         for (const [key, l] of this.glides) {
             if (typeof l.c.has === 'function' && !l.c.has(l.ref)) { this.glides.delete(key); continue; }
             const u = Math.max(0, Math.min(1, (now - l.t0) / l.dur)), g = u * u * u * (u * (u * 6 - 15) + 10);
-            // where the layer goes as _place puts it: moved by the layout's offset, squeezed above BMW's bottom strip ("stripClear")
-            const off = this._offset(), st = this._stripSy();
-            const x = Math.round(l.x0 + (l.x1 - l.x0) * g) + off.x, y = Math.round((Math.round(l.y0 + (l.y1 - l.y0) * g) + off.y) * st);
+            l.cx = Math.round(l.x0 + (l.x1 - l.x0) * g); l.cy = Math.round(l.y0 + (l.y1 - l.y0) * g);
+            const x = l.cx + off.x, y = Math.round((l.cy + off.y) * st);
             if (x + ',' + y !== l.at) { l.c.set(l.ref, { x, y }); l.at = x + ',' + y; }
-            if (u >= 1) this.glides.delete(key);
+            // (a layer that glided away with the map stays on the list till the rebuild: kept after all, it is brought back, _rebuild)
+            if (u >= 1 && !l.out) this.glides.delete(key);
         }
     }
 
@@ -2867,6 +2903,12 @@ class HudApp {
         const corked = this.clients.filter((c) => typeof c.cork === 'function' && c.cork());
         try {
             this._guard('rebuild', () => this._rebuildInner());
+            // a layer that glided away with the map and is kept after all (the map back before the rebuild): back to its place
+            this.glides.forEach((g, key) => {
+                if (!g.out) return;
+                const l = this.live && this.live.get(key);
+                if (l && isNum(l.x)) this._glide(key, l.c, l.ref, g.cx, g.cy, l.x, l.y, Date.now(), FADE_IN_MS); else this.glides.delete(key);
+            });
             // the fade in of what was made (or faded out) in this rebuild; during the dial's slide, after it
             if (this.live) {
                 // (the map going: its texts have just glided back to these places, the new ones come in as the window starts closing)
@@ -2943,6 +2985,7 @@ class HudApp {
         this.problem = null;
         this.mapLayout = layout.widgets.some((w) => w.holeWhen === 'mapUp');
         this.layoutById = new Map(layout.widgets.map((w) => [w.id, w])); this.layoutByTail = null;
+        if (this.glideFor !== name) { this.glideFor = name; this.glideCache = null; }      // (the same layout: the same answers, _plan)
         this.layoutViews = viewsOf(layout.widgets);
         this.viewsWithMap = layout.viewsWithMap === true;
         if (this.viewNow !== null && this.viewNow !== 'none' && this.layoutViews.indexOf(this.viewNow) < 0) this.viewNow = null;      // this theme doesn't have it
@@ -2959,7 +3002,12 @@ class HudApp {
         this._wazeWant();                        // (before the map's state is read: asking for the map can put it up at once, and the layout was then built half with it)
         this.mapShown = this.setting('mapUp');
         // the map came or went on the same layout: its window opens from its middle (closes faster), the Circuit dial slides
-        if (wasName === name && wasMap !== this.mapShown && this.mapLayout) this.geoAnim = { t0: Date.now(), dur: this.mapShown ? GEO_MS : Math.round(GEO_MS * 0.75), open: this.mapShown };
+        if (wasName === name && wasMap !== this.mapShown && this.mapLayout) {
+            // (from where the window is: one still opening or closing is turned round, not started over)
+            const from = this.geoAnim && isNum(this.mapKNow) ? this.mapKNow : (wasMap ? 1 : 0), to = this.mapShown ? 1 : 0;
+            const dur = Math.round((this.mapShown ? GEO_MS : GEO_MS * 0.75) * Math.max(0.4, Math.abs(to - from)));
+            this.geoAnim = { t0: Date.now(), dur, open: this.mapShown, from, to }; this.mapKNow = from;
+        } else if (wasName !== name) { this.geoAnim = null; this.glides.clear(); }      // another theme: nothing of the one before is on its way
         this.layoutSlots = layout.slots || [];
         this.layoutTheme = layout.theme && THEMES[layout.theme] ? layout.theme : null;
         this.runUp = layout.runUp !== false;
@@ -3174,7 +3222,10 @@ class HudApp {
             // (the map's widgets only: the panel without the map keeps its sheets, and its count of layers; going back, the map's texts glide out)
             // (only while the map shows: Sport 22 layers without it as before, 25 with it; splitting the panel without the map too cost 5 more, always)
             if (this.mapLayout && this.layoutById && /(^|&)mapUp(&|$)/.test(w.toggle || '')) {
-                const g = this._glideOf([w]);
+                const gc = this.glideCache || (this.glideCache = new Map());
+                const ck = w.id + '@' + w.x + ',' + w.y;
+                if (!gc.has(ck)) gc.set(ck, this._glideOf([w]));
+                const g = gc.get(ck);
                 if (g) key = (key || '') + '|g' + Math.sign(Math.round(g[0] / 100)) + ',' + Math.sign(Math.round(g[1] / 100));
             }
             let after = -1;
@@ -3210,12 +3261,31 @@ class HudApp {
         if (!ref) { this.log.warn('sheet ' + s.klass + '/' + s.z + ' at ' + s.x + ',' + s.y + ' ' + s.w + 'x' + s.h + ': layer refused'); return; }
         s.ref = ref; s.c = c; s.ci = s.conn;
         this.placed.push({ c, ref, x: s.x, y: s.y, w: s.w, h: s.h });
-        s.buf = Buffer.alloc(s.w * s.h * 4, 0);
+        s.buf = this._sheetBuf(s.w * s.h * 4);
         this.sheets.push(s);
         s.members.forEach((w) => this._guard('widget ' + w.id, () => this._create(w, s)));
         const buf = s.buf;
         s.buf = null;                    // from here on _blit sends dirty rects
-        c.pixels(ref, null, buf);
+        c.pixels(ref, null, buf);        // (the client copies it: the buffer serves again)
+        this._sheetBufBack(buf);
+    }
+
+    /**
+     * A cleared buffer for a sheet being filled. The ones of the rebuild before serve again (up to SHEET_POOL_BYTES kept): a theme made again
+     * asked for some megabytes of fresh memory each time, and clearing them out afterwards (the garbage collector) was a tenth of a rebuild.
+     */
+    _sheetBuf(n) {
+        const pool = this.bufPool || (this.bufPool = { list: [], bytes: 0 });
+        for (let i = 0; i < pool.list.length; i++) {
+            if (pool.list[i].length === n) { const b = pool.list.splice(i, 1)[0]; pool.bytes -= n; b.fill(0); return b; }
+        }
+        return Buffer.alloc(n, 0);
+    }
+    _sheetBufBack(b) {
+        const pool = this.bufPool || (this.bufPool = { list: [], bytes: 0 });
+        if (b.length > SHEET_POOL_BYTES / 2) return;
+        pool.list.push(b); pool.bytes += b.length;
+        while (pool.bytes > SHEET_POOL_BYTES || pool.list.length > 48) pool.bytes -= pool.list.shift().length;
     }
 
     /**
@@ -3836,7 +3906,7 @@ class HudApp {
         const full = [w.hole[0] + inset - w.x, w.hole[1] + inset - w.y, Math.max(0, w.hole[2] - 2 * inset), Math.max(0, w.hole[3] - 2 * inset)];
         // opening or closing (the map came or went): the window grows from its middle, or shrinks back into it
         if (w.holeWhen === 'mapUp' && this.geoAnim) {
-            const g = this._geoF(Date.now()), k = this.geoAnim ? (this.geoAnim.open ? g : 1 - g) : (on ? 1 : 0);
+            const k = this._mapK(Date.now());
             if (k <= 0.01) return [0, 0, 0, 0];
             if (k >= 1) return full;          // (a closing's first instant: still whole, not shut for a frame)
             return [full[0] + full[2] * (1 - k) / 2, full[1] + full[3] * (1 - k) / 2, full[2] * k, full[3] * k].map((v) => Math.round(v * 10) / 10);

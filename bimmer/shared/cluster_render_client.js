@@ -87,6 +87,29 @@ function jsonMessage(obj) {
     return message(JSON_T, Buffer.from(JSON.stringify(obj), 'utf8'));
 }
 
+/* The box around what differs between two pictures of the same size ({ x, y, w, h }, x and w in steps of
+ * DIFF_STEP px), or null when they are the same. Rows and row pieces are compared by Buffer.compare. */
+const DIFF_STEP = 32;
+function diffBox(a, b, iw, ih, bpp) {
+    const row = iw * bpp;
+    let y0 = -1, y1 = -1;
+    for (let y = 0; y < ih; y++) if (a.compare(b, y * row, (y + 1) * row, y * row, (y + 1) * row) !== 0) { if (y0 < 0) y0 = y; y1 = y; }
+    if (y0 < 0) return null;
+    let x0 = iw, x1 = 0;
+    for (let y = y0; y <= y1; y++) {
+        for (let x = 0; x < x0; x += DIFF_STEP) {
+            const e = Math.min(iw, x + DIFF_STEP);
+            if (a.compare(b, y * row + x * bpp, y * row + e * bpp, y * row + x * bpp, y * row + e * bpp) !== 0) { x0 = x; break; }
+        }
+        for (let e = iw; e > x1; e -= DIFF_STEP) {
+            const x = Math.max(0, e - DIFF_STEP);
+            if (a.compare(b, y * row + x * bpp, y * row + e * bpp, y * row + x * bpp, y * row + e * bpp) !== 0) { x1 = e; break; }
+        }
+    }
+    if (x1 <= x0) return null;
+    return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 + 1 };
+}
+
 /* A frame message: u32 ref, u64 id, u16 rect count, rects, pixels. */
 function frameMessage(ref, id, rects, pixels) {
     const head = 14 + rects.length * 8;
@@ -630,6 +653,18 @@ class ClusterRender extends EventEmitter {
             if (px.length !== l.image.length) return false;
             /* The same picture as the service already has (a layer kept through a rebuild): nothing to send. */
             if (l.have && !l.whole && !l.dirty.length && px.equals(l.image)) return true;
+            /* Nearly the same (a kept sheet whose speed moved on between two paints): only the box around what
+             * differs goes, not the whole sheet (up to 1 MB for the sake of one number, at each change of view
+             * or of the map while driving). Found in steps of DIFF_STEP px; over a third of the image, the whole. */
+            if (l.have && !l.whole && l.kind === 'image') {
+                const d = diffBox(px, l.image, iw, ih, bpp);
+                if (!d) return true;
+                if (d.w * d.h * 3 <= iw * ih) {
+                    const part = Buffer.allocUnsafe(d.w * d.h * bpp);
+                    for (let y = 0; y < d.h; y++) px.copy(part, y * d.w * bpp, ((d.y + y) * iw + d.x) * bpp, ((d.y + y) * iw + d.x + d.w) * bpp);
+                    return this.pixels(ref, [d], part);
+                }
+            }
             px.copy(l.image);
             l.whole = true;
             l.dirty = [];
