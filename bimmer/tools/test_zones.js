@@ -131,12 +131,12 @@ check('start-up sweep: 0 before it starts and after it ends, 1 at the top, smoot
     assert.strictEqual(h._sweepF(9000), 0, 'waiting for the layers');
     assert.strictEqual(h.sweepAt, 10000, 'and still pending');
     assert.strictEqual(h._sweepF(10000), 0);
-    assert(Math.abs(h._sweepF(10800) - 1) < 1e-9, 'the top, halfway');
-    const up = [100, 200, 400, 600, 800].map((d) => h._sweepF(10000 + d));
+    assert(Math.abs(h._sweepF(11400) - 1) < 1e-9, 'the top, halfway');
+    const up = [175, 350, 700, 1050, 1400].map((d) => h._sweepF(10000 + d));
     up.reduce((a, b) => { assert(b > a, 'rising'); return b; }, -1);
-    const down = [800, 1000, 1200, 1400, 1599].map((d) => h._sweepF(10000 + d));
+    const down = [1400, 1750, 2100, 2450, 2799].map((d) => h._sweepF(10000 + d));
     down.reduce((a, b) => { assert(b < a, 'falling'); return b; }, 2);
-    assert.strictEqual(h._sweepF(10000 + 1601), 0);
+    assert.strictEqual(h._sweepF(10000 + 2801), 0);
     assert.strictEqual(h.sweepAt, null, 'it ended');
 });
 check('start-up sweep: bars see the larger of the real value and the sweep, readouts and the shift keep the real one', () => {
@@ -144,7 +144,7 @@ check('start-up sweep: bars see the larger of the real value and the sweep, read
     h._raw = (k) => (k === 'rpm' ? 3000 : k === 'speed' ? 0 : null);
     assert.strictEqual(h._barRaw('rpm'), 3000);
     h.sweepAt = 0;
-    const now = Date.now; Date.now = () => 800;
+    const now = Date.now; Date.now = () => 1400;
     try {
         assert.strictEqual(h._barRaw('rpm'), 7000);
         assert.strictEqual(h._barRaw('speed'), 330);
@@ -153,28 +153,28 @@ check('start-up sweep: bars see the larger of the real value and the sweep, read
         Date.now = () => 100;
         const v = h._barRaw('rpm');
         assert(v > 3000 && v < 3100 || v === 3000, 'the real value still wins while the sweep is low: ' + v);
-        Date.now = () => 1700;
+        Date.now = () => 2900;
         assert.strictEqual(h._barRaw('rpm'), 3000, 'back on the real value at the end, no jump');
     } finally { Date.now = now; }
 });
 check('start-up sweep: it stops at once when the car moves (not on the demo)', () => {
     const h = make({ data: { speed: 40 } });
     h.sweepAt = 0;
-    assert.strictEqual(h._sweepF(800), 0);
+    assert.strictEqual(h._sweepF(1400), 0);
     assert.strictEqual(h.sweepAt, null);
     const d = make({ data: { speed: 40, demo: true } });
     d.sweepAt = 0;
-    assert(d._sweepF(800) > 0.99);
+    assert(d._sweepF(1400) > 0.99);
     const u = make({ data: { speed: null } });
     u.sweepAt = 0;
-    assert(u._sweepF(800) > 0.99, 'an unknown speed does not stop it');
+    assert(u._sweepF(1400) > 0.99, 'an unknown speed does not stop it');
 });
 check('the sweep zones follow it: red at the top', () => {
     const h = make();
     h._raw = (k) => (k === 'speed' ? 0 : k === 'rpm' ? 800 : null);
     h.rpmF = 800;
     h.sweepAt = 0;
-    const now = Date.now; Date.now = () => 800;
+    const now = Date.now; Date.now = () => 1400;
     try {
         assert.strictEqual(h._zoneRev(7000), 2);
         assert.strictEqual(h._zoneSpeed(), 2);

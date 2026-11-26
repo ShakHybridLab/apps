@@ -31,6 +31,19 @@ check('le mode de conduite qui rend le cluster à BMW, en français', () => {
     h._gap("drive mode Hybrid: BMW's own cluster in that mode");
     assert(/\(mode Hybrid : compteur d'origine dans ce mode\)/.test(fr.tr('Cluster on: Navi theme' + h._lastGap())));
 });
+check('la même perte sur deux connexions = un seul trou, avec ce qui se passait et sa durée (photo du 26 nov. 2026)', () => {
+    const n = h.gaps.length;
+    h.car = { data: () => ({ speed: 0 }) }; h.driveName = 'Electric Individual'; h.waze = { st: { state: 'showing' } };
+    h._gap('target waiting (none): taken: fetch removed [connection 4]');
+    h._gap('target waiting (none): taken: fetch removed [connection 3]');
+    assert.strictEqual(h.gaps.length, Math.min(8, n + 1));
+    let t = fr.tr('Cluster on: Navi theme' + h._lastGap());
+    assert(/Electric Individual, 0 km\/h, carte affichée\) pas encore revenu/.test(t), t);
+    h.gaps[h.gaps.length - 1].t -= 4200; h._gapBack();
+    t = fr.tr('Cluster on: Navi theme' + h._lastGap());
+    assert(/le compteur BMW ne prend plus l'image du thème \[connexion 4\]; Electric Individual, 0 km\/h, carte affichée\) revenu après 4\.2 s/.test(t), t);
+    h.car = undefined; h.waze = undefined;
+});
 check('le HUD ne note rien (le cluster seulement)', () => {
     const n = h.gaps.length; h.target = 'hud'; h._gap('x'); h.target = 'panel';
     assert.strictEqual(h.gaps.length, n);

@@ -44,7 +44,7 @@ class MapWindow {
             const tmp = this.file + '.' + process.pid + '.tmp';
             fs.writeFileSync(tmp, line, { mode: 0o644 });
             fs.renameSync(tmp, this.file);
-            if (line !== this.last) this.log.info('map window: ' + line.trim() + ' (Waze on cluster 0.9.107+ draws the map there)');
+            if (line !== this.last) { this.log.info('map window: ' + line.trim() + ' (Waze on cluster 0.9.107+ draws the map there)'); this.changedAt = Date.now(); }
             this.holding = true; this.last = line; this.warned = false;
         } catch (e) {
             if (!this.warned) { this.warned = true; this.log.info('map window: ' + (e && e.message || e)); }
@@ -54,7 +54,7 @@ class MapWindow {
     /** Give the window back: Waze on cluster returns to its own place. */
     release() {
         if (!this.holding) return;
-        this.holding = false; this.last = '';
+        this.holding = false; this.last = ''; this.changedAt = Date.now();
         try { fs.unlinkSync(this.file); } catch (e) { /* already gone */ }
         this.log.info('map window: given back (Waze on cluster to its own place)');
     }

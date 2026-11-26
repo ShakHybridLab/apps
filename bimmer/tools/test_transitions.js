@@ -112,8 +112,41 @@ check('le cadran de Circuit glisse du milieu à droite (et revient), à la taill
 check('le démarrage : le balayage de l\'aiguille part plus tôt, le thème apparaît en fondu', () => {
     const src = fs.readFileSync(path.join(root, 'shared', 'hud.js'), 'utf8');
     const m = src.match(/const SWEEP_WAIT_MS = (\d+);/);
-    assert(m && Number(m[1]) <= 700, 'attente du balayage : ' + (m && m[1]));
+    // (26 Nov 2026, soir : trop rapide pour le propriétaire ; le balayage part une fois le fondu d'apparition fini, et dure 2,8 s)
+    const sh = src.match(/const SHOW_MS = (\d+) \* TRANS_SLOW;/), sw = src.match(/const SWEEP_MS = (\d+);/);
+    assert(m && sh && Number(m[1]) >= Number(sh[1]) && Number(m[1]) <= Number(sh[1]) + 200, 'attente du balayage : ' + (m && m[1]));
+    assert(sw && Number(sw[1]) >= 2400, 'durée du balayage : ' + (sw && sw[1]));
     assert(/this\.showFade = name !== 'off' && \(!wasName \|\| wasName === 'off'\) && this\.started === true;/.test(src));
+});
+check('tous les thèmes : avec la carte, les textes glissent de leur ancienne place à la nouvelle (le propriétaire, 26 nov. 2026 : « que ça le fasse sur tous les thèmes »)', () => {
+    const want = { sport: 30, mblade: 60, navi: 45, evo: 3, circuit: 55 };
+    for (const t of Object.keys(want)) {
+        const L = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'hud', 'layouts', t + '.json'), 'utf8'));
+        const h = mk(); h.layoutById = new Map(L.widgets.map((w) => [w.id, w]));
+        const n = L.widgets.filter((w) => /(^|&)mapUp(&|$)/.test(w.toggle || '') && h._glideOf([w])).length;
+        assert(n >= want[t], t + ' : ' + n + ' textes qui glissent');
+    }
+    // la vitesse de Circuit : de sa place au milieu à gauche (x plus petit), dans le bon sens
+    const L = JSON.parse(fs.readFileSync(path.join(root, 'apps', 'shaktheme', 'hud', 'layouts', 'circuit.json'), 'utf8'));
+    const h = mk(); h.layoutById = new Map(L.widgets.map((w) => [w.id, w]));
+    const by = h.layoutById, d = h._glideOf([by.get('mspeed')]), back = h._glideOf([by.get('speed')]);
+    assert(d && back && d[0] === -back[0] && d[1] === -back[1], 'aller et retour : ' + d + ' / ' + back);
+    assert.strictEqual(h._glideOf([by.get('mspeed'), { id: 'fixe', type: 'text', x: 0, y: 0, w: 10, h: 10 }]), null, 'une feuille avec un texte qui ne bouge pas reste en place');
+});
+check('un texte qui glisse reste sur l\'écran tout du long, et suit l\'ouverture de la fenêtre', () => {
+    const h = mk();
+    assert.deepStrictEqual(h._glideFit([-500, 0], { x: 1700, y: 100, w: 200, h: 40 }), [-20, 0], 'retenu au bord droit');
+    assert.strictEqual(h._glideFit([3, 2], { x: 10, y: 10, w: 10, h: 10 }), null, 'un pas de rien : pas de glissement');
+    const sets = [], c = { set(ref, o) { sets.push(o); }, has() { return true; } };
+    h.glides = new Map();
+    const t0 = Date.now();
+    h._glide('0:1', c, 1, 500, 50, 100, 50, t0, 800);
+    h._glideStep(t0);
+    assert.strictEqual(sets[0].x, 500, 'au départ : à son ancienne place');
+    h._glideStep(t0 + 400);
+    assert(sets[1].x < 500 && sets[1].x > 100, 'à mi-chemin : ' + sets[1].x);
+    h._glideStep(t0 + 800);
+    assert.strictEqual(sets[sets.length - 1].x, 100); assert(!h.glides.size, 'arrivé');
 });
 console.log(bad ? bad + ' échec(s)' : 'transitions : tout passe');
 process.exit(bad ? 1 : 0);

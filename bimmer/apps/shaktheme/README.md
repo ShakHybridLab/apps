@@ -89,7 +89,7 @@ Mêmes réglages que les autres thèmes. La mise en page vient de `tools/gen_cir
 
 ### Transitions (tous les thèmes, 26 nov. 2026)
 
-Quand la carte Waze s'affiche ou s'en va, quand on change de vue avec la touche BC, quand l'alerte de zone de danger arrive : ce qui change **s'efface en douceur**, le thème est refait, puis le nouveau **apparaît en fondu**. La **fenêtre de la carte s'ouvre depuis son milieu** (et se referme dedans) ; dans Circuit, le cadran glisse pendant ce temps. Au démarrage, le thème **apparaît en fondu** par-dessus le compteur de BMW, et le balayage de l'aiguille part plus tôt. Un fond plein écran ne devient jamais transparent pendant un changement (le compteur de BMW se verrait dessous).
+Quand la carte Waze s'affiche ou s'en va, quand on change de vue avec la touche BC, quand l'alerte de zone de danger arrive : ce qui change **s'efface en douceur**, le thème est refait, puis le nouveau **apparaît en fondu**. La **fenêtre de la carte s'ouvre depuis son milieu** (et se referme dedans) et, dans tous les thèmes, la vitesse, le rapport, la limitation et les jauges **glissent** de leur place jusqu'à côté de la carte pendant ce temps (et repartent en glissant quand elle s'en va) ; dans Circuit, tout le cadran glisse. Au démarrage, le thème **apparaît en fondu** par-dessus le compteur de BMW, puis l'aiguille fait un balayage lent et doux (2,8 s). Un fond plein écran ne devient jamais transparent pendant un changement (le compteur de BMW se verrait dessous).
 
 Neither theme has been tried on a car; they are checked on the bench against the screenshot and for BMW's black gear box, seat-belt light and the hood. The gear letters use the app's own font, not the boxed one of the screenshot.
 

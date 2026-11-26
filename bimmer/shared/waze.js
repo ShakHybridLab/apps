@@ -131,6 +131,8 @@ class Waze {
     }
 
     _update(s) {
+        const was = this.st ? this.st.state : null, now = s ? s.state : null;
+        if (now !== was) { this.stateAt = this.now(); this.stateWas = was; }   // (a gap of the theme notes how long ago the map changed state)
         this.st = s;
         const keys = s ? s.keys : '';
         if (keys !== this.lastKeys) { this.lastKeys = keys; if (s && this.log) this.log.info('Waze on cluster status file: ' + s.raw); }
