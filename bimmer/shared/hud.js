@@ -1811,8 +1811,10 @@ class HudApp {
         // in the cluster": Maps on Cluster setting its map up on the cluster may be what makes BMW's cluster drop ours for a moment)
         const d = this.car ? this.car.data() : {}, wz = this.waze, ws = wz && wz.st ? wz.st.state : null;
         const ago = (t) => (isNum(t) && now - t >= 0 && now - t < 600000 ? ' ' + Math.round((now - t) / 1000) + ' s ago' : '');
-        const mw = this.mapWin && isNum(this.mapWin.changedAt) ? (this.mapWin.holding ? 'window set' : 'window given back') + ago(this.mapWin.changedAt) : null;
-        const ctx = [this.driveName || (this.driveMode ? MODE_NAME[this.driveMode] : null), isNum(d.speed) ? Math.round(d.speed) + ' km/h' : null,
+        // (kept short: the status row has three lines for two gaps, the owner's photo of 27 Nov 2026 lost the second one. The window only when
+        // it moved in the last 30 s, the drive mode not at all: the row starts with it)
+        const mw = this.mapWin && isNum(this.mapWin.changedAt) && now - this.mapWin.changedAt < 30000 ? (this.mapWin.holding ? 'window set' : 'window given back') + ago(this.mapWin.changedAt) : null;
+        const ctx = [isNum(d.speed) ? Math.round(d.speed) + ' km/h' : null,
             ws ? 'map ' + ws + (wz.stateWas ? ' (was ' + wz.stateWas + ')' : '') + ago(wz.stateAt) : null, mw && mw.indexOf(' ago') > 0 ? mw : null,
             this.carAlert === true ? 'car alert' : null].filter(Boolean).join(', ');
         this.gaps.push({ at, t: now, why: why.slice(0, 120), ctx: ctx.slice(0, 140), back: null });

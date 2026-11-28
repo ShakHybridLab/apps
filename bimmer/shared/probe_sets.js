@@ -28,7 +28,7 @@ module.exports = {
         },
     },
     shakconso: {
-        title: 'ShakConso', glyph: 'CNS', logId: 'OACN', version: '0.3.0',
+        title: 'ShakConso', glyph: 'CNS', logId: 'OACN', version: '0.3.1',
         description: "Essai : ce que l'ordinateur de bord donne à une appli (consommation et vitesse moyennes, distance et durée du trajet, données électriques).",
         note: 'Roule quelques minutes, puis photographie l\'écran : chaque ligne qui a reçu une valeur est lisible par les thèmes.',
         signals: {
@@ -36,6 +36,9 @@ module.exports = {
             'de.bmw.infotainment.KombiIF': ['statusBordcomputerAverage', 'statusBordcomputerTravelData', 'statusBordcomputerElectricData',
                 'statusConsumptionAverageElectricVehicle', 'statusBordcomputerStatus2'],
         },
+        // wide (0.3.1) : les cinq répondent sur la voiture (photo du 28 nov. 2026), mais chaque valeur était coupée après deux champs
+        // (« speedAverage1BC1 194, consumptionAverage1BC1 39, sp… ») : trois lignes par signal pour lire tous les champs
+        wide: true,
     },
     shakgps: {
         title: 'ShakGPS', glyph: 'GPS', logId: 'OAGP', version: '0.1.1',

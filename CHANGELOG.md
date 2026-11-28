@@ -1,5 +1,18 @@
 # Modifications par rapport aux projets d'origine
 
+## 28 novembre 2026
+
+### ShakConso 0.3.1 : les valeurs de l'ordinateur de bord en entier
+- **Photo de ShakConso (19:12)** : les cinq signaux de l'ordinateur de bord répondent sur la voiture (`KombiIF` : `statusBordcomputerAverage` 4 messages, `statusBordcomputerTravelData` 10, `statusBordcomputerElectricData` 15, `statusConsumptionAverageElectricVehicle` 15, `statusBordcomputerStatus2` 1) : les thèmes peuvent les lire. Lu : `speedAverage1BC1` 194, `consumptionAverage1BC1` 39, `rideDurationHours` 46 / `rideDurationMinutes` 0, `consumptionAverageElectricBC1` 1187, `consumptionAverageElectricVehicleBC1` 188, `statusBC2BN2020` « BC2_LAEUFT ». Chaque valeur était coupée après deux champs : la distance du trajet et les champs BC2 ne se lisaient pas.
+- ShakConso montre maintenant chaque valeur sur trois lignes. Rien n'est encore branché dans les thèmes : les unités restent à confirmer contre l'affichage de BMW.
+
+## 27 novembre 2026
+
+### ShakTheme 0.24.4, ShakHUD 0.6.64 : ligne d'état plus courte pour que les deux derniers trous tiennent
+- **Photos de la ligne d'état (23:48)** : « dernier trou 23:33 (… le compteur BMW ne prend plus l'image du thème ; Electric Individual, 48 km/h, carte starting depuis 2 s (avant : affichée), fenêtre placée il y a 171 s) revenu après 0 s, dernier trou 19:03 (cible » : le deuxième trou était coupé au bout des trois lignes.
+- **Ce que dit ce trou** : Maps on Cluster a redémarré son flux (« affichée » puis « starting ») et, 2 s après, le compteur BMW a lâché l'image du thème, revenue aussitôt. La fenêtre de la carte n'avait pas bougé depuis 171 s : le déplacement de la carte (piste de 0.24.3) n'est pas en cause ici, c'est le redémarrage du flux.
+- **Ligne d'état** : « BMW a lâché le thème » au lieu de la phrase longue, la durée en « : 0 s », le mode de conduite retiré (la ligne commence par lui), la fenêtre seulement si elle a bougé dans les 30 dernières secondes, « carte en démarrage » au lieu de « starting ».
+
 ## 26 novembre 2026
 
 ### ShakTheme 0.24.3, ShakHUD 0.6.63 : audit complet, thème refait deux à trois fois plus vite, transitions à l'épreuve

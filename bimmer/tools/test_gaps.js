@@ -38,10 +38,10 @@ check('la même perte sur deux connexions = un seul trou, avec ce qui se passait
     h._gap('target waiting (none): taken: fetch removed [connection 3]');
     assert.strictEqual(h.gaps.length, Math.min(8, n + 1));
     let t = fr.tr('Cluster on: Navi theme' + h._lastGap());
-    assert(/Electric Individual, 0 km\/h, carte affichée\) pas encore revenu/.test(t), t);
+    assert(/; 0 km\/h, carte affichée\) pas encore revenu/.test(t), t);
     h.gaps[h.gaps.length - 1].t -= 4200; h._gapBack();
     t = fr.tr('Cluster on: Navi theme' + h._lastGap());
-    assert(/le compteur BMW ne prend plus l'image du thème \[connexion 4\]; Electric Individual, 0 km\/h, carte affichée\) revenu après 4\.2 s/.test(t), t);
+    assert(/BMW a lâché le thème \[connexion 4\]; 0 km\/h, carte affichée\) : 4\.2 s/.test(t), t);
     h.car = undefined; h.waze = undefined;
 });
 check('le HUD ne note rien (le cluster seulement)', () => {

@@ -2,7 +2,7 @@
   "id": "shakconso",
   "title": "ShakConso (essai)",
   "description": "Essai : ce que l'ordinateur de bord donne à une appli (consommation et vitesse moyennes, distance et durée du trajet, données électriques).",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "vendor": "custom",
   "loggingId": "OACN",
   "iconGlyph": "CNS",
